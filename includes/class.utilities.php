@@ -3,14 +3,14 @@
 /**
  * Utility methods
  * 
- * @package Archetyped
+ * @package Simple Lightbox
  * @subpackage Utilities
- * @author SM
+ * @author Archetyped
  *
  */
-class AR_Utilities {
+class SLB_Utilities {
 	
-	function AR_Utilities() {
+	function SLB_Utilities() {
 		$this->__construct();
 	}
 	

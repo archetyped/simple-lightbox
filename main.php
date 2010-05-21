@@ -1,6 +1,6 @@
 <?php 
 /* 
-Plugin Name: Archetyped Lightbox
+Plugin Name: Simple Lightbox
 Plugin URI:
 Description: Customizable Lightbox for Wordpress
 Version: 0.5
@@ -10,6 +10,6 @@ Author URI: http://archetyped.com
 
 require_once 'model.php';
 
-$arlb =& new AR_Lightbox();
+$slb =& new SLB_Lightbox();
 
 ?>

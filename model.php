@@ -4,14 +4,14 @@ require_once 'includes/class.base.php';
 
 /**
  * Lightbox functionality class
- * @package Archetyped Lightbox
- * @author SM
+ * @package Simple Lightbox
+ * @author Archetyped
  */
-class AR_Lightbox extends AR_Base {
+class SLB_Lightbox extends SLB_Base {
 	
 	/*-** Init **-*/
 	
-	function AR_Lightbox() {
+	function SLB_Lightbox() {
 		$this->__construct();
 	}
 	

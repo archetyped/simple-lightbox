@@ -3,17 +3,18 @@
 require_once 'class.utilities.php';
 
 /**
- * @package Archetyped Lightbox
- * @author SM
+ * @package Simple Lightbox
+ * @subpackage Base
+ * @author Archetyped
  *
  */
-class AR_Base {
+class SLB_Base {
 	
 	/**
 	 * Prefix for Cornerstone-related data (attributes, DB tables, etc.)
 	 * @var string
 	 */
-	var $prefix = 'ar';
+	var $prefix = 'slb';
 	
 	/**
 	 * Utilities
@@ -24,7 +25,7 @@ class AR_Base {
 	/**
 	 * Legacy constructor
 	 */
-	function AR_Base() {
+	function SLB_Base() {
 		$this->__construct();
 	}
 	
@@ -32,7 +33,7 @@ class AR_Base {
 	 * Constructor
 	 */
 	function __construct() {
-		$this->util =& new AR_Utilities();
+		$this->util =& new SLB_Utilities();
 	}
 	
 	/**
