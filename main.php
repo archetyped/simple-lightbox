@@ -12,4 +12,9 @@ require_once 'model.php';
 
 $slb =& new SLB_Lightbox();
 
+function slb_enabled() {
+	global $slb;
+	return $slb->is_enabled();
+}
+
 ?>

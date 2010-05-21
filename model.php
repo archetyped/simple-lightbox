@@ -42,13 +42,13 @@ class SLB_Lightbox extends SLB_Base {
 	 * @return bool TRUE if lightbox is currently enabled, FALSE otherwise
 	 */
 	function is_enabled() {
-		return ( get_option($this->add_prefix('lb_enabled')) ) ? true : false;
+		return ( get_option($this->add_prefix('enabled')) ) ? true : false;
 	}
 
 	/*-** Frontend **-*/
 	
 	function enqueue_files() {
-		if ( ! $this->is_enabled() )
+		if ( ! $this->is_enabled() || is_admin() )
 			return;
 		wp_enqueue_script($this->add_prefix('prototype'), $this->util->get_file_url('js/prototype.js'));
 		wp_enqueue_script($this->add_prefix('scriptaculous'), $this->util->get_file_url('js/scriptaculous.js?load=effects'), array($this->add_prefix('prototype')));
@@ -102,7 +102,7 @@ class SLB_Lightbox extends SLB_Base {
 		}
 		
 		$page = 'media';
-		$section = $this->add_prefix('lb');
+		$section = $this->get_prefix();
 		//Section
 		add_settings_section($section, 'Lightbox Settings', $this->m('admin_section'), $page);
 		//Fields
@@ -133,7 +133,7 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	function admin_enabled() {
 		$checked = '';
-		$id = $this->add_prefix('lb_enabled');
+		$id = $this->add_prefix('enabled');
 		if (get_option($id))
 			$checked = ' checked="checked" ';
 		$format = '<input type="checkbox" %1$s id="%2$s" name="%2$s" class="code" /> (Default: Yes)';
@@ -146,7 +146,7 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	function admin_autostart() {
 		$checked = '';
-		$id = $this->add_prefix('lb_autostart');
+		$id = $this->add_prefix('autostart');
 		if (get_option($id))
 			$checked = ' checked="checked" ';
 		$format = '<input type="checkbox" %1$s id="%2$s" name="%2$s" class="code" /> (Default: Yes)';
@@ -159,7 +159,7 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	function admin_duration() {
 		$val = 6;
-		$id = $this->add_prefix('lb_duration');
+		$id = $this->add_prefix('duration');
 		$opt = get_option($id); 
 		if ($opt) $val = $opt;
 		$format = '<input type="text" size="3" maxlength="3" value="%1$s" id="%2$s" name="%2$s" class="code" /> (Default: 6)';
@@ -172,7 +172,7 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	function admin_loop() {
 		$checked = '';
-		$id = $this->add_prefix('lb_loop');
+		$id = $this->add_prefix('loop');
 		if (get_option($id))
 			$checked = ' checked="checked" ';
 		$format = '<input type="checkbox" %1$s id="%2$s" name="%2$s" class="code" /> (Default: Yes)';
@@ -185,7 +185,7 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	function admin_overlay_opacity() {
 		$val = 0.8;
-		$id = $this->add_prefix('lb_overlay_opacity');
+		$id = $this->add_prefix('overlay_opacity');
 		$opt = get_option($id); 
 		if ($opt) $val = $opt;
 		$format = '<input type="text" size="3" maxlength="5" value="%1$s" id="%2$s" name="%2$s" class="code" /> (Default: 0.8)';
