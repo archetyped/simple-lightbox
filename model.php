@@ -40,8 +40,8 @@ class SLB_Lightbox extends SLB_Base {
 		$this->register_hooks();
 	}
 	
-	
 	function register_hooks() {
+		register_activation_hook($this->util->get_plugin_base_file(), $this->m('activate'));
 		//Init lightbox admin
 		add_action('admin_init', $this->m('admin_settings'));
 		
@@ -49,6 +49,25 @@ class SLB_Lightbox extends SLB_Base {
 		add_action('wp_enqueue_scripts', $this->m('enqueue_files'));
 		add_action('wp_head', $this->m('client_init'));
 		
+	}
+	
+	function activate() {
+		//Set default options (if not yet set)
+		$this->reset_options(false);
+	}
+	
+	/**
+	 * Resets option values to their default values
+	 * @param bool $hard Reset all options if TRUE (default), Reset only unset options if FALSE
+	 */
+	function reset_options($hard = true) {
+		foreach ( $this->options_default as $id => $data ) {
+			$opt = $this->add_prefix($id);
+			if ( !$hard && !is_null(get_option($opt, null)) ) {
+				continue;
+			}
+			update_option($opt, $data[0]);
+		}
 	}
 	
 	/*-** Helpers **-*/
@@ -62,6 +81,24 @@ class SLB_Lightbox extends SLB_Base {
 	}
 	
 	/**
+	 * Builds object of option data
+	 * Properties:
+	 * > id: Option ID
+	 * > value: Option's value (uses default value if option not yet set)
+	 * > value_default: Option's default value (formatted)
+	 * 
+	 * @param string $option Option name
+	 * @return object Option data
+	 */
+	function get_option($option) {
+		$ret = new stdClass();
+		$ret->id = $this->add_prefix($option);
+		$ret->value = get_option($ret->id, $this->get_default_value($option, false));
+		$ret->value_default = $this->get_default_value($option);
+		return $ret;
+	}
+	
+	/**
 	 * Retrieve default value for specified option
 	 * @param string $option Option name
 	 * @param bool $formatted Whether to return formatted value (e.g. for use in admin UI)
@@ -69,11 +106,11 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	function get_default_value($option, $formatted = true) {
 		$ret = '';
-		if ( isset($this->options_default[$option]) ) {
-			$ret = $this->options_default[$option];
+		if ( isset($this->options_default[$option][0]) ) {
+			$ret = $this->options_default[$option][0];
 			//Format value (if required)
 			if ( $formatted ) {
-				if ( is_bool($ret) )
+				if ( is_bool($ret) || ( is_string($ret) && 'on' == $ret ) )
 					$ret = ( $ret ) ? 'Enabled' : 'Disabled';
 				if ( is_numeric($ret) )
 					$ret = strval($ret);
@@ -84,8 +121,11 @@ class SLB_Lightbox extends SLB_Base {
 
 	/*-** Frontend **-*/
 	
+	/**
+	 * Enqueue files in template head
+	 */
 	function enqueue_files() {
-		if ( ! $this->is_enabled() || is_admin() )
+		if ( ! $this->is_enabled() )
 			return;
 		wp_enqueue_script($this->add_prefix('prototype'), $this->util->get_file_url('js/prototype.js'));
 		wp_enqueue_script($this->add_prefix('scriptaculous'), $this->util->get_file_url('js/scriptaculous.js?load=effects'), array($this->add_prefix('prototype')));
@@ -158,65 +198,23 @@ class SLB_Lightbox extends SLB_Base {
 	function admin_section() { }
 	
 	/**
-	 * Lightbox setting - Enabled/Disabled
-	 * @return void
+	 * General field builder
+	 * @param string $option Option name to build field for
+	 * @param string $format Field markup (using sprintf specifiers)
+	 * @param string $type (optional) Type of field being build (e.g. checkbox, text, etc.)
+	 * Specifiers:
+	 * 1. Field ID
+	 * 2. Field Value
+	 * 3. Field Default Value (formatted)
+	 * 4. Field Type
 	 */
-	function admin_enabled() {
-		$opt = 'enabled';
-		$type = 'checkbox';
-		$format = '<input %4$s %1$s id="%2$s" name="%2$s" class="code" /> (Default: %3$s)';
-		$this->admin_the_field($opt, $format, $type);
-	}
-	
-	/**
-	 * Lightbox setting - Slideshow autostart
-	 * @return void
-	 */
-	function admin_autostart() {
-		$opt = 'autostart';
-		$type = 'checkbox';
-		$format = '<input %4$s %1$s id="%2$s" name="%2$s" class="code" /> (Default: %3$s)';
-		$this->admin_the_field($opt, $format, $type);
-	}
-	
-	/**
-	 * Lightbox setting - Slide duration
-	 * @return void
-	 */
-	function admin_duration() {
-		$opt = 'duration';
-		$format = '<input %4$s size="3" maxlength="3" value="%1$s" id="%2$s" name="%2$s" class="code" /> (Default: %3$s)';
-		$this->admin_the_field($opt, $format);
-	}
-	
-	/**
-	 * Lightbox setting - Looping
-	 * @return void
-	 */
-	function admin_loop() {
-		$opt = 'loop';
-		$type = 'checkbox';
-		$format = '<input %4$s %1$s id="%2$s" name="%2$s" class="code" /> (Default: %3$s)';
-		$this->admin_the_field($opt, $format, $type);
-	}
-	
-	/**
-	 * Lightbox setting - Overlay Opacity
-	 * @return void
-	 */
-	function admin_overlay_opacity() {
-		$opt = 'overlay_opacity';
-		$format = '<input %4$s size="3" maxlength="5" value="%2$s" id="%1$s" name="%1$s" class="code" /> (Default: %3$s)';
-		$this->admin_the_field($opt, $format);
-	}
-	
 	function admin_the_field($option, $format, $type = 'text') {
 		$opt = $this->get_option($option);
 		//Adjust type and value formatting based on type
 		if ( ! empty($type) && is_string($type) ) {
 			switch ( $type ) {
 				case 'checkbox' :
-					if ( $ret->value )
+					if ( $opt->value )
 						$type .= '" checked="checked';
 					break;
 			}
@@ -228,12 +226,57 @@ class SLB_Lightbox extends SLB_Base {
 		echo sprintf($format, $opt->id, $opt->value, $opt->value_default, $type);
 	}
 	
-	function get_option($option) {
-		$ret = new stdClass();
-		$ret->id = $this->add_prefix($option);
-		$ret->value = get_option($ret->id, $this->get_default_value($option, false));
-		$ret->value_default = $this->get_default_value($option);
-		return $ret;
+	/**
+	 * Lightbox setting - Enabled/Disabled
+	 * @return void
+	 */
+	function admin_enabled() {
+		$opt = 'enabled';
+		$type = 'checkbox';
+		$format = '<input %4$s id="%1$s" name="%1$s" class="code" /> (Default: %3$s)';
+		$this->admin_the_field($opt, $format, $type);
+	}
+	
+	/**
+	 * Lightbox setting - Slideshow autostart
+	 * @return void
+	 */
+	function admin_autostart() {
+		$opt = 'autostart';
+		$type = 'checkbox';
+		$format = '<input %4$s id="%1$s" name="%1$s" class="code" /> (Default: %3$s)';
+		$this->admin_the_field($opt, $format, $type);
+	}
+	
+	/**
+	 * Lightbox setting - Slide duration
+	 * @return void
+	 */
+	function admin_duration() {
+		$opt = 'duration';
+		$format = '<input %4$s size="3" maxlength="3" value="%2$s" id="%1$s" name="%1$s" class="code" /> (Default: %3$s)';
+		$this->admin_the_field($opt, $format);
+	}
+	
+	/**
+	 * Lightbox setting - Looping
+	 * @return void
+	 */
+	function admin_loop() {
+		$opt = 'loop';
+		$type = 'checkbox';
+		$format = '<input %4$s id="%1$s" name="%1$s" class="code" /> (Default: %3$s)';
+		$this->admin_the_field($opt, $format, $type);
+	}
+	
+	/**
+	 * Lightbox setting - Overlay Opacity
+	 * @return void
+	 */
+	function admin_overlay_opacity() {
+		$opt = 'overlay_opacity';
+		$format = '<input %4$s size="3" maxlength="5" value="%2$s" id="%1$s" name="%1$s" class="code" /> (Default: %3$s)';
+		$this->admin_the_field($opt, $format);
 	}
 }
 

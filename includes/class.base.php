@@ -18,7 +18,7 @@ class SLB_Base {
 	
 	/**
 	 * Utilities
-	 * @var AR_Utilities
+	 * @var SLB_Utilities
 	 */
 	var $util = null;
 	
