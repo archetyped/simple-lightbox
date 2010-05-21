@@ -9,6 +9,22 @@ require_once 'includes/class.base.php';
  */
 class SLB_Lightbox extends SLB_Base {
 	
+	/*-** Properties **-*/
+	
+	/**
+	 * Default options
+	 * 0: Value
+	 * 1: Label
+	 * @var array
+	 */
+	var $options_default = array (
+		'enabled'			=>	array(true, 'Enable Lightbox Functionality'),
+		'autostart'			=>	array(true, 'Automatically Start Slideshow'),
+		'duration'			=>	array(6, 'Slide Duration (Seconds)'),
+		'loop'				=>	array(true, 'Loop through images'),
+		'overlay_opacity'	=>	array(0.8, 'Overlay Opacity (0 - 1)'),
+	);
+	
 	/*-** Init **-*/
 	
 	function SLB_Lightbox() {
@@ -43,6 +59,27 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	function is_enabled() {
 		return ( get_option($this->add_prefix('enabled')) ) ? true : false;
+	}
+	
+	/**
+	 * Retrieve default value for specified option
+	 * @param string $option Option name
+	 * @param bool $formatted Whether to return formatted value (e.g. for use in admin UI)
+	 * @return mixed Option default value
+	 */
+	function get_default_value($option, $formatted = true) {
+		$ret = '';
+		if ( isset($this->options_default[$option]) ) {
+			$ret = $this->options_default[$option];
+			//Format value (if required)
+			if ( $formatted ) {
+				if ( is_bool($ret) )
+					$ret = ( $ret ) ? 'Enabled' : 'Disabled';
+				if ( is_numeric($ret) )
+					$ret = strval($ret);
+			}
+		}
+		return $ret;
 	}
 
 	/*-** Frontend **-*/
@@ -106,17 +143,10 @@ class SLB_Lightbox extends SLB_Base {
 		//Section
 		add_settings_section($section, 'Lightbox Settings', $this->m('admin_section'), $page);
 		//Fields
-		$fields = array(
-						'enabled'			=>	__( 'Enable Lightbox Functionality' ),
-						'autostart'			=>	__( 'Automatically Start Slideshow' ),
-						'duration'			=>	__( 'Slide Duration (Seconds)' ),
-						'loop'				=>	__( 'Loop through images' ),
-						'overlay_opacity'	=>	__( 'Overlay Opacity (0 - 1)' )
-						);
-		foreach ($fields as $key => $title) {
+		foreach ($this->options_default as $key => $defaults) {
 			$id = $section . '_' . $key;
 			$callback = $this->m('admin_' . $key);
-			add_settings_field($id, $title, $callback, $page, $section, array('label_for' => $id));
+			add_settings_field($id, __($defaults[1]), $callback, $page, $section, array('label_for' => $id));
 			register_setting($page, $id);
 		}
 	}
@@ -132,12 +162,10 @@ class SLB_Lightbox extends SLB_Base {
 	 * @return void
 	 */
 	function admin_enabled() {
-		$checked = '';
-		$id = $this->add_prefix('enabled');
-		if (get_option($id))
-			$checked = ' checked="checked" ';
-		$format = '<input type="checkbox" %1$s id="%2$s" name="%2$s" class="code" /> (Default: Yes)';
-		echo sprintf($format, $checked, $id);
+		$opt = 'enabled';
+		$type = 'checkbox';
+		$format = '<input %4$s %1$s id="%2$s" name="%2$s" class="code" /> (Default: %3$s)';
+		$this->admin_the_field($opt, $format, $type);
 	}
 	
 	/**
@@ -145,12 +173,10 @@ class SLB_Lightbox extends SLB_Base {
 	 * @return void
 	 */
 	function admin_autostart() {
-		$checked = '';
-		$id = $this->add_prefix('autostart');
-		if (get_option($id))
-			$checked = ' checked="checked" ';
-		$format = '<input type="checkbox" %1$s id="%2$s" name="%2$s" class="code" /> (Default: Yes)';
-		echo sprintf($format, $checked, $id);
+		$opt = 'autostart';
+		$type = 'checkbox';
+		$format = '<input %4$s %1$s id="%2$s" name="%2$s" class="code" /> (Default: %3$s)';
+		$this->admin_the_field($opt, $format, $type);
 	}
 	
 	/**
@@ -158,12 +184,9 @@ class SLB_Lightbox extends SLB_Base {
 	 * @return void
 	 */
 	function admin_duration() {
-		$val = 6;
-		$id = $this->add_prefix('duration');
-		$opt = get_option($id); 
-		if ($opt) $val = $opt;
-		$format = '<input type="text" size="3" maxlength="3" value="%1$s" id="%2$s" name="%2$s" class="code" /> (Default: 6)';
-		echo sprintf($format, $val, $id);
+		$opt = 'duration';
+		$format = '<input %4$s size="3" maxlength="3" value="%1$s" id="%2$s" name="%2$s" class="code" /> (Default: %3$s)';
+		$this->admin_the_field($opt, $format);
 	}
 	
 	/**
@@ -171,12 +194,10 @@ class SLB_Lightbox extends SLB_Base {
 	 * @return void
 	 */
 	function admin_loop() {
-		$checked = '';
-		$id = $this->add_prefix('loop');
-		if (get_option($id))
-			$checked = ' checked="checked" ';
-		$format = '<input type="checkbox" %1$s id="%2$s" name="%2$s" class="code" /> (Default: Yes)';
-		echo sprintf($format, $checked, $id);
+		$opt = 'loop';
+		$type = 'checkbox';
+		$format = '<input %4$s %1$s id="%2$s" name="%2$s" class="code" /> (Default: %3$s)';
+		$this->admin_the_field($opt, $format, $type);
 	}
 	
 	/**
@@ -184,12 +205,35 @@ class SLB_Lightbox extends SLB_Base {
 	 * @return void
 	 */
 	function admin_overlay_opacity() {
-		$val = 0.8;
-		$id = $this->add_prefix('overlay_opacity');
-		$opt = get_option($id); 
-		if ($opt) $val = $opt;
-		$format = '<input type="text" size="3" maxlength="5" value="%1$s" id="%2$s" name="%2$s" class="code" /> (Default: 0.8)';
-		echo sprintf($format, $val, $id);
+		$opt = 'overlay_opacity';
+		$format = '<input %4$s size="3" maxlength="5" value="%2$s" id="%1$s" name="%1$s" class="code" /> (Default: %3$s)';
+		$this->admin_the_field($opt, $format);
+	}
+	
+	function admin_the_field($option, $format, $type = 'text') {
+		$opt = $this->get_option($option);
+		//Adjust type and value formatting based on type
+		if ( ! empty($type) && is_string($type) ) {
+			switch ( $type ) {
+				case 'checkbox' :
+					if ( $ret->value )
+						$type .= '" checked="checked';
+					break;
+			}
+			
+			$type = 'type="' . $type . '"';
+		} else {
+			$type = '';
+		}
+		echo sprintf($format, $opt->id, $opt->value, $opt->value_default, $type);
+	}
+	
+	function get_option($option) {
+		$ret = new stdClass();
+		$ret->id = $this->add_prefix($option);
+		$ret->value = get_option($ret->id, $this->get_default_value($option, false));
+		$ret->value_default = $this->get_default_value($option);
+		return $ret;
 	}
 }
 
