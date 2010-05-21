@@ -1,0 +1,135 @@
+#lightbox{
+	position: absolute;
+	top: 20px;
+	left: 0;
+	width: 100%;
+	z-index: 3100;
+	text-align: center;
+	line-height: 0;
+	color:#151410;
+	}
+
+#lightbox a, #lightbox a:hover {
+	border-bottom:none;
+	color:#151410;
+	text-decoration:underline;
+}
+
+#lightbox a img{ border: none; }
+
+#outerImageContainer{
+	position: relative;
+	background-color: #fff;
+	width: 250px;
+	height: 250px;
+	margin: 0 auto;
+	}
+
+#imageContainer{
+	padding: 10px;
+	}
+
+#loading{
+	position: absolute;
+	top: 40%;
+	left: 0%;
+	height: 25%;
+	width: 100%;
+	text-align: center;
+	line-height: 0;
+	}
+#loadingLink {
+	display:block;
+	margin:0 auto;
+	padding:0;
+	width:32px;
+	height:32px;
+	background:url("../images/loading.gif") center center no-repeat;
+	text-indent:-9999px;
+}
+#hoverNav{
+	position: absolute;
+	top: 0;
+	left: 0;
+	height: 100%;
+	width: 100%;
+	z-index: 10;
+	}
+#imageContainer>#hoverNav{ left: 0;}
+#hoverNav a{ outline: none;}
+
+#prevLinkImg, #nextLinkImg{
+	width: 49%;
+	height: 100%;
+	background: transparent url("../images/blank.gif") no-repeat; /* Trick IE into showing hover */
+	display: block;
+	text-indent:-9999px;
+	}
+#prevLinkImg { left: 0; float: left;}
+#nextLinkImg { right: 0; float: right;}
+#prevLinkImg:hover, #prevLinkImg:visited:hover { background: url("../images/prevlabel.gif") left 15% no-repeat; }
+#nextLinkImg:hover, #nextLinkImg:visited:hover { background: url("../images/nextlabel.gif") right 15% no-repeat; }
+
+
+#imageDataContainer{
+	font: 10px Verdana, Helvetica, sans-serif;
+	background-color: #fff;
+	margin: 0 auto;
+	line-height: 1.4em;
+	}
+
+#imageData{
+	padding:0 10px;
+	}
+#imageDetails{ width: 70%; float: left; text-align: left; }	
+#caption{ font-weight: bold;	}
+#numberDisplay{ display: block; clear: left; }			
+#detailsNav{ display: block; clear: left; padding:0 0 10px 0;	}	
+#prevLinkDetails { margin:0 8px 0 0; }		
+#nextLinkDetails { margin:0 8px 0 0; }		
+#closeLink {
+	display:block;
+	margin:0;
+	padding:0 0 10px 0;
+	text-decoration:none;
+	float:right;
+	width:66px;
+	height:28px;
+	background:url("../images/closelabel.gif") no-repeat;
+	text-indent:-9999px;
+	overflow:hidden;
+}	
+		
+#overlay{
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 3090;
+	width: 100%;
+	height: 500px;
+	background-color: #151410;
+	filter:alpha(opacity=60);
+	-moz-opacity: 0.6;
+	opacity: 0.6;
+	}
+	
+
+.clearfix:after {
+	content: "."; 
+	display: block; 
+	height: 0; 
+	clear: both; 
+	visibility: hidden;
+	}
+
+* html>body .clearfix {
+	display: inline-block; 
+	width: 100%;
+	}
+
+* html .clearfix {
+	/* Hides from IE-mac \*/
+	height: 1%;
+	/* End hide from IE-mac */
+	}	
+	
