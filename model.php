@@ -130,7 +130,7 @@ class SLB_Lightbox extends SLB_Base {
 //		wp_enqueue_script($this->add_prefix('prototype'), $this->util->get_file_url('js/prototype.js'));
 //		wp_enqueue_script($this->add_prefix('scriptaculous'), $this->util->get_file_url('js/scriptaculous.js?load=effects'), array($this->add_prefix('prototype')));
 //		wp_enqueue_script($this->add_prefix('lightbox'), $this->util->get_file_url('js/lightbox.js'), array($this->add_prefix('prototype'), $this->add_prefix('scriptaculous')));
-		wp_enqueue_script($this->add_prefix('min'), $this->util->get_file_url('js/min.js'));
+		wp_enqueue_script($this->add_prefix('min'), $this->util->get_file_url('js/lib.js'));
 		wp_enqueue_style($this->add_prefix('lightbox_css'), $this->util->get_file_url('css/lightbox.css'));
 	}
 	
