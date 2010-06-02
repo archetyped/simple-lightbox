@@ -144,6 +144,12 @@ class SLB_Base {
 		return $this->get_prefix($sep) . $text;
 	}
 	
+	function remove_prefix($text = '', $sep = '_') {
+		if ( !empty($text) && strpos($text, ( $p = $this->get_prefix($sep) )) === 0 )
+			$text = substr($text, strlen($p));
+		return $text;
+	}
+	
 	/**
 	 * Creates a meta key for storing post meta data
 	 * Prefixes standard prefixed text with underscore to hide meta data on post edit forms

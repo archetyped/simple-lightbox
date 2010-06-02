@@ -129,6 +129,13 @@ class SLB_Utilities {
 		return $this->get_path_base() . '/' . $file;
 	}
 	
+	function get_plugin_base_name() {
+		$file = $this->get_plugin_base_file();
+		$front = dirname(dirname($file));
+		$name = substr($file, strlen($front) + 1);
+		return $name;
+	}
+	
 	/**
 	 * Retrieve current action based on URL query variables
 	 * @return string Current action
@@ -337,6 +344,17 @@ class SLB_Utilities {
 		}
 		
 		return $path;
+	}
+	
+	function build_attribute_string($attr = array(), $esc_values = true) {
+		$ret = '';
+		if ( empty($attr) || ! is_array($attr) )
+			return $ret;
+		$ret = array();
+		foreach ( $attr as $key => $val ) {
+			$ret[] = $key . '="' . ( ( $esc_values ) ? esc_attr($val) : $val ) . '"';
+		}
+		return implode(' ', $ret);
 	}
 	
 	/*-** Admin **-*/
