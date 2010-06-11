@@ -17,6 +17,7 @@ Options for customizing the lightbox behavior are located in the **Settings > Me
 * Enable/Disable Lightbox Functionality (Default: Enabled)
 * Enable Lightbox depending on Page Type (Home, Pages, Archive, etc.)
 * Automatically activate lightbox for links to images on page (no need to add `rel="lightbox"` attribute to link)
+* Group automatically-activated links (play as a slideshow)
 * Automatically Start Slideshow (Default: Enabled)
 * Slide Duration (Seconds) (Default: 6)
 * Loop through images (Default: Enabled)
@@ -46,6 +47,10 @@ Send your questions to wp@archetyped.com
 1. Lightbox Options
 
 == Changelog ==
+= 1.2 =
+* Added: Option to group automatically activated links
+* Optimized: Lightbox caption retrieval
+
 = 1.1 =
 * Added: Enable/disable lightbox functionality by page type (Home, Pages/Posts, Archive, etc.)
 * Added: Automatically activate lightbox functionality for image links
