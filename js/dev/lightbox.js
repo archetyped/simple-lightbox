@@ -1,12 +1,16 @@
 // -----------------------------------------------------------------------------------
+// 
+// Simple Lightbox
+// by Archetyped - http://archetyped.com/tools/simple-lightbox/
+// Updated: 2010-06-11
 //
-//	Lightbox Slideshow v1.1
+//	Largely based on Lightbox Slideshow v1.1
 //	by Justin Barkhuff - http://www.justinbarkhuff.com/lab/lightbox_slideshow/
-//  Updated: 2007-08-15
+//  2007/08/15
 //
 //	Largely based on Lightbox v2.02
 //	by Lokesh Dhakar - http://huddletogether.com/projects/lightbox2/
-//	3/31/06
+//	2006/03/31
 //
 //	Licensed under the Creative Commons Attribution 2.5 License - http://creativecommons.org/licenses/by/2.5/
 //
@@ -259,7 +263,19 @@ var Lightbox = {
 			}
 		}
 	},
-		
+	
+	getCaption: function(imageLink) {
+			var caption = imageLink.title || '';
+			if ( caption == '' ) {
+				var inner = $(imageLink).getElementsBySelector('img').first();
+				if ( inner )
+					caption = inner.getAttribute('alt') || inner.getAttribute('title');
+				if ( !caption )
+					caption = imageLink.innerHTML.stripTags() || imageLink.href || '';
+			}
+			return caption;
+	},
+
 	//
 	//	start()
 	//	Display overlay and lightbox. If image is part of a set, add siblings to imageArray.
@@ -282,7 +298,7 @@ var Lightbox = {
 		// if image is NOT part of a group..
 		if(rel == this.relAttribute){
 			// add single image to imageArray
-			imageTitle = imageLink.getAttribute('title') ? imageLink.getAttribute('title') : '';
+			imageTitle = this.getCaption(imageLink);
 			this.imageArray.push({'link':imageLink.getAttribute('href'), 'title':imageTitle});			
 			this.startImage = 0;
 		} else {
@@ -292,7 +308,7 @@ var Lightbox = {
 			for (var i=0; i<els.length; i++){
 				var el = els[i];
 				if (el.getAttribute('href') && (el.getAttribute('rel') == rel)){
-					imageTitle = el.getAttribute('title') ? el.getAttribute('title') : '';
+					imageTitle = this.getCaption(el);
 					this.imageArray.push({'link':el.getAttribute('href'),'title':imageTitle});
 					if(el == imageLink){
 						this.startImage = this.imageArray.length-1;

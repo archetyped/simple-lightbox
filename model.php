@@ -35,6 +35,7 @@ class SLB_Lightbox extends SLB_Base {
 		'enabled_single'	=> array(true, 'Enable on Single Posts/Pages'),
 		'enabled_archive'	=> array(true, 'Enable on Archive Pages (tags, categories, etc.)'),
 		'activate_links'	=> array(true, 'Automatically setup for all links to images on page'),
+		'group_links'		=> array(true, 'Group automatically activated links (for displaying as a slideshow)'),
 		'autostart'			=> array(true, 'Automatically Start Slideshow'),
 		'duration'			=> array(6, 'Slide Duration (Seconds)', array('size' => 3, 'maxlength' => 3)),
 		'loop'				=> array(true, 'Loop through images'),
@@ -184,6 +185,11 @@ class SLB_Lightbox extends SLB_Base {
 		if ( ! $this->is_enabled() )
 			return;
 		wp_enqueue_script($this->add_prefix('lib'), $this->util->get_file_url('js/lib.js'));
+		//Dev
+//		$path = 'js/dev/';
+//		wp_enqueue_script($this->add_prefix('pr'), $this->util->get_file_url($path . 'prototype.js'));
+//		wp_enqueue_script($this->add_prefix('sc'), $this->util->get_file_url($path . 'scriptaculous.js'));
+//		wp_enqueue_script($this->add_prefix('lb'), $this->util->get_file_url($path . 'lightbox.js'));
 		wp_enqueue_style($this->add_prefix('lightbox_css'), $this->util->get_file_url('css/lightbox.css'));
 	}
 	
@@ -202,17 +208,20 @@ class SLB_Lightbox extends SLB_Base {
 		$js_code = array();
 		//Activate links on page
 		if ( $this->get_option_value('activate_links') ) {
+			$rel = ( $this->get_option_value('group_links') ) ? 'lightbox[' . $this->get_prefix() . ']' : 'lightbox';
 			ob_start();
 			?>
-			$$('a[href$=".jpg"]:not([rel~="lightbox"])','a[href$=".jpeg"]:not([rel~="lightbox"])','a[href$=".gif"]:not([rel~="lightbox"])','a[href$=".png"]:not([rel~="lightbox"])').each(function(el){var rel=(el.rel.length > 0) ? el.rel + ' ' : '';el.rel=rel + 'lightbox';});
+			$$('a[href$=".jpg"]:not([rel~="lightbox"])','a[href$=".jpeg"]:not([rel~="lightbox"])','a[href$=".gif"]:not([rel~="lightbox"])','a[href$=".png"]:not([rel~="lightbox"])').each(function(el){if (! /(^|\b)lightbox\[.+\]($|\b)/i.test(el.rel)){var rel=(el.rel.length > 0) ? el.rel + ' ' : '';el.rel=rel + '<?php echo $rel; ?>';}});
 			<?php
 			$js_code[] = ob_get_clean();
 		}
 		//Get options
-		$options['autoPlay'] = get_option($this->add_prefix('autostart'));
-		$options['slideTime'] = get_option($this->add_prefix('duration'));
-		$options['loop'] = get_option($this->add_prefix('loop'));
-		$options['overlayOpacity'] = get_option($this->add_prefix('overlay_opacity'));
+		$options = array(
+			'autoPlay'			=> $this->get_option_value('autostart'),
+			'slideTime'			=> $this->get_option_value('duration'),
+			'loop'				=> $this->get_option_value('loop'),
+			'overlayOpacity'	=> $this->get_option_value('overlay_opacity')
+		);
 		$lb_obj = array();
 		foreach ($options as $option => $val) {
 			if ($val === TRUE || $val == 'on')
