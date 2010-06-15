@@ -269,7 +269,7 @@ var Lightbox = {
 			if ( caption == '' ) {
 				var inner = $(imageLink).getElementsBySelector('img').first();
 				if ( inner )
-					caption = inner.getAttribute('alt') || inner.getAttribute('title');
+					caption = inner.getAttribute('title') || inner.getAttribute('alt');
 				if ( !caption )
 					caption = imageLink.innerHTML.stripTags() || imageLink.href || '';
 			}

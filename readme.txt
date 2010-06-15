@@ -47,6 +47,9 @@ Send your questions to wp@archetyped.com
 1. Lightbox Options
 
 == Changelog ==
+= 1.2.1 =
+* Fixed: Image title given higher precedence than Image alt (more compatible w/WP workflow)
+
 = 1.2 =
 * Added: Option to group automatically activated links
 * Optimized: Lightbox caption retrieval
