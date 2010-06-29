@@ -131,9 +131,7 @@ class SLB_Utilities {
 	
 	function get_plugin_base_name() {
 		$file = $this->get_plugin_base_file();
-		$front = dirname(dirname($file));
-		$name = substr($file, strlen($front) + 1);
-		return $name;
+		return plugin_basename($file);
 	}
 	
 	/**

@@ -14,10 +14,12 @@ Simple Lightbox is a very simple and customizable lightbox that is easy to add t
 #### Customization
 Options for customizing the lightbox behavior are located in the **Settings > Media** admin menu in the **Lightbox Settings** section (or just click the **Settings** link below the plugin's name when viewing the list of installed plugins)
 
+* Customizable UI Text
 * Enable/Disable Lightbox Functionality (Default: Enabled)
 * Enable Lightbox depending on Page Type (Home, Pages, Archive, etc.)
 * Automatically activate lightbox for links to images on page (no need to add `rel="lightbox"` attribute to link)
 * Group automatically-activated links (play as a slideshow)
+* Group image links by Post (separate slideshow for each Post on page)
 * Automatically Start Slideshow (Default: Enabled)
 * Slide Duration (Seconds) (Default: 6)
 * Loop through images (Default: Enabled)
@@ -44,9 +46,16 @@ Send your questions to wp@archetyped.com
 
 == Screenshots ==
 
-1. Lightbox Options
+1. Lightbox Customization Options
+2. Customized UI Text
 
 == Changelog ==
+= 1.3 =
+* Added: Customizable UI label text (close, next, and prev button images can be replaced in `images` directory)
+* Added: Group image links by Post (separate slideshow for each post)
+* Added: Reset settings link on plugin listings page
+* Optimized: Organized settings page
+
 = 1.2.1 =
 * Fixed: Image title given higher precedence than Image alt (more compatible w/WP workflow)
 

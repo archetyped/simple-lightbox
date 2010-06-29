@@ -717,5 +717,3 @@ var Lightbox = {
 }
 
 // -----------------------------------------------------------------------------------
-
-//Event.observe(window,'load',function(){ Lightbox.initialize(); });
