@@ -85,16 +85,89 @@ class SLB_Utilities {
 	}
 	
 	/**
+	 * Joins and normalizes the slashes in the paths passed to method
+	 * All forward/back slashes are converted to forward slashes
+	 * Multiple path segments can be passed as additional argments
+	 * @param string $path Path to normalize
+	 * @param bool $trailing_slash (optional) Whether or not normalized path should have a trailing slash or not (Default: FALSE)
+	 *  If multiple path segments are passed, $trailing_slash will be the LAST parameter (default value used if omitted)
+	 */
+	function normalize_path($path, $trailing_slash = false) {
+		$sl_f = '/';
+		$sl_b = '\\';
+		$parts = func_get_args();
+		if ( func_num_args() > 1 ) {
+			if ( is_bool(($tr = $parts[count($parts) - 1])) ) {
+				$trailing_slash = $tr;
+				//Remove from args array
+				array_pop($parts);
+			} else {
+				$trailing_slash = false;
+			}
+			$first = true;
+			//Trim trailing slashes from path parts
+			foreach ( $parts as $key => $part ) {
+				$part = trim($part);
+				//Special Trim
+				$parts[$key] = trim($part, $sl_f . $sl_b);
+				//Verify path still contains value
+				if ( empty($parts[$key]) ) {
+					unset($parts[$key]);
+					continue;
+				}
+				//Only continue processing the first valid path segment
+				if ( $first )
+					$first = !$first;
+				else
+					continue;
+				//Add back leading slash if necessary
+				if ( $part[0] == $sl_f || $part[0] == $sl_b )
+					$parts[$key] = $sl_f . $parts[$key];
+				
+			}
+		}
+		//Join path parts together
+		$parts = implode($sl_b, $parts);
+		$parts = str_replace($sl_b, $sl_f, $parts);
+		//Add trailing slash (if necessary)
+		if ( $trailing_slash )
+			$parts . $sl_f;
+		return $parts;
+	}
+	
+	/**
 	 * Returns URL of file (assumes that it is in plugin directory)
 	 * @param string $file name of file get URL
 	 * @return string File path
 	 */
 	function get_file_url($file) {
 		if (is_string($file) && '' != trim($file)) {
-			$file = ltrim(trim($file), '/');
-			$file = sprintf('%s/%s', $this->get_url_base(), $file);
+			$file = $this->normalize_path($this->get_url_base(), $file);
 		}
 		return $file;
+	}
+	
+	/**
+	 * Retrieves file extension
+	 * @param string $file file name/path
+	 * @return string File's extension
+	 */
+	function get_file_extension($file) {
+		$ret = '';
+		$sep = '.';
+		if ( is_string($icon) && ( $rpos = strrpos($file, $sep) ) !== false ) 
+			$ret = substr($file, $rpos + 1);
+		return $ret;
+	}
+	
+	/**
+	 * Checks if file has specified extension
+	 * @param string $file File name/path
+	 * @param string $extension File ending to check $file for
+	 * @return bool TRUE if file has extension
+	 */
+	function has_file_extension($file, $extension) {
+		return ( $this->get_file_extension($file) == $extension ) ? true : false;
 	}
 	
 	/**
@@ -104,10 +177,7 @@ class SLB_Utilities {
 	function get_url_base() {
 		static $url_base = '';
 		if ( '' == $url_base ) {
-			$sl_f = '/';
-			$sl_b = '\\';
-			$plugin_dir = str_replace(str_replace($sl_f, $sl_b, WP_PLUGIN_DIR), '', str_replace($sl_f, $sl_b, dirname(dirname(__FILE__))));
-			$url_base = str_replace($sl_b, $sl_f, WP_PLUGIN_URL . $plugin_dir);
+			$url_base = $this->normalize_path(WP_PLUGIN_URL, $this->get_plugin_base());
 		}
 		return $url_base;
 	}
@@ -115,13 +185,17 @@ class SLB_Utilities {
 	function get_path_base() {
 		static $path_base = '';
 		if ( '' == $path_base ) {
-			$sl_f = '/';
-			$sl_b = '\\';
-			$plugin_dir = str_replace(str_replace($sl_f, $sl_b, WP_PLUGIN_DIR), '', str_replace($sl_f, $sl_b, dirname(dirname(__FILE__))));
-			$path_base = str_replace($sl_b, $sl_f, WP_PLUGIN_DIR . $plugin_dir);
+			$path_base = $this->normalize_path(WP_PLUGIN_DIR, $this->get_plugin_base());
 		}
-		
 		return $path_base;
+	}
+		
+	function get_plugin_base() {
+		static $plugin_dir = '';
+		if ( '' == $plugin_dir ) {
+			$plugin_dir = str_replace($this->normalize_path(WP_PLUGIN_DIR), '', $this->normalize_path(dirname(dirname(__FILE__))));
+		}
+		return $plugin_dir;
 	}
 	
 	function get_plugin_base_file() {
@@ -136,14 +210,35 @@ class SLB_Utilities {
 	
 	/**
 	 * Retrieve current action based on URL query variables
+	 * @param mixed $default (optional) Default action if no action exists
 	 * @return string Current action
 	 */
 	function get_action($default = null) {
 		$action = '';
+		
+		//Check if action is set in URL
 		if ( isset($_GET['action']) )
 			$action = $_GET['action'];
+		//Otherwise, Determine action based on plugin plugin admin page suffix
 		elseif ( isset($_GET['page']) && ($pos = strrpos($_GET['page'], '-')) && $pos !== false && ( $pos != count($_GET['page']) - 1 ) )
-			$action = trim(substr($_GET['page'], $pos + 1), '-_');	
+			$action = trim(substr($_GET['page'], $pos + 1), '-_');
+
+		//Determine action for core admin pages
+		if ( ! isset($_GET['page']) || empty($action) ) {
+			$actions = array(
+				'add'			=> array('page-new', 'post-new'),
+				'edit-item'		=> array('page', 'post'),
+				'edit'			=> array('edit', 'edit-pages')
+			);
+			$page = basename($_SERVER['SCRIPT_NAME'], '.php');
+			
+			foreach ( $actions as $act => $pages ) {
+				if ( in_array($page, $pages) ) {
+					$action = $act;
+					break;
+				}
+			}
+		}
 		if ( empty($action) )
 			$action = $default;
 		return $action;
@@ -202,9 +297,10 @@ class SLB_Utilities {
 	 *     - If the current item's value OR the corresponding item in the base array is NOT an array, current item overwrites base item
 	 * @todo Append numerical elements (as opposed to overwriting element at same index in base array)
 	 * @param array Variable number of arrays
+	 * @param array $arr1 Default array
 	 * @return array Merged array
 	 */
-	function array_merge_recursive_distinct() {
+	function array_merge_recursive_distinct($arr1) {
 		//Get all arrays passed to function
 		$args = func_get_args();
 		if (empty($args))
@@ -344,15 +440,80 @@ class SLB_Utilities {
 		return $path;
 	}
 	
-	function build_attribute_string($attr = array(), $esc_values = true) {
+	/**
+	 * Builds attribute string for HTML element
+	 * @param array $attr Attributes
+	 * @return string Formatted attribute string
+	 */
+	function build_attribute_string($attr) {
 		$ret = '';
-		if ( empty($attr) || ! is_array($attr) )
-			return $ret;
-		$ret = array();
-		foreach ( $attr as $key => $val ) {
-			$ret[] = $key . '="' . ( ( $esc_values ) ? esc_attr($val) : $val ) . '"';
+		if ( is_object($attr) )
+			$attr = (array) $attr;
+		if ( is_array($attr) ) {
+			array_map('esc_attr', $attr);
+			$attr_str = array();
+			foreach ( $attr as $key => $val ) {
+				$attr_str[] = $key . '="' . $val . '"';
+			}
+			$ret = implode(' ', $attr_str);
 		}
-		return implode(' ', $ret);
+		return $ret;
+	}
+	
+	/**
+	 * Generate external stylesheet element
+	 * @param $url Stylesheet URL
+	 * @return string Stylesheet element
+	 */
+	function build_stylesheet_element($url = '') {
+		$attributes = array('href' => $url, 'type' => 'text/css', 'rel' => 'stylesheet');
+		return $this->build_html_element(array('tag' => 'link', 'wrap' => false, 'attributes' => $attributes));
+	}
+	
+	/**
+	 * Generate external script element
+	 * @param $url Script URL
+	 * @return string Script element
+	 */
+	function build_ext_script_element($url = '') {
+		$attributes = array('src' => $url, 'type' => 'text/javascript');
+		return $this->build_html_element(array('tag' => 'script', 'attributes' => $attributes));
+	}
+	
+	/**
+	 * Generate HTML element based on values
+	 * @param $args Element arguments
+	 * @return string Generated HTML element
+	 */
+	function build_html_element($args) {
+		$defaults = array(
+						'tag'			=> 'span',
+						'wrap'			=> true,
+						'content'		=> '',
+						'attributes'	=> array()
+						);
+		$el_start = '<';
+		$el_end = '>';
+		$el_close = '/';
+		extract(wp_parse_args($args, $defaults), EXTR_SKIP);
+		$content = trim($content);
+		
+		if ( !$wrap && strlen($content) > 0 )
+			$wrap = true;
+		
+		$attributes = $this->build_attribute_string($attributes);
+		if ( strlen($attributes) > 0 )
+			$attributes = ' ' . $attributes;
+			
+		$ret = $el_start . $tag . $attributes;
+		
+		if ( $wrap )
+			$ret .= $el_end . $content . $el_start . $el_close . $tag;
+		else
+			$ret .= ' ' . $el_close;
+
+		$ret .= $el_end;
+		return $ret;	
 	}
 	
 	/*-** Admin **-*/
@@ -360,7 +521,7 @@ class SLB_Utilities {
 	/**
 	 * Add submenu page in the admin menu
 	 * Adds ability to set the position of the page in the menu
-	 * @see add_submin_menu (Wraps functionality)
+	 * @see add_submenu_page (Wraps functionality)
 	 * 
 	 * @param $parent
 	 * @param $page_title
@@ -372,30 +533,29 @@ class SLB_Utilities {
 	 * 
 	 * @global array $submenu Admin page submenus
 	 */
-	function add_submenu_page($parent, $page_title, $menu_title, $access_level, $file, $function = '', $pos = false) {
-		global $submenu;
-		
+	function add_submenu_page($parent, $page_title, $menu_title, $capability, $file, $function = '', $pos = false) {
 		//Add submenu page as usual
 		$args = func_get_args();
 		$hookname = call_user_func_array('add_submenu_page', $args);
-		
 		if ( is_int($pos) ) {
+			global $submenu;
 			//Get last submenu added
 			$parent = $this->get_submenu_parent_file($parent);
-			$subs =& $submenu[$parent];
-
-			//Make sure menu isn't already in the desired position
-			if ( $pos <= ( count($subs) - 1 ) ) {
-				//Get submenu that was just added
-				$sub = array_pop($subs);
-				//Insert into desired position
-				if ( 0 == $pos ) {
-					array_unshift($subs, $sub);
-				} else {
-					$top = array_slice($subs, 0, $pos);
-					$bottom = array_slice($subs, $pos);
-					array_push($top, $sub);
-					$subs = array_merge($top, $bottom);
+			if ( isset($submenu[$parent]) ) {
+				$subs =& $submenu[$parent];
+				//Make sure menu isn't already in the desired position
+				if ( $pos <= ( count($subs) - 1 ) ) {
+					//Get submenu that was just added
+					$sub = array_pop($subs);
+					//Insert into desired position
+					if ( 0 == $pos ) {
+						array_unshift($subs, $sub);
+					} else {
+						$top = array_slice($subs, 0, $pos);
+						$bottom = array_slice($subs, $pos);
+						array_push($top, $sub);
+						$subs = array_merge($top, $bottom);
+					}
 				}
 			}
 		}

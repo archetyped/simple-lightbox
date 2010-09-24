@@ -116,7 +116,7 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	function is_enabled($check_request = true) {
 		$ret = ( get_option($this->add_prefix('enabled')) ) ? true : false;
-		if ( $ret && !! $check_request ) {
+		if ( $ret && $check_request ) {
 			$opt = '';
 			//Determine option to check
 			if ( is_home() )

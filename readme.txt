@@ -2,7 +2,7 @@
 Contributors: archetyped
 Tags: lightbox, gallery, photography, images
 Requires at least: 2.9.2
-Tested up to: 2.9.2
+Tested up to: 3.0
 Stable tag: trunk
 
 A simple and customizable Lightbox for Wordpress
@@ -50,6 +50,8 @@ Send your questions to wp@archetyped.com
 2. Customized UI Text
 
 == Changelog ==
+= 1.3.1 =
+* Updated: Utilities code (internal)
 = 1.3 =
 * Added: Customizable UI label text (close, next, and prev button images can be replaced in `images` directory)
 * Added: Group image links by Post (separate slideshow for each post)
