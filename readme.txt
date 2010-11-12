@@ -20,6 +20,7 @@ Options for customizing the lightbox behavior are located in the **Settings > Me
 * Automatically activate lightbox for links to images on page (no need to add `rel="lightbox"` attribute to link)
 * Group automatically-activated links (play as a slideshow)
 * Group image links by Post (separate slideshow for each Post on page)
+* Enable/Disable Lightbox resizing animation
 * Automatically Start Slideshow (Default: Enabled)
 * Slide Duration (Seconds) (Default: 6)
 * Loop through images (Default: Enabled)
@@ -50,6 +51,8 @@ Send your questions to wp@archetyped.com
 2. Customized UI Text
 
 == Changelog ==
+= 1.3.2 =
+* Added: Option to enable/disable lightbox resizing animation (thanks Maria!)
 = 1.3.1 =
 * Updated: Utilities code (internal)
 = 1.3 =
