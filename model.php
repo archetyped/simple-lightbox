@@ -40,6 +40,7 @@ class SLB_Lightbox extends SLB_Base {
 		'group_links'				=> array(true, 'Group automatically activated links (for displaying as a slideshow)'),
 		'group_post'				=> array(true, 'Group image links by Post (e.g. on pages with multiple posts)'),
 		'header_ui'					=> 'UI',
+		'animate'					=> array(true, 'Animate lightbox resizing'),
 		'autostart'					=> array(true, 'Automatically Start Slideshow'),
 		'duration'					=> array(6, 'Slide Duration (Seconds)', array('size' => 3, 'maxlength' => 3)),
 		'loop'						=> array(true, 'Loop through images'),
@@ -275,7 +276,8 @@ class SLB_Lightbox extends SLB_Base {
 			'autoPlay'			=> $this->get_option_value('autostart'),
 			'slideTime'			=> $this->get_option_value('duration'),
 			'loop'				=> $this->get_option_value('loop'),
-			'overlayOpacity'	=> $this->get_option_value('overlay_opacity')
+			'overlayOpacity'	=> $this->get_option_value('overlay_opacity'),
+			'animate'			=> $this->get_option_value('animate')
 		);
 		$lb_obj = array();
 		foreach ($options as $option => $val) {
