@@ -245,7 +245,7 @@ class SLB_Lightbox extends SLB_Base {
 	function enqueue_files() {
 		if ( ! $this->is_enabled() )
 			return;
-		wp_enqueue_script($this->add_prefix('lib'), $this->util->get_file_url('js/lib.js'));
+		wp_enqueue_script($this->add_prefix('lib'), $this->util->get_file_url('js/dev/lightbox.js'), array('jquery'));
 		wp_enqueue_style($this->add_prefix('lightbox_css'), $this->util->get_file_url('css/lightbox.css'));
 	}
 	
@@ -259,17 +259,17 @@ class SLB_Lightbox extends SLB_Base {
 			
 		$options = array();
 		$out = array();
-		$out['script_start'] = '<script type="text/javascript">Event.observe(window,"load",function(){';
-		$out['script_end'] = '});</script>';
+		$out['script_start'] = '<script type="text/javascript">(function($){$(document).ready(function(){';
+		$out['script_end'] = '})})(jQuery);</script>';
 		$js_code = array();
 		//Activate links on page
 		if ( $this->get_option_value('activate_links') ) {
 			$rel = ( $this->get_option_value('group_links') ) ? 'lightbox[' . $this->get_prefix() . ']' : 'lightbox';
 			ob_start();
 			?>
-			$$('a[href$=".jpg"]:not([rel~="lightbox"])','a[href$=".jpeg"]:not([rel~="lightbox"])','a[href$=".gif"]:not([rel~="lightbox"])','a[href$=".png"]:not([rel~="lightbox"])').each(function(el){if (! /(^|\b)lightbox\[.+\]($|\b)/i.test(el.rel)){var rel=(el.rel.length > 0) ? el.rel + ' ' : '';el.rel=rel + '<?php echo $rel; ?>';}});
+			$('a[href$=".jpg"]:not([rel~="lightbox"])','a[href$=".jpeg"]:not([rel~="lightbox"])','a[href$=".gif"]:not([rel~="lightbox"])','a[href$=".png"]:not([rel~="lightbox"])').each(function(i, el){if (! /(^|\b)lightbox\[.+\]($|\b)/i.test($(el).attr('rel'))){var rel=($(el).attr('rel').length > 0) ? $(el).attr('rel') + ' ' : '';$(el).attr('rel', =rel + '<?php echo $rel; ?>');}});
 			<?php
-			$js_code[] = ob_get_clean();
+			$test = ob_get_clean();
 		}
 		//Get options
 		$options = array(

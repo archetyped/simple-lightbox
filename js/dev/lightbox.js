@@ -54,7 +54,8 @@
 //	Lightbox Object
 //
 
-var Lightbox = {	
+(function($) {
+Lightbox = {
 	activeImage : null,
 	badObjects : ['select','object','embed'],
 	container : null,
@@ -78,9 +79,7 @@ var Lightbox = {
 	// overlay and the image container.
 	//
 	initialize: function(options) {
-		if (!document.getElementsByTagName){ return; }
-		
-		this.options = $H({
+		this.options = $.extend(true, {
 			animate : true, // resizing animations
 			autoPlay : true, // should slideshow start automatically
 			borderSize : 10, // if you adjust the padding in the CSS, you will need to update this variable
@@ -94,7 +93,7 @@ var Lightbox = {
 			overlayOpacity : .8, // transparency of shadow overlay
 			prefix : '', // ID prefix for all dynamically created html elements
 			relAttribute : 'lightbox', // specifies the rel attribute value that triggers lightbox
-			resizeSpeed : 7, // controls the speed of the image resizing (1=slowest and 10=fastest)
+			resizeSpeed : 400, // controls the speed of the image resizing (milliseconds)
 			showGroupName : false, // show group name of images in image details
 			slideTime : 4, // time to display images during slideshow
 			strings : { // allows for localization
@@ -107,13 +106,12 @@ var Lightbox = {
 				numDisplayPrefix : 'Image',
 				numDisplaySeparator : 'of'
 			}
-        }).merge(options);
+        }, options);
 		
-		if(this.options.animate){
+		if ( this.options.animate ) {
 			this.overlayDuration = Math.max(this.options.overlayDuration,0);
-			this.options.resizeSpeed = Math.max(Math.min(this.options.resizeSpeed,10),1);
-			this.resizeDuration = (11 - this.options.resizeSpeed) * 0.15;
-		}else{
+			this.resizeDuration = this.options.resizeSpeed;
+		} else {
 			this.overlayDuration = 0;
 			this.resizeDuration = 0;
 		}
@@ -124,123 +122,124 @@ var Lightbox = {
 		this.container = $(this.options.containerID);
 		this.relAttribute = this.options.relAttribute;
 		this.updateImageList();
+		var t = this;
+		var objBody = $(this.container).get(0) != document ? this.container : $('body');
 		
-		var objBody = this.container != document ? this.container : document.getElementsByTagName('body').item(0);
+		var objOverlay = $('<div/>', {
+			'id': this.getID('overlay'),
+			'css': {'display': 'none'}
+		}).appendTo(objBody)
+		  .click(function() {t.end()});
 		
-		var objOverlay = document.createElement('div');
-		objOverlay.setAttribute('id',this.getID('overlay'));
-		objOverlay.style.display = 'none';
-		objBody.appendChild(objOverlay);
-		Event.observe(objOverlay,'click',this.end.bindAsEventListener(this));
+		var objLightbox = $('<div/>', {
+			'id': this.getID('lightbox'),
+			'css': {'display': 'none'}
+		}).appendTo(objBody);
 		
-		var objLightbox = document.createElement('div');
-		objLightbox.setAttribute('id',this.getID('lightbox'));
-		objLightbox.style.display = 'none';
-		objBody.appendChild(objLightbox);
-		
-		var objImageDataContainer = document.createElement('div');
-		objImageDataContainer.setAttribute('id',this.getID('imageDataContainer'));
-		objImageDataContainer.className = this.getID('clearfix');
+		var objImageDataContainer = $('<div/>', {
+			'id': this.getID('imageDataContainer'),
+			'class': this.getID('clearfix')
+		});
 
-		var objImageData = document.createElement('div');
-		objImageData.setAttribute('id',this.getID('imageData'));
-		objImageDataContainer.appendChild(objImageData);
+		var objImageData = $('<div/>', {
+			'id': this.getID('imageData')
+		}).appendTo(objImageDataContainer);
 	
-		var objImageDetails = document.createElement('div');
-		objImageDetails.setAttribute('id',this.getID('imageDetails'));
-		objImageData.appendChild(objImageDetails);
+		var objImageDetails = $('<div/>', {
+			'id': this.getID('imageDetails')
+		}).appendTo(objImageData);
 	
-		var objCaption = document.createElement('span');
-		objCaption.setAttribute('id',this.getID('caption'));
-		objImageDetails.appendChild(objCaption);
+		var objCaption = $('<span/>', {
+			'id': this.getID('caption')
+		}).appendTo(objImageDetails);
 	
-		var objNumberDisplay = document.createElement('span');
-		objNumberDisplay.setAttribute('id',this.getID('numberDisplay'));
-		objImageDetails.appendChild(objNumberDisplay);
+		var objNumberDisplay = $('<span/>', {
+			'id': this.getID('numberDisplay')
+		}).appendTo(objImageDetails);
 
-		var objDetailsNav = document.createElement('span');
-		objDetailsNav.setAttribute('id',this.getID('detailsNav'));
-		objImageDetails.appendChild(objDetailsNav);
+		var objDetailsNav = $('<span/>', {
+			'id': this.getID('detailsNav')
+		}).appendTo(objImageDetails);
 
-		var objPrevLink = document.createElement('a');
-		objPrevLink.setAttribute('id',this.getID('prevLinkDetails'));
-		objPrevLink.setAttribute('href','javascript:void(0);');
-		objPrevLink.innerHTML = this.options.strings.prevLink;
-		objDetailsNav.appendChild(objPrevLink);
-		Event.observe(objPrevLink,'click',this.showPrev.bindAsEventListener(this));
+		var objPrevLink = $('<a/>', {
+			'id': this.getID('prevLinkDetails'),
+			'href': 'javascript:void(0);',
+			'html': this.options.strings.prevLink,
+		}).appendTo(objDetailsNav)
+		  .click(function() {t.showPrev()});
 		
-		var objNextLink = document.createElement('a');
-		objNextLink.setAttribute('id',this.getID('nextLinkDetails'));
-		objNextLink.setAttribute('href','javascript:void(0);');
-		objNextLink.innerHTML = this.options.strings.nextLink;
-		objDetailsNav.appendChild(objNextLink);
-		Event.observe(objNextLink,'click',this.showNext.bindAsEventListener(this));
+		var objNextLink = $('<a/>', {
+			'id': this.getID('nextLinkDetails'),
+			'href': 'javascript:void(0);',
+			'html': this.options.strings.nextLink
+		}).appendTo(objDetailsNav)
+		  .click(function() {t.showNext()});
 
-		var objSlideShowControl = document.createElement('a');
-		objSlideShowControl.setAttribute('id',this.getID('slideShowControl'));
-		objSlideShowControl.setAttribute('href','javascript:void(0);');
-		objDetailsNav.appendChild(objSlideShowControl);
-		Event.observe(objSlideShowControl,'click',this.toggleSlideShow.bindAsEventListener(this));
+		var objSlideShowControl = $('<a/>', {
+			'id': this.getID('slideShowControl'),
+			'href': 'javascript:void(0);'
+		}).appendTo(objDetailsNav)
+		  .click(function() {t.toggleSlideShow()});
 
-		var objClose = document.createElement('div');
-		objClose.setAttribute('id',this.getID('close'));
-		objImageData.appendChild(objClose);
+		var objClose = $('<div/>', {
+			'id': this.getID('close')
+		}).appendTo(objImageData);
 	
-		var objCloseLink = document.createElement('a');
-		objCloseLink.setAttribute('id',this.getID('closeLink'));
-		objCloseLink.setAttribute('href','javascript:void(0);');
-		objCloseLink.innerHTML = this.options.strings.closeLink;
-		objClose.appendChild(objCloseLink);	
-		Event.observe(objCloseLink,'click',this.end.bindAsEventListener(this));
+		var objCloseLink = $('<a/>', {
+			'id': this.getID('closeLink'),
+			'href': 'javascript:void(0);',
+			'html': this.options.strings.closeLink
+		}).appendTo(objClose)
+		  .click(function() {t.end()});
 
-		if(this.options.imageDataLocation == 'north'){
-			objLightbox.appendChild(objImageDataContainer);
+		if (this.options.imageDataLocation == 'north') {
+			$(objLightbox).append(objImageDataContainer);
 		}
 	
-		var objOuterImageContainer = document.createElement('div');
-		objOuterImageContainer.setAttribute('id',this.getID('outerImageContainer'));
-		objLightbox.appendChild(objOuterImageContainer);
+		var objOuterImageContainer = $('<div/>', {
+			'id': this.getID('outerImageContainer')
+		}).appendTo(objLightbox);
 
-		var objImageContainer = document.createElement('div');
-		objImageContainer.setAttribute('id',this.getID('imageContainer'));
-		objOuterImageContainer.appendChild(objImageContainer);
+		var objImageContainer = $('<div/>', {
+			'id': this.getID('imageContainer')
+		}).appendTo(objOuterImageContainer);
 	
-		var objLightboxImage = document.createElement('img');
-		objLightboxImage.setAttribute('id',this.getID('lightboxImage'));
-		objImageContainer.appendChild(objLightboxImage);
+		var objLightboxImage = $('<img/>', {
+			'id': this.getID('lightboxImage')
+		}).appendTo(objImageContainer);
 	
-		var objHoverNav = document.createElement('div');
-		objHoverNav.setAttribute('id',this.getID('hoverNav'));
-		objImageContainer.appendChild(objHoverNav);
+		var objHoverNav = $('<div/>', {
+			'id': this.getID('hoverNav')
+		}).appendTo(objImageContainer);
 	
-		var objPrevLinkImg = document.createElement('a');
-		objPrevLinkImg.setAttribute('id',this.getID('prevLinkImg'));
-		objPrevLinkImg.setAttribute('href','javascript:void(0);');
-		objHoverNav.appendChild(objPrevLinkImg);
-		Event.observe(objPrevLinkImg,'click',this.showPrev.bindAsEventListener(this));
+		var objPrevLinkImg = $('<a/>', {
+			'id': this.getID('prevLinkImg'),
+			'href': 'javascript:void(0);'
+		}).appendTo(objHoverNav)
+		  .click(function() {this.showPrev()});
 		
-		var objNextLinkImg = document.createElement('a');
-		objNextLinkImg.setAttribute('id',this.getID('nextLinkImg'));
-		objNextLinkImg.setAttribute('href','javascript:void(0);');
-		objHoverNav.appendChild(objNextLinkImg);
-		Event.observe(objNextLinkImg,'click',this.showNext.bindAsEventListener(this));
+		var objNextLinkImg = $('<a/>', {
+			'id': this.getID('nextLinkImg'),
+			'href': 'javascript:void(0);'
+		}).appendTo(objHoverNav)
+		  .click(function() {this.showNext()});
 	
-		var objLoading = document.createElement('div');
-		objLoading.setAttribute('id',this.getID('loading'));
-		objImageContainer.appendChild(objLoading);
+		var objLoading = $('<div/>', {
+			'id': this.getID('loading')
+		}).appendTo(objImageContainer);
 	
-		var objLoadingLink = document.createElement('a');
-		objLoadingLink.setAttribute('id',this.getID('loadingLink'));
-		objLoadingLink.setAttribute('href','javascript:void(0);');
-		objLoadingLink.innerHTML = this.options.strings.loadingMsg;
-		objLoading.appendChild(objLoadingLink);
-		Event.observe(objLoadingLink,'click',this.end.bindAsEventListener(this));
+		var objLoadingLink = $('<a/>', {
+			'id': this.getID('loadingLink'),
+			'href': 'javascript:void(0);',
+			'html': this.options.strings.loadingMsg
+		}).appendTo(objLoading)
+		  .click(function() {t.end()});
 		
-		if(this.options.imageDataLocation != 'north'){
-			objLightbox.appendChild(objImageDataContainer);
+		if (this.options.imageDataLocation != 'north') {
+			$(objLightbox).append(objImageDataContainer);
 		}
 		
-		if(this.options.initImage != ''){
+		if (this.options.initImage != '') {
 			this.start($(this.options.initImage));
 		}
 	},
@@ -250,28 +249,33 @@ var Lightbox = {
 	//	Loops through specific tags within 'container' looking for 
 	// 'lightbox' references and applies onclick events to them.
 	//
-	updateImageList: function(){
+	updateImageList: function() {
 		var el, els, rel;
-		for(var i=0; i < this.refTags.length; i++){
-			els = this.container.getElementsByTagName(this.refTags[i]);
-			for(var j=0; j < els.length; j++){
+		var t = this;
+		for(var i=0; i < this.refTags.length; i++) {
+			els = $(this.container).find(this.refTags[i]);
+			for(var j=0; j < els.length; j++) {
 				el = els[j];
-				rel = String(el.getAttribute('rel'));
-				if (el.getAttribute('href') && (rel.toLowerCase().match(this.relAttribute))){
-					el.onclick = function(){Lightbox.start(this); return false;}
+				rel = $(el).attr('rel');
+				if ($(el).attr('href') && (rel.toLowerCase().match(this.relAttribute))) {
+					$(el).click(function() {
+						t.start(this);
+						return false;
+					});
 				}
 			}
 		}
 	},
 	
 	getCaption: function(imageLink) {
-			var caption = imageLink.title || '';
+			imageLink = $(imageLink);
+			var caption = imageLink.attr('title') || '';
 			if ( caption == '' ) {
-				var inner = $(imageLink).getElementsBySelector('img').first();
-				if ( inner )
-					caption = inner.getAttribute('title') || inner.getAttribute('alt');
+				var inner = $(imageLink).find('img').first();
+				if ( $(inner).length )
+					caption = $(inner).attr('title') || $(inner).attr('alt');
 				if ( !caption )
-					caption = imageLink.innerHTML.stripTags() || imageLink.href || '';
+					caption = imageLink.text() || imageLink.attr('href') || '';
 			}
 			return caption;
 	},
@@ -280,50 +284,52 @@ var Lightbox = {
 	//	start()
 	//	Display overlay and lightbox. If image is part of a set, add siblings to imageArray.
 	//
-	start: function(imageLink) {	
-
+	start: function(imageLink) {
+		imageLink = $(imageLink);
 		this.hideBadObjects();
 
 		// stretch overlay to fill page and fade in
 		var pageSize = this.getPageSize();
-		$(this.getID('overlay')).setStyle({height:pageSize.pageHeight+'px'});
-		new Effect.Appear(this.getID('overlay'), { duration: this.overlayDuration, from: 0, to: this.overlayOpacity });
+		this.getEl('overlay')
+			.height(pageSize.pageHeight)
+			.fadeTo(this.overlayDuration, this.overlayOpacity);
 
 		this.imageArray = [];
 		this.groupName = null;
 		
-		var rel = imageLink.getAttribute('rel');
+		var rel = $(imageLink).attr('rel');
 		var imageTitle = '';
 		
 		// if image is NOT part of a group..
-		if(rel == this.relAttribute){
+		if (rel == this.relAttribute) {
 			// add single image to imageArray
 			imageTitle = this.getCaption(imageLink);
-			this.imageArray.push({'link':imageLink.getAttribute('href'), 'title':imageTitle});			
+			this.imageArray.push({'link':$(imageLink).attr('href'), 'title':imageTitle});			
 			this.startImage = 0;
 		} else {
 			// if image is part of a group..
-			var els = this.container.getElementsByTagName(imageLink.tagName);
+			
+			var els = $(this.container).find($(imageLink).get(0).tagName.toLowerCase());
 			// loop through anchors, find other images in group, and add them to imageArray
-			for (var i=0; i<els.length; i++){
-				var el = els[i];
-				if (el.getAttribute('href') && (el.getAttribute('rel') == rel)){
+			for (var i=0; i < els.length; i++) {
+				var el = $(els[i]);
+				if (el.attr('href') && (el.attr('rel') == rel)) {
 					imageTitle = this.getCaption(el);
-					this.imageArray.push({'link':el.getAttribute('href'),'title':imageTitle});
-					if(el == imageLink){
-						this.startImage = this.imageArray.length-1;
+					this.imageArray.push({'link':el.attr('href'),'title':imageTitle});
+					if ($(el).get(0) == $(imageLink).get(0)) {
+						this.startImage = this.imageArray.length - 1;
 					}
 				}
 			}
 			// get group name
-			this.groupName = rel.substring(this.relAttribute.length+1,rel.length-1);
+			this.groupName = rel.substring(this.relAttribute.length + 1, rel.length - 1);
 		}
 
 		// calculate top offset for the lightbox and display 
 		var pageScroll = this.getPageScroll();
 		var lightboxTop = pageScroll.y + (pageSize.winHeight / 15);
 
-		$(this.getID('lightbox')).setStyle({top:lightboxTop+'px'}).show();
+		this.getEl('lightbox').css('top', lightboxTop + 'px').show();
 		this.changeImage(this.startImage);
 	},
 
@@ -331,30 +337,30 @@ var Lightbox = {
 	//	changeImage()
 	//	Hide most elements and preload image in preparation for resizing image container.
 	//
-	changeImage: function(imageNum){	
+	changeImage: function(imageNum) {
 		this.activeImage = imageNum;
 
 		this.disableKeyboardNav();
 		this.pauseSlideShow();
 
 		// hide elements during transition
-		$(this.getID('loading')).show();
-		$(this.getID('lightboxImage')).hide();
-		$(this.getID('hoverNav')).hide();
-		$(this.getID('imageDataContainer')).hide();
-		$(this.getID('numberDisplay')).hide();
-		$(this.getID('detailsNav')).hide();
-		
+		this.getEl('loading').show();
+		this.getEl('lightboxImage').hide();
+		this.getEl('hoverNav').hide();
+		this.getEl('imageDataContainer').hide();
+		this.getEl('numberDisplay').hide();
+		this.getEl('detailsNav').hide();
 		var imgPreloader = new Image();
-		
+		var t = this;
 		// once image is preloaded, resize image container
-		imgPreloader.onload=function(){
-			$(Lightbox.getID('lightboxImage')).src = imgPreloader.src;
-			Lightbox.resizeImageContainer(imgPreloader.width,imgPreloader.height);
-		}
+		$(imgPreloader).bind('load', function() {
+			t.getEl('lightboxImage').attr('src', imgPreloader.src);
+			t.resizeImageContainer(imgPreloader.width, imgPreloader.height);
+		});
+
 		imgPreloader.src = this.imageArray[this.activeImage].link;
 		
-		if(this.options.googleAnalytics){
+		if (this.options.googleAnalytics) {
 			urchinTracker(this.imageArray[this.activeImage].link);
 		}
 	},
@@ -362,30 +368,16 @@ var Lightbox = {
 	//
 	//	resizeImageContainer()
 	//
-	resizeImageContainer: function(imgWidth,imgHeight) {
+	resizeImageContainer: function(imgWidth, imgHeight) {
 		// get current height and width
-		var cDims = $(this.getID('outerImageContainer')).getDimensions();
+		var el = this.getEl('outerImageContainer');
+		var borderSize = this.options.borderSize * 2;
+		
+		this.getEl('outerImageContainer').animate({width: imgWidth + borderSize, height: imgHeight + borderSize}, this.resizeDuration)
 
-		// scalars based on change from old to new
-		var xScale = ((imgWidth  + (this.options.borderSize * 2)) / cDims.width) * 100;
-		var yScale = ((imgHeight  + (this.options.borderSize * 2)) / cDims.height) * 100;
-
-		// calculate size difference between new and old image, and resize if necessary
-		var wDiff = (cDims.width - this.options.borderSize * 2) - imgWidth;
-		var hDiff = (cDims.height - this.options.borderSize * 2) - imgHeight;
-
-		if(!( hDiff == 0)){ new Effect.Scale(this.getID('outerImageContainer'), yScale, {scaleX: false, duration: this.resizeDuration, queue: 'front'}); }
-		if(!( wDiff == 0)){ new Effect.Scale(this.getID('outerImageContainer'), xScale, {scaleY: false, delay: this.resizeDuration, duration: this.resizeDuration}); }
-
-		// if new and old image are same size and no scaling transition is necessary, 
-		// do a quick pause to prevent image flicker.
-		if((hDiff == 0) && (wDiff == 0)){
-			if(navigator.appVersion.indexOf('MSIE')!=-1){ this.pause(250); } else { this.pause(100);} 
-		}
-
-		$(this.getID('prevLinkImg')).setStyle({height:imgHeight+'px'});
-		$(this.getID('nextLinkImg')).setStyle({height:imgHeight+'px'});
-		$(this.getID('imageDataContainer')).setStyle({width:(imgWidth+(this.options.borderSize * 2))+'px'});
+		this.getEl('prevLinkImg').height(imgHeight);
+		this.getEl('nextLinkImg').height(imgHeight);
+		this.getEl('imageDataContainer').width(imgWidth + borderSize)
 
 		this.showImage();
 	},
@@ -394,9 +386,10 @@ var Lightbox = {
 	//	showImage()
 	//	Display image and begin preloading neighbors.
 	//
-	showImage: function(){
-		$(this.getID('loading')).hide();
-		new Effect.Appear(this.getID('lightboxImage'), { duration: 0.5, queue: 'end', afterFinish: function(){	Lightbox.updateDetails(); } });
+	showImage: function() {
+		this.getEl('loading').hide();
+		var t = this;
+		this.getEl('lightboxImage').fadeIn(500, function() { t.updateDetails(); });
 		this.preloadNeighborImages();
 	},
 
@@ -405,27 +398,26 @@ var Lightbox = {
 	//	Display caption, image number, and bottom nav.
 	//
 	updateDetails: function() {
-		$(this.getID('caption')).show();
-		$(this.getID('caption')).update(this.imageArray[this.activeImage].title);
+		this.getEl('caption').text(this.imageArray[this.activeImage].title);
+		this.getEl('caption').show();
 		
 		// if image is part of set display 'Image x of y' 
-		if(this.imageArray.length > 1){
+		if (this.hasImages()) {
 			var num_display = this.options.strings.numDisplayPrefix + ' ' + eval(this.activeImage + 1) + ' ' + this.options.strings.numDisplaySeparator + ' ' + this.imageArray.length;
-			if(this.options.showGroupName && this.groupName != ''){
-				num_display += ' '+this.options.strings.numDisplaySeparator+' '+this.groupName;
+			if (this.options.showGroupName && this.groupName != '') {
+				num_display += ' ' + this.options.strings.numDisplaySeparator + ' ' + this.groupName;
 			}
-			$(this.getID('numberDisplay')).update(num_display).show();
-			if(!this.enableSlideshow){
-				$(this.getID('slideShowControl')).hide();
+			this.getEl('numberDisplay')
+				.text(num_display)
+				.show();
+			if (!this.enableSlideshow) {
+				this.getEl('slideShowControl').hide();
 			}
-			$(this.getID('detailsNav')).show();
+			this.getEl('detailsNav').show();
 		}
 		
-		new Effect.Parallel(
-			[ new Effect.SlideDown( this.getID('imageDataContainer'), { sync: true }), 
-			  new Effect.Appear(this.getID('imageDataContainer'), { sync: true }) ], 
-			{ duration:.65, afterFinish: function() { Lightbox.updateNav();} } 
-		);
+		var t = this;
+		this.getEl('imageDataContainer').animate({height: 'toggle', opacity: 'toggle'}, 650, function() {t.updateNav();});
 	},
 	
 	//
@@ -433,10 +425,10 @@ var Lightbox = {
 	//	Display appropriate previous and next hover navigation.
 	//
 	updateNav: function() {
-		if(this.imageArray.length > 1){
-			$(this.getID('hoverNav')).show();
-			if(this.enableSlideshow){
-				if(this.playSlides){
+		if (this.hasImages()) {
+			this.getEl('hoverNav').show();
+			if (this.enableSlideshow) {
+				if (this.playSlides) {
 					this.startSlideShow();
 				} else {
 					this.stopSlideShow();
@@ -449,30 +441,31 @@ var Lightbox = {
 	//	startSlideShow()
 	//	Starts the slide show
 	//
-	startSlideShow: function(){
+	startSlideShow: function() {
 		this.playSlides = true;
-		this.slideShowTimer = new PeriodicalExecuter(function(pe){ Lightbox.showNext(); pe.stop(); },this.options.slideTime);
-		$(this.getID('slideShowControl')).update(this.options.strings.stopSlideshow);
+		var t = this;
+		this.slideShowTimer = setInterval(function() { t.showNext(); }, this.options.slideTime * 1000);
+		this.getEl('slideShowControl').text(this.options.strings.stopSlideshow);
 	},
 	
 	//
 	//	stopSlideShow()
 	//	Stops the slide show
 	//
-	stopSlideShow: function(){
+	stopSlideShow: function() {
 		this.playSlides = false;
-		if(this.slideShowTimer){
-			this.slideShowTimer.stop();
+		if (this.slideShowTimer) {
+			clearInterval(this.slideShowTimer);
 		}
-		$(this.getID('slideShowControl')).update(this.options.strings.startSlideshow);
+		this.getEl('slideShowControl').text(this.options.strings.startSlideshow);
 	},
 
 	//
 	//	stopSlideShow()
 	//	Stops the slide show
 	//
-	toggleSlideShow: function(){
-		if(this.playSlides){
+	toggleSlideShow: function() {
+		if (this.playSlides) {
 			this.stopSlideShow();
 		}else{
 			this.startSlideShow();
@@ -483,25 +476,41 @@ var Lightbox = {
 	//	pauseSlideShow()
 	//	Pauses the slide show (doesn't change the value of this.playSlides)
 	//
-	pauseSlideShow: function(){
-		if(this.slideShowTimer){
-			this.slideShowTimer.stop();
+	pauseSlideShow: function() {
+		if (this.slideShowTimer) {
+			clearInterval(this.slideShowTimer);
 		}
+	},
+	
+	hasImage: function() {
+		return ( this.imageArray.length > 0 );
+	},
+	
+	hasImages: function() {
+		return ( this.imageArray.length > 1 );
+	},
+	
+	isFirstImage: function() {
+		return ( this.activeImage == 0 );
+	},
+	
+	isLastImage: function() {
+		return ( this.activeImage == this.imageArray.length - 1 );
 	},
 	
 	//
 	//	showNext()
 	//	Display the next image in a group
 	//
-	showNext : function(){
-		if(this.imageArray.length > 1){
-			if(!this.options.loop && ((this.activeImage == this.imageArray.length - 1 && this.startImage == 0) || (this.activeImage+1 == this.startImage))){
+	showNext : function() {
+		if (this.hasImages()) {
+			if (!this.options.loop && ((this.isLastImage() && this.startImage == 0) || (this.activeImage + 1 == this.startImage))) {
 				return this.end();
 			}
-			if(this.activeImage == this.imageArray.length - 1){
+			if ( this.isLastImage() ) {
 				this.changeImage(0);
-			}else{
-				this.changeImage(this.activeImage+1);
+			} else {
+				this.changeImage(this.activeImage + 1);
 			}
 		}
 	},
@@ -510,9 +519,9 @@ var Lightbox = {
 	//	showPrev()
 	//	Display the next image in a group
 	//
-	showPrev : function(){
-		if(this.imageArray.length > 1){
-			if(this.activeImage == 0){
+	showPrev : function() {
+		if (this.hasImages()) {
+			if (this.activeImage == 0) {
 				this.changeImage(this.imageArray.length - 1);
 			}else{
 				this.changeImage(this.activeImage-1);
@@ -524,8 +533,8 @@ var Lightbox = {
 	//	showFirst()
 	//	Display the first image in a group
 	//
-	showFirst : function(){
-		if(this.imageArray.length > 1){
+	showFirst : function() {
+		if (this.hasImages()) {
 			this.changeImage(0);
 		}
 	},
@@ -534,8 +543,8 @@ var Lightbox = {
 	//	showFirst()
 	//	Display the first image in a group
 	//
-	showLast : function(){
-		if(this.imageArray.length > 1){
+	showLast : function() {
+		if (this.hasImages()) {
 			this.changeImage(this.imageArray.length - 1);
 		}
 	},
@@ -565,20 +574,21 @@ var Lightbox = {
 		}
 
 		key = String.fromCharCode(keycode).toLowerCase();
+		var t = this;
 		
-		if(key == 'x' || key == 'o' || key == 'c'){ // close lightbox
-			Lightbox.end();
-		} else if(key == 'p' || key == '%'){ // display previous image
-			Lightbox.showPrev();
-		} else if(key == 'n' || key =='\''){ // display next image
-			Lightbox.showNext();
-		} else if(key == 'f'){ // display first image
-			Lightbox.showFirst();
-		} else if(key == 'l'){ // display last image
-			Lightbox.showLast();
-		} else if(key == 's'){ // toggle slideshow
-			if(Lightbox.imageArray.length > 0 && Lightbox.options.enableSlideshow){
-				Lightbox.toggleSlideShow();
+		if (key == 'x' || key == 'o' || key == 'c') { // close lightbox
+			t.end();
+		} else if (key == 'p' || key == '%') { // display previous image
+			t.showPrev();
+		} else if (key == 'n' || key =='\'') { // display next image
+			t.showNext();
+		} else if (key == 'f') { // display first image
+			t.showFirst();
+		} else if (key == 'l') { // display last image
+			t.showLast();
+		} else if (key == 's') { // toggle slideshow
+			if (t.hasImage() && t.options.enableSlideshow) {
+				t.toggleSlideShow();
 			}
 		}
 	},
@@ -587,10 +597,10 @@ var Lightbox = {
 	//	preloadNeighborImages()
 	//	Preload previous and next images.
 	//
-	preloadNeighborImages: function(){
+	preloadNeighborImages: function() {
 		var nextImageID = this.imageArray.length - 1 == this.activeImage ? 0 : this.activeImage + 1;
 		nextImage = new Image();
-		nextImage.src = this.imageArray[nextImageID].link
+		nextImage.src = this.imageArray[nextImageID].link;
 
 		var prevImageID = this.activeImage == 0 ? this.imageArray.length - 1 : this.activeImage - 1;
 		prevImage = new Image();
@@ -603,37 +613,25 @@ var Lightbox = {
 	end: function() {
 		this.disableKeyboardNav();
 		this.pauseSlideShow();
-		$(this.getID('lightbox')).hide();
-		new Effect.Fade(this.getID('overlay'), { duration:this.overlayDuration });
+		this.getEl('lightbox').hide();
+		this.getEl('overlay').fadeOut(this.overlayDuration);
 		this.showBadObjects();
 	},
 	
 	//
 	//	showBadObjects()
 	//
-	showBadObjects: function (){
-		var els;
-		var tags = Lightbox.badObjects;
-		for(var i=0; i<tags.length; i++){
-			els = document.getElementsByTagName(tags[i]);
-			for(var j=0; j<els.length; j++){
-				$(els[j]).setStyle({visibility:'visible'});
-			}
-		}
+	showBadObjects: function (show) {
+		show = ( typeof(show) == 'undefined' ) ? true : !!show;
+		var vis = (show) ? 'visible' : 'hidden';
+		$(this.badObjects.join(',')).css('visibility', vis);
 	},
 	
 	//
 	//	hideBadObjects()
 	//
-	hideBadObjects: function (){
-		var els;
-		var tags = Lightbox.badObjects;
-		for(var i=0; i<tags.length; i++){
-			els = document.getElementsByTagName(tags[i]);
-			for(var j=0; j<els.length; j++){
-				$(els[j]).setStyle({visibility:'hidden'});
-			}
-		}
+	hideBadObjects: function () {
+		this.showBadObjects(false);
 	},
 		
 	//
@@ -644,7 +642,7 @@ var Lightbox = {
 	pause: function(numberMillis) {
 		var now = new Date();
 		var exitTime = now.getTime() + numberMillis;
-		while(true){
+		while(true) {
 			now = new Date();
 			if (now.getTime() > exitTime)
 				return;
@@ -656,12 +654,12 @@ var Lightbox = {
 	// Returns array with x,y page scroll values.
 	// Core code from - quirksmode.org
 	//
-	getPageScroll: function(){
+	getPageScroll: function() {
 		var x,y;
 		if (self.pageYOffset) {
 			x = self.pageXOffset;
 			y = self.pageYOffset;
-		} else if (document.documentElement && document.documentElement.scrollTop){	 // Explorer 6 Strict
+		} else if (document.documentElement && document.documentElement.scrollTop) {	 // Explorer 6 Strict
 			x = document.documentElement.scrollLeft;
 			y = document.documentElement.scrollTop;
 		} else if (document.body) {// all other Explorers
@@ -677,12 +675,12 @@ var Lightbox = {
 	// Core code from - quirksmode.org
 	// Edit for Firefox by pHaez
 	//
-	getPageSize: function(){
+	getPageSize: function() {
 		var scrollX,scrollY,windowX,windowY,pageX,pageY;
 		if (window.innerHeight && window.scrollMaxY) {	
 			scrollX = document.body.scrollWidth;
 			scrollY = window.innerHeight + window.scrollMaxY;
-		} else if (document.body.scrollHeight > document.body.offsetHeight){ // all but Explorer Mac
+		} else if (document.body.scrollHeight > document.body.offsetHeight) { // all but Explorer Mac
 			scrollX = document.body.scrollWidth;
 			scrollY = document.body.scrollHeight;
 		} else { // Explorer Mac...would also work in Explorer 6 Strict, Mozilla and Safari
@@ -711,9 +709,16 @@ var Lightbox = {
 	// getID()
 	// Returns formatted Lightbox element ID
 	//
-	getID: function(id){
+	getID: function(id) {
 		return this.options.prefix+id;
+	},
+	
+	getSel: function(id) {
+		return '#' + this.getID(id);
+	},
+	
+	getEl: function(id) {
+		return $(this.getSel(id));
 	}
 }
-
-// -----------------------------------------------------------------------------------
+})(jQuery);
