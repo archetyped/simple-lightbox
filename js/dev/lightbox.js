@@ -53,7 +53,7 @@
 //
 //	Lightbox Object
 //
-
+var Lightbox = null;
 (function($) {
 Lightbox = {
 	activeImage : null,
@@ -165,7 +165,7 @@ Lightbox = {
 		var objPrevLink = $('<a/>', {
 			'id': this.getID('prevLinkDetails'),
 			'href': 'javascript:void(0);',
-			'html': this.options.strings.prevLink,
+			'html': this.options.strings.prevLink
 		}).appendTo(objDetailsNav)
 		  .click(function() {t.showPrev()});
 		
