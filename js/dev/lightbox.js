@@ -134,12 +134,13 @@ Lightbox = {
 		var objLightbox = $('<div/>', {
 			'id': this.getID('lightbox'),
 			'css': {'display': 'none'}
-		}).appendTo(objBody);
+		}).appendTo(objBody)
+		  .click(function() {t.end()});
 		
 		var objImageDataContainer = $('<div/>', {
 			'id': this.getID('imageDataContainer'),
 			'class': this.getID('clearfix')
-		});
+		}).click(function(ev) {ev.stopPropagation();});
 
 		var objImageData = $('<div/>', {
 			'id': this.getID('imageData')
@@ -198,7 +199,8 @@ Lightbox = {
 	
 		var objOuterImageContainer = $('<div/>', {
 			'id': this.getID('outerImageContainer')
-		}).appendTo(objLightbox);
+		}).appendTo(objLightbox)
+		  .click(function(ev) {ev.stopPropagation();});
 
 		var objImageContainer = $('<div/>', {
 			'id': this.getID('imageContainer')
@@ -216,13 +218,13 @@ Lightbox = {
 			'id': this.getID('prevLinkImg'),
 			'href': 'javascript:void(0);'
 		}).appendTo(objHoverNav)
-		  .click(function() {this.showPrev()});
+		  .click(function() {t.showPrev()});
 		
 		var objNextLinkImg = $('<a/>', {
 			'id': this.getID('nextLinkImg'),
 			'href': 'javascript:void(0);'
 		}).appendTo(objHoverNav)
-		  .click(function() {this.showNext()});
+		  .click(function() {t.showNext()});
 	
 		var objLoading = $('<div/>', {
 			'id': this.getID('loading')
@@ -356,6 +358,9 @@ Lightbox = {
 		$(imgPreloader).bind('load', function() {
 			t.getEl('lightboxImage').attr('src', imgPreloader.src);
 			t.resizeImageContainer(imgPreloader.width, imgPreloader.height);
+			//Restart slideshow if active
+			if ( t.isSlideShowActive() )
+				t.startSlideshow();
 		});
 
 		imgPreloader.src = this.imageArray[this.activeImage].link;
@@ -437,6 +442,11 @@ Lightbox = {
 		}
 		this.enableKeyboardNav();
 	},
+	
+	isSlideShowActive: function() {
+		return this.playSlides;
+	},
+	
 	//
 	//	startSlideShow()
 	//	Starts the slide show
@@ -444,7 +454,7 @@ Lightbox = {
 	startSlideShow: function() {
 		this.playSlides = true;
 		var t = this;
-		this.slideShowTimer = setInterval(function() { t.showNext(); }, this.options.slideTime * 1000);
+		this.slideShowTimer = setInterval(function() { t.showNext(); t.pauseSlideShow(); }, this.options.slideTime * 1000);
 		this.getEl('slideShowControl').text(this.options.strings.stopSlideshow);
 	},
 	
@@ -504,11 +514,11 @@ Lightbox = {
 	//
 	showNext : function() {
 		if (this.hasImages()) {
-			if (!this.options.loop && ((this.isLastImage() && this.startImage == 0) || (this.activeImage + 1 == this.startImage))) {
+			if ( !this.options.loop && this.isLastImage() ) {
 				return this.end();
 			}
 			if ( this.isLastImage() ) {
-				this.changeImage(0);
+				this.showFirst();
 			} else {
 				this.changeImage(this.activeImage + 1);
 			}
@@ -521,10 +531,12 @@ Lightbox = {
 	//
 	showPrev : function() {
 		if (this.hasImages()) {
+			if ( !this.options.loop && this.isFirstImage() )
+				return this.end();
 			if (this.activeImage == 0) {
-				this.changeImage(this.imageArray.length - 1);
-			}else{
-				this.changeImage(this.activeImage-1);
+				this.showLast();
+			} else {
+				this.changeImage(this.activeImage - 1);
 			}
 		}
 	},
