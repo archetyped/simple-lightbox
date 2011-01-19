@@ -1,13 +1,24 @@
 === Plugin Name ===
 Contributors: archetyped
 Tags: lightbox, gallery, photography, images
-Requires at least: 2.9.2
-Tested up to: 3.0
+Requires at least: 3.0
+Tested up to: 3.0.4
 Stable tag: trunk
 
 A simple and customizable Lightbox for Wordpress
 
 == Description ==
+
+#### BETA
+
+The latest release is a beta that includes the following improvements:
+
+* Lightbox now integrated with jQuery
+* Javascript file size 9x smaller
+* Close lightbox by clicking to left/right outside of image (an oft-requested feature)
+
+Please be aware that beta versions may not be ideal for production environments.  Please test and report any issues by going to the [Simple Lightbox's official page](http://archetyped.com/tools/simple-lightbox/). Your testing is greatly appreciated.
+
 
 Simple Lightbox is a very simple and customizable lightbox that is easy to add to your Wordpress website
 
@@ -32,8 +43,6 @@ Options for customizing the lightbox behavior are located in the **Settings > Me
 
 == Installation ==
 
-1. Upload `simple-lightbox` folder to the `/wp-content/plugins/` directory
-1. Activate the plugin through the 'Plugins' menu in WordPress
 1. Verify that your theme uses the `wp_head()` template tag (this is where the necessary files will be added to your theme output)
 1. Let plugin automatically add lightbox functionality for links to images or manually add `rel="lightbox"` to any image links that you want to be displayed in a lightbox
 
@@ -43,7 +52,7 @@ No upgrade notices
 
 == Frequently Asked Questions ==
 
-Send your questions to wp@archetyped.com
+Send your questions to wp@archetyped.com or post a comment on [Simple Lightbox's official page](http://archetyped.com/tools/simple-lightbox/)
 
 == Screenshots ==
 
