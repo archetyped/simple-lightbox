@@ -8,18 +8,6 @@ Stable tag: trunk
 A simple and customizable Lightbox for Wordpress
 
 == Description ==
-
-#### BETA
-
-The latest release is a beta that includes the following improvements:
-
-* Lightbox now integrated with jQuery
-* Javascript file size 9x smaller
-* Close lightbox by clicking to left/right outside of image (an oft-requested feature)
-
-Please be aware that beta versions may not be ideal for production environments.  Please test and report any issues by going to the [Simple Lightbox's official page](http://archetyped.com/tools/simple-lightbox/). Your testing is greatly appreciated.
-
-
 Simple Lightbox is a very simple and customizable lightbox that is easy to add to your Wordpress website
 
 #### Customization
@@ -60,6 +48,10 @@ Send your questions to wp@archetyped.com or post a comment on [Simple Lightbox's
 2. Customized UI Text
 
 == Changelog ==
+= 1.4 =
+* Integrated with jQuery
+* Javascript filesize 9x smaller
+* Close lightbox by clicking to left/right outside of image (an oft-requested feature)
 = 1.3.2 =
 * Added: Option to enable/disable lightbox resizing animation (thanks Maria!)
 = 1.3.1 =
