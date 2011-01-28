@@ -1,6 +1,6 @@
 <?php 
 /* 
-Plugin Name: Simple Lightbox (Beta)
+Plugin Name: Simple Lightbox
 Plugin URI: http://archetyped.com/tools/simple-lightbox/
 Description: Customizable Lightbox for Wordpress
 Version: 1.5
