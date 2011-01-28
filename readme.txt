@@ -1,18 +1,19 @@
 === Plugin Name ===
 Contributors: archetyped
-Tags: lightbox, gallery, photography, images
+Tags: lightbox, gallery, photography, images, theme, template, style
 Requires at least: 3.0
 Tested up to: 3.0.4
 Stable tag: trunk
 
-A simple and customizable Lightbox for Wordpress
+A simple, themeable, and customizable Lightbox for Wordpress
 
 == Description ==
-Simple Lightbox is a very simple and customizable lightbox that is easy to add to your Wordpress website
+Simple Lightbox is a very simple and customizable lightbox that is easy to add to your Wordpress website.  It also [supports themes](http://archetyped.com/lab/slb-registering-themes/), so it can be fully integrated with your site's theme. 
 
 #### Customization
 Options for customizing the lightbox behavior are located in the **Settings > Media** admin menu in the **Lightbox Settings** section (or just click the **Settings** link below the plugin's name when viewing the list of installed plugins)
 
+* **New: Theme selection**
 * Customizable UI Text
 * Enable/Disable Lightbox Functionality (Default: Enabled)
 * Enable Lightbox depending on Page Type (Home, Pages, Archive, etc.)
@@ -48,19 +49,27 @@ Send your questions to wp@archetyped.com or post a comment on [Simple Lightbox's
 2. Customized UI Text
 
 == Changelog ==
+= 1.5 =
+* Add: Theme support
+* Optimize: Javascript cleanup and file size reductions
+* Optimize: CSS cleanup
+
 = 1.4 =
-* Integrated with jQuery
-* Javascript filesize 9x smaller
-* Close lightbox by clicking to left/right outside of image (an oft-requested feature)
+* Update: Integrated with jQuery
+* Optimize: Javascript filesize 9x smaller
+* Add: Close lightbox by clicking to left/right outside of image (an oft-requested feature)
+
 = 1.3.2 =
-* Added: Option to enable/disable lightbox resizing animation (thanks Maria!)
+* Add: Option to enable/disable lightbox resizing animation (thanks Maria!)
+
 = 1.3.1 =
-* Updated: Utilities code (internal)
+* Update: Utilities code (internal)
+
 = 1.3 =
-* Added: Customizable UI label text (close, next, and prev button images can be replaced in `images` directory)
-* Added: Group image links by Post (separate slideshow for each post)
-* Added: Reset settings link on plugin listings page
-* Optimized: Organized settings page
+* Add: Customizable UI label text (close, next, and prev button images can be replaced in `images` directory)
+* Add: Group image links by Post (separate slideshow for each post)
+* Add: Reset settings link on plugin listings page
+* Optimize: Organized settings page
 
 = 1.2.1 =
 * Fixed: Image title given higher precedence than Image alt (more compatible w/WP workflow)

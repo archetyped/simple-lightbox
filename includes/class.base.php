@@ -59,6 +59,8 @@ class SLB_Base {
 			register_deactivation_hook($this->util->get_plugin_base_file(), $this->m($func_deactivate));
 	}
 	
+	/*-** Method/Function calling **-*/
+	
 	/**
 	 * Returns callback to instance method
 	 * @param string $method Method name

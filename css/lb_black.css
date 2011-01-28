@@ -11,7 +11,7 @@
 	float:right;
 	width:66px;
 	height:28px;
-	background:url("../images/closelabel.gif") no-repeat;
+	background:url("../images/closelabel_black.gif") no-repeat;
 	text-indent:-9999px;
 	overflow:hidden;
 }
@@ -24,12 +24,12 @@
 	z-index: 3100;
 	text-align: center;
 	line-height: 0;
-	color:#151410;
+	color:#fff;
 }
 
 #slb_lightbox a, #slb_lightbox a:hover {
 	border-bottom:none;
-	color:#151410;
+	color:#fff;
 	text-decoration:underline;
 }
 
@@ -37,7 +37,7 @@
 
 #slb_container {
 	position: relative;
-	background-color: #fff;
+	background-color: #000;
 	width: 250px;
 	height: 250px;
 	margin: 0 auto;
@@ -62,7 +62,7 @@
 	padding:0;
 	width:32px;
 	height:32px;
-	background:url("../images/loading.gif") center center no-repeat;
+	background:url("../images/loading_black.gif") center center no-repeat;
 	text-indent:-9999px;
 }
 
@@ -88,12 +88,12 @@
 
 #nav_hover .slb_navPrev { left: 0; float: left;}
 #nav_hover .slb_navNext { right: 0; float: right;}
-#nav_hover .slb_navPrev:hover, #nav_hover .slb_navPrev:visited:hover { background: url("../images/prevlabel.gif") left 15% no-repeat; }
-#nav_hover .slb_navNext:hover, #nav_hover .slb_navNext:visited:hover { background: url("../images/nextlabel.gif") right 15% no-repeat; }
+#nav_hover .slb_navPrev:hover, #nav_hover .slb_navPrev:visited:hover { background: url("../images/prevlabel_black.gif") left 15% no-repeat; }
+#nav_hover .slb_navNext:hover, #nav_hover .slb_navNext:visited:hover { background: url("../images/nextlabel_black.gif") right 15% no-repeat; }
 
 #slb_details {
 	font: 10px Verdana, Helvetica, sans-serif;
-	background-color: #fff;
+	background-color: #000;
 	margin: 0 auto;
 	line-height: 1.4em;
 }

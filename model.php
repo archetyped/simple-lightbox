@@ -17,6 +17,8 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	var $themes = array();
 	
+	var $theme_default = 'default';
+	
 	/**
 	 * Page that plugin options are on
 	 * @var string
@@ -46,6 +48,7 @@ class SLB_Lightbox extends SLB_Base {
 		'group_links'				=> array(true, 'Group automatically activated links (for displaying as a slideshow)'),
 		'group_post'				=> array(true, 'Group image links by Post (e.g. on pages with multiple posts)'),
 		'header_ui'					=> 'UI',
+		'theme'						=> array('default', 'Theme'),
 		'animate'					=> array(true, 'Animate lightbox resizing'),
 		'autostart'					=> array(true, 'Automatically Start Slideshow'),
 		'duration'					=> array(6, 'Slide Duration (Seconds)', array('size' => 3, 'maxlength' => 3)),
@@ -71,12 +74,17 @@ class SLB_Lightbox extends SLB_Base {
 	function __construct() {
 		parent::__construct();
 		$this->init();
+		
+		//Setup variables
+		$this->theme_default = $this->add_prefix($this->theme_default);
+		$this->options_default['theme'][0] = $this->theme_default;
 	}
 	
 	function register_hooks() {
 		parent::register_hooks();
 		
 		/* Admin */
+
 		//Init lightbox admin
 		add_action('admin_init', $this->m('admin_settings'));
 		//Enqueue header files (CSS/JS)
@@ -84,12 +92,14 @@ class SLB_Lightbox extends SLB_Base {
 		//Reset Settings
 		add_action('admin_action_' . $this->add_prefix('reset'), $this->m('admin_reset'));
 		add_action('admin_notices', $this->m('admin_notices'));
+		//Plugin listing
+		add_filter('plugin_action_links_' . $this->util->get_plugin_base_name(), $this->m('admin_plugin_action_links'), 10, 4);
 		
 		/* Client-side */
-		//Init lightbox (client-side)
+		
+		//Init lightbox
 		add_action('wp_enqueue_scripts', $this->m('enqueue_files'));
 		add_action('wp_head', $this->m('client_init'));
-		add_filter('plugin_action_links_' . $this->util->get_plugin_base_name(), $this->m('admin_plugin_action_links'), 10, 4);
 		add_filter('the_content', $this->m('activate_post_links'));
 		
 		/* Themes */
@@ -233,8 +243,12 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	function get_theme($name = '') {
 		$name = strval($name);
+		//Default: Get current theme if no theme specified
+		if ( empty($name) ) {
+			$name = $this->get_option_value('theme');
+		}
 		if ( !$this->theme_exists($name) )
-			$name = 'default';
+			$name = $this->theme_default;
 		return $this->themes[$name];
 	}
 	
@@ -301,6 +315,7 @@ class SLB_Lightbox extends SLB_Base {
 		$layout = $this->format_theme_layout($layout);
 		
 		$defaults = array(
+			'name'				=> '',
 			'title'				=> '',
 			'stylesheet_url' 	=> '',
 			'layout'			=> ''
@@ -331,11 +346,13 @@ class SLB_Lightbox extends SLB_Base {
 	 * @uses register_theme() to register the theme(s)
 	 */
 	function init_default_themes() {
-		$name = 'default';
+		$name = $this->theme_default;
 		$title = 'Default';
 		$stylesheet_url = $this->util->get_file_url('css/lightbox.css');
 		$layout = file_get_contents($this->util->normalize_path($this->util->get_path_base(), 'templates', 'default', 'layout.html'));
 		$this->register_theme($name, $title, $stylesheet_url, $layout);
+		//Testing: Additional themes
+		$this->register_theme('black', 'Black', $this->util->get_file_url('css/lb_black.css'), $layout);
 	}
 
 	/*-** Frontend **-*/
@@ -383,7 +400,7 @@ class SLB_Lightbox extends SLB_Base {
 	function enqueue_files() {
 		if ( ! $this->is_enabled() )
 			return;
-		wp_enqueue_script($this->add_prefix('lib'), $this->util->get_file_url('js/dev/lightbox.js'), array('jquery'));
+		wp_enqueue_script($this->add_prefix('lib'), $this->util->get_file_url('js/lib.js'), array('jquery'));
 		wp_enqueue_style($this->add_prefix('lightbox_css'), $this->get_theme_style());
 	}
 	
@@ -630,6 +647,50 @@ class SLB_Lightbox extends SLB_Base {
 	function admin_field_default($args = array()) {
 		$opt = ( isset($args['opt']) ) ? $args['opt'] : '';
 		$this->admin_the_field($opt);
+	}
+	
+	/* Custom fields */
+	
+	/**
+	 * Builds field for theme selection
+	 * @param array $args Arguments set in admin_settings
+	 */
+	function admin_field_theme($args = array()) {
+		global $cnr_debug;
+		//Get option data
+		$option = $this->get_option($args['opt']);
+
+		//Get themes
+		$themes = $this->get_themes();
+		
+		//Get current theme
+		$theme = $this->get_theme();
+		
+		//Build field
+		$start = sprintf('<select id="%1$s" name="%1$s">', esc_attr($option->id));
+		$end = '</select>';
+		$option_format = '<option value="%1$s"%3$s>%2$s</option>';
+		
+		//Pop out default theme
+		$theme_default = $themes[$this->theme_default];
+		unset($themes[$this->theme_default]);
+		
+		//Sort themes by title
+		uasort($themes, create_function('$a,$b', 'return strcmp($a[\'title\'], $b[\'title\']);'));
+		
+		//Insert default theme at top of array
+		$themes = array($this->theme_default => $theme_default) + $themes;
+		
+		//Build options
+		$options = array();
+		foreach ( $themes as $name => $props ) {
+			//Check if current them and set as selected if so
+			$attr = ( $theme['name'] == $name ) ? ' selected="selected"' : '';
+			$options[] = sprintf($option_format, $name, $props['title'], $attr);
+		}
+		
+		//Output field
+		echo $start . join('', $options) . $end;
 	}
 }
 
