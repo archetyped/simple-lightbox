@@ -40,7 +40,24 @@ class SLB_Base {
 	 * Default initialization method
 	 * To be overriden by child classes
 	 */
-	function init() {}
+	function init() {
+		$func = 'register_hooks';
+		if ( isset($this) ) {
+			if ( method_exists($this, $func) )
+				call_user_method($func, $this);
+		}
+	}
+	
+	function register_hooks() {
+		//Activation
+		$func_activate = 'activate';
+		if ( method_exists($this, $func_activate) )
+			register_activation_hook($this->util->get_plugin_base_file(), $this->m($func_activate));
+		//Deactivation
+		$func_deactivate = 'deactivate';
+		if ( method_exists($this, $func_deactivate) )
+			register_deactivation_hook($this->util->get_plugin_base_file(), $this->m($func_deactivate));
+	}
 	
 	/**
 	 * Returns callback to instance method
@@ -49,6 +66,24 @@ class SLB_Base {
 	 */
 	function &m($method) {
 		return $this->util->m($this, $method);
+	}
+	
+	/*-** Hooks **-*/
+	
+	function do_action($tag, $arg = '') {
+		do_action($this->add_prefix($tag), $arg);
+	}
+	
+	function apply_filters($tag, $value) {
+		apply_filters($this->add_prefix($tag), $value);
+	}
+	
+	function add_action($tag, $function_to_add, $priority = 10, $accepted_args = 1) {
+		return add_action($this->add_prefix($tag), $function_to_add, $priority, $accepted_args);
+	}
+	
+	function add_filter($tag, $function_to_add, $priority = 10, $accepted_args = 1) {
+		return add_filter($this->add_prefix(tag), $function_to_add, $priority, $accepted_args);
 	}
 	
 	/**

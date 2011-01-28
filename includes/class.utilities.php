@@ -62,7 +62,7 @@ class SLB_Utilities {
 	/*-** Request **-*/
 	
 	/**
-	 * Checks $_SERVER['SCRIPT_NAME'] to see if file base name matches specified file name
+	 * Checks if the currently executing file matches specified file name
 	 * @param string $filename Filename to check for
 	 * @return bool TRUE if current page matches specified filename, FALSE otherwise
 	 */
@@ -131,7 +131,7 @@ class SLB_Utilities {
 		$parts = str_replace($sl_b, $sl_f, $parts);
 		//Add trailing slash (if necessary)
 		if ( $trailing_slash )
-			$parts . $sl_f;
+			$parts .= $sl_f;
 		return $parts;
 	}
 	
@@ -141,7 +141,7 @@ class SLB_Utilities {
 	 * @return string File path
 	 */
 	function get_file_url($file) {
-		if (is_string($file) && '' != trim($file)) {
+		if ( is_string($file) && '' != trim($file) ) {
 			$file = $this->normalize_path($this->get_url_base(), $file);
 		}
 		return $file;
@@ -189,7 +189,7 @@ class SLB_Utilities {
 		}
 		return $path_base;
 	}
-		
+	
 	function get_plugin_base() {
 		static $plugin_dir = '';
 		if ( '' == $plugin_dir ) {
@@ -295,7 +295,6 @@ class SLB_Utilities {
 	 *     - Merge item in base array with current item based on key name
 	 *     - If the current item's value AND the corresponding item in the base array are BOTH arrays, recursively merge the the arrays
 	 *     - If the current item's value OR the corresponding item in the base array is NOT an array, current item overwrites base item
-	 * @todo Append numerical elements (as opposed to overwriting element at same index in base array)
 	 * @param array Variable number of arrays
 	 * @param array $arr1 Default array
 	 * @return array Merged array
@@ -303,24 +302,33 @@ class SLB_Utilities {
 	function array_merge_recursive_distinct($arr1) {
 		//Get all arrays passed to function
 		$args = func_get_args();
-		if (empty($args))
+		if ( empty($args) )
 			return false;
+		//Return empty array if first parameter is not an array
+		if ( !is_array($args[0]) )
+			return array();
 		//Set first array as base array
 		$merged = $args[0];
 		//Iterate through arrays to merge
 		$arg_length = count($args);
-		for ($x = 1; $x < $arg_length; $x++) {
+		for ( $x = 1; $x < $arg_length; $x++ ) {
 			//Skip if argument is not an array (only merge arrays)
-			if (!is_array($args[$x]))
+			if ( !is_array($args[$x]) )
 				continue;
 			//Iterate through argument items
-			foreach ($args[$x] as $key => $val) {
-					if (!isset($merged[$key]) || !is_array($merged[$key]) || !is_array($val)) {
-						$merged[$key] = $val;
-					} elseif (is_array($merged[$key]) && is_array($val)) {
-						$merged[$key] = $this->array_merge_recursive_distinct($merged[$key], $val);
-					}
-					//$merged[$key] = (is_array($val) && isset($merged[$key])) ? $this->array_merge_recursive_distinct($merged[$key], $val) : $val;
+			foreach ( $args[$x] as $key => $val ) {
+				//Generate key for numeric indexes
+				if ( is_int($key) ) {
+					//Add new item to merged array
+					$merged[] = null;
+					//Get key of new item
+					$key = array_pop(array_keys($merged));
+				}
+				if ( !isset($merged[$key]) || !is_array($merged[$key]) || !is_array($val) ) {
+					$merged[$key] = $val;
+				} elseif ( is_array($merged[$key]) && is_array($val) ) {
+					$merged[$key] = $this->array_merge_recursive_distinct($merged[$key], $val);
+				}
 			}
 		}
 		return $merged;
@@ -542,22 +550,23 @@ class SLB_Utilities {
 			//Get last submenu added
 			$parent = $this->get_submenu_parent_file($parent);
 			if ( isset($submenu[$parent]) ) {
-				$subs =& $submenu[$parent];
-				//Make sure menu isn't already in the desired position
-				if ( $pos <= ( count($subs) - 1 ) ) {
-					//Get submenu that was just added
-					$sub = array_pop($subs);
-					//Insert into desired position
-					if ( 0 == $pos ) {
-						array_unshift($subs, $sub);
-					} else {
-						$top = array_slice($subs, 0, $pos);
-						$bottom = array_slice($subs, $pos);
-						array_push($top, $sub);
-						$subs = array_merge($top, $bottom);
-					}
+			$subs =& $submenu[$parent];
+
+			//Make sure menu isn't already in the desired position
+			if ( $pos <= ( count($subs) - 1 ) ) {
+				//Get submenu that was just added
+				$sub = array_pop($subs);
+				//Insert into desired position
+				if ( 0 == $pos ) {
+					array_unshift($subs, $sub);
+				} else {
+					$top = array_slice($subs, 0, $pos);
+					$bottom = array_slice($subs, $pos);
+					array_push($top, $sub);
+					$subs = array_merge($top, $bottom);
 				}
 			}
+		}
 		}
 		
 		return $hookname;

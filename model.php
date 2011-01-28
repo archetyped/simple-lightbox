@@ -12,6 +12,12 @@ class SLB_Lightbox extends SLB_Base {
 	/*-** Properties **-*/
 	
 	/**
+	 * Themes
+	 * @var array
+	 */
+	var $themes = array();
+	
+	/**
 	 * Page that plugin options are on
 	 * @var string
 	 */
@@ -67,12 +73,9 @@ class SLB_Lightbox extends SLB_Base {
 		$this->init();
 	}
 	
-	function init() {
-		$this->register_hooks();
-	}
-	
 	function register_hooks() {
-		register_activation_hook($this->util->get_plugin_base_file(), $this->m('activate'));
+		parent::register_hooks();
+		
 		/* Admin */
 		//Init lightbox admin
 		add_action('admin_init', $this->m('admin_settings'));
@@ -88,6 +91,9 @@ class SLB_Lightbox extends SLB_Base {
 		add_action('wp_head', $this->m('client_init'));
 		add_filter('plugin_action_links_' . $this->util->get_plugin_base_name(), $this->m('admin_plugin_action_links'), 10, 4);
 		add_filter('the_content', $this->m('activate_post_links'));
+		
+		/* Themes */
+		$this->add_action('init_themes', $this->m('init_default_themes'));
 	}
 	
 	function activate() {
@@ -199,6 +205,138 @@ class SLB_Lightbox extends SLB_Base {
 		}
 		return $ret;
 	}
+	
+	/*-** Theme **-*/
+	
+	/**
+	 * Retrieve themes
+	 * @uses do_action() Calls 'slb_init_themes' hook to allow plugins to register themes
+	 * @uses $themes to return registered themes
+	 * @return array Retrieved themes
+	 */
+	function get_themes() {
+		static $fetched = false;
+		if ( !$fetched ) {
+			$this->themes = array();
+			$this->do_action('init_themes');
+			$fetched = true;
+		}
+		
+		return $this->themes;
+	}
+	
+	/**
+	 * Retrieve theme
+	 * @param string $name Name of theme to retrieve
+	 * @uses theme_exists() to check for existence of theme
+	 * @return array Theme data
+	 */
+	function get_theme($name = '') {
+		$name = strval($name);
+		if ( !$this->theme_exists($name) )
+			$name = 'default';
+		return $this->themes[$name];
+	}
+	
+	/**
+	 * Retrieve specific of theme data
+	 * @uses get_theme() to retrieve theme data
+	 * @param string $name Theme name
+	 * @param string $field Theme field to retrieve
+	 * @return mixed Field data
+	 */
+	function get_theme_data($name = '', $field) {
+		$theme = $this->get_theme($name);
+		return ( isset($theme[$field]) ) ? $theme[$field] : '';
+	}
+	
+	/**
+	 * Retrieve theme stylesheet URL
+	 * @param string $name Theme name
+	 * @uses get_theme_data() to retrieve theme data
+	 * @return string Stylesheet URL
+	 */
+	function get_theme_style($name = '') {
+		return $this->get_theme_data($name, 'stylesheet_url');
+	}
+	
+	/**
+	 * Retrieve theme layout
+	 * @uses get_theme_data() to retrieve theme data
+	 * @param string $name Theme name
+	 * @return string Theme layout HTML
+	 */
+	function get_theme_layout($name = '') {
+		return $this->get_theme_data($name, 'layout');
+	}
+	
+	/**
+	 * Check whether a theme exists
+	 * @param string $name Theme to look for
+	 * @uses get_themes() to intialize themes if not already performed
+	 * @return bool TRUE if theme exists, FALSE otherwise
+	 */
+	function theme_exists($name) {
+		$this->get_themes();
+		return ( isset($this->themes[trim(strval($name))]) );
+	}
+	
+	/**
+	 * Register lightbox theme
+	 * @param string $name Unique theme name
+	 * @param string $title Display name for theme
+	 * @param string $stylesheet_url URL to stylesheet
+	 * @param string $layout Layout HTML
+	 * @uses $themes to store the registered theme
+	 */
+	function register_theme($name, $title, $stylesheet_url, $layout) {
+		if ( !is_array($this->themes) ) {
+			$this->themes = array();
+		}
+		
+		//Validate parameters
+		$name = trim(strval($name));
+		$title = trim(strval($title));
+		$stylesheet_url = trim(strval($stylesheet_url));
+		$layout = $this->format_theme_layout($layout);
+		
+		$defaults = array(
+			'title'				=> '',
+			'stylesheet_url' 	=> '',
+			'layout'			=> ''
+		);
+		
+		//Add theme to array
+		$this->themes[$name] = wp_parse_args(compact(array_keys($defaults), $defaults)); 
+	}
+	
+	/**
+	 * Formats layout for usage in JS
+	 * @param string $layout Layout to format
+	 * @return string Formatted layout
+	 */
+	function format_theme_layout($layout = '') {
+		//Remove line breaks
+		$layout = str_replace(array("\r\n", "\n", "\r", "\t"), '', $layout);
+		
+		//Escape quotes
+		$layout = str_replace("'", "\'", $layout);
+		
+		//Return
+		return "'" . $layout . "'";
+	}
+	
+	/**
+	 * Add default themes
+	 * @uses register_theme() to register the theme(s)
+	 */
+	function init_default_themes() {
+		$name = 'default';
+		$title = 'Default';
+		$stylesheet_url = $this->util->get_file_url('css/lightbox.css');
+		$layout = file_get_contents($this->util->normalize_path($this->util->get_path_base(), 'templates', 'default', 'layout.html'));
+		$this->register_theme($name, $title, $stylesheet_url, $layout);
+	}
 
 	/*-** Frontend **-*/
 	
@@ -245,8 +383,8 @@ class SLB_Lightbox extends SLB_Base {
 	function enqueue_files() {
 		if ( ! $this->is_enabled() )
 			return;
-		wp_enqueue_script($this->add_prefix('lib'), $this->util->get_file_url('js/lib.js'), array('jquery'));
-		wp_enqueue_style($this->add_prefix('lightbox_css'), $this->util->get_file_url('css/lightbox.css'));
+		wp_enqueue_script($this->add_prefix('lib'), $this->util->get_file_url('js/dev/lightbox.js'), array('jquery'));
+		wp_enqueue_style($this->add_prefix('lightbox_css'), $this->get_theme_style());
 	}
 	
 	/**
@@ -277,7 +415,8 @@ class SLB_Lightbox extends SLB_Base {
 			'slideTime'			=> $this->get_option_value('duration'),
 			'loop'				=> $this->get_option_value('loop'),
 			'overlayOpacity'	=> $this->get_option_value('overlay_opacity'),
-			'animate'			=> $this->get_option_value('animate')
+			'animate'			=> $this->get_option_value('animate'),
+			'layout'			=> $this->get_theme_layout()
 		);
 		$lb_obj = array();
 		foreach ($options as $option => $val) {

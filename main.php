@@ -34,4 +34,9 @@ function slb_enabled() {
 	return $slb->is_enabled();
 }
 
+function slb_register_theme($name, $title, $stylesheet_url, $layout) {
+	global $slb;
+	$slb->register_theme($name,$title,$stylesheet_url,$layout);
+}
+
 ?>
