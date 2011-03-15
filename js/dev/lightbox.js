@@ -124,6 +124,9 @@ Lightbox = {
 		//Append to container
 		$(layout).appendTo(objLightbox);
 		
+		//Set UI
+		this.setUI();
+		
 		//Add events
 		this.setEvents();
 		
@@ -154,6 +157,17 @@ Lightbox = {
 		//Return final layout
 		return l;
 		
+	},
+	
+	/**
+	 * Set localized values for UI elements
+	 */
+	setUI: function() {
+		var s = this.options.strings;
+		this.get('slbClose').html(s.closeLink);
+		this.get('navNext').html(s.nextLink);
+		this.get('navPrev').html(s.prevLink);
+		this.get('navSlideControl').html(s.stopSlideshow);
 	},
 	
 	/**
@@ -337,7 +351,7 @@ Lightbox = {
 		
 		// if image is part of set display 'Image x of y' 
 		if (this.hasImages()) {
-			var num_display = this.options.strings.numDisplayPrefix + ' ' + eval(this.activeImage + 1) + ' ' + this.options.strings.numDisplaySeparator + ' ' + this.imageArray.length;
+			var num_display = this.options.strings.numDisplayPrefix + ' ' + (this.activeImage + 1) + ' ' + this.options.strings.numDisplaySeparator + ' ' + this.imageArray.length;
 			if (this.options.showGroupName && this.groupName != '') {
 				num_display += ' ' + this.options.strings.numDisplaySeparator + ' ' + this.groupName;
 			}
@@ -347,7 +361,11 @@ Lightbox = {
 			if (!this.enableSlideshow) {
 				this.get('navSlideControl').hide();
 			}
-			this.get('detailsNav').show();
+		} else {
+			// Hide navigation controls when only one image exists
+			this.get('navSlideControl').hide();
+			this.get('navPrev').hide();
+			this.get('navNext').hide();
 		}
 	
 		this.get('details').width(this.get('slbContent').width() + (this.options.borderSize * 2));

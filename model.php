@@ -100,7 +100,7 @@ class SLB_Lightbox extends SLB_Base {
 		//Init lightbox
 		add_action('wp_enqueue_scripts', $this->m('enqueue_files'));
 		add_action('wp_head', $this->m('client_init'));
-		add_filter('the_content', $this->m('activate_post_links'));
+		add_filter('the_content', $this->m('activate_post_links'), 99);
 		
 		/* Themes */
 		$this->add_action('init_themes', $this->m('init_default_themes'));

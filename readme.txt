@@ -2,7 +2,7 @@
 Contributors: archetyped
 Tags: lightbox, gallery, photography, images, theme, template, style
 Requires at least: 3.0
-Tested up to: 3.0.4
+Tested up to: 3.1
 Stable tag: trunk
 
 A simple, themeable, and customizable Lightbox for Wordpress
@@ -49,6 +49,11 @@ Send your questions to wp@archetyped.com or post a comment on [Simple Lightbox's
 2. Customized UI Text
 
 == Changelog ==
+= 1.5.1 =
+* Add: WP Gallery support
+* Fix: Navigation hidden when only one image
+* Fix: Use user-defined UI text
+
 = 1.5 =
 * Add: Theme support
 * Optimize: Javascript cleanup and file size reductions
