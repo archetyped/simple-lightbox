@@ -51,7 +51,7 @@ Send your questions to wp@archetyped.com or post a comment on [Simple Lightbox's
 == Changelog ==
 = 1.5.2 =
 * Fix: Slideshow loops out of control (Mirage of Wallentin)
-* Fix: Lightbox fails when group by posts disabled (Lange Fix)
+* Fix: Lightbox fails when group by posts disabled (Lange Find)
 * Add: Option to use the image's URI as caption when link title not set (Under UI options)
 
 = 1.5.1 =
