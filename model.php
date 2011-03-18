@@ -54,6 +54,7 @@ class SLB_Lightbox extends SLB_Base {
 		'duration'					=> array(6, 'Slide Duration (Seconds)', array('size' => 3, 'maxlength' => 3)),
 		'loop'						=> array(true, 'Loop through images'),
 		'overlay_opacity'			=> array(0.8, 'Overlay Opacity (0 - 1)', array('size' => 3, 'maxlength' => 3)),
+		'caption_src'				=> array(true, 'Use image URI as caption when link title not set'),
 		'header_strings'			=> 'Labels',
 		'txt_closeLink'				=> array('close', 'Close link (for accessibility only, image used for button)'),
 		'txt_loadingMsg'			=> array('loading', 'Loading indicator'),
@@ -365,7 +366,7 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	function activate_post_links($content) {
 		//Check option
-		if ( ! is_feed() && $this->is_enabled() && $this->get_option_value('activate_links') && $this->get_option_value('group_links') && $this->get_option_value('group_post') ) {
+		if ( ! is_feed() && $this->is_enabled() && $this->get_option_value('activate_links') && $this->get_option_value('group_links') ) {
 			//Scan for links
 			$matches = array();
 			if ( preg_match_all("/\<a[^\>]*href=[^\s]+\.(?:jp[e]*g|gif|png).*?\>/i", $content, $matches) ) {
@@ -383,7 +384,7 @@ class SLB_Lightbox extends SLB_Base {
 					
 					if ( strpos($rel, 'lightbox') === false) {
 						//Add rel attribute to link
-						$rel .= ' lightbox[' . $this->add_prefix($post->ID) . ']';
+						$rel .= ' ' . ( ( $this->get_option_value('group_post') ) ? 'lightbox[' . $this->add_prefix($post->ID) . ']' : 'lightbox' );
 						$link_new = '<a rel="' . $rel . '"' . substr($link_new,2);
 						//Insert modified link
 						$content = str_replace($link, $link_new, $content);
@@ -433,6 +434,7 @@ class SLB_Lightbox extends SLB_Base {
 			'loop'				=> $this->get_option_value('loop'),
 			'overlayOpacity'	=> $this->get_option_value('overlay_opacity'),
 			'animate'			=> $this->get_option_value('animate'),
+			'captionSrc'		=> $this->get_option_value('caption_src'),
 			'layout'			=> $this->get_theme_layout()
 		);
 		$lb_obj = array();

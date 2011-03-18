@@ -48,6 +48,7 @@ Lightbox = {
 	initialize: function(options) {
 		this.options = $.extend(true, {
 			animate : true, // resizing animations
+			captionSrc : true, //Use image source URI if title not set
 			autoPlay : true, // should slideshow start automatically
 			borderSize : 10, // if you adjust the padding in the CSS, you will need to update this variable
 			containerID : document, // lightbox container object
@@ -167,7 +168,7 @@ Lightbox = {
 		this.get('slbClose').html(s.closeLink);
 		this.get('navNext').html(s.nextLink);
 		this.get('navPrev').html(s.prevLink);
-		this.get('navSlideControl').html(s.stopSlideshow);
+		this.get('navSlideControl').html(((this.playSlides) ? s.stopSlideshow : s.startSlideshow));
 	},
 	
 	/**
@@ -227,8 +228,12 @@ Lightbox = {
 				var inner = $(imageLink).find('img').first();
 				if ( $(inner).length )
 					caption = $(inner).attr('title') || $(inner).attr('alt');
-				if ( !caption )
-					caption = imageLink.text() || imageLink.attr('href') || '';
+				if ( !caption && imageLink.text().length )
+					caption = imageLink.text();
+				else if ( this.options.captionSrc )
+					caption = imageLink.attr('href');
+				else
+					caption = '';
 			}
 			return caption;
 	},
@@ -307,7 +312,7 @@ Lightbox = {
 			t.resizeImageContainer(imgPreloader.width, imgPreloader.height);
 			//Restart slideshow if active
 			if ( t.isSlideShowActive() )
-				t.startSlideshow();
+				t.startSlideShow();
 		});
 
 		imgPreloader.src = this.imageArray[this.activeImage].link;
@@ -405,6 +410,7 @@ Lightbox = {
 	startSlideShow: function() {
 		this.playSlides = true;
 		var t = this;
+		clearInterval(this.slideShowTimer);
 		this.slideShowTimer = setInterval(function() { t.showNext(); t.pauseSlideShow(); }, this.options.slideTime * 1000);
 		this.get('navSlideControl').text(this.options.strings.stopSlideshow);
 	},
