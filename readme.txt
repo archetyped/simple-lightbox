@@ -49,6 +49,10 @@ Send your questions to wp@archetyped.com or post a comment on [Simple Lightbox's
 2. Customized UI Text
 
 == Changelog ==
+= 1.5.3 =
+* Fix: Caption may not display under certain circumstances (Caption Erin)
+* Fix: Images not grouped when "separate by post" option is activated (Logical Ross)
+
 = 1.5.2 =
 * Fix: Slideshow loops out of control (Mirage of Wallentin)
 * Fix: Lightbox fails when group by posts disabled (Lange Find)
