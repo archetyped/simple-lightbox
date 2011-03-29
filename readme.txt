@@ -52,6 +52,7 @@ Send your questions to wp@archetyped.com or post a comment on [Simple Lightbox's
 = 1.5.3 =
 * Fix: Caption may not display under certain circumstances (Caption Erin)
 * Fix: Images not grouped when "separate by post" option is activated (Logical Ross)
+* Update: Lightbox will not be activated for links that already have `rel` attribute set
 
 = 1.5.2 =
 * Fix: Slideshow loops out of control (Mirage of Wallentin)
