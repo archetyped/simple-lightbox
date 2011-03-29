@@ -228,11 +228,13 @@ Lightbox = {
 				var inner = $(imageLink).find('img').first();
 				if ( $(inner).length )
 					caption = $(inner).attr('title') || $(inner).attr('alt');
-				if ( !caption && imageLink.text().length )
-					caption = imageLink.text();
-				else if ( this.options.captionSrc )
-					caption = imageLink.attr('href');
-				else
+				if ( !caption ) {
+					if ( imageLink.text().length )
+						caption = imageLink.text();
+					else if ( this.options.captionSrc )
+						caption = imageLink.attr('href');
+				}
+				if ( !caption )
 					caption = '';
 			}
 			return caption;

@@ -12,6 +12,12 @@ class SLB_Lightbox extends SLB_Base {
 	/*-** Properties **-*/
 	
 	/**
+	 * Version number
+	 * @var string
+	 */
+	var $version = '1.5.3';
+	
+	/**
 	 * Themes
 	 * @var array
 	 */
@@ -366,7 +372,7 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	function activate_post_links($content) {
 		//Check option
-		if ( ! is_feed() && $this->is_enabled() && $this->get_option_value('activate_links') && $this->get_option_value('group_links') ) {
+		if ( ! is_feed() && $this->is_enabled() && $this->get_option_value('activate_links') ) {
 			//Scan for links
 			$matches = array();
 			if ( preg_match_all("/\<a[^\>]*href=[^\s]+\.(?:jp[e]*g|gif|png).*?\>/i", $content, $matches) ) {
@@ -378,17 +384,28 @@ class SLB_Lightbox extends SLB_Base {
 					$rel = '';
 					if ( strpos(strtolower($link_new), ' rel=') !== false && preg_match("/\s+rel=(?:\"|')(.*?)(?:\"|')(\s|\>)/i", $link_new, $rel) ) {
 						//Check if lightbox is already set in rel attribute
-						$link_new = str_replace($rel[0], $rel[2], $link_new);
 						$rel = $rel[1];
 					}
 					
-					if ( strpos($rel, 'lightbox') === false) {
-						//Add rel attribute to link
-						$rel .= ' ' . ( ( $this->get_option_value('group_post') ) ? 'lightbox[' . $this->add_prefix($post->ID) . ']' : 'lightbox' );
-						$link_new = '<a rel="' . $rel . '"' . substr($link_new,2);
-						//Insert modified link
-						$content = str_replace($link, $link_new, $content);
+					if ( !empty($rel) )
+						continue;
+					
+					//Add rel attribute to link
+					$lb = 'lightbox';
+					$group = '';
+					//Check if links should be grouped
+					if ( $this->get_option_value('group_links') ) {
+						$group = $this->get_prefix();
+						//Check if groups should be separated by post
+						if ( $this->get_option_value('group_post') )
+							$group = $this->add_prefix($post->ID);
 					}
+					if ( !empty($group) )
+						$lb .= '[' . $group . ']';
+					$rel = $lb;
+					$link_new = '<a rel="' . $rel . '"' . substr($link_new,2);
+					//Insert modified link
+					$content = str_replace($link, $link_new, $content);
 				}
 			}
 		}
@@ -401,8 +418,8 @@ class SLB_Lightbox extends SLB_Base {
 	function enqueue_files() {
 		if ( ! $this->is_enabled() )
 			return;
-		wp_enqueue_script($this->add_prefix('lib'), $this->util->get_file_url('js/lib.js'), array('jquery'));
-		wp_enqueue_style($this->add_prefix('lightbox_css'), $this->get_theme_style());
+		wp_enqueue_script($this->add_prefix('lib'), $this->util->get_file_url('js/lib.js'), array('jquery'), $this->version);
+		wp_enqueue_style($this->add_prefix('lightbox_css'), $this->get_theme_style(), array(), $this->version);
 	}
 	
 	/**
@@ -658,7 +675,6 @@ class SLB_Lightbox extends SLB_Base {
 	 * @param array $args Arguments set in admin_settings
 	 */
 	function admin_field_theme($args = array()) {
-		global $cnr_debug;
 		//Get option data
 		$option = $this->get_option($args['opt']);
 
