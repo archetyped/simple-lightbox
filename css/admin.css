@@ -1,3 +1,8 @@
 .subhead {
 	margin-bottom: .2em;
 }
+
+#slb_settings {
+	display: block;
+	padding: 2em 0 0;
+}

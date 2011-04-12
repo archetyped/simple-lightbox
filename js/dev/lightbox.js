@@ -21,9 +21,9 @@
 /**
  * Lightbox object
  */
-var Lightbox = null;
+var SLB = null;
 (function($) {
-Lightbox = {
+SLB = {
 	activeImage : null,
 	badObjects : ['select','object','embed'],
 	container : null,
@@ -40,6 +40,7 @@ Lightbox = {
 	slideShowTimer : null,
 	startImage : null,
 	prefix : 'slb',
+	checkedUrls : {},
 	
 	/**
 	 * Initialize lightbox instance
@@ -48,6 +49,7 @@ Lightbox = {
 	initialize: function(options) {
 		this.options = $.extend(true, {
 			animate : true, // resizing animations
+			captionEnabled: true, //Display caption
 			captionSrc : true, //Use image source URI if title not set
 			autoPlay : true, // should slideshow start automatically
 			borderSize : 10, // if you adjust the padding in the CSS, you will need to update this variable
@@ -223,19 +225,23 @@ Lightbox = {
 	 */
 	getCaption: function(imageLink) {
 			imageLink = $(imageLink);
-			var caption = imageLink.attr('title') || '';
-			if ( caption == '' ) {
-				var inner = $(imageLink).find('img').first();
-				if ( $(inner).length )
-					caption = $(inner).attr('title') || $(inner).attr('alt');
-				if ( !caption ) {
-					if ( imageLink.text().length )
-						caption = imageLink.text();
-					else if ( this.options.captionSrc )
-						caption = imageLink.attr('href');
+			var caption = '';
+			if (this.options.captionEnabled) {
+				caption = imageLink.attr('title') || '';
+				if (caption == '') {
+					var inner = $(imageLink).find('img').first();
+					if ($(inner).length) 
+						caption = $(inner).attr('title') || $(inner).attr('alt');
+					if (!caption) {
+						if (imageLink.text().length) 
+							caption = imageLink.text();
+						else 
+							if (this.options.captionSrc) 
+								caption = imageLink.attr('href');
+					}
+					if (!caption) 
+						caption = '';
 				}
-				if ( !caption )
-					caption = '';
 			}
 			return caption;
 	},
@@ -248,46 +254,113 @@ Lightbox = {
 		imageLink = $(imageLink);
 		this.hideBadObjects();
 
-		// stretch overlay to fill page and fade in
-		this.get('overlay')
-			.height($(document).height())
-			.fadeTo(this.overlayDuration, this.overlayOpacity);
 		this.imageArray = [];
-		this.groupName = null;
+		this.groupName = this.getGroup(imageLink);
 		
 		var rel = $(imageLink).attr('rel');
 		var imageTitle = '';
+		var t = this;
 		
-		// if image is NOT part of a group..
-		if (rel == this.relAttribute) {
-			// add single image to imageArray
-			imageTitle = this.getCaption(imageLink);
-			this.imageArray.push({'link':$(imageLink).attr('href'), 'title':imageTitle});			
-			this.startImage = 0;
-		} else {
-			// if image is part of a group..
+		this.fileExists($(imageLink).attr('href'),
+		function() { //File exists
+			// stretch overlay to fill page and fade in
+			t.get('overlay')
+				.height($(document).height())
+				.fadeTo(t.overlayDuration, t.overlayOpacity);
 			
-			var els = $(this.container).find($(imageLink).get(0).tagName.toLowerCase());
-			// loop through anchors, find other images in group, and add them to imageArray
-			for (var i=0; i < els.length; i++) {
-				var el = $(els[i]);
-				if (el.attr('href') && (el.attr('rel') == rel)) {
-					imageTitle = this.getCaption(el);
-					this.imageArray.push({'link':el.attr('href'),'title':imageTitle});
-					if ($(el).get(0) == $(imageLink).get(0)) {
-						this.startImage = this.imageArray.length - 1;
+			// add image to array closure
+			var addLink = function(el) {
+				t.imageArray.push({'link':$(el).attr('href'), 'title':t.getCaption(el)});
+				return t.imageArray.length;
+			};
+			
+			var proceed = function() {
+				// calculate top offset for the lightbox and display 
+				var lightboxTop = $(document).scrollTop() + ($(window).height() / 15);
+		
+				t.get('lightbox').css('top', lightboxTop + 'px').show();
+				t.changeImage(t.startImage);
+			}
+			
+			// if image is NOT part of a group..
+			if (null == t.groupName) {
+				// add single image to imageArray
+				addLink(imageLink);			
+				t.startImage = 0;
+				proceed();
+			} else {
+				// if image is part of a group
+				var els = $(t.container).find($(imageLink).get(0).tagName.toLowerCase());
+				// loop through anchors, find other images in group, and add them to imageArray
+				var grpLinks = [];
+				var i, el;
+				for (i = 0; i < els.length; i++) {
+					el = $(els[i]);
+					if (el.attr('href') && (t.getGroup(el) == t.groupName)) {
+						grpLinks.push(el);
 					}
 				}
+				
+				for (i = 0; i < grpLinks.length; i++) {
+					el = grpLinks[i];
+					t.fileExists($(el).attr('href'),
+						function(args) {
+							var el = args.els[args.idx];
+							var il = addLink(el);
+							if ($(el).get(0) == $(imageLink).get(0)) {
+								t.startImage = il - 1;
+							}
+							if (args.idx == args.els.length - 1)
+								proceed();
+						},
+						function(args) {
+							if (args.idx == args.els.length - 1)
+								proceed(); 
+						},
+						{'idx': i, 'els': grpLinks});
+				}
+			}	
+		},
+		function() { //File does not exist
+			t.end();
+		});
+	},
+	
+	/**
+	 * Extract group name from 
+	 * @param obj el Element to extract group name from
+	 * @return string Group name
+	 */
+	getGroup: function(el) {
+		//Get full attribute value
+		var g = null;
+		var gTmp = '';
+		var gSt = '[';
+		var gEnd = ']';
+		var rel = $(el).attr('rel');
+		var search = this.relAttribute;
+		var searching = true;
+		var idx;
+		var prefix = ' ';
+		while (searching) {
+			idx = rel.indexOf(search);
+			//Stop processing if value is not found
+			if (idx == -1)
+				return g;
+			//Prefix with space to find whole word
+			if (prefix != search.charAt(0) && idx > 0) {
+				search = prefix + search;
+			} else {
+				searching = false;
 			}
-			// get group name
-			this.groupName = rel.substring(this.relAttribute.length + 1, rel.length - 1);
 		}
-
-		// calculate top offset for the lightbox and display 
-		var lightboxTop = $(document).scrollTop() + ($(window).height() / 15);
-
-		this.get('lightbox').css('top', lightboxTop + 'px').show();
-		this.changeImage(this.startImage);
+		gTmp = $.trim(rel.substring(idx).replace(search, ''));
+		//Check if group defined
+		if (gTmp.length && gSt == gTmp.charAt(0) && gTmp.indexOf(gEnd) != -1) {
+			//Extract group name
+			g = gTmp.substring(1, gTmp.indexOf(gEnd));
+		}
+		return g;
 	},
 
 	/**
@@ -316,12 +389,9 @@ Lightbox = {
 			if ( t.isSlideShowActive() )
 				t.startSlideShow();
 		});
-
-		imgPreloader.src = this.imageArray[this.activeImage].link;
 		
-		if (this.options.googleAnalytics) {
-			urchinTracker(this.imageArray[this.activeImage].link);
-		}
+		//Load image
+		imgPreloader.src = this.imageArray[this.activeImage].link;
 	},
 
 	/**
@@ -353,8 +423,12 @@ Lightbox = {
 	 * Display caption, image number, and bottom nav
 	 */
 	updateDetails: function() {
-		this.get('dataCaption').text(this.imageArray[this.activeImage].title);
-		this.get('dataCaption').show();
+		if (this.options.captionEnabled) {
+			this.get('dataCaption').text(this.imageArray[this.activeImage].title);
+			this.get('dataCaption').show();
+		} else {
+			this.get('dataCaption').hide();
+		}
 		
 		// if image is part of set display 'Image x of y' 
 		if (this.hasImages()) {
@@ -365,20 +439,12 @@ Lightbox = {
 			this.get('dataNumber')
 				.text(num_display)
 				.show();
-			if (!this.enableSlideshow) {
-				this.get('navSlideControl').hide();
-			}
-		} else {
-			// Hide navigation controls when only one image exists
-			this.get('navSlideControl').hide();
-			this.get('navPrev').hide();
-			this.get('navNext').hide();
 		}
 	
 		this.get('details').width(this.get('slbContent').width() + (this.options.borderSize * 2));
-		
+		this.updateNav();
 		var t = this;
-		this.get('details').animate({height: 'show', opacity: 'show'}, 650, function() {t.updateNav();});
+		this.get('details').animate({height: 'show', opacity: 'show'}, 650);
 	},
 	
 	/**
@@ -386,13 +452,24 @@ Lightbox = {
 	 */
 	updateNav: function() {
 		if (this.hasImages()) {
+			this.get('navPrev').show();
+			this.get('navNext').show();
 			if (this.enableSlideshow) {
+				this.get('navSlideControl').show();
 				if (this.playSlides) {
 					this.startSlideShow();
 				} else {
 					this.stopSlideShow();
 				}
+			} else {
+				this.get('navSlideControl').hide();
 			}
+		} else {
+			// Hide navigation controls when only one image exists
+			this.get('dataNumber').hide();
+			this.get('navPrev').hide();
+			this.get('navNext').hide();
+			this.get('navSlideControl').hide();
 		}
 		this.enableKeyboardNav();
 	},
@@ -683,6 +760,48 @@ Lightbox = {
 	 */
 	get: function(id) {
 		return $(this.getSel(id));
+	},
+	
+	/**
+	 * Checks if file exists using AJAX request
+	 * @param string url File URL
+	 * @param callback success Callback to run if file exists
+	 * @param callback failure Callback to run if file does not exist
+	 * @param obj args Arguments for callback
+	 */
+	fileExists: function(url, success, failure, args) {
+		var statusFail = 404;
+		var stateCheck = 4;
+		var t = this;
+		var proceed = function(res) {
+			if (statusFail != res.status) {
+				if ($.isFunction(success)) 
+					success(args);
+			} else {
+				if ($.isFunction(failure)) 
+					failure(args);
+			}
+		};
+		
+		//Check if URL already processed
+		if (url in this.checkedUrls) {
+			proceed(this.checkedUrls[url]);
+		} else {
+			var req = new XMLHttpRequest();
+			req.open('HEAD', url, true);
+			req.onreadystatechange = function(){
+				if (stateCheck == this.readyState) {
+					t.addUrl(url, this);
+					proceed(this);
+				}
+			};
+			req.send();
+		}
+	},
+	
+	addUrl: function(url, res) {
+		if (!(url in this.checkedUrls))
+			this.checkedUrls[url] = res;
 	}
 }
 })(jQuery);

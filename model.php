@@ -47,7 +47,8 @@ class SLB_Lightbox extends SLB_Base {
 		'header_enabled'			=> 'Activation',
 		'enabled'					=> array(true, 'Enable Lightbox Functionality'),
 		'enabled_home'				=> array(true, 'Enable on Home page'),
-		'enabled_single'			=> array(true, 'Enable on Single Posts/Pages'),
+		'enabled_post'				=> array(true, 'Enable on Posts'),
+		'enabled_page'				=> array(true, 'Enable on Pages'),				
 		'enabled_archive'			=> array(true, 'Enable on Archive Pages (tags, categories, etc.)'),
 		'activate_links'			=> array(true, 'Activate all image links on page'),
 		'header_activation'			=> 'Grouping',
@@ -60,6 +61,7 @@ class SLB_Lightbox extends SLB_Base {
 		'duration'					=> array(6, 'Slide Duration (Seconds)', array('size' => 3, 'maxlength' => 3)),
 		'loop'						=> array(true, 'Loop through images'),
 		'overlay_opacity'			=> array(0.8, 'Overlay Opacity (0 - 1)', array('size' => 3, 'maxlength' => 3)),
+		'enabled_caption'			=> array(true, 'Enable caption'),
 		'caption_src'				=> array(true, 'Use image URI as caption when link title not set'),
 		'header_strings'			=> 'Labels',
 		'txt_closeLink'				=> array('close', 'Close link (for accessibility only, image used for button)'),
@@ -116,6 +118,14 @@ class SLB_Lightbox extends SLB_Base {
 	function activate() {
 		//Set default options (if not yet set)
 		$this->reset_options(false);
+		//Options migration
+		$opt = 'enabled_single';
+		if ( $this->option_isset($opt) ) {
+			$val = $this->get_option_value($opt);
+			$this->update_option('enabled_post', $val);
+			$this->update_option('enabled_page', $val);
+			$this->delete_option($opt);
+		}
 	}
 	
 	/**
@@ -124,8 +134,8 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	function reset_options($hard = true) {
 		foreach ( $this->options_default as $id => $data ) {
-			$opt = $this->add_prefix($id);
-			if ( !$hard && !is_null(get_option($opt, null)) ) {
+			$opt = $this->get_option_id($id);
+			if ( !is_array($data) || ( !$hard && !is_null(get_option($opt, null)) ) ) {
 				continue;
 			}
 			update_option($opt, $data[0]);
@@ -145,8 +155,12 @@ class SLB_Lightbox extends SLB_Base {
 			//Determine option to check
 			if ( is_home() )
 				$opt = 'home';
-			elseif ( is_single() )
-				$opt = 'single';
+			elseif ( is_single ) {
+				if ( is_page() )
+					$opt = 'page';
+				else
+					$opt = 'post';
+			}
 			elseif ( is_archive() || is_search() )
 				$opt = 'archive';
 			//Check option
@@ -155,6 +169,20 @@ class SLB_Lightbox extends SLB_Base {
 			}
 		}
 		return $ret;
+	}
+	
+	/**
+	 * Generate option ID for saving in DB
+	 * Prefixes option name with plugin prefix
+	 * @param string $option Option to generate ID for
+	 * @return string Option ID
+	 */
+	function get_option_id($option) {
+		return $this->add_prefix($option);
+	}
+	
+	function option_isset($option) {
+		return !is_null(get_option($this->get_option_id($option), null));
 	}
 	
 	/**
@@ -169,12 +197,22 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	function get_option($option) {
 		$ret = new stdClass();
-		$ret->id = $this->add_prefix($option);
+		$ret->id = $this->get_option_id($option);
 		$ret->value = get_option($ret->id, $this->get_default_value($option, false));
 		$ret->value_default = $this->get_default_value($option, false);
 		$ret->value_default_formatted = $this->get_default_value($option);
 		$ret->attr = $this->get_default_attr($option);
 		return $ret;
+	}
+	
+	/**
+	 * Delete plugin-specific option
+	 * @uses delete_option() to perform DB operations
+	 * @param string $option Option name
+	 * @return bool TRUE if option deleted from DB
+	 */
+	function delete_option($option) {
+		return delete_option($this->get_option_id($option));
 	}
 	
 	/**
@@ -185,6 +223,10 @@ class SLB_Lightbox extends SLB_Base {
 	function get_option_value($option) {
 		$opt = $this->get_option($option);
 		return $opt->value;
+	}
+	
+	function update_option($option, $newvalue) {
+		update_option($this->get_option_id($option), $newvalue);
 	}
 	
 	/**
@@ -285,10 +327,15 @@ class SLB_Lightbox extends SLB_Base {
 	 * Retrieve theme layout
 	 * @uses get_theme_data() to retrieve theme data
 	 * @param string $name Theme name
+	 * @param bool $filter (optional) Filter layout based on user preferences 
 	 * @return string Theme layout HTML
 	 */
-	function get_theme_layout($name = '') {
-		return $this->get_theme_data($name, 'layout');
+	function get_theme_layout($name = '', $filter = true) {
+		$l = $this->get_theme_data($name, 'layout');
+		//Filter
+		if ( !$this->get_option_value('enabled_caption') )
+			$l = str_replace($this->get_theme_placeholder('dataCaption'), '', $l);
+		return $l;
 	}
 	
 	/**
@@ -330,6 +377,15 @@ class SLB_Lightbox extends SLB_Base {
 		
 		//Add theme to array
 		$this->themes[$name] = wp_parse_args(compact(array_keys($defaults), $defaults)); 
+	}
+	
+	/**
+	 * Build theme placeholder
+	 * @param string $name Placeholder name
+	 * @return string Placeholder
+	 */
+	function get_theme_placeholder($name) {
+		return '{' . $name . '}';
 	}
 	
 	/**
@@ -387,11 +443,16 @@ class SLB_Lightbox extends SLB_Base {
 						$rel = $rel[1];
 					}
 					
-					if ( !empty($rel) )
+					if ( strpos($rel, 'lightbox') !== false || strpos($rel, $this->add_prefix('off')) )
 						continue;
 					
+					$lb = '';
+					
+					if ( !empty($rel) )
+						$lb .= ' ';
+					
 					//Add rel attribute to link
-					$lb = 'lightbox';
+					$lb .= 'lightbox';
 					$group = '';
 					//Check if links should be grouped
 					if ( $this->get_option_value('group_links') ) {
@@ -402,7 +463,7 @@ class SLB_Lightbox extends SLB_Base {
 					}
 					if ( !empty($group) )
 						$lb .= '[' . $group . ']';
-					$rel = $lb;
+					$rel .= $lb;
 					$link_new = '<a rel="' . $rel . '"' . substr($link_new,2);
 					//Insert modified link
 					$content = str_replace($link, $link_new, $content);
@@ -419,7 +480,7 @@ class SLB_Lightbox extends SLB_Base {
 		if ( ! $this->is_enabled() )
 			return;
 		wp_enqueue_script($this->add_prefix('lib'), $this->util->get_file_url('js/lib.js'), array('jquery'), $this->version);
-		wp_enqueue_style($this->add_prefix('lightbox_css'), $this->get_theme_style(), array(), $this->version);
+		wp_enqueue_style($this->add_prefix('style'), $this->get_theme_style(), array(), $this->version);
 	}
 	
 	/**
@@ -451,6 +512,7 @@ class SLB_Lightbox extends SLB_Base {
 			'loop'				=> $this->get_option_value('loop'),
 			'overlayOpacity'	=> $this->get_option_value('overlay_opacity'),
 			'animate'			=> $this->get_option_value('animate'),
+			'captionEnabled'	=> $this->get_option_value('enabled_caption'),
 			'captionSrc'		=> $this->get_option_value('caption_src'),
 			'layout'			=> $this->get_theme_layout()
 		);
@@ -465,7 +527,7 @@ class SLB_Lightbox extends SLB_Base {
 		//Load UI Strings
 		if ( ($strings = $this->build_strings()) && !empty($strings) )
 			$lb_obj[] = $strings;
-		$js_code[] = 'Lightbox.initialize({' . implode(',', $lb_obj) . '});';
+		$js_code[] = 'SLB.initialize({' . implode(',', $lb_obj) . '});';
 		echo $out['script_start'] . implode('', $js_code) . $out['script_end'];
 	}
 	
