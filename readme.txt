@@ -13,6 +13,7 @@ Simple Lightbox is a very simple and customizable lightbox that is easy to add t
 ### BETA NOTES
 This is a beta version.  Please test and [provide feedback on the beta release page](http://archetyped.com/lab/slb-1-5-4-beta/).
 Main changes
+
 * Add: Option to enable/disable image caption
 * Optimize: Separate options to enable/disable SLB on Posts and Pages
 * Add: `rel` attribute supported again
