@@ -18,6 +18,7 @@ Main changes
 * Optimize: Separate options to enable/disable SLB on Posts and Pages
 * Add: `rel` attribute supported again
 * Add: Use `slb_off` in link's `rel` attribute to disable automatic activation for link
+* Add: Check URLs for nonexistent images before attempting to display in lightbox
 * Optimize: Better grouping support
 
 #### Customization
