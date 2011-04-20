@@ -16,7 +16,7 @@ Main changes
 
 #### Beta 2
 * Add: Option to enable/disable link validation
-* Fix: HTTPS compatibility (Jürgen Protocol)
+* Fix: HTTPS compatibility (J&uuml;rgen Protocol)
 
 #### Beta 1
 * Add: Option to enable/disable image caption
