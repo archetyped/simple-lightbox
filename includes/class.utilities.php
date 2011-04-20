@@ -177,7 +177,7 @@ class SLB_Utilities {
 	function get_url_base() {
 		static $url_base = '';
 		if ( '' == $url_base ) {
-			$url_base = $this->normalize_path(WP_PLUGIN_URL, $this->get_plugin_base());
+			$url_base = $this->normalize_path(plugins_url(), $this->get_plugin_base());
 		}
 		return $url_base;
 	}

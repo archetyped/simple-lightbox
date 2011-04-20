@@ -15,7 +15,7 @@ class SLB_Lightbox extends SLB_Base {
 	 * Version number
 	 * @var string
 	 */
-	var $version = '1.5.4b';
+	var $version = '1.5.4b2';
 	
 	/**
 	 * Themes
@@ -50,7 +50,8 @@ class SLB_Lightbox extends SLB_Base {
 		'enabled_post'				=> array(true, 'Enable on Posts'),
 		'enabled_page'				=> array(true, 'Enable on Pages'),				
 		'enabled_archive'			=> array(true, 'Enable on Archive Pages (tags, categories, etc.)'),
-		'activate_links'			=> array(true, 'Activate all image links on page'),
+		'activate_links'			=> array(true, 'Activate all image links in item content'),
+		'validate_links'			=> array(true, 'Validate links'),
 		'header_activation'			=> 'Grouping',
 		'group_links'				=> array(true, 'Group automatically activated links (for displaying as a slideshow)'),
 		'group_post'				=> array(true, 'Group image links by Post (e.g. on pages with multiple posts)'),
@@ -507,6 +508,7 @@ class SLB_Lightbox extends SLB_Base {
 		}
 		//Get options
 		$options = array(
+			'validateLinks'		=> $this->get_option_value('validate_links'),
 			'autoPlay'			=> $this->get_option_value('autostart'),
 			'slideTime'			=> $this->get_option_value('duration'),
 			'loop'				=> $this->get_option_value('loop'),

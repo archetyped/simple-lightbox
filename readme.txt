@@ -11,9 +11,14 @@ A simple, themeable, and customizable Lightbox for Wordpress
 Simple Lightbox is a very simple and customizable lightbox that is easy to add to your Wordpress website.  It also [supports themes](http://archetyped.com/lab/slb-registering-themes/), so it can be fully integrated with your site's theme.
 
 ### BETA NOTES
-This is a beta version.  Please test and [provide feedback on the beta release page](http://archetyped.com/lab/slb-1-5-4-beta/).
+The current release is a beta version.  Please test and [provide feedback on the beta release page](http://archetyped.com/lab/slb-1-5-4-beta/).
 Main changes
 
+#### Beta 2
+* Add: Option to enable/disable link validation
+* Fix: HTTPS compatibility (Jürgen Protocol)
+
+#### Beta 1
 * Add: Option to enable/disable image caption
 * Optimize: Separate options to enable/disable SLB on Posts and Pages
 * Add: `rel` attribute supported again
@@ -52,7 +57,7 @@ No upgrade notices
 
 == Frequently Asked Questions ==
 
-Send your questions to wp@archetyped.com or post a comment on [Simple Lightbox's official page](http://archetyped.com/tools/simple-lightbox/)
+Post your questions and comments on [Simple Lightbox's official page](http://archetyped.com/tools/simple-lightbox/)
 
 == Screenshots ==
 

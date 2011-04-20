@@ -49,6 +49,7 @@ SLB = {
 	initialize: function(options) {
 		this.options = $.extend(true, {
 			animate : true, // resizing animations
+			validateLinks : false, //Validate links before adding them to lightbox
 			captionEnabled: true, //Display caption
 			captionSrc : true, //Use image source URI if title not set
 			autoPlay : true, // should slideshow start automatically
@@ -770,6 +771,8 @@ SLB = {
 	 * @param obj args Arguments for callback
 	 */
 	fileExists: function(url, success, failure, args) {
+		if (!this.options.validateLinks)
+			return success(args);
 		var statusFail = 404;
 		var stateCheck = 4;
 		var t = this;
