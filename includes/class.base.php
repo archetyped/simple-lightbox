@@ -161,29 +161,57 @@ class SLB_Base {
 	}
 	
 	/**
+	 * Get valid separator
+	 * @param string $sep (optional) Separator supplied
+	 * @return string Separator
+	 */
+	function get_sep($sep = null) {
+		if ( !is_string($sep) )
+			$default = '_';
+		return ( is_string($sep) ) ? $sep : $default;
+	}
+	
+	/**
 	 * Retrieve class prefix (with separator if set)
 	 * @param bool|string $sep Separator to append to class prefix (Default: no separator)
 	 * @return string Class prefix
 	 */
-	function get_prefix($sep = false) {
-		$sep = ( is_string($sep) ) ? $sep : '';
+	function get_prefix($sep = null) {
+		$sep = $this->get_sep($sep);
 		$prefix = ( !empty($this->prefix) ) ? $this->prefix . $sep : '';
 		return $prefix;
 	}
 	
 	/**
+	 * Check if a string is prefixed
+	 * @param string $text Text to check for prefix
+	 * @param string $sep (optional) Separator used
+	 */
+	function has_prefix($text, $sep = null) {
+		return ( !empty($text) && strpos($text, $this->get_prefix($sep)) === 0 );
+	}
+	
+	/**
 	 * Prepend plugin prefix to some text
 	 * @param string $text Text to add to prefix
-	 * @param string $sep Text used to separate prefix and text
+	 * @param string $sep (optional) Text used to separate prefix and text
+	 * @param bool $once (optional) Whether to add prefix to text that already contains a prefix or not
 	 * @return string Text with prefix prepended
 	 */
-	function add_prefix($text = '', $sep = '_') {
+	function add_prefix($text, $sep = null, $once = true) {
+		if ( $this->has_prefix($text, $sep) )
+			return $text;
 		return $this->get_prefix($sep) . $text;
 	}
 	
-	function remove_prefix($text = '', $sep = '_') {
-		if ( !empty($text) && strpos($text, ( $p = $this->get_prefix($sep) )) === 0 )
-			$text = substr($text, strlen($p));
+	/**
+	 * Remove prefix from specified string
+	 * @param string $text String to remove prefix from
+	 * @param string $sep (optional) Separator used with prefix
+	 */
+	function remove_prefix($text, $sep = null) {
+		if ( $this->has_prefix($text,$sep) )
+			$text = substr($text, strlen($this->get_prefix($sep)));
 		return $text;
 	}
 	
