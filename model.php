@@ -15,7 +15,7 @@ class SLB_Lightbox extends SLB_Base {
 	 * Version number
 	 * @var string
 	 */
-	var $version = '1.5.4b2';
+	var $version = '1.5.4b3';
 	
 	/**
 	 * Themes

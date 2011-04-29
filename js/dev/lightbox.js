@@ -178,18 +178,31 @@ SLB = {
 	 * Add events to various UI elements
 	 */
 	setEvents: function() {
-		var t = this;
+		var t = this, delay = 500;
 		this.get('container,details').click(function(ev) {
 			ev.stopPropagation();
 		});
-		this.get('navPrev').click(function() {
+		
+		var clickP = function() {
+			t.get('navPrev').unbind('click').click(false);
+			setTimeout(function() {t.get('navPrev').click(clickP)}, delay);
 			t.showPrev();
 			return false;
+		};
+		this.get('navPrev').click(function(){
+			return clickP();
 		});
-		this.get('navNext').click(function() {
+		
+		var clickN = function() {
+			t.get('navNext').unbind('click').click(false);
+			setTimeout(function() {t.get('navNext').click(clickN)}, delay);
 			t.showNext();
 			return false;
+		};
+		this.get('navNext').click(function() {
+			return clickN();
 		});
+		
 		this.get('navSlideControl').click(function() {
 			t.toggleSlideShow();
 			return false;
@@ -261,61 +274,80 @@ SLB = {
 		var rel = $(imageLink).attr('rel');
 		var imageTitle = '';
 		var t = this;
+		var groupTemp = {};
 		
 		this.fileExists($(imageLink).attr('href'),
 		function() { //File exists
-			// stretch overlay to fill page and fade in
+			// Stretch overlay to fill page and fade in
 			t.get('overlay')
 				.height($(document).height())
 				.fadeTo(t.overlayDuration, t.overlayOpacity);
 			
-			// add image to array closure
-			var addLink = function(el) {
-				t.imageArray.push({'link':$(el).attr('href'), 'title':t.getCaption(el)});
-				return t.imageArray.length;
+			// Add image to array closure
+			var addLink = function(el, idx) {
+				groupTemp[idx] = el;
+				return groupTemp.length;
 			};
 			
+			//Build final image array & launch lightbox
 			var proceed = function() {
-				// calculate top offset for the lightbox and display 
+				t.startImage = 0;
+				//Sort links by document order
+				var order = [], el;
+				for (var x in groupTemp) {
+					order.push(x);
+				}
+				order.sort(function(a, b) { return (a - b); });
+				for (x = 0; x < order.length; x++) {
+					el = groupTemp[order[x]];
+					//Check if link being evaluated is the same as the clicked link
+					if ($(el).get(0) == $(imageLink).get(0)) {
+						t.startImage = x;
+					}
+					t.imageArray.push({'link':$(el).attr('href'), 'title':t.getCaption(el)});
+				}
+				// Calculate top offset for the lightbox and display 
 				var lightboxTop = $(document).scrollTop() + ($(window).height() / 15);
 		
 				t.get('lightbox').css('top', lightboxTop + 'px').show();
 				t.changeImage(t.startImage);
 			}
 			
-			// if image is NOT part of a group..
+			// If image is NOT part of a group..
 			if (null == t.groupName) {
-				// add single image to imageArray
-				addLink(imageLink);			
+				// Add single image to imageArray
+				addLink(imageLink, 0);			
 				t.startImage = 0;
 				proceed();
 			} else {
-				// if image is part of a group
+				// If image is part of a group
 				var els = $(t.container).find($(imageLink).get(0).tagName.toLowerCase());
-				// loop through anchors, find other images in group, and add them to imageArray
+				// Loop through links on page & find other images in group
 				var grpLinks = [];
 				var i, el;
 				for (i = 0; i < els.length; i++) {
 					el = $(els[i]);
 					if (el.attr('href') && (t.getGroup(el) == t.groupName)) {
+						//Add links in same group to temp array
 						grpLinks.push(el);
 					}
 				}
 				
+				//Loop through group links, validate, and add to imageArray
+				var processed = 0;
 				for (i = 0; i < grpLinks.length; i++) {
 					el = grpLinks[i];
 					t.fileExists($(el).attr('href'),
-						function(args) {
+						function(args) { //File exists
 							var el = args.els[args.idx];
-							var il = addLink(el);
-							if ($(el).get(0) == $(imageLink).get(0)) {
-								t.startImage = il - 1;
-							}
-							if (args.idx == args.els.length - 1)
+							var il = addLink(el, args.idx);
+							processed++;
+							if (processed == args.els.length)
 								proceed();
 						},
-						function(args) {
-							if (args.idx == args.els.length - 1)
+						function(args) { //File does not exist
+							processed++;
+							if (args.idx == args.els.length)
 								proceed(); 
 						},
 						{'idx': i, 'els': grpLinks});
@@ -617,14 +649,17 @@ SLB = {
 	 * Enable image navigation via the keyboard
 	 */
 	enableKeyboardNav: function() {
-		document.onkeydown = this.keyboardAction; 
+		var t = this;
+		$(document).keydown(function(e) {
+			t.keyboardAction(e);
+		});
 	},
 
 	/**
 	 * Disable image navigation via the keyboard
 	 */
 	disableKeyboardNav: function() {
-		document.onkeydown = '';
+		$(document).unbind('keydown');
 	},
 
 	/**
@@ -639,21 +674,20 @@ SLB = {
 		}
 
 		key = String.fromCharCode(keycode).toLowerCase();
-		var t = this;
-		
-		if (key == 'x' || key == 'o' || key == 'c') { // close lightbox
-			t.end();
+
+		if (keycode == 27 || key == 'x' || key == 'o' || key == 'c') { // close lightbox
+			this.end();
 		} else if (key == 'p' || key == '%') { // display previous image
-			t.showPrev();
+			this.showPrev();
 		} else if (key == 'n' || key =='\'') { // display next image
-			t.showNext();
+			this.showNext();
 		} else if (key == 'f') { // display first image
-			t.showFirst();
+			this.showFirst();
 		} else if (key == 'l') { // display last image
-			t.showLast();
+			this.showLast();
 		} else if (key == 's') { // toggle slideshow
-			if (t.hasImage() && t.options.enableSlideshow) {
-				t.toggleSlideShow();
+			if (this.hasImage() && this.options.enableSlideshow) {
+				this.toggleSlideShow();
 			}
 		}
 	},
@@ -773,11 +807,11 @@ SLB = {
 	fileExists: function(url, success, failure, args) {
 		if (!this.options.validateLinks)
 			return success(args);
-		var statusFail = 404;
+		var statusFail = 400;
 		var stateCheck = 4;
 		var t = this;
 		var proceed = function(res) {
-			if (statusFail != res.status) {
+			if (res.status < statusFail) {
 				if ($.isFunction(success)) 
 					success(args);
 			} else {
@@ -792,7 +826,7 @@ SLB = {
 		} else {
 			var req = new XMLHttpRequest();
 			req.open('HEAD', url, true);
-			req.onreadystatechange = function(){
+			req.onreadystatechange = function() {
 				if (stateCheck == this.readyState) {
 					t.addUrl(url, this);
 					proceed(this);
