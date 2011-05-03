@@ -15,7 +15,7 @@ The current release is a beta version.  Please test and [provide feedback on the
 Main changes
 
 #### Beta 4
-* Fix: Zmanu is single
+* Fix: Zmanu is_single
 
 #### Beta 3
 * Fix: Image order is sometimes incorrect
