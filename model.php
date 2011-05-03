@@ -15,7 +15,7 @@ class SLB_Lightbox extends SLB_Base {
 	 * Version number
 	 * @var string
 	 */
-	var $version = '1.5.4b3';
+	var $version = '1.5.4b4';
 	
 	/**
 	 * Themes
@@ -156,7 +156,7 @@ class SLB_Lightbox extends SLB_Base {
 			//Determine option to check
 			if ( is_home() )
 				$opt = 'home';
-			elseif ( is_single ) {
+			elseif ( is_single() ) {
 				if ( is_page() )
 					$opt = 'page';
 				else

@@ -14,6 +14,9 @@ Simple Lightbox is a very simple and customizable lightbox that is easy to add t
 The current release is a beta version.  Please test and [provide feedback on the beta release page](http://archetyped.com/lab/slb-1-5-4-beta/).
 Main changes
 
+#### Beta 4
+* Fix: Zmanu is single
+
 #### Beta 3
 * Fix: Image order is sometimes incorrect
 * Optimize: Improved link validation
