@@ -10,6 +10,26 @@
  */
 class SLB_Utilities {
 	
+	/* Properties */
+	
+	/**
+	 * Default plugin headers
+	 * @var array
+	 */
+	var $plugin_headers = array (
+		'Name' => 'Plugin Name',
+		'PluginURI' => 'Plugin URI',
+		'Version' => 'Version',
+		'Description' => 'Description',
+		'Author' => 'Author',
+		'AuthorURI' => 'Author URI',
+		'TextDomain' => 'Text Domain',
+		'DomainPath' => 'Domain Path',
+		'Network' => 'Network',
+	);
+	
+	/* Constructors */
+	
 	function SLB_Utilities() {
 		$this->__construct();
 	}
@@ -138,11 +158,23 @@ class SLB_Utilities {
 	/**
 	 * Returns URL of file (assumes that it is in plugin directory)
 	 * @param string $file name of file get URL
-	 * @return string File path
+	 * @return string File URL
 	 */
 	function get_file_url($file) {
 		if ( is_string($file) && '' != trim($file) ) {
 			$file = $this->normalize_path($this->get_url_base(), $file);
+		}
+		return $file;
+	}
+	
+	/**
+	 * Returns path to plugin file
+	 * @param string $file file name
+	 * @return string File path
+	 */
+	function get_file_path($file) {
+		if ( is_string($file) && '' != trim($file) ) {
+			$file = $this->normalize_path($this->get_path_base(), $file);
 		}
 		return $file;
 	}
@@ -155,13 +187,14 @@ class SLB_Utilities {
 	function get_file_extension($file) {
 		$ret = '';
 		$sep = '.';
-		if ( is_string($icon) && ( $rpos = strrpos($file, $sep) ) !== false ) 
+		if ( ( $rpos = strrpos($file, $sep) ) !== false ) 
 			$ret = substr($file, $rpos + 1);
 		return $ret;
 	}
 	
 	/**
 	 * Checks if file has specified extension
+	 * @uses get_file_extension()
 	 * @param string $file File name/path
 	 * @param string $extension File ending to check $file for
 	 * @return bool TRUE if file has extension
@@ -172,6 +205,8 @@ class SLB_Utilities {
 	
 	/**
 	 * Retrieve base URL for plugin-specific files
+	 * @uses get_plugin_base()
+	 * @uses normalize_path()
 	 * @return string Base URL
 	 */
 	function get_url_base() {
@@ -182,6 +217,13 @@ class SLB_Utilities {
 		return $url_base;
 	}
 	
+	/**
+	 * Retrieve plugin's base path
+	 * @uses WP_PLUGIN_DIR
+	 * @uses get_plugin_base()
+	 * @uses normalize_path()
+	 * @return string Base path
+	 */
 	function get_path_base() {
 		static $path_base = '';
 		if ( '' == $path_base ) {
@@ -190,6 +232,12 @@ class SLB_Utilities {
 		return $path_base;
 	}
 	
+	/**
+	 * Retrieve plugin's base directory
+	 * @uses WP_PLUGIN_DIR
+	 * @uses normalize_path()
+	 * @return string Base directory
+	 */
 	function get_plugin_base() {
 		static $plugin_dir = '';
 		if ( '' == $plugin_dir ) {
@@ -198,14 +246,94 @@ class SLB_Utilities {
 		return $plugin_dir;
 	}
 	
+	/**
+	 * Retrieve plugin's base file path
+	 * @uses get_path_base()
+	 * @uses get_file_path()
+	 * @return string Base file path
+	 */
 	function get_plugin_base_file() {
-		$file = 'main.php';
-		return $this->get_path_base() . '/' . $file;
+		static $file = '';
+		global $cnr;
+		if ( empty($file) ) {
+			$dir = @ opendir($this->get_path_base());
+			if ( $dir ) {
+				while ( ($ftemp = readdir($dir)) !== false ) {
+					//Only process PHP files
+					$ftemp = $this->get_file_path($ftemp);
+					if ( !$this->has_file_extension($ftemp, 'php') || !is_readable($ftemp) )
+						continue;
+					//Check for data
+					$data = get_file_data($ftemp, $this->plugin_headers);
+					if ( !empty($data['Name']) ) {
+						//Set base file
+						$file = $ftemp;
+						break;
+					}
+				}
+			}
+			@closedir($dir);
+		}
+		//Return
+		return $file;
 	}
 	
+	/**
+	 * Retrieve plugin's internal name
+	 * Internal name is used by WP core
+	 * @uses get_plugin_base_file()
+	 * @uses plugin_basename()
+	 * @return string Internal plugin name
+	 */
 	function get_plugin_base_name() {
 		$file = $this->get_plugin_base_file();
 		return plugin_basename($file);
+	}
+	
+	/**
+	 * Retrieve plugin info
+	 * Parses info comment in main plugin file
+	 * @uses get_plugin_base_file()
+	 */
+	function get_plugin_info($field = '') {
+		static $data = array();
+		$ret = '';
+		//Get plugin data
+		if ( empty($data) ) {
+			$file = $this->get_plugin_base_file(); 
+			$data = get_file_data($file, $this->plugin_headers);
+		}
+		//Return specified field
+		if ( !empty($field) ) {
+			if ( isset($data[$field]) )
+				$ret = $data[$field];
+		} else {
+			$ret = $data;
+		}
+		return $ret;
+	}
+	
+	/**
+	 * Retrieve plugin version
+	 * @uses get_plugin_info()
+	 * @param bool $strip_desc Strip any additional version text
+	 * @return string Plugin version
+	 */
+	function get_plugin_version($strip_desc = true) {
+		static $v = '';
+		//Retrieve version
+		if ( empty($v) ) {
+			$field = 'Version';
+			$v = $this->get_plugin_info($field);
+		}
+		//Format
+		$ret = $v;
+		if ( $strip_desc ) {
+			$ret = explode(' ', $ret, 2);
+			$ret = $ret[0];
+		}
+		//Return
+		return $ret;
 	}
 	
 	/**
@@ -383,6 +511,13 @@ class SLB_Utilities {
 		return $item;
 	}
 	
+	/**
+	 * Build formatted string based on array values
+	 * Array values in formatted string will be ordered by index order
+	 * @param array $attribute Values to build string with
+	 * @param string $format (optional) Format name (Default: Multidimensional array representation > ['value1']['value2']['value3'], etc.)
+	 * @return string Formatted string based on array values
+	 */
 	function get_array_path($attribute = '', $format = null) {
 		//Formatted value
 		$fmtd = '';
