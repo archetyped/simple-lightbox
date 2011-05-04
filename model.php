@@ -156,11 +156,8 @@ class SLB_Lightbox extends SLB_Base {
 			//Determine option to check
 			if ( is_home() )
 				$opt = 'home';
-			elseif ( is_single() ) {
-				if ( is_page() )
-					$opt = 'page';
-				else
-					$opt = 'post';
+			elseif ( is_singular() ) {
+				$opt = ( is_page() ) ? 'page' : 'post';
 			}
 			elseif ( is_archive() || is_search() )
 				$opt = 'archive';
