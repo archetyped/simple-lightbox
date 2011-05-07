@@ -13,6 +13,9 @@ Simple Lightbox is a very simple and customizable lightbox that is easy to add t
 #### Customization
 Options for customizing the lightbox behavior are located in the **Settings > Media** admin menu in the **Lightbox Settings** section (or just click the **Settings** link below the plugin's name when viewing the list of installed plugins)
 
+* **New: Link Validation** (Optional)
+* **New: Keyboard Navigation**
+* **New: Show/Hide Lightbox Caption**
 * Theme Support
 * Customizable UI Text
 * Enable/Disable Lightbox Functionality (Default: Enabled)
@@ -59,7 +62,6 @@ Post your questions and comments on [Simple Lightbox's official page](http://arc
 * Fix: Enabling SLB on Pages issue
 * Fix: Zmanu is_single
 * Fix: Image order is sometimes incorrect
-* Optimize: Improved link validation
 * Optimize: Filter double clicks
 * Optimize: Separate options to enable/disable SLB on Posts and Pages
 * Optimize: Better grouping support

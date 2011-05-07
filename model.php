@@ -51,7 +51,7 @@ class SLB_Lightbox extends SLB_Base {
 		'enabled_page'				=> array(true, 'Enable on Pages'),				
 		'enabled_archive'			=> array(true, 'Enable on Archive Pages (tags, categories, etc.)'),
 		'activate_links'			=> array(true, 'Activate all image links in item content'),
-		'validate_links'			=> array(true, 'Validate links'),
+		'validate_links'			=> array(false, 'Validate links'),
 		'header_activation'			=> 'Grouping',
 		'group_links'				=> array(true, 'Group automatically activated links (for displaying as a slideshow)'),
 		'group_post'				=> array(true, 'Group image links by Post (e.g. on pages with multiple posts)'),
