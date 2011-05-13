@@ -12,18 +12,18 @@ class SLB_Lightbox extends SLB_Base {
 	/*-** Properties **-*/
 	
 	/**
-	 * Version number
-	 * @var string
-	 */
-	var $version = '1.5.4';
-	
-	/**
 	 * Themes
 	 * @var array
 	 */
 	var $themes = array();
 	
 	var $theme_default = 'default';
+	
+	/**
+	 * Options instance
+	 * @var SLB_Options
+	 */
+	var $options = null;
 	
 	/**
 	 * Page that plugin options are on
@@ -51,7 +51,7 @@ class SLB_Lightbox extends SLB_Base {
 		'enabled_page'				=> array(true, 'Enable on Pages'),				
 		'enabled_archive'			=> array(true, 'Enable on Archive Pages (tags, categories, etc.)'),
 		'activate_links'			=> array(true, 'Activate all image links in item content'),
-		'validate_links'			=> array(false, 'Validate links'),
+		'validate_links'			=> array(true, 'Validate links'),
 		'header_activation'			=> 'Grouping',
 		'group_links'				=> array(true, 'Group automatically activated links (for displaying as a slideshow)'),
 		'group_post'				=> array(true, 'Group image links by Post (e.g. on pages with multiple posts)'),
@@ -75,6 +75,42 @@ class SLB_Lightbox extends SLB_Base {
 		'txt_numDisplaySeparator'	=> array('of', 'Image number separator (e.g. Image x <strong>of</strong> y)')
 	);
 	
+	var $options_config = array (
+		'groups' 	=> array (
+			'activation'	=> 'Activation',
+			'grouping'		=> 'Grouping',
+			'ui'			=> 'UI',
+			'labels'		=> 'Labels'
+		),
+		'options'	=> array (
+			'enabled'					=> array('label' => 'Enable Lightbox Functionality', 'default' => true, 'group' => 'activation'),
+			'enabled_home'				=> array('label' => 'Enable on Home page', 'default' => true, 'group' => 'activation'),
+			'enabled_post'				=> array('label' => 'Enable on Posts', 'default' => true, 'group' => 'activation'),
+			'enabled_page'				=> array('label' => 'Enable on Pages', 'default' => true, 'group' => 'activation'),
+			'enabled_archive'			=> array('label' => 'Enable on Archive Pages (tags, categories, etc.)', 'default' => true, 'group' => 'activation'),
+			'activate_links'			=> array('label' => 'Activate all image links in item content', 'default' => true, 'group' => 'activation'),
+			'validate_links'			=> array('label' => 'Validate links', 'default' => true, 'group' => 'activation'),
+			'group_links'				=> array('label' => 'Group automatically activated links (for displaying as a slideshow)', 'default' => true, 'group' => 'grouping'),
+			'group_post'				=> array('label' => 'Group image links by Post (e.g. on pages with multiple posts)', 'default' => true, 'group' => 'grouping'),
+			'theme'						=> array('label' => 'Theme', 'default' => 'default', 'group' => 'ui'),
+			'animate'					=> array('label' => 'Animate lightbox resizing', 'default' => true, 'group' => 'ui'),
+			'autostart'					=> array('label' => 'Automatically Start Slideshow', 'default' => true, 'group' => 'ui'),
+			'duration'					=> array('label' => 'Slide Duration (Seconds)', 'default' => 6, 'attr' => array('size' => 3, 'maxlength' => 3), 'group' => 'ui'),
+			'loop'						=> array('label' => 'Loop through images', 'default' => true, 'group' => 'ui'),
+			'overlay_opacity'			=> array('label' => 'Overlay Opacity (0 - 1)', 'default' => 0.8, 'attr' => array('size' => 3, 'maxlength' => 3), 'group' => 'ui'),
+			'enabled_caption'			=> array('label' => 'Enable caption', 'default' => true, 'group' => 'ui'),
+			'caption_src'				=> array('label' => 'Use image URI as caption when link title not set', 'default' => true, 'group' => 'ui'),
+			'txt_closeLink'				=> array('label' => 'Close link (for accessibility only, image used for button)', 'default' => 'close', 'group' => 'labels'),
+			'txt_loadingMsg'			=> array('label' => 'Loading indicator', 'default' => 'loading', 'group' => 'labels'),
+			'txt_nextLink'				=> array('label' => 'Next Image link', 'default' => 'next &raquo;', 'group' => 'labels'),
+			'txt_prevLink'				=> array('label' => 'Previous Image link', 'default' => '&laquo; prev', 'group' => 'labels'),
+			'txt_startSlideshow'		=> array('label' => 'Start Slideshow link', 'default' => 'start slideshow', 'group' => 'labels'),
+			'txt_stopSlideshow'			=> array('label' => 'Stop Slideshow link', 'default' => 'stop slideshow', 'group' => 'labels'),
+			'txt_numDisplayPrefix'		=> array('label' => 'Image number prefix (e.g. <strong>Image</strong> x of y)', 'default' => 'Image', 'group' => 'labels'),
+			'txt_numDisplaySeparator'	=> array('label' => 'Image number separator (e.g. Image x <strong>of</strong> y)', 'default' => 'of', 'group' => 'labels')
+		)
+	);
+	
 	/*-** Init **-*/
 	
 	function SLB_Lightbox() {
@@ -84,6 +120,8 @@ class SLB_Lightbox extends SLB_Base {
 	function __construct() {
 		parent::__construct();
 		$this->init();
+		
+		$this->options =& new SLB_Options($this->options_config);
 		
 		//Setup variables
 		$this->theme_default = $this->add_prefix($this->theme_default);
@@ -477,8 +515,8 @@ class SLB_Lightbox extends SLB_Base {
 	function enqueue_files() {
 		if ( ! $this->is_enabled() )
 			return;
-		wp_enqueue_script($this->add_prefix('lib'), $this->util->get_file_url('js/lib.js'), array('jquery'), $this->version);
-		wp_enqueue_style($this->add_prefix('style'), $this->get_theme_style(), array(), $this->version);
+		wp_enqueue_script($this->add_prefix('lib'), $this->util->get_file_url('js/lib.js'), array('jquery'), $this->util->get_plugin_version());
+		wp_enqueue_style($this->add_prefix('style'), $this->get_theme_style(), array(), $this->util->get_plugin_version());
 	}
 	
 	/**
