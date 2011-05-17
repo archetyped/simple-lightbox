@@ -1,6 +1,67 @@
 <?php
 require_once 'class.base.php';
 
+class SLB_Field {}
+class SLB_Field_Collection {}
+
+/**
+ * Option object
+ * @package Simple Lightbox
+ * @subpackage Options
+ * @author SM
+ */
+class SLB_Option extends SLB_Field {
+	
+	/* Init */
+	
+	function SLB_Option() {
+		$this->__construct();
+	}
+	
+	function __construct() {
+		parent::__construct();
+	}
+}
+
+/**
+ * Options collection
+ * @package Simple Lightbox
+ * @subpackage Options
+ * @author SM
+ * @uses SLB_Field_Collection
+ * @todo Create parent class
+ */
+class SLB_Options extends SLB_Field_Collection {
+	
+	/* Properties */
+	
+	var $groups = array();
+	
+	var $options = array();
+
+	/* Collection */
+	
+	function add_option($props, $group = '') {
+		
+	}
+	
+	/* Group */
+	
+	function add_group($id, $properties) {
+		
+	}
+	
+	function add_to_group($option, $group) {
+		
+	}
+	
+	function get_groups() {
+		
+	}
+	
+	
+}
+
 /**
  * Plugin options management class
  * 
@@ -9,7 +70,7 @@ require_once 'class.base.php';
  * @author Archetyped
  *
  */
-class SLB_Options extends SLB_Base {
+class SLB_Options_OLD extends SLB_Base {
 	/**
 	 * Name of option in DB
 	 * Prefixed during construction

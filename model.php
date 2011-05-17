@@ -1,6 +1,7 @@
 <?php 
 
 require_once 'includes/class.base.php';
+require_once 'includes/class.options.php';
 
 /**
  * Lightbox functionality class
@@ -121,7 +122,7 @@ class SLB_Lightbox extends SLB_Base {
 		parent::__construct();
 		$this->init();
 		
-		$this->options =& new SLB_Options($this->options_config);
+//		$this->options =& new SLB_Options($this->options_config);
 		
 		//Setup variables
 		$this->theme_default = $this->add_prefix($this->theme_default);
@@ -529,8 +530,8 @@ class SLB_Lightbox extends SLB_Base {
 			
 		$options = array();
 		$out = array();
-		$out['script_start'] = '<script type="text/javascript">(function($){$(document).ready(function(){';
-		$out['script_end'] = '})})(jQuery);</script>';
+		$out['script_start'] = '<script type="text/javascript">/* <![CDATA[ */(function($){$(document).ready(function(){';
+		$out['script_end'] = '})})(jQuery);/* ]]> */</script>';
 		$js_code = array();
 		//Activate links on page
 		if ( $this->get_option_value('activate_links') ) {
