@@ -1,5 +1,6 @@
 === Plugin Name ===
 Contributors: archetyped
+Donate link: http://archetyped.com/tools/simple-lightbox/#donate
 Tags: lightbox, gallery, photography, images, theme, template, style
 Requires at least: 3.0
 Tested up to: 3.1.2
@@ -52,7 +53,7 @@ No upgrade notices
 
 == Frequently Asked Questions ==
 
-Post your questions and comments on [Simple Lightbox's official page](http://archetyped.com/tools/simple-lightbox/)
+Post your questions and comments on [Simple Lightbox's beta release page](http://archetyped.com/lab/slb-1-5-5-beta/)
 
 == Screenshots ==
 

@@ -21,12 +21,6 @@ class SLB_Lightbox extends SLB_Base {
 	var $theme_default = 'default';
 	
 	/**
-	 * Options instance
-	 * @var SLB_Options
-	 */
-	var $options = null;
-	
-	/**
 	 * Page that plugin options are on
 	 * @var string
 	 */
@@ -83,34 +77,48 @@ class SLB_Lightbox extends SLB_Base {
 			'ui'			=> 'UI',
 			'labels'		=> 'Labels'
 		),
-		'options'	=> array (
-			'enabled'					=> array('label' => 'Enable Lightbox Functionality', 'default' => true, 'group' => 'activation'),
-			'enabled_home'				=> array('label' => 'Enable on Home page', 'default' => true, 'group' => 'activation'),
-			'enabled_post'				=> array('label' => 'Enable on Posts', 'default' => true, 'group' => 'activation'),
-			'enabled_page'				=> array('label' => 'Enable on Pages', 'default' => true, 'group' => 'activation'),
-			'enabled_archive'			=> array('label' => 'Enable on Archive Pages (tags, categories, etc.)', 'default' => true, 'group' => 'activation'),
-			'activate_links'			=> array('label' => 'Activate all image links in item content', 'default' => true, 'group' => 'activation'),
-			'validate_links'			=> array('label' => 'Validate links', 'default' => true, 'group' => 'activation'),
-			'group_links'				=> array('label' => 'Group automatically activated links (for displaying as a slideshow)', 'default' => true, 'group' => 'grouping'),
-			'group_post'				=> array('label' => 'Group image links by Post (e.g. on pages with multiple posts)', 'default' => true, 'group' => 'grouping'),
-			'theme'						=> array('label' => 'Theme', 'default' => 'default', 'group' => 'ui'),
-			'animate'					=> array('label' => 'Animate lightbox resizing', 'default' => true, 'group' => 'ui'),
-			'autostart'					=> array('label' => 'Automatically Start Slideshow', 'default' => true, 'group' => 'ui'),
-			'duration'					=> array('label' => 'Slide Duration (Seconds)', 'default' => 6, 'attr' => array('size' => 3, 'maxlength' => 3), 'group' => 'ui'),
-			'loop'						=> array('label' => 'Loop through images', 'default' => true, 'group' => 'ui'),
-			'overlay_opacity'			=> array('label' => 'Overlay Opacity (0 - 1)', 'default' => 0.8, 'attr' => array('size' => 3, 'maxlength' => 3), 'group' => 'ui'),
-			'enabled_caption'			=> array('label' => 'Enable caption', 'default' => true, 'group' => 'ui'),
-			'caption_src'				=> array('label' => 'Use image URI as caption when link title not set', 'default' => true, 'group' => 'ui'),
-			'txt_closeLink'				=> array('label' => 'Close link (for accessibility only, image used for button)', 'default' => 'close', 'group' => 'labels'),
-			'txt_loadingMsg'			=> array('label' => 'Loading indicator', 'default' => 'loading', 'group' => 'labels'),
-			'txt_nextLink'				=> array('label' => 'Next Image link', 'default' => 'next &raquo;', 'group' => 'labels'),
-			'txt_prevLink'				=> array('label' => 'Previous Image link', 'default' => '&laquo; prev', 'group' => 'labels'),
-			'txt_startSlideshow'		=> array('label' => 'Start Slideshow link', 'default' => 'start slideshow', 'group' => 'labels'),
-			'txt_stopSlideshow'			=> array('label' => 'Stop Slideshow link', 'default' => 'stop slideshow', 'group' => 'labels'),
-			'txt_numDisplayPrefix'		=> array('label' => 'Image number prefix (e.g. <strong>Image</strong> x of y)', 'default' => 'Image', 'group' => 'labels'),
-			'txt_numDisplaySeparator'	=> array('label' => 'Image number separator (e.g. Image x <strong>of</strong> y)', 'default' => 'of', 'group' => 'labels')
+		'items'	=> array (
+			'enabled'					=> array('title' => 'Enable Lightbox Functionality', 'default' => true, 'group' => 'activation'),
+			'enabled_home'				=> array('title' => 'Enable on Home page', 'default' => true, 'group' => 'activation'),
+			'enabled_post'				=> array('title' => 'Enable on Posts', 'default' => true, 'group' => 'activation'),
+			'enabled_page'				=> array('title' => 'Enable on Pages', 'default' => true, 'group' => 'activation'),
+			'enabled_archive'			=> array('title' => 'Enable on Archive Pages (tags, categories, etc.)', 'default' => true, 'group' => 'activation'),
+			'activate_links'			=> array('title' => 'Activate all image links in item content', 'default' => true, 'group' => 'activation'),
+			'validate_links'			=> array('title' => 'Validate links', 'default' => false, 'group' => 'activation'),
+			'group_links'				=> array('title' => 'Group automatically activated links (for displaying as a slideshow)', 'default' => true, 'group' => 'grouping'),
+			'group_post'				=> array('title' => 'Group image links by Post (e.g. on pages with multiple posts)', 'default' => true, 'group' => 'grouping'),
+			'theme'						=> array('title' => 'Theme', 'default' => 'default', 'group' => 'ui', 'parent' => 'option_theme'),
+			'animate'					=> array('title' => 'Animate lightbox resizing', 'default' => true, 'group' => 'ui'),
+			'autostart'					=> array('title' => 'Automatically Start Slideshow', 'default' => true, 'group' => 'ui'),
+			'duration'					=> array('title' => 'Slide Duration (Seconds)', 'default' => 6, 'attr' => array('size' => 3, 'maxlength' => 3), 'group' => 'ui'),
+			'loop'						=> array('title' => 'Loop through images', 'default' => true, 'group' => 'ui'),
+			'overlay_opacity'			=> array('title' => 'Overlay Opacity (0 - 1)', 'default' => 0.8, 'attr' => array('size' => 3, 'maxlength' => 3), 'group' => 'ui'),
+			'enabled_caption'			=> array('title' => 'Enable caption', 'default' => true, 'group' => 'ui'),
+			'caption_src'				=> array('title' => 'Use image URI as caption when link title not set', 'default' => true, 'group' => 'ui'),
+			'txt_closeLink'				=> array('title' => 'Close link (for accessibility only, image used for button)', 'default' => 'close', 'group' => 'labels'),
+			'txt_loadingMsg'			=> array('title' => 'Loading indicator', 'default' => 'loading', 'group' => 'labels'),
+			'txt_nextLink'				=> array('title' => 'Next Image link', 'default' => 'next &raquo;', 'group' => 'labels'),
+			'txt_prevLink'				=> array('title' => 'Previous Image link', 'default' => '&laquo; prev', 'group' => 'labels'),
+			'txt_startSlideshow'		=> array('title' => 'Start Slideshow link', 'default' => 'start slideshow', 'group' => 'labels'),
+			'txt_stopSlideshow'			=> array('title' => 'Stop Slideshow link', 'default' => 'stop slideshow', 'group' => 'labels'),
+			'txt_numDisplayPrefix'		=> array('title' => 'Image number prefix (e.g. <strong>Image</strong> x of y)', 'default' => 'Image', 'group' => 'labels'),
+			'txt_numDisplaySeparator'	=> array('title' => 'Image number separator (e.g. Image x <strong>of</strong> y)', 'default' => 'of', 'group' => 'labels')
 		)
 	);
+	
+	/* Instance members */
+	
+	/**
+	 * Options instance
+	 * @var SLB_Options
+	 */
+	var $options = null;
+	
+	/**
+	 * Fields
+	 * @var SLB_Fields
+	 */
+	var $fields = null;
 	
 	/*-** Init **-*/
 	
@@ -121,12 +129,17 @@ class SLB_Lightbox extends SLB_Base {
 	function __construct() {
 		parent::__construct();
 		$this->init();
-		
-//		$this->options =& new SLB_Options($this->options_config);
-		
+
 		//Setup variables
 		$this->theme_default = $this->add_prefix($this->theme_default);
 		$this->options_default['theme'][0] = $this->theme_default;
+		$opt_theme =& $this->options_config['items']['theme'];
+		$opt_theme['default'] = $this->theme_default;
+		$opt_theme['options'] = $this->m('get_theme_options');
+		
+		//Init objects
+		$this->options =& new SLB_Options('options', $this->options_config);
+		$this->fields =& new SLB_Fields();
 	}
 	
 	function register_hooks() {
@@ -152,7 +165,7 @@ class SLB_Lightbox extends SLB_Base {
 		add_filter('the_content', $this->m('activate_post_links'), 99);
 		
 		/* Themes */
-		$this->add_action('init_themes', $this->m('init_default_themes'));
+		$this->util->add_action('init_themes', $this->m('init_default_themes'));
 	}
 	
 	function activate() {
@@ -314,7 +327,7 @@ class SLB_Lightbox extends SLB_Base {
 		static $fetched = false;
 		if ( !$fetched ) {
 			$this->themes = array();
-			$this->do_action('init_themes');
+			$this->util->do_action('init_themes');
 			$fetched = true;
 		}
 		
@@ -655,6 +668,7 @@ class SLB_Lightbox extends SLB_Base {
 	/**
 	 * Adds settings section for Lightbox functionality
 	 * Section is added to Settings > Media Admin menu
+	 * @todo Move appropriate code to options class
 	 */
 	function admin_settings() {
 		$page = $this->options_admin_page;
@@ -668,30 +682,13 @@ class SLB_Lightbox extends SLB_Base {
 		$section = $this->get_prefix();
 		//Section
 		add_settings_section($section, '<span id="' . $this->admin_get_settings_section() . '">' . __('Lightbox Settings') . '</span>', $this->m('admin_section'), $page);
-		//Fields
-		foreach ($this->options_default as $key => $defaults) {
-			$id = $this->add_prefix($key);
-			$func = 'admin_field_' . $key;
-			$label = ( isset($defaults[1]) ) ? $defaults[1] : '';
-			$callback = ( method_exists($this, $func) ) ? $this->m($func) : $this->m('admin_field_default');
-			$args = array('opt' => $key);
-			//Check if option is a section header
-			if ( ! is_array($defaults) ) {
-				$label = '<h4 class="subhead">' . $defaults . '</h4>';
-				$callback = $this->m('admin_field_header');
-			} elseif ( is_null(get_option($id, null)) ) {
-				//Add option to DB if not yet set
-				$args['label_for'] = $id;
-				update_option($id, htmlentities2($defaults[0]));
-			}
-			add_settings_field($id, __($label), $callback, $page, $section, $args);
-			register_setting($page, $id);
-		}
-	}
+		//Register settings container
+		register_setting($page, $this->add_prefix('options'), $this->options->m('validate'));
+ 	}
 	
 	function admin_enqueue_files() {
 		if ( is_admin() && basename($_SERVER['SCRIPT_NAME']) == $this->options_admin_page ) {
-			wp_enqueue_style($this->add_prefix('admin_styles'), $this->util->get_file_url('css/admin.css'));
+			wp_enqueue_style($this->add_prefix('admin'), $this->util->get_file_url('css/admin.css'));
 		}
 	}
 	
@@ -706,14 +703,17 @@ class SLB_Lightbox extends SLB_Base {
 	/**
 	 * Placeholder function for lightbox admin settings
 	 * Required because setting init function requires a callback
+	 * @todo Evaluate for moving to options class
 	 */
-	function admin_section() { }
+	function admin_section() {
+		$this->options->build();		
+	}
 	
 	/**
 	 * General field builder
 	 * @param string $option Option name to build field for
 	 * @param string $format Field markup (using sprintf specifiers)
-	 * @param string $type (optional) Type of field being build (e.g. checkbox, text, etc.)
+	 * @param string $type (optional) Type of field being built (e.g. checkbox, text, etc.)
 	 * Specifiers:
 	 * 1. Field ID
 	 * 2. Field Value
@@ -769,6 +769,27 @@ class SLB_Lightbox extends SLB_Base {
 	}
 	
 	/* Custom fields */
+	
+	function get_theme_options() {
+		//Get themes
+		$themes = $this->get_themes();
+		
+		//Pop out default theme
+		$theme_default = $themes[$this->theme_default];
+		unset($themes[$this->theme_default]);
+		
+		//Sort themes by title
+		uasort($themes, create_function('$a,$b', 'return strcmp($a[\'title\'], $b[\'title\']);'));
+		
+		//Insert default theme at top of array
+		$themes = array($this->theme_default => $theme_default) + $themes;
+		
+		//Build options
+		foreach ( $themes as $name => $props ) {
+			$themes[$name] = $props['title'];
+		}
+		return $themes;
+	}
 	
 	/**
 	 * Builds field for theme selection

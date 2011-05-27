@@ -1,8 +1,6 @@
 <?php
 require_once 'class.base.php';
-
-class SLB_Field {}
-class SLB_Field_Collection {}
+require_once 'class.fields.php';
 
 /**
  * Option object
@@ -11,15 +9,86 @@ class SLB_Field_Collection {}
  * @author SM
  */
 class SLB_Option extends SLB_Field {
+
+	/**
+	 * Child mapping
+	 * @see SLB_Field_Base::map
+	 * @var array
+	 */
+	var $map = array(
+		'default'	=> 'data',
+		'attr'		=> 'properties'
+	);
 	
 	/* Init */
 	
-	function SLB_Option() {
-		$this->__construct();
+	function SLB_Option($id, $title = '', $default = '') {
+		$args = func_get_args();
+		call_user_func_array(array(&$this, '__construct'), $args);
 	}
 	
-	function __construct() {
-		parent::__construct();
+	/**
+	 * @see SLB_Field::__construct()
+	 * @uses parent::__construct() to initialize instance
+	 * @param $id
+	 * @param $title
+	 * @param $default
+	 */
+	function __construct($id, $title = '', $default = '') {
+		//Normalize properties
+		$args = func_get_args();
+		$props = SLB_Utilities::func_get_options($args);
+		$props = wp_parse_args($props, array ('id' => $id, 'title' => $title, 'default' => $default));
+		//Send to parent constructor
+		parent::__construct($props);
+	}
+	
+	/* Getters/Setters */
+	
+	/**
+	 * Retrieve default value for option
+	 * @return mixed Default option value
+	 */
+	function get_default($context = '') {
+		return $this->get_data($context, false);	
+	}
+	
+	/**
+	 * Sets parent based on default value
+	 */
+	function set_parent($parent = null) {
+		$p = $this->get_parent();
+		if ( empty($parent) && empty($p) ) {
+			$parent = 'text';
+			$d = $this->get_default();
+			if ( is_bool($d) )
+				$parent = 'checkbox';
+			$parent = 'option_' . $parent;
+		} elseif ( !empty($p) && !is_object($p) ) {
+			$parent =& $p;
+		}
+		parent::set_parent($parent);
+	}
+	
+	/* Formatting */
+	
+	/**
+	 * Format data as string for browser output
+	 * @see SLB_Field_Base::format()
+	 * @param mixed $value Data to format
+	 * @param string $context (optional) Current context
+	 * @return string Formatted value
+	 */
+	function format_display($value, $context = '') {
+		if ( !is_string($value) ) {
+			if ( is_bool($value) )
+				$value = ( $value ) ? 'Enabled' : 'Disabled';
+			elseif ( is_null($value) )
+				$value = '';
+			else
+				$value = strval($value);
+		}
+		return htmlentities($value);
 	}
 }
 
@@ -29,513 +98,212 @@ class SLB_Option extends SLB_Field {
  * @subpackage Options
  * @author SM
  * @uses SLB_Field_Collection
- * @todo Create parent class
  */
 class SLB_Options extends SLB_Field_Collection {
 	
 	/* Properties */
+
+	var $item_type = 'SLB_Option';
 	
-	var $groups = array();
+	/* Init */
 	
-	var $options = array();
+	function SLB_Options($id, $props = array()) {
+		$args = func_get_args();
+		call_user_func_array(array(&$this, '__construct'), $args);
+	}
+	
+	function __construct($id, $props = array()) {
+		$args = func_get_args();
+		call_user_func_array(array(parent, '__construct'), $args);
+	}
+	
+	function register_hooks() {
+		parent::register_hooks();
+		//Register fields
+		add_action($this->add_prefix('register_fields'), $this->m('register_fields'));
+		//Set option parents
+		add_action($this->add_prefix('fields_registered'), $this->m('set_parents'));
+	}
+	
+	/* Option setup */
+	
+	/**
+	 * Register option-specific fields
+	 * @param SLB_Fields $fields Reference to global fields object
+	 * @return void
+	 */
+	function register_fields(&$fields) {
+		//Layouts
+		$layout_label = '<label for="{field_id}" class="title block">{label}</label>';
+		$label_ref = '{label ref_base="layout"}';
+		$field_pre = '<div class="input block">';
+		$field_post = '</div>';
+		$opt_pre = '<div class="' . $this->add_prefix('option_item') . '">';
+		$opt_post = '</div>';
+		$layout_form = '<{form_attr ref_base="layout"} /> (Default: {data context="display" top="0"})'; 
+		
+		//Text input
+		$otxt = new SLB_Field_Type('option_text', 'text');
+		$otxt->set_property('class', '{inherit} code');
+		$otxt->set_property('size', null);
+		$otxt->set_property('value', '{data context="form"}');
+		$otxt->set_layout('label', $layout_label);
+		$otxt->set_layout('form', $opt_pre . $label_ref . $field_pre . $layout_form . $field_post . $opt_post);
+		$fields->add($otxt);
+		
+		//Checkbox
+		$ocb = new SLB_Field_Type('option_checkbox', 'checkbox');
+		$ocb->set_layout('label', $layout_label);
+		$ocb->set_layout('form', $opt_pre . $label_ref . $field_pre . $layout_form . $field_post . $opt_post);
+		$fields->add($ocb);
+		
+		//Theme
+		$othm = new SLB_Field_Type('option_theme', 'select');
+		$othm->set_layout('label', $layout_label);
+		$othm->set_layout('form_start', $field_pre . '{inherit}');
+		$othm->set_layout('form_end', '{inherit}' . $field_post);
+		$othm->set_layout('form', $opt_pre . '{inherit}' . $opt_post);
+		$fields->add($othm);
+	}
+	
+	/**
+	 * Set parent field types for options
+	 * Parent only set for Admin pages
+	 * @uses SLB_Option::set_parent() to set parent field for each option item
+	 * @uses is_admin() to determine if current request is admin page
+	 * @param array $fields Default field types
+	 * @return void
+	 */
+	function set_parents(&$fields) {
+		if ( !is_admin() )
+			return false;
+		$items =& $this->get_items();
+		foreach ( $items as $opt ) {
+			$opt->set_parent();
+		}
+	}
+	
+	/* Processing */
+	
+	function validate($values) {
+		if ( is_array($values) ) {
+			//Get option group being validated
+			$group = '';
+			/*
+			$filter = 'sanitize_option_';
+			$option = str_replace($filter, '', current_filter());
+			if ( $this->get_id() == $this->remove_prefix($option) ) {
+				$group = '';
+			} else {
+				$group = substr($option, strlen($this->add_prefix($this->get_id())) + 1); 
+			}
+			*/
+			//Format data based on option type (bool, string, etc.)
+			foreach ( $values as $id => $val ) {
+				//Get default
+				$item = $this->get($id);
+				$d = $item->get_default();
+				if ( is_bool($d) && !empty($val) )
+					$values[$id] = true;
+			}
+			//Merge in additional options that are not in post data
+			//Missing options (e.g. disabled checkboxes) & defaults
+			$items =& $this->get_items();
+			foreach ( $items as $id => $opt ) {
+				if ( !isset($values[$id]) ) {
+					if ( is_bool($opt->get_default()) )
+						$values[$id] = false;
+					else
+						$values[$id] = $opt->get_default();
+				}
+			}
+		}
+		
+		//Return value
+		return $values;
+	}
+	
+	/* Data */
+	
+	/**
+	 * Retrieve options from database
+	 * @return array Options data
+	 */
+	function fetch_data($sanitize = true) {
+		$data = get_option($this->get_key(), null);
+		if ( $sanitize && is_array($data) ) {
+			//Sanitize loaded data based on default values
+			foreach ( $data as $id => $val ) {
+				if ( $this->has($id) ) {
+					$opt = $this->get($id);
+					if ( is_bool($opt->get_default()) )
+						$data[$id] = !!$val;
+				} else {
+					unset($data[$id]);
+				}
+			}
+		}
+		return $data;
+	}
+	
+	/**
+	 * Retrieves option data for collection
+	 * @see SLB_Field_Collection::load_data()
+	 */
+	function load_data() {
+		static $fetched = false;
+		if ( !$fetched ) {
+			$fetched = true;
+			//Retrieve data
+			$this->data = $this->fetch_data();
+		}
+	}
 
 	/* Collection */
 	
-	function add_option($props, $group = '') {
+	/**
+	 * Build key for saving/retrieving data to options table
+	 * @return string Key
+	 */
+	function get_key() {
+		return $this->add_prefix($this->get_id());
+	}
+	
+	/**
+	 * Add option to collection
+	 * @uses SLB_Field_Collection::add() to add item
+	 * @param string $id Unique item ID
+	 * @param string $title Item title
+	 * @param mixed $default Default value
+	 * @param string $group (optional) Group ID to add item to
+	 * @return SLB_Option Option instance reference
+	 */
+	function &add($id, $title = '', $default = '', $group = null) {
+		//Build properties array
+		$properties = $this->make_properties($title, array('title' => $title, 'group' => $group, 'default' => $default));
 		
-	}
-	
-	/* Group */
-	
-	function add_group($id, $properties) {
+		//Create item
+		/**
+		 * @var SLB_Option
+		 */
+		$item =& parent::add($id, $properties);
 		
-	}
-	
-	function add_to_group($option, $group) {
-		
-	}
-	
-	function get_groups() {
-		
-	}
-	
-	
-}
-
-/**
- * Plugin options management class
- * 
- * @package Simple Lightbox
- * @subpackage Options
- * @author Archetyped
- *
- */
-class SLB_Options_OLD extends SLB_Base {
-	/**
-	 * Name of option in DB
-	 * Prefixed during construction
-	 * @var string
-	 */
-	var $name = 'options';
-	
-	/**
-	 * Groups for organizing options
-	 * @var unknown_type
-	 */
-	var $groups = array();
-	
-	/**
-	 * Key used to store configuration options
-	 * @var string
-	 */
-	var $key_config = 'config';
-	
-	/**
-	 * Key for option value property
-	 * @var string
-	 */
-	var $config_value = 'value';
-	
-	/**
-	 * Key for option default value property
-	 * @var string
-	 */
-	var $config_default = 'default';
-	
-	/**
-	 * Key for option label property
-	 * @var string
-	 */
-	var $config_label = 'label';
-	
-	/**
-	 * Key for option description property
-	 * @var string
-	 */
-	var $config_desc = 'desc';
-	
-	/**
-	 * Default config data (Set at initialization)
-	 * @var array
-	 */
-	var $config_data_default = array();
-	
-	/*-** Init **-*/
-
-	/**
-	 * Legacy constructor
-	 * @param $config @see __construct
-	 */
-	function SLB_Options($config = null) {
-		$this->__construct($config);
-	}
-	
-	/**
-	 * Constructor
-	 * @param array $config Default configuration options
-	 */
-	function __construct($config = null) {
-		parent::__construct();
-		$this->name = $this->add_prefix($this->name);
-//		$this->set_config(array());
-		//Set default config data
-		if ( is_array($config) ) {
-			//Set up groups
-			if ( isset($config['groups']) ) {
-				$this->add_groups($config['groups']);
-			}
-			if ( isset($config['options']) )
-				$this->add_options($config['options']);
-			$this->config_data_default = $config;
-		}
-	}
-	
-	/*-** Methods **-*/
-	
-	/* Getters/Setters */
-	
-	/**
-	 * Retrieve configuration option
-	 * @param string Option name
-	 * @param mixed Default value
-	 * @return mixed Specified option's data
-	 */
-	function get($key = null, $default = null) {
-		if ( $this->exists($key) ) {
-			if ( $this->has_value($key) ) {
-				return $this->get_config_item($key, $this->config_value);
-			}
-			return $this->get_default($key);
-		}
-		return $default;
-	}
-	
-	/**
-	 * Retrieve default option value
-	 * @param $key Option name
-	 * @return mixed Default value or FALSE if option does not exist
-	 */
-	function get_default($key) {
-		if ( $this->exists($key) ) {
-			return $this->get_config_item($key, $this->config_default);
-		}
-		return false;
-	}
-	
-	/**
-	 * Set configuration option data
-	 * @param $key Option to set data for
-	 * @param $data Option data
-	 */
-	function set($key, $data = null, $label = null, $desc = null) {
-		$prop = ( $this->exists($key) ) ? $this->config_value : $this->config_default;
-		$data = array($prop => $data, $this->config_label => $label, $this->config_desc => $desc);
-		$this->set_config_item($key, $data); 
-	}
-	
-	/**
-	 * Checks if option has a saved value
-	 * @param string $key Option name
-	 * @return bool TRUE if option has a saved value
-	 */
-	function has_value($key) {
-		return $this->exists($key, $this->config_value);
-	}
-	
-	/**
-	 * Check if config option exists
-	 * @param $key Option name
-	 * @return bool TRUE if option exists, FALSE otherwise
-	 */
-	function exists($key, $prop = false) {
-		$ret = false;
-		$config = $this->get_config();
-		$key = strval($key);
-		$ret = ( isset($config[$key]) );
-		if ( $ret && is_string($prop) && !isset($config[$key][$prop]) )
-			$ret = false;
-		return $ret;
-	}
-	
-	/* Groups */
-	
-	/**
-	 * Add multiple groups
-	 * @uses add_group()
-	 * @param array $groups Groups to add
-	 * @return void
-	 */
-	function add_groups($groups) {
-		if ( is_array($groups) ) {
-			foreach ( $groups as $id => $props ) {
-				$this->add_group($id, $props);
-			}
-		}
-	}
-	
-	/**
-	 * Add group to object
-	 * @uses $groups
-	 * @param string $id Unique group ID
-	 * @param array $props Group properties
-	 * @return void
-	 */
-	function add_group($id, $props) {
-		if ( !is_array($this->groups) )
-			$this->groups = array();
-		$this->groups[$id] = $props;
-	}
-	
-	/* Configuration Options */
-	
-	/**
-	 * Add multiple option at once
-	 * @uses add_option()
-	 * @param array $options Options to add
-	 * @return void
-	 */
-	function add_options($options) {
-		if ( is_array($options) ) {
-			foreach ( $options as $id => $props )
-				$this->add_option($id, $props);
-		}
-	}
-	
-	/**
-	 * Add option to object
-	 * @param string $id Unique option ID
-	 * @param array $props Option properties
-	 * @return void
-	 */
-	function add_option($id, $props = array()) {
-		
-	}
-	
-	/**
-	 * Create configuration option item
-	 * Associative array with keys for option properties
-	 * default: Default value
-	 * label: Option label
-	 * desc: Description
-	 * @param $args
-	 * @return array Normalized option item
-	 */
-	function make_config_item($args = null) {
-		$default_args = array($this->config_default => null, $this->config_label => '', $this->config_desc => '');
-		$args = wp_parse_args($args, $default_args);
-		return $args;
-	}
-	
-	/**
-	 * Retrieve option item
-	 * @see make_config_item
-	 * @param $key Option name
-	 * @return mixed Option item or value of specified property
-	 */
-	function get_config_item($key, $prop = false) {
-		$config = $this->get_config();
-		$ret = null;
-		
-		if ( is_string($key) && ( isset($config[$key]) || isset($this->config_data_default[$key]) ) ) {
-			$val = ( isset($config[$key]) ) ? $config[$key] : array();
-			$def = ( isset($this->config_data_default[$key]) ) ? $this->config_data_default[$key] : array();
-			$ret = wp_parse_args($val, $def);
-		}
-		
-		$ret = $this->make_config_item($ret);
-		
-		//Retrieve option property (if specified and available)
-		if ( !empty($prop) && isset($ret[$prop]) ) {
-			$ret = $ret[$prop];
-		}
-		
-		return $ret;
-	}
-	
-	/**
-	 * Save option item to DB
-	 * @param string $key Option name
-	 * @param array $args Option data
-	 */
-	function set_config_item($key, $args) {
-		//Validate config data (must contain value)
-		if ( !isset($args[$this->config_value]) )
-			return false;
-		//Remove default option properties
-		if ( count($args) > 1 )
-			$args = $this->remove_config_default($args);
-		//Save config data
-		$config = $this->get_config_saved();
-		$config[$key] = $args;
-		$this->set_config($config, false);
-	}
-	
-	/**
-	 * Remove default properties from option item 
-	 * Useful for stripping default data before saving option data
-	 * @param array $item Option data
-	 * @return array Associative array of user-defined option data
-	 */
-	function remove_config_default($item) {
-		$props_save = array_diff(array_keys($item), array_keys($this->make_config_item()));
-		$ret = array();
-		foreach ( $props_save as $prop ) {
-			$ret[$prop] = $item[$prop];
-		}
-		return $ret;
-	}
-	
-	/**
-	 * Retrieve configuration options
-	 * @return array Associative array of configuration options
-	 */
-	function get_config() {
-			return $this->util->array_merge_recursive_distinct($this->config_data_default, $this->get_config_saved());
-	}
-	
-	/**
-	 * Retrieve saved option data
-	 * Values only
-	 * @return array Saved option data
-	 */
-	function get_config_saved() {
-		return $this->get_data($this->key_config, array());
-	}
-	
-	/**
-	 * Save configuration options to DB
-	 * Default mode is direct overwrite 
-	 * @param array $config Configuration options
-	 * @param bool $clean (optional) Whether to strip all options of default properties
-	 */
-	function set_config($config = array(), $clean = true) {
-		//Validate
-		if ( !is_array($config) )
-			$config = array();
-		//Strip default properties from array items
-		if ( !empty($config) && $clean ) {
-			$config = array_map($this->m('remove_config_default'), $config);
-		} 
-		//Skip if data is unchanged
-		if ( $config == $this->get_config_saved() )
-			return false;
-		//Save to DB
-		$this->set_data($this->key_config, $config);
-	}
-	
-	/* Low-level Data Handling */
-	
-	/**
-	 * Retrieve arbitrary data saved to options instance
-	 * @param string $key Data key
-	 * @param mixed $default Default value to return if key does not exist
-	 * @return mixed Specified data
-	 */
-	function get_data($key = null, $default = null) {
-		$opts = get_option($this->name, false);
-		if ( is_string($key) && is_array($opts) ) {
-			return ( isset($opts[$key]) ) ? $opts[$key] : $default;
-		}
-		if ( !is_array($opts) ) {
-			$opts = array();
-			update_option($this->name, $opts);
-		}
-		return $opts;
-	}
-	
-	/**
-	 * Set arbitrary data in options instance
-	 * @param string $key Data key
-	 * @param mixed $data Data to set
-	 */
-	function set_data($key = null, $data = null) {
-		$opts = $this->get_data();
-		//Set data
-		if ( func_num_args() == 1 && is_array($key) ) {
-			$opts = $key;
-		}
-		elseif ( func_num_args() > 1 && is_string($key) ) {
-			$opts[$key] = $data;
-		}
-		//Save to db
-		update_option($this->name, $opts);
+		return $item;
 	}
 	
 	/* Output */
 	
-	/**
-	 * Output form for configuration options
-	 */
-	function form() {
-		$opts = array();
-		//Build form elements for valid config options
-		foreach ( $this->get_config() as $key => $data ) {
-			if ( !$this->is_form_field($key) )
-				continue;
-			$id = $this->get_form_id($key);
-			$opts[] = '<tr valign="top"><th scope="row"><label for="' . $id . '">' . $data[$this->config_label] . '</label></th><td>' . $this->get_form_element($key, $data) . '</td></tr>';
-		}
-		//Build form 
-		if ( !empty($opts) ) {
-			array_unshift($opts, '<form method="post" action="' . esc_attr($_SERVER['REQUEST_URI']) . '">', '<table class="form-table">');
-			$opts[] = '</table>';
-			$opts[] = '<p class="submit"><input class="button-primary" type="submit" value="' . __('Save Changes') . '" name="' . $this->add_prefix('submit') . '" /></p>';
-			$opts[] = '</form>';
-		}
-		echo implode('', $opts);
-	}
-	
-	/**
-	 * Handle form submission
-	 */
-	function handle_form() {
-		if ( isset($_POST[$this->add_prefix('submit')]) ) {
-			$postdata = ( isset($_POST[$this->add_prefix($this->key_config)]) ) ? $_POST[$this->add_prefix($this->key_config)] : array();
-			//Iterate through fields and set option values
-			$config = $this->get_config();
-			foreach ( $config as $key => $data ) {
-				//Skip non form items
-				if ( !$this->is_form_field($key) )
-					continue;
-				//Handle different option types (based on default values)
-				$val_default = $this->get_default($key);
-				//Boolean
-				if ( is_bool($val_default) ) {
-					$config[$key][$this->config_value] = ( isset($postdata[$key]) ) ? true : false;
-				}
-			 	//Default: Set form value
-			 	else {
-			 		if ( isset($postdata[$key]) )
-			 			$config[$key][$this->config_value] = $postdata[$key];
-			 	}
-			}
-			$this->set_config($config);
-		}
-	}
-	
-	/**
-	 * Check whether config option is intended to be manipulated via a form
-	 * @param $key Option name
-	 * @return bool TRUE if option is intended for forms
-	 */
-	function is_form_field($key) {
-		$data = $this->get_config_item($key);
-		return ( !empty($data[$this->config_label]) );
-	}
-	
-	/**
-	 * Generate valid form ID for option 
-	 * @param string $key Option name
-	 * @return string form ID for option
-	 */
-	function get_form_id($key) {
-		static $lkey = '';
-		static $id = '';
-		if ( $key != $lkey ) {
-			$id = $this->add_prefix(array($this->key_config, $key));	
-		}
-		return $id;
-	}
-	
-	/**
-	 * Generate valid form name for option
-	 * ID will be part of 'config' Post data array when submitted
-	 * @param $key Option name
-	 * @return string Form name
-	 */
-	function get_form_name($key) {
-		return $this->add_prefix($this->key_config) . '[' . $key . ']';
-	}
-	
-	/**
-	 * Field builder for config options
-	 * @param string $key Option name
-	 * @param array $data(optional) Option data
-	 * @return string Form element (HTML)
-	 */
-	function get_form_element($key, $data = null) {
-		$ret = 'Element';
-		if ( !is_array($data) || empty($data) )
-			$data = $this->get_config_item($key);
-		$attr = array('value' => $this->get($key), 'name' => $this->get_form_name($key));
-		$attr['id'] = $this->get_form_id($key);
+	function build_group($group) {
+		if ( !$this->group_exists($group) )
+			return false;
+		$group =& $this->get_group($group);
+		//Stop processing if group contains no items
+		if ( !count($this->get_items($group)) )
+			return false;
 		
-		//Determine field type
-		$type_default = 'text';
-		if ( is_bool($attr['value']) ) {
-			$attr['type'] = 'checkbox';
-		} else {
-			$attr['type'] =  $type_default;
-		}
-		
-		//Adjust type and value formatting based on type
-		switch ( $attr['type'] ) {
-			case 'checkbox' :
-				if ( $attr['value'] )
-					$attr['checked'] = 'checked';
-				break;
-		}
-		$ret = $this->util->build_html_element(array('tag' => 'input', 'wrap' => false, 'attributes' => $attr));
-		return $ret;
+		//Group header
+		echo '<h4 class="subhead">' . $group->title . '</h4>';
+		//Build items
+		echo $this->build_items($group);
 	}
 }
