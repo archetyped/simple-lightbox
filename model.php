@@ -1,6 +1,7 @@
 <?php 
 
 require_once 'includes/class.base.php';
+require_once 'includes/class.fields.php';
 require_once 'includes/class.options.php';
 
 /**
@@ -33,43 +34,9 @@ class SLB_Lightbox extends SLB_Base {
 	var $options_admin_form = 'options.php';
 	
 	/**
-	 * Default options
-	 * 0: Value
-	 * 1: Label
+	 * Options Configuration
 	 * @var array
 	 */
-	var $options_default = array (
-		'header_enabled'			=> 'Activation',
-		'enabled'					=> array(true, 'Enable Lightbox Functionality'),
-		'enabled_home'				=> array(true, 'Enable on Home page'),
-		'enabled_post'				=> array(true, 'Enable on Posts'),
-		'enabled_page'				=> array(true, 'Enable on Pages'),				
-		'enabled_archive'			=> array(true, 'Enable on Archive Pages (tags, categories, etc.)'),
-		'activate_links'			=> array(true, 'Activate all image links in item content'),
-		'validate_links'			=> array(true, 'Validate links'),
-		'header_activation'			=> 'Grouping',
-		'group_links'				=> array(true, 'Group automatically activated links (for displaying as a slideshow)'),
-		'group_post'				=> array(true, 'Group image links by Post (e.g. on pages with multiple posts)'),
-		'header_ui'					=> 'UI',
-		'theme'						=> array('default', 'Theme'),
-		'animate'					=> array(true, 'Animate lightbox resizing'),
-		'autostart'					=> array(true, 'Automatically Start Slideshow'),
-		'duration'					=> array(6, 'Slide Duration (Seconds)', array('size' => 3, 'maxlength' => 3)),
-		'loop'						=> array(true, 'Loop through images'),
-		'overlay_opacity'			=> array(0.8, 'Overlay Opacity (0 - 1)', array('size' => 3, 'maxlength' => 3)),
-		'enabled_caption'			=> array(true, 'Enable caption'),
-		'caption_src'				=> array(true, 'Use image URI as caption when link title not set'),
-		'header_strings'			=> 'Labels',
-		'txt_closeLink'				=> array('close', 'Close link (for accessibility only, image used for button)'),
-		'txt_loadingMsg'			=> array('loading', 'Loading indicator'),
-		'txt_nextLink'				=> array('next &raquo;', 'Next Image link'),
-		'txt_prevLink'				=> array('&laquo; prev', 'Previous Image link'),
-		'txt_startSlideshow'		=> array('start slideshow', 'Start Slideshow link'),
-		'txt_stopSlideshow'			=> array('stop slideshow', 'Stop Slideshow link'),
-		'txt_numDisplayPrefix'		=> array('Image', 'Image number prefix (e.g. <strong>Image</strong> x of y)'),
-		'txt_numDisplaySeparator'	=> array('of', 'Image number separator (e.g. Image x <strong>of</strong> y)')
-	);
-	
 	var $options_config = array (
 		'groups' 	=> array (
 			'activation'	=> 'Activation',
@@ -90,9 +57,9 @@ class SLB_Lightbox extends SLB_Base {
 			'theme'						=> array('title' => 'Theme', 'default' => 'default', 'group' => 'ui', 'parent' => 'option_theme'),
 			'animate'					=> array('title' => 'Animate lightbox resizing', 'default' => true, 'group' => 'ui'),
 			'autostart'					=> array('title' => 'Automatically Start Slideshow', 'default' => true, 'group' => 'ui'),
-			'duration'					=> array('title' => 'Slide Duration (Seconds)', 'default' => 6, 'attr' => array('size' => 3, 'maxlength' => 3), 'group' => 'ui'),
+			'duration'					=> array('title' => 'Slide Duration (Seconds)', 'default' => '6', 'attr' => array('size' => 3, 'maxlength' => 3), 'group' => 'ui'),
 			'loop'						=> array('title' => 'Loop through images', 'default' => true, 'group' => 'ui'),
-			'overlay_opacity'			=> array('title' => 'Overlay Opacity (0 - 1)', 'default' => 0.8, 'attr' => array('size' => 3, 'maxlength' => 3), 'group' => 'ui'),
+			'overlay_opacity'			=> array('title' => 'Overlay Opacity (0 - 1)', 'default' => '0.8', 'attr' => array('size' => 3, 'maxlength' => 3), 'group' => 'ui'),
 			'enabled_caption'			=> array('title' => 'Enable caption', 'default' => true, 'group' => 'ui'),
 			'caption_src'				=> array('title' => 'Use image URI as caption when link title not set', 'default' => true, 'group' => 'ui'),
 			'txt_closeLink'				=> array('title' => 'Close link (for accessibility only, image used for button)', 'default' => 'close', 'group' => 'labels'),
@@ -103,6 +70,13 @@ class SLB_Lightbox extends SLB_Base {
 			'txt_stopSlideshow'			=> array('title' => 'Stop Slideshow link', 'default' => 'stop slideshow', 'group' => 'labels'),
 			'txt_numDisplayPrefix'		=> array('title' => 'Image number prefix (e.g. <strong>Image</strong> x of y)', 'default' => 'Image', 'group' => 'labels'),
 			'txt_numDisplaySeparator'	=> array('title' => 'Image number separator (e.g. Image x <strong>of</strong> y)', 'default' => 'of', 'group' => 'labels')
+		),
+		'legacy' => array (
+			'header_activation',
+			'header_enabled',
+			'header_strings',
+			'header_ui',
+			'enabled_single'
 		)
 	);
 	
@@ -130,16 +104,14 @@ class SLB_Lightbox extends SLB_Base {
 		parent::__construct();
 		$this->init();
 
-		//Setup variables
-		$this->theme_default = $this->add_prefix($this->theme_default);
-		$this->options_default['theme'][0] = $this->theme_default;
+		//Setup options
 		$opt_theme =& $this->options_config['items']['theme'];
-		$opt_theme['default'] = $this->theme_default;
+		$opt_theme['default'] = $this->theme_default = $this->add_prefix($this->theme_default);
 		$opt_theme['options'] = $this->m('get_theme_options');
 		
 		//Init objects
-		$this->options =& new SLB_Options('options', $this->options_config);
 		$this->fields =& new SLB_Fields();
+		$this->options =& new SLB_Options('options', $this->options_config);
 	}
 	
 	function register_hooks() {
@@ -170,29 +142,8 @@ class SLB_Lightbox extends SLB_Base {
 	
 	function activate() {
 		//Set default options (if not yet set)
-		$this->reset_options(false);
-		//Options migration
-		$opt = 'enabled_single';
-		if ( $this->option_isset($opt) ) {
-			$val = $this->get_option_value($opt);
-			$this->update_option('enabled_post', $val);
-			$this->update_option('enabled_page', $val);
-			$this->delete_option($opt);
-		}
-	}
-	
-	/**
-	 * Resets option values to their default values
-	 * @param bool $hard Reset all options if TRUE (default), Reset only unset options if FALSE
-	 */
-	function reset_options($hard = true) {
-		foreach ( $this->options_default as $id => $data ) {
-			$opt = $this->get_option_id($id);
-			if ( !is_array($data) || ( !$hard && !is_null(get_option($opt, null)) ) ) {
-				continue;
-			}
-			update_option($opt, $data[0]);
-		}
+		$this->options->reset(false);
+		$this->options->migrate();
 	}
 	
 	/*-** Helpers **-*/
@@ -202,7 +153,7 @@ class SLB_Lightbox extends SLB_Base {
 	 * @return bool TRUE if lightbox is currently enabled, FALSE otherwise
 	 */
 	function is_enabled($check_request = true) {
-		$ret = ( get_option($this->add_prefix('enabled')) ) ? true : false;
+		$ret = ( $this->options->get_value('enabled') ) ? true : false;
 		if ( $ret && $check_request ) {
 			$opt = '';
 			//Determine option to check
@@ -214,103 +165,9 @@ class SLB_Lightbox extends SLB_Base {
 			elseif ( is_archive() || is_search() )
 				$opt = 'archive';
 			//Check option
-			if ( ! empty($opt) && ( $opt = 'enabled_' . $opt ) && isset($this->options_default[$opt]) ) {
-				$ret = ( get_option($this->add_prefix($opt)) ) ? true : false;
+			if ( !empty($opt) && ( $opt = 'enabled_' . $opt ) && $this->options->has($opt) ) {
+				$ret = ( $this->options->get_value($opt) ) ? true : false;
 			}
-		}
-		return $ret;
-	}
-	
-	/**
-	 * Generate option ID for saving in DB
-	 * Prefixes option name with plugin prefix
-	 * @param string $option Option to generate ID for
-	 * @return string Option ID
-	 */
-	function get_option_id($option) {
-		return $this->add_prefix($option);
-	}
-	
-	function option_isset($option) {
-		return !is_null(get_option($this->get_option_id($option), null));
-	}
-	
-	/**
-	 * Builds object of option data
-	 * Properties:
-	 * > id: Option ID
-	 * > value: Option's value (uses default value if option not yet set)
-	 * > value_default: Option's default value (formatted)
-	 * 
-	 * @param string $option Option name
-	 * @return object Option data
-	 */
-	function get_option($option) {
-		$ret = new stdClass();
-		$ret->id = $this->get_option_id($option);
-		$ret->value = get_option($ret->id, $this->get_default_value($option, false));
-		$ret->value_default = $this->get_default_value($option, false);
-		$ret->value_default_formatted = $this->get_default_value($option);
-		$ret->attr = $this->get_default_attr($option);
-		return $ret;
-	}
-	
-	/**
-	 * Delete plugin-specific option
-	 * @uses delete_option() to perform DB operations
-	 * @param string $option Option name
-	 * @return bool TRUE if option deleted from DB
-	 */
-	function delete_option($option) {
-		return delete_option($this->get_option_id($option));
-	}
-	
-	/**
-	 * Retrieve an option's value
-	 * @param string $option Option name
-	 * @return mixed Option value
-	 */
-	function get_option_value($option) {
-		$opt = $this->get_option($option);
-		return $opt->value;
-	}
-	
-	function update_option($option, $newvalue) {
-		update_option($this->get_option_id($option), $newvalue);
-	}
-	
-	/**
-	 * Retrieve default attributes for an option
-	 * @param string $option Option name
-	 * @return array Default attributes
-	 */
-	function get_default_attr($option) {
-		$ret = array();
-		if ( isset($this->options_default[$option][2]) )
-			$ret = $this->options_default[$option][2];
-		return $ret;
-	}
-	
-	/**
-	 * Retrieve default value for specified option
-	 * @param string $option Option name
-	 * @param bool $formatted Whether to return formatted value (e.g. for use in admin UI)
-	 * @return mixed Option default value
-	 */
-	function get_default_value($option, $formatted = true) {
-		$ret = '';
-		if ( isset($this->options_default[$option][0]) ) {
-			$ret = $this->options_default[$option][0];
-			//Format value (if required)
-			if ( $formatted ) {
-				if ( is_bool($ret) || ( is_string($ret) && 'on' == $ret ) )
-					$ret = ( $ret ) ? 'Enabled' : 'Disabled';
-				if ( is_numeric($ret) )
-					$ret = strval($ret);
-				$ret = htmlentities($ret);
-			}
-		} elseif ( ! is_array($this->options_default[$option]) ) {
-			$ret = $this->options_default[$option];
 		}
 		return $ret;
 	}
@@ -330,7 +187,6 @@ class SLB_Lightbox extends SLB_Base {
 			$this->util->do_action('init_themes');
 			$fetched = true;
 		}
-		
 		return $this->themes;
 	}
 	
@@ -344,7 +200,7 @@ class SLB_Lightbox extends SLB_Base {
 		$name = strval($name);
 		//Default: Get current theme if no theme specified
 		if ( empty($name) ) {
-			$name = $this->get_option_value('theme');
+			$name = $this->options->get_value('theme');
 		}
 		if ( !$this->theme_exists($name) )
 			$name = $this->theme_default;
@@ -383,7 +239,7 @@ class SLB_Lightbox extends SLB_Base {
 	function get_theme_layout($name = '', $filter = true) {
 		$l = $this->get_theme_data($name, 'layout');
 		//Filter
-		if ( !$this->get_option_value('enabled_caption') )
+		if ( !$this->options->get_value('enabled_caption') )
 			$l = str_replace($this->get_theme_placeholder('dataCaption'), '', $l);
 		return $l;
 	}
@@ -478,7 +334,7 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	function activate_post_links($content) {
 		//Check option
-		if ( ! is_feed() && $this->is_enabled() && $this->get_option_value('activate_links') ) {
+		if ( ! is_feed() && $this->is_enabled() && $this->options->get_value('activate_links') ) {
 			//Scan for links
 			$matches = array();
 			if ( preg_match_all("/\<a[^\>]*href=[^\s]+\.(?:jp[e]*g|gif|png).*?\>/i", $content, $matches) ) {
@@ -505,10 +361,10 @@ class SLB_Lightbox extends SLB_Base {
 					$lb .= 'lightbox';
 					$group = '';
 					//Check if links should be grouped
-					if ( $this->get_option_value('group_links') ) {
+					if ( $this->options->get_value('group_links') ) {
 						$group = $this->get_prefix();
 						//Check if groups should be separated by post
-						if ( $this->get_option_value('group_post') )
+						if ( $this->options->get_value('group_post') )
 							$group = $this->add_prefix($post->ID);
 					}
 					if ( !empty($group) )
@@ -547,8 +403,8 @@ class SLB_Lightbox extends SLB_Base {
 		$out['script_end'] = '})})(jQuery);/* ]]> */</script>';
 		$js_code = array();
 		//Activate links on page
-		if ( $this->get_option_value('activate_links') ) {
-			$rel = ( $this->get_option_value('group_links') ) ? 'lightbox[' . $this->get_prefix() . ']' : 'lightbox';
+		if ( $this->options->get_value('activate_links') ) {
+			$rel = ( $this->options->get_value('group_links') ) ? 'lightbox[' . $this->get_prefix() . ']' : 'lightbox';
 			ob_start();
 			?>
 			$('a[href$=".jpg"]:not([rel~="lightbox"])','a[href$=".jpeg"]:not([rel~="lightbox"])','a[href$=".gif"]:not([rel~="lightbox"])','a[href$=".png"]:not([rel~="lightbox"])').each(function(i, el){if (! /(^|\b)lightbox\[.+\]($|\b)/i.test($(el).attr('rel'))){var rel=($(el).attr('rel').length > 0) ? $(el).attr('rel') + ' ' : '';$(el).attr('rel', =rel + '<?php echo $rel; ?>');}});
@@ -557,14 +413,14 @@ class SLB_Lightbox extends SLB_Base {
 		}
 		//Get options
 		$options = array(
-			'validateLinks'		=> $this->get_option_value('validate_links'),
-			'autoPlay'			=> $this->get_option_value('autostart'),
-			'slideTime'			=> $this->get_option_value('duration'),
-			'loop'				=> $this->get_option_value('loop'),
-			'overlayOpacity'	=> $this->get_option_value('overlay_opacity'),
-			'animate'			=> $this->get_option_value('animate'),
-			'captionEnabled'	=> $this->get_option_value('enabled_caption'),
-			'captionSrc'		=> $this->get_option_value('caption_src'),
+			'validateLinks'		=> $this->options->get_value('validate_links'),
+			'autoPlay'			=> $this->options->get_value('autostart'),
+			'slideTime'			=> $this->options->get_value('duration'),
+			'loop'				=> $this->options->get_value('loop'),
+			'overlayOpacity'	=> $this->options->get_value('overlay_opacity'),
+			'animate'			=> $this->options->get_value('animate'),
+			'captionEnabled'	=> $this->options->get_value('enabled_caption'),
+			'captionSrc'		=> $this->options->get_value('caption_src'),
 			'layout'			=> $this->get_theme_layout()
 		);
 		$lb_obj = array();
@@ -589,12 +445,12 @@ class SLB_Lightbox extends SLB_Base {
 	function build_strings() {
 		$ret = '';
 		$prefix = 'txt_';
-		$opt_strings = array_filter(array_keys($this->options_default), create_function('$opt', 'return ( strpos($opt, "' . $prefix . '") === 0 );'));
+		$opt_strings = array_filter(array_keys($this->options->get_items()), create_function('$opt', 'return ( strpos($opt, "' . $prefix . '") === 0 );'));
 		if ( $opt_strings ) {
 			$strings = array();
 			foreach ( $opt_strings as $key ) {
 				$name = substr($key, strlen($prefix));
-				$strings[] = "'" . $name . "':'" . $this->get_option_value($key) . "'";
+				$strings[] = "'" . $name . "':'" . $this->options->get_value($key) . "'";
 			}
 			$ret = "'strings':{" . implode(',', $strings) . "}";
 		}
@@ -635,7 +491,7 @@ class SLB_Lightbox extends SLB_Base {
 		$action = 'reset';
 		if ( isset($_REQUEST['action']) && $this->add_prefix($action) == $_REQUEST['action'] ) {
 			//Reset settings
-			$this->reset_options(true);
+			$this->options->reset(true);
 			$uri = remove_query_arg(array('_wpnonce', 'action'), add_query_arg(array($this->add_prefix('action') => $action), $_SERVER['REQUEST_URI']));
 			//Redirect user
 			wp_redirect($uri);
@@ -686,7 +542,12 @@ class SLB_Lightbox extends SLB_Base {
 		register_setting($page, $this->add_prefix('options'), $this->options->m('validate'));
  	}
 	
+ 	/**
+ 	 * Enqueues header files for admin pages
+ 	 * @todo Separate and move options CSS to options class
+ 	 */
 	function admin_enqueue_files() {
+		//Enqueue custom CSS for options page
 		if ( is_admin() && basename($_SERVER['SCRIPT_NAME']) == $this->options_admin_page ) {
 			wp_enqueue_style($this->add_prefix('admin'), $this->util->get_file_url('css/admin.css'));
 		}
@@ -695,6 +556,7 @@ class SLB_Lightbox extends SLB_Base {
 	/**
 	 * Get ID of settings section on admin page
 	 * @return string ID of settings section
+	 * @todo Eval for moving to options class
 	 */
 	function admin_get_settings_section() {
 		return $this->add_prefix('settings');
@@ -707,65 +569,6 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	function admin_section() {
 		$this->options->build();		
-	}
-	
-	/**
-	 * General field builder
-	 * @param string $option Option name to build field for
-	 * @param string $format Field markup (using sprintf specifiers)
-	 * @param string $type (optional) Type of field being built (e.g. checkbox, text, etc.)
-	 * Specifiers:
-	 * 1. Field ID
-	 * 2. Field Value
-	 * 3. Field Default Value (formatted)
-	 * 4. Field Type
-	 */
-	function admin_the_field($option, $format = '', $type = '') {
-		$opt = $this->get_option($option);
-		$format_default = '<input id="%1$s" name="%1$s" %4$s class="code" /> (Default: %3$s)';
-		if ( empty($format) && $format !== false )
-			$format = $format_default;
-		if ( empty($type) || !is_string($type) ) {
-			$type_default = 'text';
-			$type = ( is_bool($opt->value_default) ) ? 'checkbox' : $type_default;
-		}
-		//Adjust type and value formatting based on type
-		switch ( $type ) {
-			case 'checkbox' :
-				if ( $opt->value )
-					$opt->attr['checked'] = 'checked';
-				break;
-			case 'text' :
-				if ( $format == $format_default )
-					$format = str_replace('%4$s', '%4$s value="%2$s"', $format);
-				break;
-		}
-		$opt->attr['type'] = $type;
-		//Build attribute string
-		$attr = '';
-		if ( ! empty($opt->attr) ) {
-			$attr = $this->util->build_attribute_string($opt->attr);
-		}
-
-		echo sprintf($format, $opt->id, htmlentities($opt->value), $opt->value_default_formatted, $attr);
-	}
-	
-	/**
-	 * Builds header for settings subsection
-	 * @param array $args Arguments set in admin_settings
-	 */
-	function admin_field_header($args) {
-		$opt = ( isset($args['opt']) ) ? $args['opt'] : '';
-		$this->admin_the_field($opt, false, 'header');
-	}
-	
-	/**
-	 * Default field output generator
-	 * @param array $args Arguments set in admin_settings
-	 */
-	function admin_field_default($args = array()) {
-		$opt = ( isset($args['opt']) ) ? $args['opt'] : '';
-		$this->admin_the_field($opt);
 	}
 	
 	/* Custom fields */
@@ -789,47 +592,6 @@ class SLB_Lightbox extends SLB_Base {
 			$themes[$name] = $props['title'];
 		}
 		return $themes;
-	}
-	
-	/**
-	 * Builds field for theme selection
-	 * @param array $args Arguments set in admin_settings
-	 */
-	function admin_field_theme($args = array()) {
-		//Get option data
-		$option = $this->get_option($args['opt']);
-
-		//Get themes
-		$themes = $this->get_themes();
-		
-		//Get current theme
-		$theme = $this->get_theme();
-		
-		//Build field
-		$start = sprintf('<select id="%1$s" name="%1$s">', esc_attr($option->id));
-		$end = '</select>';
-		$option_format = '<option value="%1$s"%3$s>%2$s</option>';
-		
-		//Pop out default theme
-		$theme_default = $themes[$this->theme_default];
-		unset($themes[$this->theme_default]);
-		
-		//Sort themes by title
-		uasort($themes, create_function('$a,$b', 'return strcmp($a[\'title\'], $b[\'title\']);'));
-		
-		//Insert default theme at top of array
-		$themes = array($this->theme_default => $theme_default) + $themes;
-		
-		//Build options
-		$options = array();
-		foreach ( $themes as $name => $props ) {
-			//Check if current them and set as selected if so
-			$attr = ( $theme['name'] == $name ) ? ' selected="selected"' : '';
-			$options[] = sprintf($option_format, $name, $props['title'], $attr);
-		}
-		
-		//Output field
-		echo $start . join('', $options) . $end;
 	}
 }
 

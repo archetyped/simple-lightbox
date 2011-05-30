@@ -125,6 +125,39 @@ class SLB_Options extends SLB_Field_Collection {
 		add_action($this->add_prefix('fields_registered'), $this->m('set_parents'));
 	}
 	
+	/**
+	 * Migrate options from old versions to current version
+	 */
+	function migrate() {
+		//Legacy options
+		$oid = 'enabled_single';
+		$d = null;
+		$this->load_data();
+		if ( ($o = get_option($oid, $d)) && $o !== $d ) {
+			$this->set_data('enabled_post', $o, false);
+			$this->set_data('enabled_page', $o, false);
+		}
+		//Migrate separate options to unified option
+		$items =& $this->get_items();
+		foreach ( $items as $id => $opt ) {
+			$oid = $this->add_prefix($id);
+			$o = get_option($oid, $d);
+			if ( $o !== $d ) {
+				//Migrate value to data array
+				$this->set_data($id, $o, false);
+				//Delete legacy option
+				delete_option($oid);
+			}
+		}
+		//Remove any remaining legacy items
+		if ( is_array($this->properties_init) && isset($this->properties_init['legacy']) && is_array($this->properties_init['legacy']) ) {
+			foreach( $this->properties_init['legacy'] as $opt )
+				delete_option($this->add_prefix($opt));
+		}
+		//Save changes
+		$this->save();
+	}
+	
 	/* Option setup */
 	
 	/**
@@ -188,8 +221,8 @@ class SLB_Options extends SLB_Field_Collection {
 	function validate($values) {
 		if ( is_array($values) ) {
 			//Get option group being validated
-			$group = '';
 			/*
+			$group = '';
 			$filter = 'sanitize_option_';
 			$option = str_replace($filter, '', current_filter());
 			if ( $this->get_id() == $this->remove_prefix($option) ) {
@@ -201,8 +234,7 @@ class SLB_Options extends SLB_Field_Collection {
 			//Format data based on option type (bool, string, etc.)
 			foreach ( $values as $id => $val ) {
 				//Get default
-				$item = $this->get($id);
-				$d = $item->get_default();
+				$d = $this->get_default($id);
 				if ( is_bool($d) && !empty($val) )
 					$values[$id] = true;
 			}
@@ -210,7 +242,8 @@ class SLB_Options extends SLB_Field_Collection {
 			//Missing options (e.g. disabled checkboxes) & defaults
 			$items =& $this->get_items();
 			foreach ( $items as $id => $opt ) {
-				if ( !isset($values[$id]) ) {
+				//Add options that were not included in form submission
+				if ( !array_key_exists($id, $values) ) {
 					if ( is_bool($opt->get_default()) )
 						$values[$id] = false;
 					else
@@ -258,6 +291,33 @@ class SLB_Options extends SLB_Field_Collection {
 			$this->data = $this->fetch_data();
 		}
 	}
+	
+	/**
+	 * Resets option values to their default values
+	 * @param bool $hard Reset all options if TRUE (default), Reset only unset options if FALSE
+	 */
+	function reset($hard = true) {
+		$this->load_data();
+		//Reset data
+		if ( $hard ) {
+			$this->data = null;
+		}
+		//Save
+		$this->save();
+	}
+	
+	/**
+	 * Save options data to database
+	 */
+	function save() {
+		$opts =& $this->get_items();
+		$data = array();
+		foreach ( $opts as $id => $opt ) {
+			$data[$id] = $opt->get_data();
+		}
+		$this->data = $data;
+		update_option($this->get_key(), $data);
+	}
 
 	/* Collection */
 	
@@ -289,6 +349,28 @@ class SLB_Options extends SLB_Field_Collection {
 		$item =& parent::add($id, $properties);
 		
 		return $item;
+	}
+	
+	/**
+	 * Retrieve option value
+	 * @uses get_data() to retrieve option data
+	 * @param string $option Option ID to retrieve value for
+	 * @param string $context (optional) Context for formatting data
+	 * @return mixed Option value
+	 */
+	function get_value($option, $context = '') {
+		return $this->get_data($option, $context);
+	}
+	
+	/**
+	 * Retrieve option's default value
+	 * @uses get_data() to retrieve option data
+	 * @param string $option Option ID to retrieve value for
+	 * @param string $context (optional) Context for formatting data
+	 * @return mixed Option's default value
+	 */
+	function get_default($option, $context = '') {
+		return $this->get_data($option, $context, false);
 	}
 	
 	/* Output */

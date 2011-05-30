@@ -64,7 +64,13 @@ class SLB_Field_Base extends SLB_Base {
 	 * @var array Object Properties
 	 */
 	var $properties = array();
-
+	
+	/**
+	 * Initialization properties
+	 * @var array
+	 */
+	var $properties_init = null;
+	
 	/**
 	 * Structure: Property names stored as keys in group
 	 * Root
@@ -135,6 +141,8 @@ class SLB_Field_Base extends SLB_Base {
 		//Remove empty variables
 		if ( empty($properties['parent']) )
 			unset($properties['parent']);
+		//Save init properties
+		$this->properties_init = $properties;
 		//Set Properties
 		$this->set_properties($properties);
 	}
@@ -231,7 +239,6 @@ class SLB_Field_Base extends SLB_Base {
 		}
 
 		$path = $this->util->build_path($path, $name);
-//		if ( $this->properties['d'] && $name != 'd' ) $this->debug->print_message('Path to check', $path);
 		//Set defaults and prepare data
 		$val = $default;
 		$inherit = false;
@@ -426,7 +433,6 @@ class SLB_Field_Base extends SLB_Base {
 	 * @return mixed Value at specified path
 	 */
 	function get_data($context = '', $top = true) {
-//		if ( $this->properties['d'] ) $this->debug->print_message('START get_data: ' . $this->get_id());
 		$opt_d = array('context' => '', 'top' => true);
 		$args = func_get_args();
 		$a = false;
@@ -461,6 +467,9 @@ class SLB_Field_Base extends SLB_Base {
 				if ( empty($new) && method_exists($obj, 'get_container') ) {
 					$checked = true;
 					$new = $obj->get_container();
+					//Load data
+					if ( method_exists($new, 'load_data') )
+						$new->load_data();
 				}
 	
 				$obj = $new;
@@ -488,15 +497,12 @@ class SLB_Field_Base extends SLB_Base {
 			$obj = array_shift($obj_path);
 			//Shorten path
 			array_shift($path);
-//			if ( $this->properties['d'] ) $this->debug->print_message('OBJ: ' . $obj->get_id(), 'Checking data path', $path);
 			//Check for value in object and stop iteration if matching data found
 			$val = $this->get_object_value($obj, 'data', $path, null, 'current');
-//			if ( $this->properties['d'] ) $this->debug->print_message('Retrieved Value: ', $val);
 			if ( !is_null($val) ) {
 				break;
 			}
 		}
-//		if ( $this->properties['d'] ) $this->debug->print_message('END get_data: ' . $this->get_id(), '');
 		return $this->format($val, $context);
 	}
 
@@ -1378,7 +1384,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	 * @var string
 	 */
 	var $item_type = 'SLB_Field';
-
+	
 	/* Constructors */
 
 	/**
@@ -1436,7 +1442,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	 * @param string|object $item Reference or ID of Field to set data for
 	 * @param mixed $value Data to set
 	 */
-	function set_data($item, $value = '') {
+	function set_data($item, $value = '', $save = true) {
 		//Set data for entire collection
 		if ( 1 == func_num_args() && is_array($item) )
 			$this->data = wp_parse_args($item, $this->data);
@@ -1446,6 +1452,8 @@ class SLB_Field_Collection extends SLB_Field_Base {
 		//Set data
 		if ( is_string($item) && !empty($item) && isset($this->items[$item]) )
 			$this->data[$item] = $value;
+		if ( $save )
+			$this->save();
 	}
 
 	/* Item */
@@ -1510,6 +1518,15 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	}
 
 	/**
+	 * Checks if item exists in the collection
+	 * @param string $item Item ID
+	 * @return bool TRUE if item exists, FALSE otherwise
+	 */
+	function has($item) {
+		return ( !is_string($item) || empty($item) || is_null($this->get_member_value('items', $item, null)) ) ? false : true;
+	}
+	
+	/**
 	 * Retrieve specified item in collection
 	 * @param string|object $item Item object or ID to retrieve
 	 * @return object Specified item
@@ -1533,16 +1550,25 @@ class SLB_Field_Collection extends SLB_Field_Base {
 		}
 		return $item;
 	}
-
-	/**
-	 * Checks if item exists in the collection
-	 * @param string $item Item ID
-	 * @return bool TRUE if item exists, FALSE otherwise
-	 */
-	function has($item) {
-		return ( !is_string($item) || empty($item) || is_null($this->get_member_value('items', $item, null)) ) ? false : true;
-	}
 	
+	/**
+	 * Retrieve item data
+	 * @param $item
+	 * @param $context
+	 * @param $top
+	 */
+	function get_data($item = null, $context = '', $top = true) {
+		$this->load_data();
+		$ret = null;
+		if ( $this->has($item) ) {
+			$item =& $this->get($item);
+			$ret = $item->get_data($context, $top);
+		} elseif ( is_null($item) ) {
+			$ret = parent::get_data($context, $top);
+		}
+		return $ret;
+	}
+
 	/* Items (Collection) */
 	
 	/**
@@ -1830,7 +1856,6 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	 * Build entire collection of items
 	 */
 	function build() {
-		$this->load_data();
 		//Get Groups
 		$groups = array_keys($this->get_groups());
 		//Build groups
@@ -2141,7 +2166,6 @@ class SLB_Fields extends SLB_Field_Collection {
 		$out = '';
 		$c = $field->get_container();
 		$d = ( isset($c->data[$field->get_id()]) ) ? $c->data[$field->get_id()] : null;
-//		$this->debug->print_message('Processing checkbox: ' . $field->get_id(), 'Data', $field->get_data());
 		$field->set_property('d', true);
 		if ( $field->get_data() )
 			$out = 'checked="checked"';
