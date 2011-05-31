@@ -549,7 +549,7 @@ class SLB_Lightbox extends SLB_Base {
 	function admin_enqueue_files() {
 		//Enqueue custom CSS for options page
 		if ( is_admin() && basename($_SERVER['SCRIPT_NAME']) == $this->options_admin_page ) {
-			wp_enqueue_style($this->add_prefix('admin'), $this->util->get_file_url('css/admin.css'));
+			wp_enqueue_style($this->add_prefix('admin'), $this->util->get_file_url('css/admin.css'), array(), $this->util->get_plugin_version());
 		}
 	}
 	
