@@ -29,12 +29,6 @@ class SLB_Base {
 	var $util = null;
 	
 	/**
-	 * Debug
-	 * @var CNR_Debug
-	 */
-	var $debug = null;
-	
-	/**
 	 * Legacy constructor
 	 */
 	function SLB_Base() {
@@ -46,7 +40,6 @@ class SLB_Base {
 	 */
 	function __construct() {
 		$this->util =& new SLB_Utilities($this);
-		$this->debug =& new CNR_Debug();
 	}
 	
 	/*-** Init **-*/
