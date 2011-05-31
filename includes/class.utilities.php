@@ -328,7 +328,7 @@ class SLB_Utilities {
 		if ( $trailing_slash )
 			$parts .= $sl_f;
 		return $parts;
-	}
+	} 
 	
 	/**
 	 * Returns URL of file (assumes that it is in plugin directory)
@@ -337,7 +337,7 @@ class SLB_Utilities {
 	 */
 	function get_file_url($file) {
 		if ( is_string($file) && '' != trim($file) ) {
-			$file = $this->normalize_path($this->get_url_base(), $file);
+			$file = str_replace(' ', '%20', $this->normalize_path($this->get_url_base(), $file));
 		}
 		return $file;
 	}
