@@ -1,6 +1,6 @@
 <?php 
 
-require_once 'includes/class.base.php';
+require_once 'includes/class.base.dev.php';
 require_once 'includes/class.fields.php';
 require_once 'includes/class.options.php';
 
@@ -51,6 +51,7 @@ class SLB_Lightbox extends SLB_Base {
 			'enabled_page'				=> array('title' => 'Enable on Pages', 'default' => true, 'group' => 'activation'),
 			'enabled_archive'			=> array('title' => 'Enable on Archive Pages (tags, categories, etc.)', 'default' => true, 'group' => 'activation'),
 			'activate_links'			=> array('title' => 'Activate all image links in item content', 'default' => true, 'group' => 'activation'),
+			'activate_attachments'		=> array('title' => 'Activate all image attachment links', 'default' => true, 'group' => 'activation'),
 			'validate_links'			=> array('title' => 'Validate links', 'default' => false, 'group' => 'activation'),
 			'group_links'				=> array('title' => 'Group automatically activated links (for displaying as a slideshow)', 'default' => true, 'group' => 'grouping'),
 			'group_post'				=> array('title' => 'Group image links by Post (e.g. on pages with multiple posts)', 'default' => true, 'group' => 'grouping'),
@@ -346,14 +347,13 @@ class SLB_Lightbox extends SLB_Base {
 				global $post;
 				$types = (object) array('img' => 'image', 'att' => 'attachment');
 				$img_types = array('jpg', 'jpeg', 'gif', 'png');
+				$rgx = "/\b(\w+.*?)=\"(.*?)\"(?:\s|$)/i";
 				//Iterate through links & add lightbox if necessary
 				foreach ( $links as $link ) {
 					//Check if rel attribute exists
 					$link_new = $link;
-//					$this->debug->print_message('O: ' . $link_new);
 					//Parse link
 					$link_attr = substr($link_new, 2, strlen($link_new) - 3);
-					$rgx = "/\b(\w+.*?)=\"(.*?)\"(?:\s|$)/i";
 					$attr_matches = $attr = array();
 					preg_match_all($rgx, $link_attr, $attr_matches);
 					foreach ( $attr_matches[1] as $key => $val ) {
@@ -382,7 +382,10 @@ class SLB_Lightbox extends SLB_Base {
 						$type = $types->att;
 					if ( !$type )
 						continue;
-
+					
+					if ( $type == $types->att && !$this->options->get_value('activate_attachments') )
+						continue;
+						
 					//Process link
 					if ( empty($r) )
 						$r = array();
@@ -410,7 +413,6 @@ class SLB_Lightbox extends SLB_Base {
 					$r = implode(' ', $r);
 					
 					$link_new = '<a ' . $this->util->build_attribute_string($attr) . '>';
-//					$this->debug->print_message('N: ' . $link_new);
 					//Insert modified link
 					$content = str_replace($link, $link_new, $content);
 					unset($h, $r);

@@ -22,3 +22,7 @@
 	margin-bottom: 9px;
 	padding: 8px 10px;
 }
+
+.slb_option_item .input select {
+	min-width: 12em;
+}

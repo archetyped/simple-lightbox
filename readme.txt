@@ -15,6 +15,10 @@ Simple Lightbox is a very simple and customizable lightbox that is easy to add t
 The current release is a beta version.  Please test and [provide feedback on the beta release page](http://archetyped.com/lab/slb-1-5-5-beta/).
 Main changes
 
+#### Beta 4
+* Add: Admin option to enable/disable attachment links
+* Optimize: Improved compatibility for older versions of PHP
+
 #### Beta 3
 * Add: Support for image attachment links
 * Optimize: Improved compatibility for older versions of PHP
