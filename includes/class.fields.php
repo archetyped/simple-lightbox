@@ -135,8 +135,10 @@ class SLB_Field_Base extends SLB_Base {
 		parent::__construct();
 		//Normalize Properties
 		$args = func_get_args();
-		if ( empty($parent) )
-			array_pop($args);
+		if ( func_num_args() > 1 && empty($parent) ) {
+			unset($args[1]);
+			$args = array_values($args);
+		}
 		$properties = $this->make_properties($this->util->func_get_options($args), array('id' => $id, 'parent' => $parent));
 		//Remove empty variables
 		if ( empty($properties['parent']) )
@@ -222,7 +224,7 @@ class SLB_Field_Base extends SLB_Base {
 	 * @return mixed Specified member value
 	 * @todo Return reference
 	 */
-	function get_member_value($member, $name = '', $default = '', $dir = 'parent') {
+	function &get_member_value($member, $name = '', $default = '', $dir = 'parent') {
 		//Check if path to member is supplied
 		$path = array();
 		if ( is_array($member) && isset($member['tag']) ) {
@@ -266,20 +268,20 @@ class SLB_Field_Base extends SLB_Base {
 				$deeper = false;
 		}
 		if ( $deeper && 'current' != $dir ) {
-				//Get Parent value (recursive)
-				$ex_val = ( 'parent' != $dir ) ? $this->get_container_value($member, $name, $default) : $this->get_parent_value($member, $name, $default);
-				//Handle inheritance
-				if ( is_array($val) ) {
-					//Combine Arrays
-					if ( is_array($ex_val) )
-						$val = array_merge($ex_val, $val);
-				} elseif ( $inherit !== false ) {
-					//Replace placeholder with inherited string
-					$val = str_replace($inherit_tag, $ex_val, $val);
-				} else {
-					//Default: Set parent value as value
-					$val = $ex_val;
-				}
+			//Get Parent value (recursive)
+			$ex_val = ( 'parent' != $dir ) ? $this->get_container_value($member, $name, $default) : $this->get_parent_value($member, $name, $default);
+			//Handle inheritance
+			if ( is_array($val) ) {
+				//Combine Arrays
+				if ( is_array($ex_val) )
+					$val = array_merge($ex_val, $val);
+			} elseif ( $inherit !== false ) {
+				//Replace placeholder with inherited string
+				$val = str_replace($inherit_tag, $ex_val, $val);
+			} else {
+				//Default: Set parent value as value
+				$val = $ex_val;
+			}
 		}
 
 		return $val;
@@ -545,8 +547,9 @@ class SLB_Field_Base extends SLB_Base {
 			 * @var SLB
 			 */
 			$b =& $this->get_base();
-			if ( $b && $b->fields->has($parent) )
+			if ( $b && $b->fields->has($parent) ) {
 				$parent =& $b->fields->get($parent);
+			}
 		}
 		
 		//Set parent value on object
@@ -1311,9 +1314,6 @@ class SLB_Field_Type extends SLB_Field_Base {
 	 */
 	function build_layout($layout = 'form', $data = null) {
 		$out_default = '';
-
-		/* Layout */
-
 		//Get base layout
 		$out = $this->get_layout($layout);
 		//Only parse valid layouts
@@ -1346,7 +1346,6 @@ class SLB_Field_Type extends SLB_Field_Base {
 		} else {
 			$out = $out_default;
 		}
-
 		/* Return generated value */
 		return implode('', array($this->build_pre(), $out, $this->build_post()));
 	}
@@ -1404,8 +1403,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	 */
 	function __construct($id, $properties = null) {
 		//Parent constructor
-		$args = func_get_args();
-		call_user_func_array(array(parent, '__construct'), $args);
+		parent::__construct($id, $properties);
 		
 		//Init
 		$this->init();
@@ -1469,9 +1467,9 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	function &add($id, $parent = null, $properties = array(), $group = null) {
 		$args = func_get_args();
 		$properties = $this->make_properties($this->util->func_get_options($args), $properties, array('group' => $group));
-		
+		$it = ( is_object($id) ) ? 'O:' . $id->get_id() . '(' . get_class($id) . ')' : $id;
 		//Check if previously created item is being added
-		if ( is_object($id) && get_class($id) == $this->item_type ) {
+		if ( is_object($id) && strtolower(get_class($id)) == strtolower($this->item_type) ) {
 			$item =& $id;
 		} else {
 			//Create item
@@ -1483,6 +1481,10 @@ class SLB_Field_Collection extends SLB_Field_Base {
 			 */
 			$item =& new $type($id, $properties);
 		}
+		if ( strlen($item->get_id()) == 0 ) {
+			return false;
+		}
+		
 		$item->set_container($this);
 
 		//Add item to collection
@@ -1498,7 +1500,6 @@ class SLB_Field_Collection extends SLB_Field_Base {
 			}
 		}
 		$this->add_to_group($group, $item->id);
-		
 		return $item;
 	}
 
@@ -1536,7 +1537,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 			if ( !is_object($item) || !is_a($item, $this->item_type) ) {
 				if ( is_string($item) ) {
 					$item = trim($item);
-					$item = $this->get_member_value('items', $item);
+					$item =& $this->items[$item];
 				}
 				else {
 					$item = false;
@@ -1729,17 +1730,17 @@ class SLB_Field_Collection extends SLB_Field_Base {
 		if ( ! is_array($items) )
 			$items = array($items);
 		foreach ( $items as $item ) {
-			unset($fref);
 			if ( ! $this->has($item) )
 				continue;
-			$fref =& $this->get($item);
+			$iref =& $this->get($item);
 			//Remove item from any other group it's in (items can only be in one group)
 			foreach ( array_keys($this->groups) as $group_name ) {
-				if ( isset($this->groups[$group_name]->items[$fref->id]) )
-					unset($this->groups[$group_name]->items[$fref->id]);
+				if ( isset($this->groups[$group_name]->items[$iref->id]) )
+					unset($this->groups[$group_name]->items[$iref->id]);
 			}
 			//Add reference to item in group
-			$this->groups[$group_id]->items[$fref->id] =& $fref;
+			$this->groups[$group_id]->items[$iref->id] =& $iref;
+			unset($iref);
 		}
 	}
 
@@ -1910,7 +1911,7 @@ class SLB_Fields extends SLB_Field_Collection {
 		/* Field Types */
 
 		//Base
-		$base = new SLB_Field_Type('base');
+		$base =& new SLB_Field_Type('base');
 		$base->set_description('Default Element');
 		$base->set_property('tag', 'span');
 		$base->set_property('class', '', 'attr');
@@ -1921,7 +1922,7 @@ class SLB_Fields extends SLB_Field_Collection {
 		$this->add($base);
 
 		//Base closed
-		$base_closed = new SLB_Field_Type('base_closed');
+		$base_closed =& new SLB_Field_Type('base_closed');
 		$base_closed->set_parent('base');
 		$base_closed->set_description('Default Element (Closed Tag)');
 		$base_closed->set_layout('form_start', '<{tag} id="{field_id}" name="{field_name}" {properties ref_base="root" group="attr"}>');
@@ -1930,7 +1931,7 @@ class SLB_Fields extends SLB_Field_Collection {
 		$this->add($base_closed);
 
 		//Input
-		$input = new SLB_Field_Type('input', 'base');
+		$input =& new SLB_Field_Type('input', 'base');
 		$input->set_description('Default Input Element');
 		$input->set_property('tag', 'input');
 		$input->set_property('type', 'text', 'attr');
@@ -1938,7 +1939,7 @@ class SLB_Fields extends SLB_Field_Collection {
 		$this->add($input);
 
 		//Text input
-		$text = new SLB_Field_Type('text', 'input');
+		$text =& new SLB_Field_Type('text', 'input');
 		$text->set_description('Text Box');
 		$text->set_property('size', 15, 'attr');
 		$text->set_property('label');
@@ -1946,7 +1947,7 @@ class SLB_Fields extends SLB_Field_Collection {
 		$this->add($text);
 		
 		//Checkbox
-		$cb = new SLB_Field_Type('checkbox', 'input');
+		$cb =& new SLB_Field_Type('checkbox', 'input');
 		$cb->set_property('type', 'checkbox');
 		$cb->set_property('value', null);
 		$cb->set_layout('form_attr', '{inherit} {checked}');
@@ -1954,28 +1955,28 @@ class SLB_Fields extends SLB_Field_Collection {
 		$this->add($cb);
 
 		//Textarea
-		$ta = new SLB_Field_Type('textarea', 'base_closed');
+		$ta =& new SLB_Field_Type('textarea', 'base_closed');
 		$ta->set_property('tag', 'textarea');
 		$ta->set_property('cols', 40, 'attr');
 		$ta->set_property('rows', 3, 'attr');
 		$this->add($ta);
 		
 		//Rich Text
-		$rt = new SLB_Field_Type('richtext', 'textarea');
+		$rt =& new SLB_Field_Type('richtext', 'textarea');
 		$rt->set_property('class', 'theEditor {inherit}');
 		$rt->set_layout('form', '<div class="rt_container">{inherit}</div>');
 		$rt->add_action('admin_print_footer_scripts', 'wp_tiny_mce', 25);
 		$this->add($rt);
 
 		//Hidden
-		$hidden = new SLB_Field_Type('hidden');
+		$hidden =& new SLB_Field_Type('hidden');
 		$hidden->set_parent('input');
 		$hidden->set_description('Hidden Field');
 		$hidden->set_property('type', 'hidden');
 		$this->add($hidden);
 
 		//Select
-		$select = new SLB_Field_Type('select', 'base_closed');
+		$select =& new SLB_Field_Type('select', 'base_closed');
 		$select->set_description('Select tag');
 		$select->set_property('tag', 'select');
 		$select->set_property('tag_option', 'option');
@@ -1987,7 +1988,7 @@ class SLB_Fields extends SLB_Field_Collection {
 		$this->add($select);
 		
 		//Span
-		$span = new SLB_Field_Type('span', 'base_closed');
+		$span =& new SLB_Field_Type('span', 'base_closed');
 		$span->set_description('Inline wrapper');
 		$span->set_property('tag', 'span');
 		$span->set_property('value', 'Hello there!');

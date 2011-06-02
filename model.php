@@ -335,44 +335,85 @@ class SLB_Lightbox extends SLB_Base {
 	function activate_post_links($content) {
 		//Check option
 		if ( ! is_feed() && $this->is_enabled() && $this->options->get_value('activate_links') ) {
-			//Scan for links
-			$matches = array();
-			if ( preg_match_all("/\<a[^\>]*href=[^\s]+\.(?:jp[e]*g|gif|png).*?\>/i", $content, $matches) ) {
+			$links = array();
+			//Get all links on page
+			$rgx = "/\<a[^\>]+href=.*?\>/i";
+			preg_match_all($rgx, $content, $links);
+			$links = $links[0];
+			$domain = str_replace(array('http://', 'https://'), '', get_bloginfo('url'));
+			//Process links
+			if ( count($links) > 0 ) {
 				global $post;
+				$types = (object) array('img' => 'image', 'att' => 'attachment');
+				$img_types = array('jpg', 'jpeg', 'gif', 'png');
 				//Iterate through links & add lightbox if necessary
-				foreach ($matches[0] as $link) {
+				foreach ( $links as $link ) {
 					//Check if rel attribute exists
 					$link_new = $link;
-					$rel = '';
-					if ( strpos(strtolower($link_new), ' rel=') !== false && preg_match("/\s+rel=(?:\"|')(.*?)(?:\"|')(\s|\>)/i", $link_new, $rel) ) {
-						//Check if lightbox is already set in rel attribute
-						$rel = $rel[1];
+//					$this->debug->print_message('O: ' . $link_new);
+					//Parse link
+					$link_attr = substr($link_new, 2, strlen($link_new) - 3);
+					$rgx = "/\b(\w+.*?)=\"(.*?)\"(?:\s|$)/i";
+					$attr_matches = $attr = array();
+					preg_match_all($rgx, $link_attr, $attr_matches);
+					foreach ( $attr_matches[1] as $key => $val ) {
+						if ( isset($attr_matches[2][$key]) )
+							$attr[trim($val)] = trim($attr_matches[2][$key]);
 					}
+					//Destroy parsing vars
+					unset($link_attr, $attr_matches);
+
+					//Set default attributes
+					$attr = array_map('trim', array_merge(array('rel' => '', 'href' => ''), $attr));
+					$h =& $attr['href'];
+					$r =& $attr['rel'];
 					
-					if ( strpos($rel, 'lightbox') !== false || strpos($rel, $this->add_prefix('off')) )
+					
+					//Stop processing link if lightbox attribute has already been set
+					$lb = 'lightbox';
+					if ( empty($h) || '#' == $h || ( !empty($r) && ( strpos($r, $lb) !== false || strpos($r, $this->add_prefix('off')) !== false ) ) )
 						continue;
 					
-					$lb = '';
+					//Determine link type
+					$type = false;
+					if ( in_array($this->util->get_file_extension($h), $img_types) )
+						$type = $types->img;
+					elseif ( strpos($h, $domain) !== false && is_local_attachment($h) && ( $pid = url_to_postid($h) ) && wp_attachment_is_image($pid) ) 
+						$type = $types->att;
+					if ( !$type )
+						continue;
+
+					//Process link
+					if ( empty($r) )
+						$r = array();
+					else
+						$r = array($r);
 					
-					if ( !empty($rel) )
-						$lb .= ' ';
-					
-					//Add rel attribute to link
-					$lb .= 'lightbox';
-					$group = '';
 					//Check if links should be grouped
 					if ( $this->options->get_value('group_links') ) {
-						$group = $this->get_prefix();
-						//Check if groups should be separated by post
-						if ( $this->options->get_value('group_post') )
-							$group = $this->add_prefix($post->ID);
-					}
-					if ( !empty($group) )
+						$group = ( $this->options->get_value('group_post') ) ? $this->add_prefix($post->ID) : $this->get_prefix();
 						$lb .= '[' . $group . ']';
-					$rel .= $lb;
-					$link_new = '<a rel="' . $rel . '"' . substr($link_new,2);
+					}
+					$r[] = $lb;
+					
+					//Type specific processing
+					switch ($type) {
+						case $types->att:
+							//Get attachment URL
+							$src = wp_get_attachment_url($pid);
+							if ( !empty($src) )
+								$r[] = $this->add_prefix('src[' . $src . ']');
+							break;
+					}
+					
+					//Convert rel attribute to string
+					$r = implode(' ', $r);
+					
+					$link_new = '<a ' . $this->util->build_attribute_string($attr) . '>';
+//					$this->debug->print_message('N: ' . $link_new);
 					//Insert modified link
 					$content = str_replace($link, $link_new, $content);
+					unset($h, $r);
 				}
 			}
 		}

@@ -57,7 +57,7 @@ class SLB_Option extends SLB_Field {
 	 * Sets parent based on default value
 	 */
 	function set_parent($parent = null) {
-		$p = $this->get_parent();
+		$p =& $this->get_parent();
 		if ( empty($parent) && empty($p) ) {
 			$parent = 'text';
 			$d = $this->get_default();
@@ -113,8 +113,7 @@ class SLB_Options extends SLB_Field_Collection {
 	}
 	
 	function __construct($id, $props = array()) {
-		$args = func_get_args();
-		call_user_func_array(array(parent, '__construct'), $args);
+		parent::__construct($id, $props);
 	}
 	
 	function register_hooks() {
@@ -176,7 +175,7 @@ class SLB_Options extends SLB_Field_Collection {
 		$layout_form = '<{form_attr ref_base="layout"} /> (Default: {data context="display" top="0"})'; 
 		
 		//Text input
-		$otxt = new SLB_Field_Type('option_text', 'text');
+		$otxt =& new SLB_Field_Type('option_text', 'text');
 		$otxt->set_property('class', '{inherit} code');
 		$otxt->set_property('size', null);
 		$otxt->set_property('value', '{data context="form"}');
@@ -185,13 +184,13 @@ class SLB_Options extends SLB_Field_Collection {
 		$fields->add($otxt);
 		
 		//Checkbox
-		$ocb = new SLB_Field_Type('option_checkbox', 'checkbox');
+		$ocb =& new SLB_Field_Type('option_checkbox', 'checkbox');
 		$ocb->set_layout('label', $layout_label);
 		$ocb->set_layout('form', $opt_pre . $label_ref . $field_pre . $layout_form . $field_post . $opt_post);
 		$fields->add($ocb);
 		
 		//Theme
-		$othm = new SLB_Field_Type('option_theme', 'select');
+		$othm =& new SLB_Field_Type('option_theme', 'select');
 		$othm->set_layout('label', $layout_label);
 		$othm->set_layout('form_start', $field_pre . '{inherit}');
 		$othm->set_layout('form_end', '{inherit}' . $field_post);
@@ -204,15 +203,20 @@ class SLB_Options extends SLB_Field_Collection {
 	 * Parent only set for Admin pages
 	 * @uses SLB_Option::set_parent() to set parent field for each option item
 	 * @uses is_admin() to determine if current request is admin page
-	 * @param array $fields Default field types
+	 * @param object $fields Collection of default field types
 	 * @return void
 	 */
 	function set_parents(&$fields) {
 		if ( !is_admin() )
 			return false;
 		$items =& $this->get_items();
-		foreach ( $items as $opt ) {
-			$opt->set_parent();
+		foreach ( array_keys($items) as $opt ) {
+			$items[$opt]->set_parent();
+		}
+		foreach ( $this->items as $opt ) {
+			$p = $opt->parent;
+			if ( is_object($p) )
+				$p = 'o:' . $p->id;
 		}
 	}
 	

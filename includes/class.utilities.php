@@ -67,7 +67,9 @@ class SLB_Utilities {
 	 * @param string $sep (optional) Separator supplied
 	 * @return string Separator
 	 */
-	function get_sep($sep = null) {
+	function get_sep($sep = false) {
+		if ( is_null($sep) )
+			$sep = '';
 		if ( !is_string($sep) )
 			$default = '_';
 		return ( is_string($sep) ) ? $sep : $default;
@@ -100,7 +102,7 @@ class SLB_Utilities {
 	 * @param bool $once (optional) Whether to add prefix to text that already contains a prefix or not
 	 * @return string Text with prefix prepended
 	 */
-	function add_prefix($text, $sep = null, $once = true) {
+	function add_prefix($text, $sep = '_', $once = true) {
 		if ( $this->has_prefix($text, $sep) )
 			return $text;
 		return $this->get_prefix($sep) . $text;
@@ -111,7 +113,7 @@ class SLB_Utilities {
 	 * @param string $text String to remove prefix from
 	 * @param string $sep (optional) Separator used with prefix
 	 */
-	function remove_prefix($text, $sep = null) {
+	function remove_prefix($text, $sep = '_') {
 		if ( $this->has_prefix($text,$sep) )
 			$text = substr($text, strlen($this->get_prefix($sep)));
 		return $text;
