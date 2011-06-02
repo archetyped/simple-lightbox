@@ -16,8 +16,9 @@ The current release is a beta version.  Please test and [provide feedback on the
 Main changes
 
 #### Beta 3
+* Add: Support for image attachment links
 * Optimize: Improved compatibility for older versions of PHP
-
+* Optimize: Internal optimizations
 
 #### Beta 2
 * Fix: Debug code removed (Fatal Seb)

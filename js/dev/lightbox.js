@@ -100,7 +100,6 @@ SLB = {
 			this.overlayDuration = 0;
 			this.resizeDuration = 0;
 		}
-		
 		this.enableSlideshow = this.options.enableSlideshow;
 		this.overlayOpacity = Math.max(Math.min(this.options.overlayOpacity,1),0);
 		this.playSlides = this.options.autoPlay;
@@ -223,7 +222,7 @@ SLB = {
 			for(var j=0; j < els.length; j++) {
 				el = els[j];
 				rel = $(el).attr('rel');
-				if ($(el).attr('href') && (rel.toLowerCase().match(this.relAttribute))) {
+				if ($(el).attr('href') && (rel.toLowerCase().indexOf(this.relAttribute) != -1)) {
 					$(el).click(function() {
 						t.start(this);
 						return false;
@@ -275,8 +274,7 @@ SLB = {
 		var imageTitle = '';
 		var t = this;
 		var groupTemp = {};
-		
-		this.fileExists($(imageLink).attr('href'),
+		this.fileExists(this.getSourceFile(imageLink),
 		function() { //File exists
 			// Stretch overlay to fill page and fade in
 			t.get('overlay')
@@ -304,7 +302,7 @@ SLB = {
 					if ($(el).get(0) == $(imageLink).get(0)) {
 						t.startImage = x;
 					}
-					t.imageArray.push({'link':$(el).attr('href'), 'title':t.getCaption(el)});
+					t.imageArray.push({'link':t.getSourceFile($(el)), 'title':t.getCaption(el)});
 				}
 				// Calculate top offset for the lightbox and display 
 				var lightboxTop = $(document).scrollTop() + ($(window).height() / 15);
@@ -327,7 +325,7 @@ SLB = {
 				var i, el;
 				for (i = 0; i < els.length; i++) {
 					el = $(els[i]);
-					if (el.attr('href') && (t.getGroup(el) == t.groupName)) {
+					if (t.getSourceFile(el) && (t.getGroup(el) == t.groupName)) {
 						//Add links in same group to temp array
 						grpLinks.push(el);
 					}
@@ -337,7 +335,7 @@ SLB = {
 				var processed = 0;
 				for (i = 0; i < grpLinks.length; i++) {
 					el = grpLinks[i];
-					t.fileExists($(el).attr('href'),
+					t.fileExists(t.getSourceFile($(el)),
 						function(args) { //File exists
 							var el = args.els[args.idx];
 							var il = addLink(el, args.idx);
@@ -357,6 +355,21 @@ SLB = {
 		function() { //File does not exist
 			t.end();
 		});
+	},
+	
+	/**
+	 * Retrieve source URI in link
+	 * @param {Object} el
+	 * @return string Source file URI
+	 */
+	getSourceFile: function(el) {
+		var src = $(el).attr('href');
+		var rel = $(el).attr('rel');
+		var reSrc = /\bslb_src\[(.+?)\](?:\b|$)/;
+		if ( reSrc.test(rel) ) {
+			src = reSrc.exec(rel)[1];
+		}
+		return src;
 	},
 	
 	/**
