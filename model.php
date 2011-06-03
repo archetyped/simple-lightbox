@@ -428,7 +428,7 @@ class SLB_Lightbox extends SLB_Base {
 	function enqueue_files() {
 		if ( ! $this->is_enabled() )
 			return;
-		wp_enqueue_script($this->add_prefix('lib'), $this->util->get_file_url('js/lib.js'), array('jquery'), $this->util->get_plugin_version());
+		wp_enqueue_script($this->add_prefix('lib'), $this->util->get_file_url('js/dev/lightbox.js'), array('jquery'), $this->util->get_plugin_version());
 		wp_enqueue_style($this->add_prefix('style'), $this->get_theme_style(), array(), $this->util->get_plugin_version());
 	}
 	
@@ -445,15 +445,6 @@ class SLB_Lightbox extends SLB_Base {
 		$out['script_start'] = '<script type="text/javascript">/* <![CDATA[ */(function($){$(document).ready(function(){';
 		$out['script_end'] = '})})(jQuery);/* ]]> */</script>';
 		$js_code = array();
-		//Activate links on page
-		if ( $this->options->get_value('activate_links') ) {
-			$rel = ( $this->options->get_value('group_links') ) ? 'lightbox[' . $this->get_prefix() . ']' : 'lightbox';
-			ob_start();
-			?>
-			$('a[href$=".jpg"]:not([rel~="lightbox"])','a[href$=".jpeg"]:not([rel~="lightbox"])','a[href$=".gif"]:not([rel~="lightbox"])','a[href$=".png"]:not([rel~="lightbox"])').each(function(i, el){if (! /(^|\b)lightbox\[.+\]($|\b)/i.test($(el).attr('rel'))){var rel=($(el).attr('rel').length > 0) ? $(el).attr('rel') + ' ' : '';$(el).attr('rel', =rel + '<?php echo $rel; ?>');}});
-			<?php
-			$test = ob_get_clean();
-		}
 		//Get options
 		$options = array(
 			'validateLinks'		=> $this->options->get_value('validate_links'),
@@ -464,14 +455,15 @@ class SLB_Lightbox extends SLB_Base {
 			'animate'			=> $this->options->get_value('animate'),
 			'captionEnabled'	=> $this->options->get_value('enabled_caption'),
 			'captionSrc'		=> $this->options->get_value('caption_src'),
-			'layout'			=> $this->get_theme_layout()
+			'layout'			=> $this->get_theme_layout(),
+			'altsrc'			=> $this->add_prefix('src')
 		);
 		$lb_obj = array();
 		foreach ($options as $option => $val) {
-			if ($val === TRUE || $val == 'on')
-				$val = 'true';
-			elseif ($val === FALSE || empty($val))
-				$val = 'false';
+			if ( is_bool($val) )
+				$val = ( $val ) ? 'true' : 'false';
+			elseif ( is_string($val) && "'" != $val[0] )
+				$val = "'" . $val . "'";
 			$lb_obj[] = "'{$option}':{$val}";
 		}
 		//Load UI Strings

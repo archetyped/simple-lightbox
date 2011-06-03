@@ -4,7 +4,7 @@
 // by Archetyped - http://archetyped.com/tools/simple-lightbox/
 // Updated: 2011-01-27
 //
-//	Largely based on Lightbox Slideshow v1.1
+//	Originally based on Lightbox Slideshow v1.1
 //	by Justin Barkhuff - http://www.justinbarkhuff.com/lab/lightbox_slideshow/
 //  2007/08/15
 //
@@ -21,7 +21,7 @@
 /**
  * Lightbox object
  */
-var SLB = null;
+//var SLB = null;
 (function($) {
 SLB = {
 	activeImage : null,
@@ -34,13 +34,14 @@ SLB = {
 	overlayDuration : null,
 	overlayOpacity : null,
 	playSlides : null,
-	refTags : ['a','area'],
+	refTags : ['a'],
 	relAttribute : null,
 	resizeDuration : null,
 	slideShowTimer : null,
 	startImage : null,
 	prefix : 'slb',
 	checkedUrls : {},
+	
 	
 	/**
 	 * Initialize lightbox instance
@@ -66,6 +67,7 @@ SLB = {
 			resizeSpeed : 400, // controls the speed of the image resizing (milliseconds)
 			showGroupName : false, // show group name of images in image details
 			slideTime : 4, // time to display images during slideshow
+			altsrc : 'src',
 			strings : { // allows for localization
 				closeLink : 'close',
 				loadingMsg : 'loading',
@@ -93,6 +95,7 @@ SLB = {
 		if (!this.options.layout || this.options.layout.toString().length == 0)
 			this.end();
 		
+		//Validate options
 		if ( this.options.animate ) {
 			this.overlayDuration = Math.max(this.options.overlayDuration,0);
 			this.resizeDuration = this.options.resizeSpeed;
@@ -217,19 +220,23 @@ SLB = {
 	 */
 	updateImageList: function() {
 		var el, els, rel, t = this;
-		for(var i=0; i < this.refTags.length; i++) {
-			els = $(this.container).find(this.refTags[i]);
-			for(var j=0; j < els.length; j++) {
-				el = els[j];
-				rel = $(el).attr('rel');
-				if ($(el).attr('href') && (rel.toLowerCase().indexOf(this.relAttribute) != -1)) {
-					$(el).click(function() {
-						t.start(this);
-						return false;
-					});
-				}
-			}
+		sel = [], selBase = '[href][rel*="' + this.relAttribute + '"]';
+		
+		//Define event handler
+		var handler = function() {
+			//Check if element is valid for lightbox
+			t.start(this);
+			return false;
+		};
+		
+		//Build selector
+		for (var i = 0; i < this.refTags.length; i++) {
+			sel.push(this.refTags[i] + selBase);
 		}
+		sel = sel.join(',');
+				
+		//Add event handler to links
+		$(sel, $(this.container)).live('click', handler);
 	},
 	
 	/**
@@ -365,7 +372,7 @@ SLB = {
 	getSourceFile: function(el) {
 		var src = $(el).attr('href');
 		var rel = $(el).attr('rel');
-		var reSrc = /\bslb_src\[(.+?)\](?:\b|$)/;
+		var reSrc = new RegExp('\\b' + this.options.altsrc + '\\[(.+?)\\](?:\\b|$)');
 		if ( reSrc.test(rel) ) {
 			src = reSrc.exec(rel)[1];
 		}
