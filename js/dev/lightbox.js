@@ -388,7 +388,7 @@ SLB = {
 		//Get full attribute value
 		var g = null;
 		var rel = $(el).attr('rel') || '';
-		if (rel == '') {
+		if (rel != '') {
 			var gTmp = '';
 			var gSt = '[';
 			var gEnd = ']';
