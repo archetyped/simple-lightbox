@@ -16,6 +16,7 @@ The current release is a beta version.  Please test and [provide feedback on the
 Main changes
 
 #### Beta 4
+* Add: Support for links added after page load (e.g. via AJAX, etc.)
 * Add: Admin option to enable/disable attachment links
 * Optimize: Improved compatibility for older versions of PHP
 
