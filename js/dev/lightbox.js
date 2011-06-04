@@ -277,7 +277,7 @@ SLB = {
 		this.imageArray = [];
 		this.groupName = this.getGroup(imageLink);
 		
-		var rel = $(imageLink).attr('rel');
+		var rel = $(imageLink).attr('rel') || '';
 		var imageTitle = '';
 		var t = this;
 		var groupTemp = {};
@@ -371,7 +371,7 @@ SLB = {
 	 */
 	getSourceFile: function(el) {
 		var src = $(el).attr('href');
-		var rel = $(el).attr('rel');
+		var rel = $(el).attr('rel') || '';
 		var reSrc = new RegExp('\\b' + this.options.altsrc + '\\[(.+?)\\](?:\\b|$)');
 		if ( reSrc.test(rel) ) {
 			src = reSrc.exec(rel)[1];
@@ -387,8 +387,8 @@ SLB = {
 	getGroup: function(el) {
 		//Get full attribute value
 		var g = null;
-		var rel = $(el).attr('rel');
-		if (typeof rel != 'undefined' && rel.toString() != '') {
+		var rel = $(el).attr('rel') || '';
+		if (rel == '') {
 			var gTmp = '';
 			var gSt = '[';
 			var gEnd = ']';
