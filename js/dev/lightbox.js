@@ -387,31 +387,34 @@ SLB = {
 	getGroup: function(el) {
 		//Get full attribute value
 		var g = null;
-		var gTmp = '';
-		var gSt = '[';
-		var gEnd = ']';
 		var rel = $(el).attr('rel');
-		var search = this.relAttribute;
-		var searching = true;
-		var idx;
-		var prefix = ' ';
-		while (searching) {
-			idx = rel.indexOf(search);
-			//Stop processing if value is not found
-			if (idx == -1)
-				return g;
-			//Prefix with space to find whole word
-			if (prefix != search.charAt(0) && idx > 0) {
-				search = prefix + search;
-			} else {
-				searching = false;
+		if (typeof rel != 'undefined' && rel.toString() != '') {
+			var gTmp = '';
+			var gSt = '[';
+			var gEnd = ']';
+			var search = this.relAttribute;
+			var searching = true;
+			var idx;
+			var prefix = ' ';
+			while (searching) {
+				idx = rel.indexOf(search);
+				//Stop processing if value is not found
+				if (idx == -1) 
+					return g;
+				//Prefix with space to find whole word
+				if (prefix != search.charAt(0) && idx > 0) {
+					search = prefix + search;
+				}
+				else {
+					searching = false;
+				}
 			}
-		}
-		gTmp = $.trim(rel.substring(idx).replace(search, ''));
-		//Check if group defined
-		if (gTmp.length && gSt == gTmp.charAt(0) && gTmp.indexOf(gEnd) != -1) {
-			//Extract group name
-			g = gTmp.substring(1, gTmp.indexOf(gEnd));
+			gTmp = $.trim(rel.substring(idx).replace(search, ''));
+			//Check if group defined
+			if (gTmp.length && gSt == gTmp.charAt(0) && gTmp.indexOf(gEnd) != -1) {
+				//Extract group name
+				g = gTmp.substring(1, gTmp.indexOf(gEnd));
+			}
 		}
 		return g;
 	},
