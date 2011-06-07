@@ -1,6 +1,6 @@
 <?php 
 
-require_once 'includes/class.base.php';
+require_once 'includes/class.base.dev.php';
 require_once 'includes/class.fields.php';
 require_once 'includes/class.options.php';
 
@@ -347,7 +347,7 @@ class SLB_Lightbox extends SLB_Base {
 				global $post;
 				$types = (object) array('img' => 'image', 'att' => 'attachment');
 				$img_types = array('jpg', 'jpeg', 'gif', 'png');
-				$rgx = "/\b(\w+.*?)=\"(.*?)\"(?:\s|$)/i";
+				$rgx = "/\b(\w+.*?)=([\"'])(.*?)\\2(?:\s|$)/i";
 				//Iterate through links & add lightbox if necessary
 				foreach ( $links as $link ) {
 					//Check if rel attribute exists
@@ -357,14 +357,14 @@ class SLB_Lightbox extends SLB_Base {
 					$attr_matches = $attr = array();
 					preg_match_all($rgx, $link_attr, $attr_matches);
 					foreach ( $attr_matches[1] as $key => $val ) {
-						if ( isset($attr_matches[2][$key]) )
-							$attr[trim($val)] = trim($attr_matches[2][$key]);
+						if ( isset($attr_matches[3][$key]) )
+							$attr[trim($val)] = trim($attr_matches[3][$key]);
 					}
 					//Destroy parsing vars
 					unset($link_attr, $attr_matches);
 
 					//Set default attributes
-					$attr = array_map('trim', array_merge(array('rel' => '', 'href' => ''), $attr));
+					$attr = array_merge(array('rel' => '', 'href' => ''), $attr);
 					$h =& $attr['href'];
 					$r =& $attr['rel'];
 					
@@ -373,15 +373,15 @@ class SLB_Lightbox extends SLB_Base {
 					$lb = 'lightbox';
 					if ( empty($h) || '#' == $h || ( !empty($r) && ( strpos($r, $lb) !== false || strpos($r, $this->add_prefix('off')) !== false ) ) )
 						continue;
-					
 					//Determine link type
 					$type = false;
 					if ( in_array($this->util->get_file_extension($h), $img_types) )
 						$type = $types->img;
 					elseif ( strpos($h, $domain) !== false && is_local_attachment($h) && ( $pid = url_to_postid($h) ) && wp_attachment_is_image($pid) ) 
 						$type = $types->att;
-					if ( !$type )
+					if ( !$type ) {
 						continue;
+					}
 					
 					if ( $type == $types->att && !$this->options->get_value('activate_attachments') )
 						continue;

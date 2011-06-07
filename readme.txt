@@ -1,5 +1,5 @@
 === Plugin Name ===
-Contributors: archetyped
+Contributors: Archetyped
 Donate link: http://archetyped.com/tools/simple-lightbox/#donate
 Tags: lightbox, gallery, photography, images, theme, template, style
 Requires at least: 3.1.2
@@ -14,6 +14,9 @@ Simple Lightbox is a very simple and customizable lightbox that is easy to add t
 ### BETA NOTES
 The current release is a beta version.  Please test and [provide feedback on the beta release page](http://archetyped.com/lab/slb-1-5-5-beta/).
 Main changes
+
+#### Beta 5
+* Update: Additional WordPress 3.2 support (Gallery)
 
 #### Beta 4
 * Add: Support for WordPress 3.2

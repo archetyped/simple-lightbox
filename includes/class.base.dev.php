@@ -1,6 +1,6 @@
 <?php
 
-require_once 'class.utilities.php';
+require_once 'class.utilities.dev.php';
 
 /**
  * @package Simple Lightbox
@@ -30,7 +30,7 @@ class SLB_Base {
 	
 	/**
 	 * Debug
-	 * @var CNR_Debug;
+	 * @var SLB_Debug;
 	 */
 	var $debug = null;
 	
@@ -46,7 +46,7 @@ class SLB_Base {
 	 */
 	function __construct() {
 		$this->util =& new SLB_Utilities($this);
-		$this->debug =& new CNR_Debug();
+		$this->debug =& new SLB_Debug();
 	}
 	
 	/*-** Init **-*/

@@ -1,5 +1,5 @@
 <?php
-require_once 'class.base.php';
+require_once 'class.base.dev.php';
 require_once 'class.fields.php';
 
 /**
