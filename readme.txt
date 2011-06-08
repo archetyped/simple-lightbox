@@ -17,6 +17,7 @@ Main changes
 
 #### Beta 5
 * Update: Additional WordPress 3.2 support (Gallery)
+* Fix: Improved options migration from old versions (Hutchison Migration)
 
 #### Beta 4
 * Add: Support for WordPress 3.2

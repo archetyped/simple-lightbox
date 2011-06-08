@@ -1,6 +1,6 @@
 <?php 
 
-require_once 'includes/class.base.dev.php';
+require_once 'includes/class.base.php';
 require_once 'includes/class.fields.php';
 require_once 'includes/class.options.php';
 
