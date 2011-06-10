@@ -58,7 +58,7 @@ class SLB_Base {
 	function init() {
 		$func = 'register_hooks';
 		if ( isset($this) && method_exists($this, $func) ) {
-			call_user_method($func, $this);
+			call_user_func($this->m($func));
 		}
 	}
 	

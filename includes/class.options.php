@@ -131,10 +131,7 @@ class SLB_Options extends SLB_Field_Collection {
 		$oid = 'enabled_single';
 		$d = null;
 		$this->load_data();
-		if ( ($o = get_option($oid, $d)) && $o !== $d ) {
-			$this->set_data('enabled_post', $o, false);
-			$this->set_data('enabled_page', $o, false);
-		}
+		
 		//Migrate separate options to unified option
 		$items =& $this->get_items();
 		foreach ( $items as $id => $opt ) {
@@ -147,10 +144,28 @@ class SLB_Options extends SLB_Field_Collection {
 				delete_option($oid);
 			}
 		}
-		//Remove any remaining legacy items
+		
+		//Migrate legacy items
 		if ( is_array($this->properties_init) && isset($this->properties_init['legacy']) && is_array($this->properties_init['legacy']) ) {
-			foreach( $this->properties_init['legacy'] as $opt )
+			foreach( $this->properties_init['legacy'] as $opt => $dest ) {
+				$oid = $this->add_prefix($opt);
+				$o = get_option($oid, $d);
+				//Only migrate valid values
+				if ( $o !== $d ) {
+					//Wrap single destination in array
+					if ( is_string($dest) ) {
+						$dest = array($dest);
+					}
+					//Process destinations
+					if ( is_array($dest) ) {
+						foreach ( $dest as $id ) {
+							$this->set_data($id, $o, false);
+						}
+					}
+				}
+				//Remove legacy item
 				delete_option($this->add_prefix($opt));
+			}
 		}
 		//Save changes
 		$this->save();

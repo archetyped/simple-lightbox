@@ -1,6 +1,6 @@
 <?php
 
-require_once 'class.base.php';
+require_once 'class.base.dev.php';
 
 /**
  * Fields - Base class

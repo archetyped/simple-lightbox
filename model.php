@@ -1,7 +1,6 @@
 <?php 
 
-require_once 'includes/class.base.php';
-require_once 'includes/class.fields.php';
+require_once 'includes/class.base.dev.php';
 require_once 'includes/class.options.php';
 
 /**
@@ -73,11 +72,11 @@ class SLB_Lightbox extends SLB_Base {
 			'txt_numDisplaySeparator'	=> array('title' => 'Image number separator (e.g. Image x <strong>of</strong> y)', 'default' => 'of', 'group' => 'labels')
 		),
 		'legacy' => array (
-			'header_activation',
-			'header_enabled',
-			'header_strings',
-			'header_ui',
-			'enabled_single'
+			'header_activation'	=> null,
+			'header_enabled'	=> null,
+			'header_strings'	=> null,
+			'header_ui'			=> null,
+			'enabled_single'	=> array('enabled_post', 'enabled_page')
 		)
 	);
 	
@@ -113,11 +112,12 @@ class SLB_Lightbox extends SLB_Base {
 		//Init objects
 		$this->fields =& new SLB_Fields();
 		$this->options =& new SLB_Options('options', $this->options_config);
+		$this->check_upgrade();
 	}
 	
 	function register_hooks() {
 		parent::register_hooks();
-		
+
 		/* Admin */
 
 		//Init lightbox admin
@@ -145,6 +145,12 @@ class SLB_Lightbox extends SLB_Base {
 		//Set default options (if not yet set)
 		$this->options->reset(false);
 		$this->options->migrate();
+	}
+	
+	function check_upgrade() {
+		if ( isset($_GET['action']) && 'activate-plugin' == $_GET['action'] && isset($_GET['plugin']) && $this->util->get_plugin_base_name() == $_GET['plugin'] ) {
+			$this->activate();
+		}
 	}
 	
 	/*-** Helpers **-*/
