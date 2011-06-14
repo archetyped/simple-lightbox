@@ -431,7 +431,7 @@ class SLB_Lightbox extends SLB_Base {
 	function enqueue_files() {
 		if ( ! $this->is_enabled() )
 			return;
-		wp_enqueue_script($this->add_prefix('lib'), $this->util->get_file_url('js/lib.js'), array('jquery'), $this->util->get_plugin_version());
+		wp_enqueue_script($this->add_prefix('lib'), $this->util->get_file_url('js/dev/lightbox.js'), array('jquery'), $this->util->get_plugin_version());
 		wp_enqueue_style($this->add_prefix('style'), $this->get_theme_style(), array(), $this->util->get_plugin_version());
 	}
 	

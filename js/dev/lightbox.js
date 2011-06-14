@@ -408,13 +408,14 @@ SLB = {
 			for (var i = 0; i < this.relAttribute.length; i++) {
 				search = this.relAttribute[i];
 				idx = rel.indexOf(search);
-				//Stop processing if value is not found
-				if (idx == -1) 
-					continue;
 				//Prefix with space to find whole word
 				if (prefix != search.charAt(0) && idx > 0) {
 					search = prefix + search;
+					idx = rel.indexOf(search);
 				}
+				//Stop processing if value is not found
+				if (idx == -1)
+					continue;
 				gTmp = $.trim(rel.substring(idx).replace(search, ''));
 				//Check if group defined
 				if (gTmp.length && gSt == gTmp.charAt(0) && gTmp.indexOf(gEnd) != -1) {
