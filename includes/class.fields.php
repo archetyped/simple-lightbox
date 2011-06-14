@@ -1,6 +1,6 @@
 <?php
 
-require_once 'class.base.dev.php';
+require_once 'class.base.php';
 
 /**
  * Fields - Base class
@@ -93,7 +93,13 @@ class SLB_Field_Base extends SLB_Base {
 	 * @var mixed
 	 */
 	var $data = null;
-
+	
+	/**
+	 * Whether data has been fetched or not
+	 * @var bool
+	 */
+	var $data_fetched = false;
+	
 	/**
 	 * @var array Script resources to include for object
 	 */
@@ -1435,7 +1441,9 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	 *  > JSON
 	 * @return void
 	 */
-	function load_data() {}
+	function load_data() {
+		$this->data_fetched = true;
+	}
 	
 	/**
 	 * Set data for an item

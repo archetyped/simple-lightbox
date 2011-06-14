@@ -15,6 +15,12 @@ Simple Lightbox is a very simple and customizable lightbox that is easy to add t
 The current release is a beta version.  Please test and [provide feedback on the beta release page](http://archetyped.com/lab/slb-1-5-5-beta/).
 Main changes
 
+#### Beta 6
+* Optimize: Improved settings migration from previous versions
+* Add: Distinct link activation (will not affect other lightboxes)
+* Add: Backwards compatibility with legacy lightbox links (optional)
+* Update: Improved UI consistency
+
 #### Beta 5
 * Update: Additional WordPress 3.2 support (Gallery)
 * Fix: Improved options migration from old versions (Hutchison Migration)

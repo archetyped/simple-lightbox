@@ -129,6 +129,21 @@ class SLB_Base {
 	}
 	
 	/**
+	 * Add prefix to variable reference
+	 * Updates actual variable rather than return value
+	 * @uses SLB_Utilities::add_prefix_ref();
+	 * @param string $var Variable to add prefix to
+	 * @param string $sep (optional) Separator text
+	 * @param bool $once (optional) Add prefix only once
+	 * @return void
+	 */
+	function add_prefix_ref(&$var, $sep = null, $once = true) {
+		$args = func_get_args();
+		$args[0] =& $var;
+		call_user_func_array($this->util->m($this->util, 'add_prefix_ref'), $args);
+	}
+	
+	/**
 	 * Remove prefix from specified string
 	 * @param string $text String to remove prefix from
 	 * @param string $sep (optional) Separator used with prefix

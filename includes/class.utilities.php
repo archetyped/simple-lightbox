@@ -109,6 +109,20 @@ class SLB_Utilities {
 	}
 	
 	/**
+	 * Add prefix to variable reference
+	 * Updates actual variable rather than return value
+	 * @uses add_prefix() to add prefix to variable
+	 * @param string $var Variable to add prefix to
+	 * @param string $sep (optional) Separator text
+	 * @param bool $once (optional) Add prefix only once
+	 * @return void
+	 */
+	function add_prefix_ref(&$var, $sep = null, $once = true) {
+		$args = func_get_args();
+		$var = call_user_func_array($this->m($this, 'add_prefix'), $args);
+	}
+	
+	/**
 	 * Remove prefix from specified string
 	 * @param string $text String to remove prefix from
 	 * @param string $sep (optional) Separator used with prefix
@@ -463,8 +477,12 @@ class SLB_Utilities {
 	 * @return string Internal plugin name
 	 */
 	function get_plugin_base_name() {
-		$file = $this->get_plugin_base_file();
-		return plugin_basename($file);
+		static $name = false;
+		if ( !$name ) {
+			$file = $this->get_plugin_base_file();
+			$name = plugin_basename($file);
+		}
+		return $name;
 	}
 	
 	/**

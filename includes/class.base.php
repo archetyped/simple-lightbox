@@ -51,7 +51,7 @@ class SLB_Base {
 	function init() {
 		$func = 'register_hooks';
 		if ( isset($this) && method_exists($this, $func) ) {
-			call_user_method($func, $this);
+			call_user_func($this->m($func));
 		}
 	}
 	
@@ -119,6 +119,21 @@ class SLB_Base {
 	function add_prefix($text, $sep = null, $once = true) {
 		$args = func_get_args();
 		return call_user_func_array($this->util->m($this->util, 'add_prefix'), $args);
+	}
+	
+	/**
+	 * Add prefix to variable reference
+	 * Updates actual variable rather than return value
+	 * @uses SLB_Utilities::add_prefix_ref();
+	 * @param string $var Variable to add prefix to
+	 * @param string $sep (optional) Separator text
+	 * @param bool $once (optional) Add prefix only once
+	 * @return void
+	 */
+	function add_prefix_ref(&$var, $sep = null, $once = true) {
+		$args = func_get_args();
+		$args[0] =& $var;
+		call_user_func_array($this->util->m($this->util, 'add_prefix_ref'), $args);
 	}
 	
 	/**

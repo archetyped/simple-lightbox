@@ -1,6 +1,6 @@
 <?php 
 
-require_once 'includes/class.base.dev.php';
+require_once 'includes/class.base.php';
 require_once 'includes/class.options.php';
 
 /**
@@ -32,6 +32,14 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	var $options_admin_form = 'options.php';
 	
+	var $attr = null;
+	
+	/**
+	 * Legacy attribute (for backwards compatibility)
+	 * @var string
+	 */
+	var $attr_legacy = 'lightbox';
+	
 	/**
 	 * Options Configuration
 	 * @var array
@@ -49,6 +57,7 @@ class SLB_Lightbox extends SLB_Base {
 			'enabled_post'				=> array('title' => 'Enable on Posts', 'default' => true, 'group' => 'activation'),
 			'enabled_page'				=> array('title' => 'Enable on Pages', 'default' => true, 'group' => 'activation'),
 			'enabled_archive'			=> array('title' => 'Enable on Archive Pages (tags, categories, etc.)', 'default' => true, 'group' => 'activation'),
+			'enabled_compat'			=> array('title' => 'Enable backwards-compatibility with legacy lightbox links', 'default' => false, 'group' => 'activation'),
 			'activate_links'			=> array('title' => 'Activate all image links in item content', 'default' => true, 'group' => 'activation'),
 			'activate_attachments'		=> array('title' => 'Activate all image attachment links', 'default' => true, 'group' => 'activation'),
 			'validate_links'			=> array('title' => 'Validate links', 'default' => false, 'group' => 'activation'),
@@ -89,7 +98,7 @@ class SLB_Lightbox extends SLB_Base {
 	var $options = null;
 	
 	/**
-	 * Fields
+	 * Base field definitions
 	 * @var SLB_Fields
 	 */
 	var $fields = null;
@@ -110,9 +119,9 @@ class SLB_Lightbox extends SLB_Base {
 		$opt_theme['options'] = $this->m('get_theme_options');
 		
 		//Init objects
+		$this->attr = $this->get_prefix();
 		$this->fields =& new SLB_Fields();
 		$this->options =& new SLB_Options('options', $this->options_config);
-		$this->check_upgrade();
 	}
 	
 	function register_hooks() {
@@ -140,19 +149,7 @@ class SLB_Lightbox extends SLB_Base {
 		/* Themes */
 		$this->util->add_action('init_themes', $this->m('init_default_themes'));
 	}
-	
-	function activate() {
-		//Set default options (if not yet set)
-		$this->options->reset(false);
-		$this->options->migrate();
-	}
-	
-	function check_upgrade() {
-		if ( isset($_GET['action']) && 'activate-plugin' == $_GET['action'] && isset($_GET['plugin']) && $this->util->get_plugin_base_name() == $_GET['plugin'] ) {
-			$this->activate();
-		}
-	}
-	
+
 	/*-** Helpers **-*/
 	
 	/**
@@ -343,7 +340,7 @@ class SLB_Lightbox extends SLB_Base {
 		//Check option
 		if ( ! is_feed() && $this->is_enabled() && $this->options->get_value('activate_links') ) {
 			$links = array();
-			//Get all links on page
+			//Get all links in content
 			$rgx = "/\<a[^\>]+href=.*?\>/i";
 			preg_match_all($rgx, $content, $links);
 			$links = $links[0];
@@ -376,8 +373,8 @@ class SLB_Lightbox extends SLB_Base {
 					
 					
 					//Stop processing link if lightbox attribute has already been set
-					$lb = 'lightbox';
-					if ( empty($h) || '#' == $h || ( !empty($r) && ( strpos($r, $lb) !== false || strpos($r, $this->add_prefix('off')) !== false ) ) )
+					$lb = $this->attr;
+					if ( empty($h) || '#' == $h || ( !empty($r) && ( strpos($r, $lb) !== false || strpos($r, $this->add_prefix('off')) !== false || strpos($r, $this->attr_legacy) !== false ) ) )
 						continue;
 					//Determine link type
 					$type = false;
@@ -462,14 +459,22 @@ class SLB_Lightbox extends SLB_Base {
 			'captionEnabled'	=> $this->options->get_value('enabled_caption'),
 			'captionSrc'		=> $this->options->get_value('caption_src'),
 			'layout'			=> $this->get_theme_layout(),
-			'altsrc'			=> $this->add_prefix('src')
+			'altsrc'			=> $this->add_prefix('src'),
+			'relAttribute'		=> array($this->get_prefix()),
+			'prefix'			=> $this->get_prefix()
 		);
+		//Backwards compatibility
+		if ( $this->options->get_value('enabled_compat'))
+			$options['relAttribute'][] = $this->attr_legacy;
 		$lb_obj = array();
 		foreach ($options as $option => $val) {
 			if ( is_bool($val) )
 				$val = ( $val ) ? 'true' : 'false';
 			elseif ( is_string($val) && "'" != $val[0] )
 				$val = "'" . $val . "'";
+			elseif ( is_array($val) ) {
+				$val = "['" . implode("','", $val) . "']";
+			}
 			$lb_obj[] = "'{$option}':{$val}";
 		}
 		//Load UI Strings

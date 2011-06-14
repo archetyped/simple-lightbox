@@ -39,9 +39,8 @@ SLB = {
 	resizeDuration : null,
 	slideShowTimer : null,
 	startImage : null,
-	prefix : 'slb',
+	prefix : '',
 	checkedUrls : {},
-	
 	
 	/**
 	 * Initialize lightbox instance
@@ -63,7 +62,7 @@ SLB = {
 			loop : true, // whether to continuously loop slideshow images
 			overlayDuration : .2, // time to fade in shadow overlay
 			overlayOpacity : .8, // transparency of shadow overlay
-			relAttribute : 'lightbox', // specifies the rel attribute value that triggers lightbox
+			relAttribute : null, // specifies the rel attribute value that triggers lightbox
 			resizeSpeed : 400, // controls the speed of the image resizing (milliseconds)
 			showGroupName : false, // show group name of images in image details
 			slideTime : 4, // time to display images during slideshow
@@ -95,7 +94,17 @@ SLB = {
 		if (!this.options.layout || this.options.layout.toString().length == 0)
 			this.end();
 		
+		
 		//Validate options
+		if ( 'prefix' in this.options )
+			this.prefix = this.options.prefix;
+		  //Activation Attribute
+		if ( null == this.options.relAttribute )
+			 this.options.relAttribute = [this.prefix];
+		else if ( !$.isArray(this.options.relAttribute) )
+			this.options.relAttribute = [this.options.relAttribute.toString()];
+		this.relAttribute = this.options.relAttribute;
+		
 		if ( this.options.animate ) {
 			this.overlayDuration = Math.max(this.options.overlayDuration,0);
 			this.resizeDuration = this.options.resizeSpeed;
@@ -107,7 +116,6 @@ SLB = {
 		this.overlayOpacity = Math.max(Math.min(this.options.overlayOpacity,1),0);
 		this.playSlides = this.options.autoPlay;
 		this.container = $(this.options.containerID);
-		this.relAttribute = this.options.relAttribute;
 		this.updateImageList();
 		var t = this;
 		var objBody = $(this.container).get(0) != document ? this.container : $('body');
@@ -219,8 +227,8 @@ SLB = {
 	 * Finds all compatible image links on page
 	 */
 	updateImageList: function() {
-		var el, els, rel, t = this;
-		sel = [], selBase = '[href][rel*="' + this.relAttribute + '"]';
+		var el, els, rel, ph = '{relattr}', t = this;
+		var sel = [], selBase = '[href][rel*="' + ph + '"]';
 		
 		//Define event handler
 		var handler = function() {
@@ -231,10 +239,11 @@ SLB = {
 		
 		//Build selector
 		for (var i = 0; i < this.refTags.length; i++) {
-			sel.push(this.refTags[i] + selBase);
+			for (var x = 0; x < this.relAttribute.length; x++) {
+				sel.push(this.refTags[i] + selBase.replace(ph, this.relAttribute[x]));
+			}
 		}
 		sel = sel.join(',');
-				
 		//Add event handler to links
 		$(sel, $(this.container)).live('click', handler);
 	},
@@ -389,31 +398,30 @@ SLB = {
 		var g = null;
 		var rel = $(el).attr('rel') || '';
 		if (rel != '') {
-			var gTmp = '';
-			var gSt = '[';
-			var gEnd = ']';
-			var search = this.relAttribute;
-			var searching = true;
-			var idx;
-			var prefix = ' ';
-			while (searching) {
+			var gTmp = '',
+				gSt = '[',
+				gEnd = ']',
+				search = '',
+				idx,
+				prefix = ' ';
+			//Iterate through attributes to find group
+			for (var i = 0; i < this.relAttribute.length; i++) {
+				search = this.relAttribute[i];
 				idx = rel.indexOf(search);
 				//Stop processing if value is not found
 				if (idx == -1) 
-					return g;
+					continue;
 				//Prefix with space to find whole word
 				if (prefix != search.charAt(0) && idx > 0) {
 					search = prefix + search;
 				}
-				else {
-					searching = false;
+				gTmp = $.trim(rel.substring(idx).replace(search, ''));
+				//Check if group defined
+				if (gTmp.length && gSt == gTmp.charAt(0) && gTmp.indexOf(gEnd) != -1) {
+					//Extract group name
+					g = gTmp.substring(1, gTmp.indexOf(gEnd));
+					continue;
 				}
-			}
-			gTmp = $.trim(rel.substring(idx).replace(search, ''));
-			//Check if group defined
-			if (gTmp.length && gSt == gTmp.charAt(0) && gTmp.indexOf(gEnd) != -1) {
-				//Extract group name
-				g = gTmp.substring(1, gTmp.indexOf(gEnd));
 			}
 		}
 		return g;

@@ -18,7 +18,7 @@ class SLB_Option extends SLB_Field {
 		'default'	=> 'data',
 		'attr'		=> 'properties'
 	);
-	
+		
 	/* Init */
 	
 	function SLB_Option($id, $title = '', $default = '') {
@@ -104,6 +104,19 @@ class SLB_Options extends SLB_Field_Collection {
 
 	var $item_type = 'SLB_Option';
 	
+	/**
+	 * Key for saving version to DB
+	 * @var string
+	 */
+	var $version_key = 'version';
+	
+	
+	/**
+	 * Whether verison has been checked
+	 * @var bool
+	 */
+	var $version_checked = false;
+	
 	/* Init */
 	
 	function SLB_Options($id, $props = array()) {
@@ -113,6 +126,7 @@ class SLB_Options extends SLB_Field_Collection {
 	
 	function __construct($id, $props = array()) {
 		parent::__construct($id, $props);
+		$this->add_prefix_ref($this->version_key);
 	}
 	
 	function register_hooks() {
@@ -123,12 +137,53 @@ class SLB_Options extends SLB_Field_Collection {
 		add_action($this->add_prefix('fields_registered'), $this->m('set_parents'));
 	}
 	
+	/* Legacy/Migration */
+	
+	/**
+	 * Checks whether new version has been installed and migrates necessary settings
+	 * @uses $version_key as option name
+	 * @uses get_option() to retrieve saved version number
+	 * @uses SLB_Utilities::get_plugin_version() to retrieve current version
+	 * @return bool TRUE if version has been changed
+	 */
+	function check_update() {
+		if ( !$this->version_checked ) {
+			$this->version_checked = true;
+			//Get version from DB
+			$vo = get_option($this->version_key);
+			//Get current version
+			$vn = $this->util->get_plugin_version();
+			//Compare versions
+			if ( strcasecmp($vo, $vn) < 0 ) {
+				//Migrate
+				$this->migrate();
+				
+				//Update saved version
+				$this->set_version($vn);
+			}
+		}
+		return $this->version_checked;
+	}
+	
+	/**
+	 * Save plugin version to DB
+	 * If no version supplied, will fetch plugin data to determine version
+	 * @uses $version_key as option name
+	 * @uses update_option() to save version to options table
+	 * @param string $ver (optional) Plugin version
+	 */
+	function set_version($ver = null) {
+		if ( empty($ver) ) {
+			$ver = $this->util->get_plugin_version();
+		}
+		return update_option($this->version_key, $ver);
+	}
+	
 	/**
 	 * Migrate options from old versions to current version
 	 */
 	function migrate() {
 		//Legacy options
-		$oid = 'enabled_single';
 		$d = null;
 		$this->load_data();
 		
@@ -186,7 +241,7 @@ class SLB_Options extends SLB_Field_Collection {
 		$field_post = '</div>';
 		$opt_pre = '<div class="' . $this->add_prefix('option_item') . '">';
 		$opt_post = '</div>';
-		$layout_form = '<{form_attr ref_base="layout"} /> (Default: {data context="display" top="0"})'; 
+		$layout_form = '<{form_attr ref_base="layout"} /> <span class="description">(Default: {data context="display" top="0"})</span>'; 
 		
 		//Text input
 		$otxt =& new SLB_Field_Type('option_text', 'text');
@@ -278,9 +333,13 @@ class SLB_Options extends SLB_Field_Collection {
 	
 	/**
 	 * Retrieve options from database
+	 * @uses get_option to retrieve option data
 	 * @return array Options data
 	 */
 	function fetch_data($sanitize = true) {
+		//Check update
+		$this->check_update();
+		//Get data
 		$data = get_option($this->get_key(), null);
 		if ( $sanitize && is_array($data) ) {
 			//Sanitize loaded data based on default values
@@ -302,9 +361,8 @@ class SLB_Options extends SLB_Field_Collection {
 	 * @see SLB_Field_Collection::load_data()
 	 */
 	function load_data() {
-		static $fetched = false;
-		if ( !$fetched ) {
-			$fetched = true;
+		if ( !$this->data_fetched ) {
+			$this->data_fetched = true;
 			//Retrieve data
 			$this->data = $this->fetch_data();
 		}
