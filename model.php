@@ -422,7 +422,7 @@ class SLB_Lightbox extends SLB_Base {
 				}
 			}
 		}
-		return $content; 
+		return $content;
 	}
 	
 	/**
