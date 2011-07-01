@@ -228,7 +228,7 @@ SLB = {
 	 */
 	updateImageList: function() {
 		var el, els, rel, ph = '{relattr}', t = this;
-		var sel = [], selBase = '[href][rel*="' + ph + '"]';
+		var sel = [], selBase = '[href][rel*="' + ph + '"]:not([rel~="' + this.addPrefix('off') + '"])';
 		
 		//Define event handler
 		var handler = function() {
@@ -767,12 +767,34 @@ SLB = {
 	},
 
 	/**
+	 * Generate separator text
+	 * @param string sep Separator text
+	 * @return string Separator text
+	 */
+	getSep: function(sep) {
+		return ( typeof sep == 'undefined' ) ? '_' : sep;
+	},
+	
+	/**
+	 * Retrieve prefix
+	 * @return string Object prefix
+	 */
+	getPrefix: function() {
+		return this.prefix;
+	},
+
+	/**
 	 * Add prefix to text
 	 * @param string txt Text to add prefix to
+	 * @param string sep (optional) Separator text
 	 * @return string Prefixed text
 	 */
-	addPrefix: function(txt) {
-		return this.prefix + '_' + txt;
+	addPrefix: function(txt, sep) {
+		return this.getPrefix() + this.getSep(sep) + txt;
+	},
+	
+	hasPrefix: function(txt) {
+		return ( txt.indexOf(this.addPrefix('')) == 0 ) ? true : false;
 	},
 	
 	/**

@@ -51,6 +51,9 @@ Post your questions and comments on [Simple Lightbox's official page](http://arc
 2. Customized UI Text
 
 == Changelog ==
+= 1.5.5.1 =
+* Fix: Disabled links not being disabled (Disabling Sascha)
+
 = 1.5.5 =
 * Add: Distinct link activation (will not affect other lightboxes)
 * Add: Backwards compatibility with legacy lightbox links (optional)
