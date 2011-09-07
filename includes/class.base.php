@@ -73,7 +73,10 @@ class SLB_Base {
 	 * @return object|bool Base object (FALSE if object does not exist)
 	 */
 	function &get_base() {
-		return ( isset($GLOBALS[$this->base]) ) ? $GLOBALS[$this->base] : false;
+		$base = false;
+		if ( isset($GLOBALS[$this->base]) )
+			$base =& $GLOBALS[$this->base]; 
+		return $base;
 	}
 	
 	/*-** Method/Function calling **-*/

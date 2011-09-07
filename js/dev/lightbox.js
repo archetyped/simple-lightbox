@@ -17,11 +17,10 @@
 //	The code inserts HTML at the bottom of the page for displaying content in a non-modal dialog
 //
 // -----------------------------------------------------------------------------------
-
 /**
  * Lightbox object
  */
-//var SLB = null;
+var SLB = null;
 (function($) {
 SLB = {
 	activeImage : null,

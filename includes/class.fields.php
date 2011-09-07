@@ -341,7 +341,7 @@ class SLB_Field_Base extends SLB_Base {
 		//Load options based on format
 		if ( !is_array($options) )
 			$options = array('format' => $options);
-		if ( is_string($options['format']) && isset($formats[$options['format']]) )
+		if ( isset($options['format']) && is_string($options['format']) && isset($formats[$options['format']]) )
 			$options_default = wp_parse_args($formats[$options['format']], $options_default);
 		else
 			unset($options['format']);
@@ -540,7 +540,7 @@ class SLB_Field_Base extends SLB_Base {
 		if ( empty($parent) && !is_string($this->parent) )
 			return false;
 		//Parent passed as object reference wrapped in array
-		if ( is_array($parent) && is_object($parent[0]) )
+		if ( is_array($parent) && isset($parent[0]) && is_object($parent[0]) )
 			$parent =& $parent[0];
 		
 		//No parent set but parent ID (previously) set in object
