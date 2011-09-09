@@ -20,7 +20,7 @@
 /**
  * Lightbox object
  */
-var SLB = null;
+//var SLB = null;
 (function($) {
 SLB = {
 	activeImage : null,
@@ -40,6 +40,7 @@ SLB = {
 	startImage : null,
 	prefix : '',
 	checkedUrls : {},
+	media : {},
 	
 	/**
 	 * Initialize lightbox instance
@@ -66,6 +67,7 @@ SLB = {
 			showGroupName : false, // show group name of images in image details
 			slideTime : 4, // time to display images during slideshow
 			altsrc : 'src',
+			mId : 'id',
 			strings : { // allows for localization
 				closeLink : 'close',
 				loadingMsg : 'loading',
@@ -252,26 +254,48 @@ SLB = {
 	 * @param {Object} imageLink
 	 */
 	getCaption: function(imageLink) {
-			imageLink = $(imageLink);
-			var caption = '';
-			if (this.options.captionEnabled) {
-				caption = imageLink.attr('title') || '';
-				if (caption == '') {
-					var inner = $(imageLink).find('img').first();
-					if ($(inner).length) 
-						caption = $(inner).attr('title') || $(inner).attr('alt');
-					if (!caption) {
-						if (imageLink.text().length) 
-							caption = imageLink.text();
-						else 
-							if (this.options.captionSrc) 
-								caption = imageLink.attr('href');
-					}
-					if (!caption) 
-						caption = '';
+		imageLink = $(imageLink);
+		var caption = '';
+		if (this.options.captionEnabled) {
+			var sels = {
+				'capt': '.wp-caption-text',
+				'gIcon': '.gallery-icon'
+			};
+			var els = {
+				'link': imageLink,
+				'origin': imageLink,
+				'sibs': null,
+				'img': null
+			}
+			//WP Caption
+			if ( $(els.link).parent(sels.gIcon).length > 0 ) {
+				els.origin = $(els.link).parent();
+			}
+			if ( (els.sibs = $(els.origin).siblings(sels.capt)) && $(els.sibs).length > 0 ) {
+				caption = $(els.sibs).first().text();
+			}
+			caption = caption.trim();
+			//Fall back to image properties
+			if ( '' == caption ) {
+				els.img = $(els.link).find('img').first();
+				if ( $(els.img).length ) {
+					//Image title / alt
+					caption = $(els.img).attr('title') || $(els.img).attr('alt');
 				}
 			}
-			return caption;
+			caption = caption.trim();
+			//Fall back Link Text
+			if ('' == caption) {
+				if ($(sels.link).text().trim().length) {
+					caption = $(sels.link).text().trim();
+				} else if (this.options.captionSrc) {
+					//Fall back to Link href
+					caption = $(sels.link).attr('href');
+				}
+			}
+			caption = caption.trim();
+		}
+		return caption;
 	},
 
 	/**
@@ -380,9 +404,26 @@ SLB = {
 	getSourceFile: function(el) {
 		var src = $(el).attr('href');
 		var rel = $(el).attr('rel') || '';
-		var reSrc = new RegExp('\\b' + this.options.altsrc + '\\[(.+?)\\](?:\\b|$)');
-		if ( reSrc.test(rel) ) {
-			src = reSrc.exec(rel)[1];
+		if (rel.length) {
+			relSrc = '';
+			//Attachment
+			var reId = new RegExp('\\b' + this.addPrefix(this.options.mId) + '\\[(.+?)\\](?:\\b|$)');
+			if (reId.test(rel)) {
+				mId = reId.exec(rel)[1];
+				if (mId in this.media && 'source' in this.media[mId]) {
+					relSrc = this.media[mId].source;
+				}
+			}
+			//Explicit source
+			if (!relSrc.length) {
+				var reSrc = new RegExp('\\b' + this.addPrefix(this.options.altsrc) + '\\[(.+?)\\](?:\\b|$)');
+				if (reSrc.test(rel)) {
+					relSrc = reSrc.exec(rel)[1];
+				}
+			}
+			//Set source using rel-derived value
+			if ( relSrc.length )
+				src = relSrc;
 		}
 		return src;
 	},

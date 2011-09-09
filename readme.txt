@@ -15,6 +15,11 @@ Simple Lightbox is a very simple and customizable lightbox that is easy to add t
 The current release is a beta version.  Please test and [provide feedback on the beta release page](http://archetyped.com/lab/slb-1-5-6-beta/).
 Main changes
 
+#### Beta 2
+* Add: Support for W3 Total Cache plugin
+* Optimize: Template CSS Cleanup
+* Optimize: Caption support for galleries
+
 #### Beta 1
 * Update: Options code cleanup (Juga Sweep)
 

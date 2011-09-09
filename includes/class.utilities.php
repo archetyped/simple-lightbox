@@ -878,6 +878,15 @@ class SLB_Utilities {
 		return $this->build_html_element(array('tag' => 'link', 'wrap' => false, 'attributes' => $attributes));
 	}
 	
+	function build_script_element($content = '', $id = '') {
+		$attributes = array('type' => 'text/javascript');
+		$content = '/* <![CDATA[ */' . $content . '/* ]]> */';
+		if ( is_string($id) && !empty($id) ) {
+			$attributes['id'] = $id;
+		}
+		return $this->build_html_element(array('tag' => 'script', 'content' => $content, 'attributes' => $attributes));
+	}
+	
 	/**
 	 * Generate external script element
 	 * @param $url Script URL

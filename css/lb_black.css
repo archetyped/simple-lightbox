@@ -1,16 +1,19 @@
 .slb_dataCaption { font-weight: bold;}
 .slb_dataNumber { display: block; clear: left; }			
 #slb_nav { display: block; clear: left; padding:0 0 10px 0;}	
-.slb_navPrev { margin:0 8px 0 0; }		
-.slb_navNext { margin:0 8px 0 0; }		
+.slb_navPrev { margin:0 8px 0 0; }
+.slb_navNext { margin:0 8px 0 0; }
+#slb_close {
+	float: right;
+	width:66px;
+	height:28px;
+}
+
 .slb_slbClose {
 	display:block;
 	margin:0;
 	padding:0 0 10px 0;
 	text-decoration:none;
-	float:right;
-	width:66px;
-	height:28px;
 	background:url("../images/closelabel_black.gif") no-repeat;
 	text-indent:-9999px;
 	overflow:hidden;
@@ -43,11 +46,11 @@
 	margin: 0 auto;
 }
 
-#imageContainer {
+#slb_content {
 	padding: 10px;
 }
 
-#loading {
+#slb_loading {
 	position: absolute;
 	top: 40%;
 	left: 0%;
@@ -56,6 +59,7 @@
 	text-align: center;
 	line-height: 0;
 }
+
 #slb_slbLoading {
 	display:block;
 	margin:0 auto;
@@ -66,7 +70,7 @@
 	text-indent:-9999px;
 }
 
-#nav_hover {
+#slb_nav_hover {
 	position: absolute;
 	top: 0;
 	left: 0;
@@ -76,9 +80,9 @@
 	left: 0;
 }
 	
-#nav_hover a { outline: none; }
+#slb_nav_hover a { outline: none; }
 
-#nav_hover .slb_nav {
+#slb_nav_hover .slb_nav {
 	width: 47%;
 	height: 98%;
 	background: transparent url("../images/blank.gif") no-repeat; /* Trick IE into showing hover */
@@ -86,22 +90,28 @@
 	text-indent: -9999px;
 }
 
-#nav_hover .slb_navPrev { left: 0; float: left;}
-#nav_hover .slb_navNext { right: 0; float: right;}
-#nav_hover .slb_navPrev:hover, #nav_hover .slb_navPrev:visited:hover { background: url("../images/prevlabel_black.gif") left 15% no-repeat; }
-#nav_hover .slb_navNext:hover, #nav_hover .slb_navNext:visited:hover { background: url("../images/nextlabel_black.gif") right 15% no-repeat; }
+#slb_nav_hover .slb_navPrev { left: 0; float: left;}
+#slb_nav_hover .slb_navNext { right: 0; float: right;}
+#slb_nav_hover .slb_navPrev:hover, #slb_nav_hover .slb_navPrev:visited:hover { background: url("../images/prevlabel_black.gif") left 15% no-repeat; }
+#slb_nav_hover .slb_navNext:hover, #slb_nav_hover .slb_navNext:visited:hover { background: url("../images/nextlabel_black.gif") right 15% no-repeat; }
 
 #slb_details {
 	font: 10px Verdana, Helvetica, sans-serif;
 	background-color: #000;
 	margin: 0 auto;
 	line-height: 1.4em;
+	text-align: left;
+	overflow: hidden;
 }
 
-#imageData {
+#slb_data {
 	padding:0 10px;
 }
-#imageDetails { width: 70%; float: left; text-align: left; }	
+
+#slb_data_content {
+	width: 70%;
+	float: left;
+}
 
 #slb_overlay {
 	position: absolute;
@@ -115,24 +125,4 @@
 	-moz-opacity: 0.6;
 	opacity: 0.6;
 }
-	
-
-.clearfix:after {
-	content: "."; 
-	display: block; 
-	height: 0; 
-	clear: both; 
-	visibility: hidden;
-}
-
-* html>body .clearfix {
-	display: inline-block; 
-	width: 100%;
-}
-
-* html .clearfix {
-	/* Hides from IE-mac \*/
-	height: 1%;
-	/* End hide from IE-mac */
-}	
 	

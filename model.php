@@ -39,6 +39,15 @@ class SLB_Lightbox extends SLB_Base {
 	 * @var string
 	 */
 	var $attr_legacy = 'lightbox';
+
+	/**
+	 * Properties for media attachments in current request
+	 * Key (int) Attachment ID
+	 * Value (assoc-array) Attachment properties (url, etc.)
+	 * > source: Source URL
+	 * @var array
+	 */
+	var $media_attachments = array();
 	
 	/**
 	 * Options Configuration
@@ -144,6 +153,7 @@ class SLB_Lightbox extends SLB_Base {
 		//Init lightbox
 		add_action('wp_enqueue_scripts', $this->m('enqueue_files'));
 		add_action('wp_head', $this->m('client_init'));
+		add_action('wp_footer', $this->m('client_footer'), 99);
 		add_filter('the_content', $this->m('activate_post_links'), 99);
 		
 		/* Themes */
@@ -353,6 +363,7 @@ class SLB_Lightbox extends SLB_Base {
 				$rgx = "/\b(\w+.*?)=([\"'])(.*?)\\2(?:\s|$)/i";
 				//Iterate through links & add lightbox if necessary
 				foreach ( $links as $link ) {
+					$src = '';
 					//Check if rel attribute exists
 					$link_new = $link;
 					//Parse link
@@ -405,10 +416,16 @@ class SLB_Lightbox extends SLB_Base {
 					//Type specific processing
 					switch ($type) {
 						case $types->att:
-							//Get attachment URL
-							$src = wp_get_attachment_url($pid);
-							if ( !empty($src) )
-								$r[] = $this->add_prefix('src[' . $src . ']');
+							//Get attachment URL (if not previously retrieved)
+							if ( !isset($this->media_attachments[$pid]) ) {
+								$src = wp_get_attachment_url($pid);
+								//Add attachment properties
+								if ( !empty($src) )
+									$this->media_attachments[$pid] = array('source' => $src);
+							}
+							//Check again if attachment ID exists (in case it was just added to array)
+							if ( isset($this->media_attachments[$pid]) )
+								$r[] = $this->add_prefix('id[' . $pid . ']');
 							break;
 					}
 					
@@ -436,6 +453,17 @@ class SLB_Lightbox extends SLB_Base {
 	}
 	
 	/**
+	 * Build client (JS) object name
+	 * @return string Name of JS object
+	 */
+	function get_client_obj() {
+		static $obj = null;
+		if ( is_null($obj) )
+			$obj = strtoupper($this->get_prefix(''));
+		return $obj;
+	}
+	
+	/**
 	 * Sets options/settings to initialize lightbox functionality on page load
 	 * @return void
 	 */
@@ -445,8 +473,8 @@ class SLB_Lightbox extends SLB_Base {
 			
 		$options = array();
 		$out = array();
-		$out['script_start'] = '<script type="text/javascript">/* <![CDATA[ */(function($){$(document).ready(function(){';
-		$out['script_end'] = '})})(jQuery);/* ]]> */</script>';
+		$out['script_start'] = '(function($){$(document).ready(function(){';
+		$out['script_end'] = '})})(jQuery);';
 		$js_code = array();
 		//Get options
 		$options = array(
@@ -480,8 +508,31 @@ class SLB_Lightbox extends SLB_Base {
 		//Load UI Strings
 		if ( ($strings = $this->build_strings()) && !empty($strings) )
 			$lb_obj[] = $strings;
-		$js_code[] = 'SLB.initialize({' . implode(',', $lb_obj) . '});';
-		echo $out['script_start'] . implode('', $js_code) . $out['script_end'];
+		$js_code[] = $this->get_client_obj() . '.initialize({' . implode(',', $lb_obj) . '});';
+		$js_out = $out['script_start'] . implode('', $js_code) . $out['script_end'];
+		echo $this->util->build_script_element($js_out, $this->add_prefix('init'));
+	}
+	
+	/**
+	 * Output code in footer
+	 * > Media attachment URLs
+	 */
+	function client_footer() {
+		if ( !$this->is_enabled() )
+			return;
+		//Media attachments
+		if ( !empty($this->media_attachments) ) {
+			$atch_obj = array();
+			foreach ( $this->media_attachments as $aid => $props ) {
+				$props_obj = array();
+				foreach ( $props as $pk => $pv )
+					$props_obj[] = "'{$pk}':'{$pv}'";
+				$props = '{' . implode(',', $props_obj) . '}';
+				$atch_obj[] = "'{$aid}':$props";
+			}
+			$atch_out = $this->get_client_obj() . '.media = {' . implode(',', $atch_obj) . '};';
+			echo $this->util->build_script_element($atch_out, $this->add_prefix('media'));
+		}
 	}
 	
 	/**
