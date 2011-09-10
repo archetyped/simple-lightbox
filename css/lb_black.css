@@ -1,128 +1,43 @@
-.slb_dataCaption { font-weight: bold;}
-.slb_dataNumber { display: block; clear: left; }			
-#slb_nav { display: block; clear: left; padding:0 0 10px 0;}	
-.slb_navPrev { margin:0 8px 0 0; }
-.slb_navNext { margin:0 8px 0 0; }
-#slb_close {
-	float: right;
-	width:66px;
-	height:28px;
-}
+@import url('lightbox.css');
 
-.slb_slbClose {
-	display:block;
-	margin:0;
-	padding:0 0 10px 0;
-	text-decoration:none;
-	background:url("../images/closelabel_black.gif") no-repeat;
-	text-indent:-9999px;
-	overflow:hidden;
-}
+/* General */
 
 #slb_lightbox {
-	position: absolute;
-	top: 20px;
-	left: 0;
-	width: 100%;
-	z-index: 3100;
-	text-align: center;
-	line-height: 0;
 	color:#fff;
 }
 
-#slb_lightbox a, #slb_lightbox a:hover {
-	border-bottom:none;
+#slb_lightbox a, 
+#slb_lightbox a:hover {
 	color:#fff;
-	text-decoration:underline;
 }
-
-#slb_lightbox a img { border: none; }
 
 #slb_container {
-	position: relative;
 	background-color: #000;
-	width: 250px;
-	height: 250px;
-	margin: 0 auto;
-}
-
-#slb_content {
-	padding: 10px;
-}
-
-#slb_loading {
-	position: absolute;
-	top: 40%;
-	left: 0%;
-	height: 25%;
-	width: 100%;
-	text-align: center;
-	line-height: 0;
 }
 
 #slb_slbLoading {
-	display:block;
-	margin:0 auto;
-	padding:0;
-	width:32px;
-	height:32px;
-	background:url("../images/loading_black.gif") center center no-repeat;
-	text-indent:-9999px;
+	background-image: url("../images/loading_black.gif");
 }
 
-#slb_nav_hover {
-	position: absolute;
-	top: 0;
-	left: 0;
-	height: 100%;
-	width: 100%;
-	z-index: 10;
-	left: 0;
-}
-	
-#slb_nav_hover a { outline: none; }
+/* Navigation */
 
-#slb_nav_hover .slb_nav {
-	width: 47%;
-	height: 98%;
-	background: transparent url("../images/blank.gif") no-repeat; /* Trick IE into showing hover */
-	display: block;
-	text-indent: -9999px;
+#slb_nav_hover .slb_navPrev:hover,
+#slb_nav_hover .slb_navPrev:visited:hover {
+	background-image: url("../images/prevlabel_black.gif");
 }
 
-#slb_nav_hover .slb_navPrev { left: 0; float: left;}
-#slb_nav_hover .slb_navNext { right: 0; float: right;}
-#slb_nav_hover .slb_navPrev:hover, #slb_nav_hover .slb_navPrev:visited:hover { background: url("../images/prevlabel_black.gif") left 15% no-repeat; }
-#slb_nav_hover .slb_navNext:hover, #slb_nav_hover .slb_navNext:visited:hover { background: url("../images/nextlabel_black.gif") right 15% no-repeat; }
+#slb_nav_hover .slb_navNext:hover,
+#slb_nav_hover .slb_navNext:visited:hover {
+	background-image: url("../images/nextlabel_black.gif");
+}
+
+.slb_slbClose {
+	background-image: url("../images/closelabel_black.gif");
+}
+
+/* Content */
 
 #slb_details {
-	font: 10px Verdana, Helvetica, sans-serif;
 	background-color: #000;
-	margin: 0 auto;
-	line-height: 1.4em;
-	text-align: left;
-	overflow: hidden;
-}
-
-#slb_data {
-	padding:0 10px;
-}
-
-#slb_data_content {
-	width: 70%;
-	float: left;
-}
-
-#slb_overlay {
-	position: absolute;
-	top: 0;
-	left: 0;
-	z-index: 3090;
-	width: 100%;
-	height: 500px;
-	background-color: #151410;
-	filter:alpha(opacity=60);
-	-moz-opacity: 0.6;
-	opacity: 0.6;
 }
 	

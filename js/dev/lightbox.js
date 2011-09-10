@@ -14,8 +14,6 @@
 //
 //	Licensed under the Creative Commons Attribution 2.5 License - http://creativecommons.org/licenses/by/2.5/
 //
-//	The code inserts HTML at the bottom of the page for displaying content in a non-modal dialog
-//
 // -----------------------------------------------------------------------------------
 /**
  * Lightbox object
@@ -52,6 +50,7 @@ SLB = {
 			validateLinks : false, //Validate links before adding them to lightbox
 			captionEnabled: true, //Display caption
 			captionSrc : true, //Use image source URI if title not set
+			descEnabled: true, //Display description
 			autoPlay : true, // should slideshow start automatically
 			borderSize : 10, // if you adjust the padding in the CSS, you will need to update this variable
 			containerID : document, // lightbox container object
@@ -86,6 +85,7 @@ SLB = {
 				navNext: '<a class="slb_navNext slb_nav" href="#">&raquo; next</a>',
 				navSlideControl: '<a class="slb_navSlideControl" href="#">Stop</a>',
 				dataCaption: '<span class="slb_dataCaption"></span>',
+				dataDescription: '<span class="slb_dataDescription"></span>',
 				dataNumber: '<span class="slb_dataNumber"></span>'
 			},
 			layout : null
@@ -250,6 +250,146 @@ SLB = {
 	},
 	
 	/**
+	 * Display overlay and lightbox. If image is part of a set, add siblings to imageArray.
+	 * @param node imageLink Link element containing image URL
+	 */
+	start: function(imageLink) {
+		imageLink = $(imageLink);
+		this.hideBadObjects();
+
+		this.imageArray = [];
+		this.groupName = this.getGroup(imageLink);
+		
+		var rel = $(imageLink).attr('rel') || '';
+		var imageTitle = '';
+		var t = this;
+		var groupTemp = {};
+		this.fileExists(this.getSourceFile(imageLink),
+		function() { //File exists
+			// Stretch overlay to fill page and fade in
+			t.get('overlay')
+				.height($(document).height())
+				.fadeTo(t.overlayDuration, t.overlayOpacity);
+			
+			// Add image to array closure
+			var addLink = function(el, idx) {
+				groupTemp[idx] = el;
+				return groupTemp.length;
+			};
+			
+			//Build final image array & launch lightbox
+			var proceed = function() {
+				t.startImage = 0;
+				//Sort links by document order
+				var order = [], el;
+				for (var x in groupTemp) {
+					order.push(x);
+				}
+				order.sort(function(a, b) { return (a - b); });
+				for (x = 0; x < order.length; x++) {
+					el = groupTemp[order[x]];
+					//Check if link being evaluated is the same as the clicked link
+					if ($(el).get(0) == $(imageLink).get(0)) {
+						t.startImage = x;
+					}
+					t.imageArray.push({'link':t.getSourceFile($(el)), 'title':t.getCaption(el), 'desc': t.getDescription(el)});
+				}
+				// Calculate top offset for the lightbox and display 
+				var lightboxTop = $(document).scrollTop() + ($(window).height() / 15);
+		
+				t.get('lightbox').css('top', lightboxTop + 'px').show();
+				t.changeImage(t.startImage);
+			}
+			
+			// If image is NOT part of a group..
+			if (null == t.groupName) {
+			// Add single image to imageArray
+				addLink(imageLink, 0);			
+				t.startImage = 0;
+				proceed();
+			} else {
+				// If image is part of a group
+				var els = $(t.container).find($(imageLink).get(0).tagName.toLowerCase());
+				// Loop through links on page & find other images in group
+				var grpLinks = [];
+				var i, el;
+				for (i = 0; i < els.length; i++) {
+					el = $(els[i]);
+					if (t.getSourceFile(el) && (t.getGroup(el) == t.groupName)) {
+						//Add links in same group to temp array
+						grpLinks.push(el);
+					}
+				}
+				
+				//Loop through group links, validate, and add to imageArray
+				var processed = 0;
+				for (i = 0; i < grpLinks.length; i++) {
+					el = grpLinks[i];
+					t.fileExists(t.getSourceFile($(el)),
+						function(args) { //File exists
+							var el = args.els[args.idx];
+							var il = addLink(el, args.idx);
+							processed++;
+							if (processed == args.els.length)
+								proceed();
+						},
+						function(args) { //File does not exist
+							processed++;
+							if (args.idx == args.els.length)
+								proceed(); 
+						},
+						{'idx': i, 'els': grpLinks});
+				}
+			}	
+		},
+		function() { //File does not exist
+			t.end();
+		});
+	},
+	
+	/**
+	 * Retrieve ID of media item
+	 * @param {Object} el Link element
+	 * @return int Media ID (Default: 0 - No ID)
+	 */
+	getMediaId: function(el) {
+		var rel = $(el).attr('rel') || '',
+			mId = 0;
+		if (rel.length) {
+			var reId = new RegExp('\\b' + this.addPrefix(this.options.mId) + '\\[(.+?)\\](?:\\b|$)');
+			if (reId.test(rel)) {
+				mId = reId.exec(rel)[1];
+			}
+		}
+		return mId;
+	},
+	
+	/**
+	 * Retrieve Media properties
+	 * @param {Object} el Link element
+	 * @return Object (Default: Empty)
+	 */
+	getMediaProperties: function(el) {
+		var props = {},
+			mId = this.getMediaId(el);
+		if (mId in this.media) {
+			props = this.media[mId];
+		}
+		return props;
+	},
+	
+	/**
+	 * Retrieve single property for media item
+	 * @param {Object} el Link element
+	 * @param string prop Property to retrieve
+	 * @return mixed Item property (Default: false)
+	 */
+	getMediaProperty: function(el, prop) {
+		var props = this.getMediaProperties(el);
+		return (prop in props) ? props[prop] : false;
+	},
+	
+	/**
 	 * Build caption for displayed caption
 	 * @param {Object} imageLink
 	 */
@@ -297,103 +437,21 @@ SLB = {
 		}
 		return caption;
 	},
-
+	
 	/**
-	 * Display overlay and lightbox. If image is part of a set, add siblings to imageArray.
-	 * @param node imageLink Link element containing image URL
+	 * Retrieve item description
+	 * @param {Object} imageLink
+	 * @return string Item description (Default: empty string)
 	 */
-	start: function(imageLink) {
-		imageLink = $(imageLink);
-		this.hideBadObjects();
-
-		this.imageArray = [];
-		this.groupName = this.getGroup(imageLink);
-		
-		var rel = $(imageLink).attr('rel') || '';
-		var imageTitle = '';
-		var t = this;
-		var groupTemp = {};
-		this.fileExists(this.getSourceFile(imageLink),
-		function() { //File exists
-			// Stretch overlay to fill page and fade in
-			t.get('overlay')
-				.height($(document).height())
-				.fadeTo(t.overlayDuration, t.overlayOpacity);
-			
-			// Add image to array closure
-			var addLink = function(el, idx) {
-				groupTemp[idx] = el;
-				return groupTemp.length;
-			};
-			
-			//Build final image array & launch lightbox
-			var proceed = function() {
-				t.startImage = 0;
-				//Sort links by document order
-				var order = [], el;
-				for (var x in groupTemp) {
-					order.push(x);
-				}
-				order.sort(function(a, b) { return (a - b); });
-				for (x = 0; x < order.length; x++) {
-					el = groupTemp[order[x]];
-					//Check if link being evaluated is the same as the clicked link
-					if ($(el).get(0) == $(imageLink).get(0)) {
-						t.startImage = x;
-					}
-					t.imageArray.push({'link':t.getSourceFile($(el)), 'title':t.getCaption(el)});
-				}
-				// Calculate top offset for the lightbox and display 
-				var lightboxTop = $(document).scrollTop() + ($(window).height() / 15);
-		
-				t.get('lightbox').css('top', lightboxTop + 'px').show();
-				t.changeImage(t.startImage);
-			}
-			
-			// If image is NOT part of a group..
-			if (null == t.groupName) {
-				// Add single image to imageArray
-				addLink(imageLink, 0);			
-				t.startImage = 0;
-				proceed();
-			} else {
-				// If image is part of a group
-				var els = $(t.container).find($(imageLink).get(0).tagName.toLowerCase());
-				// Loop through links on page & find other images in group
-				var grpLinks = [];
-				var i, el;
-				for (i = 0; i < els.length; i++) {
-					el = $(els[i]);
-					if (t.getSourceFile(el) && (t.getGroup(el) == t.groupName)) {
-						//Add links in same group to temp array
-						grpLinks.push(el);
-					}
-				}
-				
-				//Loop through group links, validate, and add to imageArray
-				var processed = 0;
-				for (i = 0; i < grpLinks.length; i++) {
-					el = grpLinks[i];
-					t.fileExists(t.getSourceFile($(el)),
-						function(args) { //File exists
-							var el = args.els[args.idx];
-							var il = addLink(el, args.idx);
-							processed++;
-							if (processed == args.els.length)
-								proceed();
-						},
-						function(args) { //File does not exist
-							processed++;
-							if (args.idx == args.els.length)
-								proceed(); 
-						},
-						{'idx': i, 'els': grpLinks});
-				}
-			}	
-		},
-		function() { //File does not exist
-			t.end();
-		});
+	getDescription: function(imageLink) {
+		var desc = '';
+		if (this.options.descEnabled) {
+			//Retrieve description
+			desc = this.getMediaProperty(imageLink, 'desc');
+			if (!desc)
+				desc = '';
+		}
+		return desc;
 	},
 	
 	/**
@@ -405,17 +463,10 @@ SLB = {
 		var src = $(el).attr('href');
 		var rel = $(el).attr('rel') || '';
 		if (rel.length) {
-			relSrc = '';
-			//Attachment
-			var reId = new RegExp('\\b' + this.addPrefix(this.options.mId) + '\\[(.+?)\\](?:\\b|$)');
-			if (reId.test(rel)) {
-				mId = reId.exec(rel)[1];
-				if (mId in this.media && 'source' in this.media[mId]) {
-					relSrc = this.media[mId].source;
-				}
-			}
+			//Attachment source
+			relSrc = this.getMediaProperty(el, 'source');
 			//Explicit source
-			if (!relSrc.length) {
+			if (!relSrc || !relSrc.length) {
 				var reSrc = new RegExp('\\b' + this.addPrefix(this.options.altsrc) + '\\[(.+?)\\](?:\\b|$)');
 				if (reSrc.test(rel)) {
 					relSrc = reSrc.exec(rel)[1];
@@ -528,12 +579,17 @@ SLB = {
 	 * Display caption, image number, and bottom nav
 	 */
 	updateDetails: function() {
+		//Caption
 		if (this.options.captionEnabled) {
 			this.get('dataCaption').text(this.imageArray[this.activeImage].title);
 			this.get('dataCaption').show();
 		} else {
 			this.get('dataCaption').hide();
 		}
+		
+		//Description
+		console.dir(this.imageArray[this.activeImage]);
+		this.get('dataDescription').text(this.imageArray[this.activeImage].desc);
 		
 		// if image is part of set display 'Image x of y' 
 		if (this.hasImages()) {

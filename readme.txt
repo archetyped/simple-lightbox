@@ -13,7 +13,13 @@ Simple Lightbox is a very simple and customizable lightbox that is easy to add t
 
 ### BETA NOTES
 The current release is a beta version.  Please test and [provide feedback on the beta release page](http://archetyped.com/lab/slb-1-5-6-beta/).
-Main changes
+
+#### Beta 3
+* Update: **Important:** [System Requirements](http://wordpress.org/about/requirements/) aligned with WP 3.2.1
+* Add: Display image description in lightbox
+* Add: Option to enable/disable image description in settings
+* Optimize: Additional CSS cleanup
+* Optimize: Template loading performance
 
 #### Beta 2
 * Add: Support for W3 Total Cache plugin
