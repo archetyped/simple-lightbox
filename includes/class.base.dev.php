@@ -1,6 +1,6 @@
 <?php
 
-require_once 'class.utilities.dev.php';
+require_once 'class.utilities.php';
 
 /**
  * @package Simple Lightbox

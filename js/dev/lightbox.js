@@ -414,7 +414,7 @@ SLB = {
 			if ( (els.sibs = $(els.origin).siblings(sels.capt)) && $(els.sibs).length > 0 ) {
 				caption = $(els.sibs).first().text();
 			}
-			caption = caption.trim();
+			caption = $.trim(caption);
 			//Fall back to image properties
 			if ( '' == caption ) {
 				els.img = $(els.link).find('img').first();
@@ -423,17 +423,17 @@ SLB = {
 					caption = $(els.img).attr('title') || $(els.img).attr('alt');
 				}
 			}
-			caption = caption.trim();
+			caption = $.trim(caption);
 			//Fall back Link Text
 			if ('' == caption) {
-				if ($(sels.link).text().trim().length) {
-					caption = $(sels.link).text().trim();
+				if ($.trim($(sels.link).text()).length) {
+					caption = $.trim($(sels.link).text());
 				} else if (this.options.captionSrc) {
 					//Fall back to Link href
 					caption = $(sels.link).attr('href');
 				}
 			}
-			caption = caption.trim();
+			caption = $.trim(caption);
 		}
 		return caption;
 	},
@@ -588,7 +588,6 @@ SLB = {
 		}
 		
 		//Description
-		console.dir(this.imageArray[this.activeImage]);
 		this.get('dataDescription').text(this.imageArray[this.activeImage].desc);
 		
 		// if image is part of set display 'Image x of y' 

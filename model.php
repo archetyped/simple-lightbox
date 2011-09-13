@@ -352,7 +352,7 @@ class SLB_Lightbox extends SLB_Base {
 	function activate_post_links($content) {
 		global $wpdb;
 		//Check option
-		if ( ! is_feed() && $this->is_enabled() && $this->options->get_value('activate_links') ) {
+		if ( !is_feed() && $this->is_enabled() && $this->options->get_value('activate_links') ) {
 			$links = array();
 			//Get all links in content
 			$rgx = "/\<a[^\>]+href=.*?\>/i";
@@ -478,7 +478,7 @@ class SLB_Lightbox extends SLB_Base {
 	function enqueue_files() {
 		if ( ! $this->is_enabled() )
 			return;
-		wp_enqueue_script($this->add_prefix('lib'), $this->util->get_file_url('js/dev/lightbox.js'), array('jquery'), $this->util->get_plugin_version());
+		wp_enqueue_script($this->add_prefix('lib'), $this->util->get_file_url('js/lib.js'), array('jquery'), $this->util->get_plugin_version());
 		wp_enqueue_style($this->add_prefix('style'), $this->get_theme_style(), array(), $this->util->get_plugin_version());
 	}
 	
@@ -516,6 +516,7 @@ class SLB_Lightbox extends SLB_Base {
 			'animate'			=> $this->options->get_value('animate'),
 			'captionEnabled'	=> $this->options->get_value('enabled_caption'),
 			'captionSrc'		=> $this->options->get_value('caption_src'),
+			'descEnabled'		=> $this->options->get_value('enabled_desc'),
 			'layout'			=> $this->get_theme_layout(),
 			'altsrc'			=> $this->add_prefix('src'),
 			'relAttribute'		=> array($this->get_prefix()),
@@ -524,21 +525,7 @@ class SLB_Lightbox extends SLB_Base {
 		//Backwards compatibility
 		if ( $this->options->get_value('enabled_compat'))
 			$options['relAttribute'][] = $this->attr_legacy;
-		$lb_obj = array();
-		foreach ($options as $option => $val) {
-			if ( is_bool($val) )
-				$val = ( $val ) ? 'true' : 'false';
-			elseif ( is_string($val) && "'" != $val[0] )
-				$val = "'" . $val . "'";
-			elseif ( is_array($val) ) {
-				$val = "['" . implode("','", $val) . "']";
-			}
-			$lb_obj[] = "'{$option}':{$val}";
-		}
-		//Load UI Strings
-		if ( ($strings = $this->build_strings()) && !empty($strings) )
-			$lb_obj[] = $strings;
-		$js_code[] = $this->get_client_obj() . '.initialize({' . implode(',', $lb_obj) . '});';
+		$js_code[] = $this->get_client_obj() . '.initialize(' . json_encode($options) . ');';
 		$js_out = $out['script_start'] . implode('', $js_code) . $out['script_end'];
 		echo $this->util->build_script_element($js_out, $this->add_prefix('init'));
 	}
