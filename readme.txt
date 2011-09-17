@@ -14,9 +14,14 @@ Simple Lightbox is a very simple and customizable lightbox that is easy to add t
 ### BETA NOTES
 The current release is a beta version.  Please test and [provide feedback on the beta release page](http://archetyped.com/lab/slb-1-5-6-beta/).
 
+#### Beta 5
+* Add: HTML in image descriptions
+* Optimize: Support for non-English text in UI settings
+* Fix: User-defined UI text not used (Ivan gets Even (cooler))
+
 #### Beta 4
 * Fix: Options reset after update (KRazy Donna)
-* Optimize: Improved IE compatibilility
+* Optimize: Improved IE compatibility
 * Optimize: Improved data handling
 
 #### Beta 3
@@ -52,7 +57,7 @@ Options for customizing the lightbox behavior are located in the **Settings > Me
 #### Usage
 1. Insert links to images/image attachments into your posts/pages
 
-**That’s it! The image will be displayed in a lightbox automatically.**
+**That's it! The image will be displayed in a lightbox automatically.**
 
 * For more usage tips, go to [Simple Lightbox's official page](http://archetyped.com/tools/simple-lightbox/)
 

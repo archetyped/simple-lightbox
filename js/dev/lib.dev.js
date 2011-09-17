@@ -588,7 +588,7 @@ SLB = {
 		}
 		
 		//Description
-		this.get('dataDescription').text(this.imageArray[this.activeImage].desc);
+		this.get('dataDescription').html(this.imageArray[this.activeImage].desc);
 		
 		// if image is part of set display 'Image x of y' 
 		if (this.hasImages()) {

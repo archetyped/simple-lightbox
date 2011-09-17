@@ -387,11 +387,13 @@ class SLB_Utilities {
 	 * Checks if file has specified extension
 	 * @uses get_file_extension()
 	 * @param string $file File name/path
-	 * @param string $extension File ending to check $file for
+	 * @param string|array $extension File ending(s) to check $file for
 	 * @return bool TRUE if file has extension
 	 */
 	function has_file_extension($file, $extension) {
-		return ( $this->get_file_extension($file) == $extension ) ? true : false;
+		if ( !is_array($extension) )
+			$extension = array(strval($extension)); 
+		return ( in_array($this->get_file_extension($file), $extension) ) ? true : false;
 	}
 	
 	/**
@@ -876,6 +878,15 @@ class SLB_Utilities {
 	function build_stylesheet_element($url = '') {
 		$attributes = array('href' => $url, 'type' => 'text/css', 'rel' => 'stylesheet');
 		return $this->build_html_element(array('tag' => 'link', 'wrap' => false, 'attributes' => $attributes));
+	}
+	
+	function build_script_element($content = '', $id = '') {
+		$attributes = array('type' => 'text/javascript');
+		$content = '/* <![CDATA[ */' . $content . '/* ]]> */';
+		if ( is_string($id) && !empty($id) ) {
+			$attributes['id'] = $id;
+		}
+		return $this->build_html_element(array('tag' => 'script', 'content' => $content, 'attributes' => $attributes));
 	}
 	
 	/**

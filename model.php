@@ -478,7 +478,9 @@ class SLB_Lightbox extends SLB_Base {
 	function enqueue_files() {
 		if ( ! $this->is_enabled() )
 			return;
-		wp_enqueue_script($this->add_prefix('lib'), $this->util->get_file_url('js/lib.js'), array('jquery'), $this->util->get_plugin_version());
+		
+		$lib = 'js/' . ( ( WP_DEBUG ) ? 'dev/lib.dev.js' : 'lib.js' );
+		wp_enqueue_script($this->add_prefix('lib'), $this->util->get_file_url($lib), array('jquery'), $this->util->get_plugin_version());
 		wp_enqueue_style($this->add_prefix('style'), $this->get_theme_style(), array(), $this->util->get_plugin_version());
 	}
 	
@@ -525,6 +527,10 @@ class SLB_Lightbox extends SLB_Base {
 		//Backwards compatibility
 		if ( $this->options->get_value('enabled_compat'))
 			$options['relAttribute'][] = $this->attr_legacy;
+			
+		//Load UI Strings
+		if ( ($strings = $this->build_strings()) && !empty($strings) )
+			$options['strings'] = $strings;
 		$js_code[] = $this->get_client_obj() . '.initialize(' . json_encode($options) . ');';
 		$js_out = $out['script_start'] . implode('', $js_code) . $out['script_end'];
 		echo $this->util->build_script_element($js_out, $this->add_prefix('init'));
@@ -546,19 +552,19 @@ class SLB_Lightbox extends SLB_Base {
 	
 	/**
 	 * Build JS object of UI strings when initializing lightbox
-	 * @return string JS object of UI strings
+	 * @return array UI strings
 	 */
 	function build_strings() {
-		$ret = '';
+		$ret = array();
+		//Get all UI options
 		$prefix = 'txt_';
 		$opt_strings = array_filter(array_keys($this->options->get_items()), create_function('$opt', 'return ( strpos($opt, "' . $prefix . '") === 0 );'));
-		if ( $opt_strings ) {
-			$strings = array();
+		if ( count($opt_strings) ) {
+			//Build array of UI options
 			foreach ( $opt_strings as $key ) {
 				$name = substr($key, strlen($prefix));
-				$strings[] = "'" . $name . "':'" . $this->options->get_value($key) . "'";
+				$ret[$name] = $this->options->get_value($key);
 			}
-			$ret = "'strings':{" . implode(',', $strings) . "}";
 		}
 		return $ret;
 	}

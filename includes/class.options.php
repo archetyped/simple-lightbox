@@ -295,17 +295,6 @@ class SLB_Options extends SLB_Field_Collection {
 	
 	function validate($values) {
 		if ( is_array($values) ) {
-			//Get option group being validated
-			/*
-			$group = '';
-			$filter = 'sanitize_option_';
-			$option = str_replace($filter, '', current_filter());
-			if ( $this->get_id() == $this->remove_prefix($option) ) {
-				$group = '';
-			} else {
-				$group = substr($option, strlen($this->add_prefix($this->get_id())) + 1); 
-			}
-			*/
 			//Format data based on option type (bool, string, etc.)
 			foreach ( $values as $id => $val ) {
 				//Get default
