@@ -447,11 +447,36 @@ SLB = {
 		var desc = '';
 		if (this.options.descEnabled) {
 			//Retrieve description
-			desc = this.getMediaProperty(imageLink, 'desc');
+			if (this.inGallery(imageLink, 'ng')) {
+				desc = $(imageLink).attr('title');
+			}
+			else 
+				desc = this.getMediaProperty(imageLink, 'desc');
+			
 			if (!desc)
 				desc = '';
 		}
 		return desc;
+	},
+	
+	/**
+	 * Check if current link is part of a gallery
+	 * @param {Object} imageLink
+	 * @param string gType Gallery type to check for
+	 * @return bool Whether link is part of a gallery
+	 */
+	inGallery: function(imageLink, gType) {
+		var ret = false;
+		var galls = {
+			'wp': '.gallery-icon',
+			'ng': '.ngg-gallery-thumbnail'
+		};
+		
+		
+		if ( typeof gType == 'undefined' || !(gType in galls) ) {
+			gType = 'wp';
+		}
+		return ( ( $(imageLink).parent(galls[gType]).length > 0 ) ? true : false );
 	},
 	
 	/**
