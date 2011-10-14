@@ -49,56 +49,6 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	var $media_attachments = array();
 	
-	/**
-	 * Options Configuration
-	 * @var array
-	 */
-	var $options_config = array (
-		'groups' 	=> array (
-			'activation'	=> 'Activation',
-			'grouping'		=> 'Grouping',
-			'ui'			=> 'UI',
-			'labels'		=> 'Labels'
-		),
-		'items'	=> array (
-			'enabled'					=> array('title' => 'Enable Lightbox Functionality', 'default' => true, 'group' => 'activation'),
-			'enabled_home'				=> array('title' => 'Enable on Home page', 'default' => true, 'group' => 'activation'),
-			'enabled_post'				=> array('title' => 'Enable on Posts', 'default' => true, 'group' => 'activation'),
-			'enabled_page'				=> array('title' => 'Enable on Pages', 'default' => true, 'group' => 'activation'),
-			'enabled_archive'			=> array('title' => 'Enable on Archive Pages (tags, categories, etc.)', 'default' => true, 'group' => 'activation'),
-			'enabled_compat'			=> array('title' => 'Enable backwards-compatibility with legacy lightbox links', 'default' => false, 'group' => 'activation'),
-			'activate_links'			=> array('title' => 'Activate all image links in item content', 'default' => true, 'group' => 'activation'),
-			'activate_attachments'		=> array('title' => 'Activate all image attachment links', 'default' => true, 'group' => 'activation'),
-			'validate_links'			=> array('title' => 'Validate links', 'default' => false, 'group' => 'activation'),
-			'group_links'				=> array('title' => 'Group automatically activated links (for displaying as a slideshow)', 'default' => true, 'group' => 'grouping'),
-			'group_post'				=> array('title' => 'Group image links by Post (e.g. on pages with multiple posts)', 'default' => true, 'group' => 'grouping'),
-			'theme'						=> array('title' => 'Theme', 'default' => 'default', 'group' => 'ui', 'parent' => 'option_theme'),
-			'animate'					=> array('title' => 'Animate lightbox resizing', 'default' => true, 'group' => 'ui'),
-			'autostart'					=> array('title' => 'Automatically Start Slideshow', 'default' => true, 'group' => 'ui'),
-			'duration'					=> array('title' => 'Slide Duration (Seconds)', 'default' => '6', 'attr' => array('size' => 3, 'maxlength' => 3), 'group' => 'ui'),
-			'loop'						=> array('title' => 'Loop through images', 'default' => true, 'group' => 'ui'),
-			'overlay_opacity'			=> array('title' => 'Overlay Opacity (0 - 1)', 'default' => '0.8', 'attr' => array('size' => 3, 'maxlength' => 3), 'group' => 'ui'),
-			'enabled_caption'			=> array('title' => 'Enable caption', 'default' => true, 'group' => 'ui'),
-			'caption_src'				=> array('title' => 'Use image URI as caption when link title not set', 'default' => true, 'group' => 'ui'),
-			'enabled_desc'				=> array('title' => 'Enable description', 'default' => true, 'group' => 'ui'),
-			'txt_closeLink'				=> array('title' => 'Close link (for accessibility only, image used for button)', 'default' => 'close', 'group' => 'labels'),
-			'txt_loadingMsg'			=> array('title' => 'Loading indicator', 'default' => 'loading', 'group' => 'labels'),
-			'txt_nextLink'				=> array('title' => 'Next Image link', 'default' => 'next &raquo;', 'group' => 'labels'),
-			'txt_prevLink'				=> array('title' => 'Previous Image link', 'default' => '&laquo; prev', 'group' => 'labels'),
-			'txt_startSlideshow'		=> array('title' => 'Start Slideshow link', 'default' => 'start slideshow', 'group' => 'labels'),
-			'txt_stopSlideshow'			=> array('title' => 'Stop Slideshow link', 'default' => 'stop slideshow', 'group' => 'labels'),
-			'txt_numDisplayPrefix'		=> array('title' => 'Image number prefix (e.g. <strong>Image</strong> x of y)', 'default' => 'Image', 'group' => 'labels'),
-			'txt_numDisplaySeparator'	=> array('title' => 'Image number separator (e.g. Image x <strong>of</strong> y)', 'default' => 'of', 'group' => 'labels')
-		),
-		'legacy' => array (
-			'header_activation'	=> null,
-			'header_enabled'	=> null,
-			'header_strings'	=> null,
-			'header_ui'			=> null,
-			'enabled_single'	=> array('enabled_post', 'enabled_page')
-		)
-	);
-	
 	/* Instance members */
 	
 	/**
@@ -121,17 +71,68 @@ class SLB_Lightbox extends SLB_Base {
 	
 	function __construct() {
 		parent::__construct();
+		load_plugin_textdomain($this->get_prefix(), false,	$this->util->get_plugin_file_path('lang', array(false, false)));
+		$this->init_options();
 		$this->init();
 
-		//Setup options
-		$opt_theme =& $this->options_config['items']['theme'];
-		$opt_theme['default'] = $this->theme_default = $this->add_prefix($this->theme_default);
-		$opt_theme['options'] = $this->m('get_theme_options');
-		
 		//Init objects
 		$this->attr = $this->get_prefix();
 		$this->fields =& new SLB_Fields();
-		$this->options =& new SLB_Options('options', $this->options_config);
+	}
+	
+	function init_options() {
+		//Setup options
+		$p = $this->get_prefix();
+		$options_config = array (
+			'groups' 	=> array (
+				'activation'	=> __('Activation', $p),
+				'grouping'		=> __('Grouping', $p),
+				'ui'			=> __('UI', $p),
+				'labels'		=> __('Labels', $p)
+			),
+			'items'	=> array (
+				'enabled'					=> array('title' => __('Enable Lightbox Functionality', $p), 'default' => true, 'group' => 'activation'),
+				'enabled_home'				=> array('title' => __('Enable on Home page', $p), 'default' => true, 'group' => 'activation'),
+				'enabled_post'				=> array('title' => __('Enable on Posts', $p), 'default' => true, 'group' => 'activation'),
+				'enabled_page'				=> array('title' => __('Enable on Pages', $p), 'default' => true, 'group' => 'activation'),
+				'enabled_archive'			=> array('title' => __('Enable on Archive Pages (tags, categories, etc.)', $p), 'default' => true, 'group' => 'activation'),
+				'enabled_compat'			=> array('title' => __('Enable backwards-compatibility with legacy lightbox links', $p), 'default' => false, 'group' => 'activation'),
+				'activate_attachments'		=> array('title' => __('Activate image attachment links', $p), 'default' => true, 'group' => 'activation'),
+				'validate_links'			=> array('title' => __('Validate links', $p), 'default' => false, 'group' => 'activation'),
+				'group_links'				=> array('title' => __('Group image links (for displaying as a slideshow)', $p), 'default' => true, 'group' => 'grouping'),
+				'group_post'				=> array('title' => __('Group image links by Post (e.g. on pages with multiple posts)', $p), 'default' => true, 'group' => 'grouping'),
+				'group_gallery'				=> array('title' => __('Group gallery links separately', $p), 'default' => false, 'group' => 'grouping'),
+				'theme'						=> array('title' => __('Theme', $p), 'default' => 'default', 'group' => 'ui', 'parent' => 'option_theme'),
+				'animate'					=> array('title' => __('Animate lightbox resizing', $p), 'default' => true, 'group' => 'ui'),
+				'autostart'					=> array('title' => __('Automatically Start Slideshow', $p), 'default' => true, 'group' => 'ui'),
+				'duration'					=> array('title' => __('Slide Duration (Seconds)', $p), 'default' => '6', 'attr' => array('size' => 3, 'maxlength' => 3), 'group' => 'ui'),
+				'loop'						=> array('title' => __('Loop through images', $p), 'default' => true, 'group' => 'ui'),
+				'overlay_opacity'			=> array('title' => __('Overlay Opacity (0 - 1)', $p), 'default' => '0.8', 'attr' => array('size' => 3, 'maxlength' => 3), 'group' => 'ui'),
+				'enabled_caption'			=> array('title' => __('Enable caption', $p), 'default' => true, 'group' => 'ui'),
+				'caption_src'				=> array('title' => __('Use image URI as caption when link title not set', $p), 'default' => true, 'group' => 'ui'),
+				'enabled_desc'				=> array('title' => __('Enable description', $p), 'default' => true, 'group' => 'ui'),
+				'txt_closeLink'				=> array('title' => __('Close link (for accessibility only, image used for button)', $p), 'default' => 'close', 'group' => 'labels'),
+				'txt_loadingMsg'			=> array('title' => __('Loading indicator', $p), 'default' => 'loading', 'group' => 'labels'),
+				'txt_nextLink'				=> array('title' => __('Next Image link', $p), 'default' => 'next &raquo;', 'group' => 'labels'),
+				'txt_prevLink'				=> array('title' => __('Previous Image link', $p), 'default' => '&laquo; prev', 'group' => 'labels'),
+				'txt_startSlideshow'		=> array('title' => __('Start Slideshow link', $p), 'default' => 'start slideshow', 'group' => 'labels'),
+				'txt_stopSlideshow'			=> array('title' => __('Stop Slideshow link', $p), 'default' => 'stop slideshow', 'group' => 'labels'),
+				'txt_numDisplayPrefix'		=> array('title' => __('Image number prefix (e.g. <strong>Image</strong> x of y)', $p), 'default' => 'Image', 'group' => 'labels'),
+				'txt_numDisplaySeparator'	=> array('title' => __('Image number separator (e.g. Image x <strong>of</strong> y)', $p), 'default' => 'of', 'group' => 'labels')
+			),
+			'legacy' => array (
+				'header_activation'	=> null,
+				'header_enabled'	=> null,
+				'header_strings'	=> null,
+				'header_ui'			=> null,
+				'enabled_single'	=> array('enabled_post', 'enabled_page')
+			)
+		);
+		$opt_theme =& $options_config['items']['theme'];
+		$opt_theme['default'] = $this->theme_default = $this->add_prefix($this->theme_default);
+		$opt_theme['options'] = $this->m('get_theme_options');
+		
+		$this->options =& new SLB_Options('options', $options_config);
 	}
 	
 	function register_hooks() {
@@ -155,7 +156,11 @@ class SLB_Lightbox extends SLB_Base {
 		add_action('wp_enqueue_scripts', $this->m('enqueue_files'));
 		add_action('wp_head', $this->m('client_init'));
 		add_action('wp_footer', $this->m('client_footer'), 99);
-		add_filter('the_content', $this->m('activate_post_links'), 99);
+		if ( $this->options->get_bool('group_gallery') ) {
+			add_filter('the_content', $this->m('gallery_wrap'), 1);
+			add_filter('the_content', $this->m('gallery_unwrap'), 100);
+		}
+		add_filter('the_content', $this->m('activate_links'), 99);
 		
 		/* Themes */
 		$this->util->add_action('init_themes', $this->m('init_default_themes'));
@@ -168,7 +173,7 @@ class SLB_Lightbox extends SLB_Base {
 	 * @return bool TRUE if lightbox is currently enabled, FALSE otherwise
 	 */
 	function is_enabled($check_request = true) {
-		$ret = ( $this->options->get_value('enabled') ) ? true : false;
+		$ret = ( $this->options->get_bool('enabled') && !is_feed() ) ? true : false;
 		if ( $ret && $check_request ) {
 			$opt = '';
 			//Determine option to check
@@ -254,9 +259,9 @@ class SLB_Lightbox extends SLB_Base {
 	function get_theme_layout($name = '', $filter = true) {
 		$l = $this->get_theme_data($name, 'layout');
 		//Filter
-		if ( !$this->options->get_value('enabled_caption') )
+		if ( !$this->options->get_bool('enabled_caption') )
 			$l = str_replace($this->get_theme_placeholder('dataCaption'), '', $l);
-		if ( !$this->options->get_value('enabled_desc') )
+		if ( !$this->options->get_bool('enabled_desc') )
 			$l = str_replace($this->get_theme_placeholder('dataDescription'), '', $l);
 		return $l;
 	}
@@ -344,129 +349,265 @@ class SLB_Lightbox extends SLB_Base {
 	/*-** Frontend **-*/
 	
 	/**
+	 * Builds wrapper for grouping
+	 * @return object Wrapper properties
+	 *  > open
+	 *  > close
+	 */
+	function group_get_wrapper() {
+		static $wrapper = null;
+		if (  is_null($wrapper) ) {
+			$start = '<';
+			$end = '>';
+			$terminate = '/';
+			$val = $this->add_prefix('group');
+			//Build properties
+			$wrapper = array(
+				'open' => $start . $val . $end,
+				'close' => $start . $terminate . $val . $end
+			);
+			//Convert to object
+			$wrapper = (object) $wrapper;
+		}
+		return $wrapper;
+	}
+	
+	/**
+	 * Wraps galleries for grouping
+	 * @param string $content Post content
+	 * @return string Modified post content
+	 */
+	function gallery_wrap($content) {
+		global $shortcode_tags;
+		//Save default shortcode handlers to temp variable
+		$sc_temp = $shortcode_tags;
+		//Find gallery shortcodes
+		$shortcodes = array('gallery', 'nggallery');
+		$m = $this->m('gallery_wrap_callback');
+		$shortcode_tags = array();
+		foreach ( $shortcodes as $tag ) {
+			$shortcode_tags[$tag] = $m;
+		}
+		//Wrap gallery shortcodes
+		$content = do_shortcode($content);
+		//Restore default shortcode handlers
+		$shortcode_tags = $sc_temp;
+		
+		return $content;
+	}
+	
+	/**
+	 * Wraps gallery shortcodes for later processing
+	 * @param array $attr Shortcode attributes
+	 * @param string $content Content enclosed in shortcode
+	 * @param string $tag Shortcode name
+	 * @return string Wrapped gallery shortcode
+	 */
+	function gallery_wrap_callback($attr, $content = null, $tag) {
+		//Rebuild shortcode
+		$sc = '[' . $tag . ' ' . $this->util->build_attribute_string($attr) . ']';
+		if ( !empty($content) )
+			$sc .= $content . '[/' . $tag .']';
+		//Wrap shortcode
+		$w = $this->group_get_wrapper();
+		$sc = $w->open . $sc . $w->close;
+		return $sc;
+	}
+	
+	/**
+	 * Removes wrapping from galleries
+	 * @param $content Post content
+	 * @return string Modified post content
+	 */
+	function gallery_unwrap($content) {
+		/*
+		$w = $this->group_get_wrapper();
+		if ( strpos($content, $w->open) !== false ) {
+			$content = str_replace($w->open, '', $content);
+			$content = str_replace($w->close, '', $content);
+		}
+		*/
+		return $content;
+	}
+	
+	/**
 	 * Scans post content for image links and activates them
 	 * 
 	 * Lightbox will not be activated for feeds
 	 * @param $content
 	 */
-	function activate_post_links($content) {
-		global $wpdb;
-		//Check option
-		if ( !is_feed() && $this->is_enabled() && $this->options->get_value('activate_links') ) {
-			$links = array();
-			//Get all links in content
-			$rgx = "/\<a[^\>]+href=.*?\>/i";
-			preg_match_all($rgx, $content, $links);
-			$links = $links[0];
-			$domain = str_replace(array('http://', 'https://'), '', get_bloginfo('url'));
-			//Process links
-			if ( count($links) > 0 ) {
-				global $post;
-				$types = (object) array('img' => 'image', 'att' => 'attachment');
-				$img_types = array('jpg', 'jpeg', 'gif', 'png');
-				$rgx = "/\b(\w+.*?)=([\"'])(.*?)\\2(?:\s|$)/i";
-				//Iterate through links & add lightbox if necessary
-				foreach ( $links as $link ) {
-					$m_props = array();
-					$pid = 0;
-					//Check if rel attribute exists
-					$link_new = $link;
-					//Parse link
-					$link_attr = substr($link_new, 2, strlen($link_new) - 3);
-					$attr_matches = $attr = array();
-					preg_match_all($rgx, $link_attr, $attr_matches);
-					foreach ( $attr_matches[1] as $key => $val ) {
-						if ( isset($attr_matches[3][$key]) )
-							$attr[trim($val)] = trim($attr_matches[3][$key]);
-					}
-					//Destroy parsing vars
-					unset($link_attr, $attr_matches);
+	function activate_links($content) {
+		//Activate links only if enabled
+		if ( $this->is_enabled() ) {
+			$groups = array();
+			$w = $this->group_get_wrapper();
+			$g_ph_f = '[%s]';
 
-					//Set default attributes
-					$attr = array_merge(array('rel' => '', 'href' => ''), $attr);
-					$h =& $attr['href'];
-					$r =& $attr['rel'];
-					
-					
-					//Stop processing link if lightbox attribute has already been set
-					$lb = $this->attr;
-					if ( empty($h) || '#' == $h || ( !empty($r) && ( strpos($r, $lb) !== false || strpos($r, $this->add_prefix('off')) !== false || strpos($r, $this->attr_legacy) !== false ) ) )
-						continue;
-					//Determine link type
-					$type = false;
-					if ( $this->util->has_file_extension($h, $img_types) ) {
-						$type = $types->img;
-						//Check if item links to internal media (attachment)
-						if ( strpos($h, $domain) !== false ) {
-							$pid_temp = $wpdb->get_var($wpdb->prepare("SELECT post_id FROM $wpdb->postmeta WHERE `meta_key` = %s AND `meta_value` = %s LIMIT 1", '_wp_attached_file', basename($h)));
-							if ( is_numeric($pid_temp) )
-								$pid = intval($pid_temp);
-						}
-					}
-					elseif ( strpos($h, $domain) !== false && is_local_attachment($h) && ( $pid = url_to_postid($h) ) && wp_attachment_is_image($pid) ) 
-						$type = $types->att;
-					if ( !$type ) {
-						continue;
-					}
-					
-					if ( $type == $types->att && !$this->options->get_value('activate_attachments') )
-						continue;
-						
-					//Process link
-					if ( empty($r) )
-						$r = array();
-					else
-						$r = array($r);
-					
-					//Check if links should be grouped
-					if ( $this->options->get_value('group_links') ) {
-						$group = ( $this->options->get_value('group_post') ) ? $this->add_prefix($post->ID) : $this->get_prefix();
-						$lb .= '[' . $group . ']';
-					}
-					$r[] = $lb;
-					
-					//Load properties for attachments
-					if ( !!$pid ) {
-						if ( !isset($this->media_attachments[$pid]) ) {
-							switch ($type) {
-								case $types->img:
-									$m_props['source'] = $h;
-									break;
-									
-								case $types->att:
-									//Source URL
-									$m_props['source'] = wp_get_attachment_url($pid);
-									break;
-							}
-															
-							//Retrieve attachment data
-							if ( $this->options->get_value('enabled_desc') ) {
-								$m_props['p'] = get_post($pid);
-								//Description
-								$m_props['desc'] = $m_props['p']->post_content;
-								//Clear attachment data
-								unset($m_props['p']);
-							}
-							
-							//Add attachment properties
-							if ( !empty($m_props['source']) )
-								$this->media_attachments[$pid] = $m_props;
-						}
-						
-						//Check again if attachment ID exists (in case it was just added to array)
-						if ( isset($this->media_attachments[$pid]) )
-							$r[] = $this->add_prefix('id[' . $pid . ']');
-					}
-					
-					
-					//Convert rel attribute to string
-					$r = implode(' ', $r);
-					
-					$link_new = '<a ' . $this->util->build_attribute_string($attr) . '>';
-					//Insert modified link
-					$content = str_replace($link, $link_new, $content);
-					unset($h, $r);
+			//Strip gallery links (if necessary)
+			if ( $this->options->get_bool('group_gallery') ) {
+				$groups = array();
+				$g_idx = 0;
+				$g_end_idx = 0;
+				//Iterate through galleries
+				while ( ($g_start_idx = strpos($content, $w->open, $g_end_idx)) && $g_start_idx !== false 
+						&& ($g_end_idx = strpos($content, $w->close, $g_start_idx)) && $g_end_idx != false ) {
+					$g_start_idx += strlen($w->open);
+					//Extract gallery content & save for processing
+					$g_len = $g_end_idx - $g_start_idx;
+					$groups[$g_idx] = substr($content, $g_start_idx, $g_len);
+					//Replace content with placeholder
+					$g_ph = sprintf($g_ph_f, $g_idx);
+					$content = substr_replace($content, $g_ph, $g_start_idx, $g_len);
+					//Increment gallery count
+					$g_idx++;
+					//Update end index
+					$g_end_idx = $g_start_idx + strlen($w->open);
 				}
+			}
+			
+			//General link processing
+			$content = $this->process_links($content);
+			
+			//Reintegrate Groups
+			foreach ( $groups as $group => $g_content ) {
+				$g_ph = $w->open . sprintf($g_ph_f, $group) . $w->close;
+				//Skip group if placeholder does not exist in content
+				if ( strpos($content, $g_ph) === false ) {
+					continue;
+				}
+				//Replace placeholder with processed content
+				$content = str_replace($g_ph, $w->open . $this->process_links($g_content, $group) . $w->close, $content);
+			}
+		}
+		return $content;
+	}
+	
+	/**
+	 * Retrieve HTML links in content
+	 * @param string $content Content to get links from
+	 * @param bool (optional) $unique Remove duplicates from returned links (Default: FALSE)
+	 * @return array Links in content
+	 */
+	function get_links($content, $unique = false) {
+		$rgx = "/\<a[^\>]+href=.*?\>/i";
+		$links = array();
+		preg_match_all($rgx, $content, $links);
+		$links = $links[0];
+		if ( $unique )
+			$links = array_unique($links);
+		return $links;
+	}
+	
+	/**
+	 * Process links in content
+	 * @param string $content Text containing links
+	 * @param string (optional) $group Group to add links to (Default: none)
+	 * @return string Content with processed links 
+	 */
+	function process_links($content, $group = null) {
+		global $wpdb;
+		$links = $this->get_links($content, true);
+		//Process links
+		if ( count($links) > 0 ) {
+			global $post;
+			$types = (object) array('img' => 'image', 'att' => 'attachment');
+			$img_types = array('jpg', 'jpeg', 'gif', 'png');
+			
+			//Format Group
+			$g = ( is_null($group) || 0 == strlen(trim($group)) ) ? '' : '_g_' . $group;
+			if ( $this->options->get_bool('group_links') ) {
+				$g = ( ( $this->options->get_bool('group_post') ) ? $this->add_prefix($post->ID) : $this->get_prefix() ) . $g;
+			}
+			$lb_base = $lb = $this->attr;
+			if ( !empty($g) ) {
+				$lb .= '[' . $g . ']';
+			}
+			
+			//Iterate through links & add lightbox if necessary
+			foreach ( $links as $link ) {
+				//Init vars
+				$m_props = array();
+				$pid = 0;
+				$link_new = $link;
+				
+				//Parse link attributes
+				$attr = $this->util->parse_attribute_string($link_new, array('rel' => '', 'href' => ''));
+				$h =& $attr['href'];
+				$r =& $attr['rel'];
+				
+				//Stop processing link if lightbox attribute has already been set
+				if ( empty($h) || '#' == $h || ( !empty($r) && ( strpos($r, $lb_base) !== false || strpos($r, $this->add_prefix('off')) !== false || strpos($r, $this->attr_legacy) !== false ) ) )
+					continue;
+				//Determine link type
+				$type = false;
+				$domain = str_replace(array('http://', 'https://'), '', get_bloginfo('url'));
+				if ( $this->util->has_file_extension($h, $img_types) ) {
+					$type = $types->img;
+					//Check if item links to internal media (attachment)
+					if ( strpos($h, $domain) !== false ) {
+						$pid_temp = $wpdb->get_var($wpdb->prepare("SELECT post_id FROM $wpdb->postmeta WHERE `meta_key` = %s AND `meta_value` = %s LIMIT 1", '_wp_attached_file', basename($h)));
+						if ( is_numeric($pid_temp) )
+							$pid = intval($pid_temp);
+					}
+				}
+				elseif ( strpos($h, $domain) !== false && is_local_attachment($h) && ( $pid = url_to_postid($h) ) && wp_attachment_is_image($pid) ) 
+					$type = $types->att;
+				if ( !$type ) {
+					continue;
+				}
+				
+				if ( $type == $types->att && !$this->options->get_bool('activate_attachments') )
+					continue;
+					
+				//Process rel attribute
+				if ( empty($r) )
+					$r = array();
+				else
+					$r = explode(' ', trim($r));
+				
+				$r[] = $lb;
+				
+				//Load properties for attachments
+				if ( !!$pid ) {
+					if ( !isset($this->media_attachments[$pid]) ) {
+						switch ($type) {
+							case $types->img:
+								$m_props['source'] = $h;
+								break;
+								
+							case $types->att:
+								//Source URL
+								$m_props['source'] = wp_get_attachment_url($pid);
+								break;
+						}
+														
+						//Retrieve attachment data
+						if ( $this->options->get_bool('enabled_desc') ) {
+							$m_props['p'] = get_post($pid);
+							//Description
+							$m_props['desc'] = $m_props['p']->post_content;
+							//Clear attachment data
+							unset($m_props['p']);
+						}
+						
+						//Add attachment properties
+						if ( !empty($m_props['source']) )
+							$this->media_attachments[$pid] = $m_props;
+					}
+					
+					//Check again if attachment ID exists (in case it was just added to array)
+					if ( isset($this->media_attachments[$pid]) )
+						$r[] = $this->add_prefix('id[' . $pid . ']');
+				}
+				
+				
+				//Convert rel attribute to string
+				$r = implode(' ', $r);
+				
+				//Update link in content
+				$link_new = '<a ' . $this->util->build_attribute_string($attr) . '>';
+				$content = str_replace($link, $link_new, $content);
+				unset($h, $r);
 			}
 		}
 		return $content;
@@ -510,27 +651,30 @@ class SLB_Lightbox extends SLB_Base {
 		$js_code = array();
 		//Get options
 		$options = array(
-			'validateLinks'		=> $this->options->get_value('validate_links'),
-			'autoPlay'			=> $this->options->get_value('autostart'),
+			'validateLinks'		=> $this->options->get_bool('validate_links'),
+			'autoPlay'			=> $this->options->get_bool('autostart'),
 			'slideTime'			=> $this->options->get_value('duration'),
-			'loop'				=> $this->options->get_value('loop'),
+			'loop'				=> $this->options->get_bool('loop'),
 			'overlayOpacity'	=> $this->options->get_value('overlay_opacity'),
-			'animate'			=> $this->options->get_value('animate'),
-			'captionEnabled'	=> $this->options->get_value('enabled_caption'),
-			'captionSrc'		=> $this->options->get_value('caption_src'),
-			'descEnabled'		=> $this->options->get_value('enabled_desc'),
-			'layout'			=> $this->get_theme_layout(),
+			'animate'			=> $this->options->get_bool('animate'),
+			'captionEnabled'	=> $this->options->get_bool('enabled_caption'),
+			'captionSrc'		=> $this->options->get_bool('caption_src'),
+			'descEnabled'		=> $this->options->get_bool('enabled_desc'),
 			'altsrc'			=> $this->add_prefix('src'),
 			'relAttribute'		=> array($this->get_prefix()),
 			'prefix'			=> $this->get_prefix()
 		);
 		//Backwards compatibility
-		if ( $this->options->get_value('enabled_compat'))
+		if ( $this->options->get_bool('enabled_compat'))
 			$options['relAttribute'][] = $this->attr_legacy;
 			
 		//Load UI Strings
 		if ( ($strings = $this->build_strings()) && !empty($strings) )
 			$options['strings'] = $strings;
+		//Load Layout
+		$options['layout'] = $this->get_theme_layout();
+
+		//Build client output
 		$js_code[] = $this->get_client_obj() . '.initialize(' . json_encode($options) . ');';
 		$js_out = $out['script_start'] . implode('', $js_code) . $out['script_end'];
 		echo $this->util->build_script_element($js_out, $this->add_prefix('init'));
@@ -581,9 +725,9 @@ class SLB_Lightbox extends SLB_Base {
 	function admin_plugin_action_links($actions, $plugin_file, $plugin_data, $context) {
 		//Add link to settings (only if active)
 		if ( is_plugin_active($this->util->get_plugin_base_name()) ) {
-			$settings = __('Settings');
-			$reset = __('Reset');
-			$reset_confirm = "'" . __('Are you sure you want to reset your settings?') . "'";
+			$settings = __('Settings', $this->get_prefix());
+			$reset = __('Reset', $this->get_prefix());
+			$reset_confirm = "'" . __('Are you sure you want to reset your settings?', $this->get_prefix()) . "'";
 			$action = $this->add_prefix('reset');
 			$reset_link = wp_nonce_url(add_query_arg('action', $action, remove_query_arg(array($this->add_prefix('action'), 'action'), $_SERVER['REQUEST_URI'])), $action);
 			array_unshift($actions, '<a class="delete" href="options-media.php#' . $this->admin_get_settings_section() . '" title="' . $settings . '">' . $settings . '</a>');
@@ -599,7 +743,7 @@ class SLB_Lightbox extends SLB_Base {
 	function admin_reset() {
 		//Validate user
 		if ( ! current_user_can('activate_plugins') || ! check_admin_referer($this->add_prefix('reset')) )
-			wp_die(__('You do not have sufficient permissions to manage plugins for this blog.'));
+			wp_die(__('You do not have sufficient permissions to manage plugins for this blog.', $this->get_prefix()));
 		$action = 'reset';
 		if ( isset($_REQUEST['action']) && $this->add_prefix($action) == $_REQUEST['action'] ) {
 			//Reset settings
@@ -649,7 +793,7 @@ class SLB_Lightbox extends SLB_Base {
 		$page = 'media';
 		$section = $this->get_prefix();
 		//Section
-		add_settings_section($section, '<span id="' . $this->admin_get_settings_section() . '">' . __('Lightbox Settings') . '</span>', $this->m('admin_section'), $page);
+		add_settings_section($section, '<span id="' . $this->admin_get_settings_section() . '">' . __('Lightbox Settings', $this->get_prefix()) . '</span>', $this->m('admin_section'), $page);
 		//Register settings container
 		register_setting($page, $this->add_prefix('options'), $this->options->m('validate'));
  	}

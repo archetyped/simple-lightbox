@@ -566,6 +566,7 @@ SLB = {
 		$(imgPreloader).bind('load', function() {
 			t.get('slbContent').attr('src', imgPreloader.src);
 			t.resizeImageContainer(imgPreloader.width, imgPreloader.height);
+
 			//Restart slideshow if active
 			if ( t.isSlideShowActive() )
 				t.startSlideShow();
@@ -580,14 +581,28 @@ SLB = {
 	 * @param int imgWidth Image width in pixels
 	 * @param int imgHeight Image height in pixels
 	 */
-	resizeImageContainer: function(imgWidth, imgHeight) {
-		// get current height and width
-		var el = this.get('container');
-		var borderSize = this.options.borderSize * 2;
-		
-		this.get('container').animate({width: imgWidth + borderSize, height: imgHeight + borderSize}, this.resizeDuration)
-
+	resizeImageContainer: function(w, h) {
+		var d = this.getContainerSize(w, h);
+		//Resize container
+		this.get('container').animate({width: d.width, height: d.height}, this.resizeDuration);
+		//Resize overlay
+		this.get('overlay').css('min-width', d.width);
 		this.showImage();
+	},
+	
+	/**
+	 * Retrieve or build container size
+	 * @param int w Container width to set
+	 * @param int h Container height to set
+	 * @return obj Container width (w)/height (h) values
+	 */
+	getContainerSize: function(w, h) {
+		var b = this.options.borderSize * 2;
+		var c = {
+			'width': w + b,
+			'height': h + b
+		}
+		return c;
 	},
 	
 	/**

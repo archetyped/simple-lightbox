@@ -89,6 +89,19 @@ class SLB_Option extends SLB_Field {
 		}
 		return htmlentities($value);
 	}
+	
+	/**
+	 * Format data as boolean (true/false)
+	 * @see SLB_Field_Base::format()
+	 * @param mixed $value Data to format
+	 * @param string $context (optional) Current context
+	 * @return bool Option value
+	 */
+	function format_bool($value, $context = '') {
+		if ( !is_bool($value) )
+			$value = !!$value;
+		return $value;
+	}
 }
 
 /**
@@ -427,6 +440,16 @@ class SLB_Options extends SLB_Field_Collection {
 	 */
 	function get_value($option, $context = '') {
 		return $this->get_data($option, $context);
+	}
+	
+	/**
+	 * Retrieve option value as boolean (true/false)
+	 * @uses get_data() to retrieve option data
+	 * @param string $option Option ID to retrieve value for
+	 * @return bool Option value
+	 */
+	function get_bool($option) {
+		return $this->get_data($option, 'bool');
 	}
 	
 	/**

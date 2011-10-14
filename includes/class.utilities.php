@@ -300,51 +300,61 @@ class SLB_Utilities {
 	 * All forward/back slashes are converted to forward slashes
 	 * Multiple path segments can be passed as additional argments
 	 * @param string $path Path to normalize
-	 * @param bool $trailing_slash (optional) Whether or not normalized path should have a trailing slash or not (Default: FALSE)
-	 *  If multiple path segments are passed, $trailing_slash will be the LAST parameter (default value used if omitted)
+	 * @param bool|array $trailing_slash (optional) Whether or not normalized path should have a trailing slash or not (Default: FALSE)
+	 *  If array is passed, first index is trailing, second is leading slash
+	 * If multiple path segments are passed, $trailing_slash will be the LAST parameter (default value used if omitted)
 	 */
 	function normalize_path($path, $trailing_slash = false) {
 		$sl_f = '/';
 		$sl_b = '\\';
 		$parts = func_get_args();
+		//Slash defaults (trailing, leading);
+		$slashes = array(false, true);
 		if ( func_num_args() > 1 ) {
-			if ( is_bool(($tr = $parts[count($parts) - 1])) ) {
-				$trailing_slash = $tr;
-				//Remove from args array
-				array_pop($parts);
-			} else {
-				$trailing_slash = false;
+			//Get last argument
+			$arg_last = $parts[count($parts) - 1];
+			if ( is_bool($arg_last) ) {
+				$arg_last = array($arg_last);
 			}
-			$first = true;
-			//Trim trailing slashes from path parts
-			foreach ( $parts as $key => $part ) {
-				$part = trim($part);
-				//Special Trim
-				$parts[$key] = trim($part, $sl_f . $sl_b);
-				//Verify path still contains value
-				if ( empty($parts[$key]) ) {
-					unset($parts[$key]);
-					continue;
-				}
-				//Only continue processing the first valid path segment
-				if ( $first )
-					$first = !$first;
-				else
-					continue;
-				//Add back leading slash if necessary
-				if ( $part[0] == $sl_f || $part[0] == $sl_b )
-					$parts[$key] = $sl_f . $parts[$key];
-				
+			
+			if ( is_array($arg_last) && count($arg_last) > 0 && is_bool($arg_last[0]) ) {
+				//Remove slash paramter from args array
+				array_pop($parts);
+				//Normalize slashes options
+				if ( isset($arg_last[0]) )
+					$slashes[0] = $arg_last[0];
+				if ( isset($arg_last[1]) )
+					$slashes[1] = $arg_last[1];
 			}
 		}
+		//Extract to slash options local variables
+		list($trailing_slash, $leading_slash) = $slashes;
+		
+		//Clean path segments
+		foreach ( $parts as $key => $part ) {
+			//Trim slashes/spaces
+			$parts[$key] = trim($part, " " . $sl_f . $sl_b);
+			
+			//Verify path segment still contains value
+			if ( empty($parts[$key]) ) {
+				unset($parts[$key]);
+				continue;
+			}
+		}
+		
 		//Join path parts together
 		$parts = implode($sl_b, $parts);
 		$parts = str_replace($sl_b, $sl_f, $parts);
 		//Add trailing slash (if necessary)
 		if ( $trailing_slash )
 			$parts .= $sl_f;
+		//Add leading slash (if necessary)
+		$regex = '#^.+:[\\/]#';
+		if ( $leading_slash && !preg_match($regex, $parts) ) {
+			$parts = $sl_f . $parts;
+		}
 		return $parts;
-	} 
+	}
 	
 	/**
 	 * Returns URL of file (assumes that it is in plugin directory)
@@ -370,16 +380,25 @@ class SLB_Utilities {
 		return $file;
 	}
 	
+	function get_plugin_file_path($file, $trailing_slash = false) {
+		if ( is_string($file) && '' != trim($file) )
+			$file = $this->normalize_path($this->get_plugin_base(), $file, $trailing_slash);
+		return $file;
+	}
+	
 	/**
 	 * Retrieves file extension
 	 * @param string $file file name/path
+	 * @param bool (optional) $lowercase Whether lowercase extension should be returned (Default: TRUE)
 	 * @return string File's extension
 	 */
-	function get_file_extension($file) {
+	function get_file_extension($file, $lowercase = true) {
 		$ret = '';
 		$sep = '.';
 		if ( ( $rpos = strrpos($file, $sep) ) !== false ) 
 			$ret = substr($file, $rpos + 1);
+		if ( $lowercase )
+			$ret = strtolower($ret);
 		return $ret;
 	}
 	
@@ -388,12 +407,17 @@ class SLB_Utilities {
 	 * @uses get_file_extension()
 	 * @param string $file File name/path
 	 * @param string|array $extension File ending(s) to check $file for
+	 * @param bool (optional) Whether check should be case senstive or not (Default: FALSE)
 	 * @return bool TRUE if file has extension
 	 */
-	function has_file_extension($file, $extension) {
+	function has_file_extension($file, $extension, $case_sensitive = false) {
 		if ( !is_array($extension) )
-			$extension = array(strval($extension)); 
-		return ( in_array($this->get_file_extension($file), $extension) ) ? true : false;
+			$extension = array(strval($extension));
+		if ( !$case_sensitive ) {
+			//Normalize extensions
+			$extension = array_map('strtolower', $extension);
+		} 
+		return ( in_array($this->get_file_extension($file, !$case_sensitive), $extension) ) ? true : false;
 	}
 	
 	/**
@@ -848,6 +872,34 @@ class SLB_Utilities {
 		}
 		
 		return $path;
+	}
+	
+	/**
+	 * Parse string of attributes into array
+	 * For XML/XHTML tag attributes
+	 * @param string $txt Attribute text (Can be full tag or just attributes)
+	 * @return array Attributes as associative array
+	 */
+	function parse_attribute_string($txt, $defaults = array()) {
+		$txt = trim($txt, ' >');
+		$matches = $attr = array();
+		//Strip tag
+		if ( $txt[0] == '<' && ($s = strpos($txt, ' ')) && $s !== false ) {
+			$txt = trim(substr($txt, $s + 1));
+		}
+		//Parse attributes
+		$rgx = "/\b(\w+.*?)=([\"'])(.*?)\\2(?:\s|$)/i";
+		preg_match_all($rgx, $txt, $matches);
+		if ( count($matches) > 3 ) {
+			foreach ( $matches[1] as $sub_idx => $val ) {
+				if ( isset($matches[3][$sub_idx]) )
+					$attr[trim($val)] = trim($matches[3][$sub_idx]);
+			}
+		}
+		//Destroy parsing vars
+		unset($txt, $matches);
+
+		return array_merge($defaults, $attr);
 	}
 	
 	/**
