@@ -53,6 +53,22 @@ class SLB_Base {
 		if ( isset($this) && method_exists($this, $func) ) {
 			call_user_func($this->m($func));
 		}
+		add_action('init', $this->m('init_env'));
+	}
+	
+	function init_env() {
+		//Localization
+		$ldir = 'l10n';
+		$lpath = $this->util->get_plugin_file_path($ldir, array(false, false));
+		$lpath_abs = $this->util->get_file_path($ldir);
+		if ( is_dir($lpath_abs) ) {
+			load_plugin_textdomain($this->get_prefix(), false,	$lpath);
+		}
+		//Options
+		$func_opts = 'init_options';
+		if ( isset($this) && method_exists($this, $func_opts) ) {
+			call_user_func($this->m($func_opts));
+		}
 	}
 	
 	function register_hooks() {

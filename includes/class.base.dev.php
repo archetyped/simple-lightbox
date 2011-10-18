@@ -60,6 +60,11 @@ class SLB_Base {
 		if ( isset($this) && method_exists($this, $func) ) {
 			call_user_func($this->m($func));
 		}
+		//Environment
+		$func_env = 'init_env';
+		if ( isset($this) && method_exists($this, $func_env) ) {
+			add_action('init', $this->m($func_env));
+		}
 	}
 	
 	function register_hooks() {

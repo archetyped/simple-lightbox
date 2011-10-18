@@ -1,6 +1,6 @@
 <?php
 
-require_once 'class.base.php';
+require_once 'class.base.dev.php';
 
 /**
  * Fields - Base class
@@ -558,7 +558,7 @@ class SLB_Field_Base extends SLB_Base {
 			 * @var SLB
 			 */
 			$b =& $this->get_base();
-			if ( $b && $b->fields->has($parent) ) {
+			if ( $b && isset($b->fields) && $b->fields->has($parent) ) {
 				$parent =& $b->fields->get($parent);
 			}
 		}

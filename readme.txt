@@ -15,6 +15,9 @@ Simple Lightbox is a very simple and customizable lightbox that is easy to add t
 The current release is a beta version.  Please test and [provide feedback on the beta release page](http://archetyped.com/lab/slb-1-6-beta/).
 Main changes
 
+#### Beta 2
+* Add: Localization support
+
 #### Beta 1
 * Add: Option to group gallery links separately (supports WordPress & NextGen galleries)
 * Fix: Image activation is case-sensitive (Sensitive Tanya)

@@ -455,11 +455,13 @@ class SLB_Utilities {
 	 * @uses normalize_path()
 	 * @return string Base directory
 	 */
-	function get_plugin_base() {
+	function get_plugin_base($trim = false) {
 		static $plugin_dir = '';
 		if ( '' == $plugin_dir ) {
 			$plugin_dir = str_replace($this->normalize_path(WP_PLUGIN_DIR), '', $this->normalize_path(dirname(dirname(__FILE__))));
 		}
+		if ( $trim )
+			$plugin_dir = trim($plugin_dir, ' \/');
 		return $plugin_dir;
 	}
 	
@@ -1185,6 +1187,10 @@ class SLB_Debug {
 		return $t;
 	}
 	
+	function timer_exists($name) {
+		return ( isset($this->timers[$name]) && is_object($this->timers[$name]) ) ? true : false;
+	}
+	
 	/**
 	 * Start a timer
 	 * Timer overwrites previous timer of same name
@@ -1196,6 +1202,16 @@ class SLB_Debug {
 		$this->timers[$name] = new stdClass();
 		$this->timers[$name]->start = $time;
 		$this->timers[$name]->end = $time;
+		$this->timers[$name]->counter = 0;
+	}
+	
+	function timer_continue($name = 'default') {
+		//Get accumlated time
+		$p = $this->timer_get($name);
+		//Start timer anew
+		$this->timer_start($name);
+		//Update accumulated time
+		$this->timers[$name]->counter = $p;
 	}
 	
 	/**
@@ -1204,9 +1220,7 @@ class SLB_Debug {
 	 */
 	function timer_stop($name = 'default') {
 		$time = $this->microtime_float();
-		if (!isset($this->timers[$name])
-			|| !is_object($this->timers[$name])
-		) {
+		if ( !$this->timer_exists($name) ) {
 			$this->timer_start($name, $time);
 		} else {
 			$this->timers[$name]->end = $time;
@@ -1219,14 +1233,15 @@ class SLB_Debug {
 	 * @return float Timer result
 	 */
 	function timer_get($name = 'default') {
-		if (!isset($this->timers[$name]) 
-			|| !is_object($this->timers[$name])
-			|| $this->timers[$name]->end < $this->timers[$name]->start
-		) {
-			$this->timer_start($name);
+		//Stop timer if necessary
+		if ( !$this->timer_exists($name) || $this->timers[$name]->end < $this->timers[$name]->start ) {
+			$this->timer_stop($name);
 		}
-		//Get difference in times
+		//Get difference between start/stop times
 		$res = (float)$this->timers[$name]->end - (float)$this->timers[$name]->start;
+		//Add to accumulated time (for pausing/unpausing timers)
+		$res += $this->timers[$name]->counter;
+		
 		return $res;
 	}
 	
@@ -1238,6 +1253,31 @@ class SLB_Debug {
 	function timer_show($name = 'default', $format = 'Elapsed time: %s') {
 		$res = $this->timer_get($name);
 		$this->print_message(sprintf($format, $res));
+	}
+	
+	function timer_compare($timer_1, $timer_2) {
+		$ts = func_get_args();
+		$tr = array();
+		$msgs = array();
+		$formats = array(
+			'timer' 	=> '%s: %s',
+			'results_2'	=> '%s faster than %s by %.2fx'
+		);
+		foreach ( $ts as $t ) {
+			$r = $tr[$t] = $this->timer_get($t);
+			$msgs[] = sprintf($formats['timer'], $t, $r);
+		}
+		if ( count($tr) > 1 ) {
+			//Sort timers (fastest to slowest)
+			asort($tr);
+			//Build timer comparison message
+			$ts = array_keys($tr);
+			$r = array($ts[0], $ts[1], ($tr[$ts[1]]/$tr[$ts[0]]));
+			$msgs[] = vsprintf($formats['results_2'], $r);
+		}
+		
+		//Output timer results
+		$this->print_message(implode(PHP_EOL, $msgs));
 	}
 	
 	/**
@@ -1266,6 +1306,9 @@ class SLB_Debug {
 	/**
 	 * Return customized backtrace
 	 * @param string|array $properties (optional) Properties to retrieve for each level (Default: all properties) Can be comma-delimited string or array
+	 * @link http://php.net/manual/en/function.debug-backtrace.php Available properties
+	 * Additional properties
+	 *  > args_simple: Simplify arguments output (For easier viewing)
 	 * @param int $levels (optional) Number of levels to retrieve (Default: entire backtrace)
 	 * @param int $offset (optional) Where to start backtrace output (Default: 1 - Removes current/wrapper functions from output, etc.)
 	 * @param bool $echo (optional) Whether or not to print backtrace output (Default: false)
@@ -1273,15 +1316,15 @@ class SLB_Debug {
 	 */
 	function backtrace($properties = null, $levels = null, $offset = 1, $echo = false) {
 		$out = array();
-		$debug = debug_backtrace();
+		$backtrace = debug_backtrace();
 		//Remove current & calling functions from trace
 		$offset = intval($offset);
-		$debug = array_slice($debug, $offset);
-		if ( ($debug_levels = count($debug)) ) {
+		$backtrace = array_slice($backtrace, $offset);
+		if ( ($backtrace_levels = count($backtrace)) ) {
 			//Setup levels
 			$levels = intval($levels);
-			if ( empty($levels) || $levels > $debug_levels ) {
-				$levels = $debug_levels;
+			if ( empty($levels) || $levels > $backtrace_levels ) {
+				$levels = $backtrace_levels;
 			}
 			
 			//Setup properties
@@ -1291,14 +1334,23 @@ class SLB_Debug {
 				$properties = array_map('trim', $properties);
 			
 			//Build output
-			for ( $x = 0; $x < $levels; $x++ ) {
+			for ( $c = 0; $c < $levels; $c++ ) {
 				$level_out = array();
+				//Use full backtrace data
 				if ( !is_array($properties) ) {
-					$level_out = $debug[$x];
+					$level_out = $backtrace[$c];
 				} else {
+					//Filter backtrace data based on properties array
 					foreach ( $properties as $prop ) {
-						if ( isset($debug[$x][$prop]) )
-							$level_out[$prop] = $debug[$x][$prop];
+						//Default properties
+						if ( isset($backtrace[$c][$prop]) )
+							$level_out[$prop] = $backtrace[$c][$prop];
+						//Custom properties
+						switch ( $prop ) {
+							case 'args_simple' :
+								$level_out[$prop] = $this->simplify($backtrace[$c]['args']);
+								break;
+						}
 					}
 				}
 				if ( !empty($level_out) )
@@ -1310,6 +1362,43 @@ class SLB_Debug {
 			$out = $out[0];
 		if ( $echo )
 			$this->print_message($out);
+		return $out;
+	}
+	
+	/**
+	 * Simplify data for easier reviewing
+	 * Converts instance objects to class names
+	 * @param mixed $data Data to simplify
+	 * @param bool (optional) $recursive Whether data should be simplified recursively (Default: TRUE)
+	 * @return mixed Simplified data
+	 */
+	function simplify($data, $recursive = true) {
+		//Array
+		$labels = array('obj' => 'OBJECT', 'obj_m' => 'OBJECT METHOD');
+		$formats = array('default' => '%1$s: %2$s', 'obj_m' => '%1$s->%2$s');
+		$out = '';
+		if ( is_array($data) ) {
+			//Instance method
+			if ( count($data) == 2 && ($d = array_values($data)) && is_object($d[0]) && is_string($d[1]) ) {
+				$out = sprintf($formats['obj_m'], $this->simplify($d[0]), $d[1]);
+				$out = str_replace($labels['obj'], $labels['obj_m'], $out);
+			}
+			//Recursive
+			elseif ( $recursive ) {
+				$out = array();
+				foreach ( $data as $key => $val ) {
+					$out[$key] = $this->simplify($val, $recursive);
+				}
+			}
+		}
+		//Object
+		elseif ( is_object($data) ) {
+			$out = sprintf($formats['default'], $labels['obj'], get_class($data));
+		}
+		else {
+			$out = $data;
+		}
+		
 		return $out;
 	}
 }

@@ -102,6 +102,28 @@ class SLB_Option extends SLB_Field {
 			$value = !!$value;
 		return $value;
 	}
+	
+	/**
+	 * Format data as string
+	 * @see SLB_Field_Base::format()
+	 * @param mixed $value Data to format
+	 * @param string $context (optional) Current context
+	 * @return string Option string value
+	 */
+	function format_string($value, $context = '') {
+		if ( is_bool($value) ) {
+			$value = ( $value ) ? 'true' : 'false';
+		} 
+		elseif ( is_object($value) ) {
+			$value = get_class($value);
+		}
+		elseif ( is_array($value) ) {
+			$value = implode(' ', $value);
+		} 
+		else {
+			$value = strval($value);
+		}
+	}
 }
 
 /**
@@ -132,12 +154,22 @@ class SLB_Options extends SLB_Field_Collection {
 	
 	/* Init */
 	
-	function SLB_Options($id, $props = array()) {
+	function SLB_Options($id = '', $props = array()) {
 		$args = func_get_args();
 		call_user_func_array(array(&$this, '__construct'), $args);
 	}
 	
-	function __construct($id, $props = array()) {
+	function __construct($id = '', $props = array()) {
+		$args = func_get_args();
+		//Validate arguments
+		if ( count($args) == 1 && is_array($args[0]) ) {
+			$props = $id;
+			$id = '';
+		}
+		//Set default ID
+		if ( !is_string($id) || empty($id) ) {
+			$id = 'options';
+		}
 		parent::__construct($id, $props);
 		$this->add_prefix_ref($this->version_key);
 	}
@@ -449,7 +481,11 @@ class SLB_Options extends SLB_Field_Collection {
 	 * @return bool Option value
 	 */
 	function get_bool($option) {
-		return $this->get_data($option, 'bool');
+		return $this->get_value($option, 'bool');
+	}
+	
+	function get_string($option) {
+		return $this->get_value($option, 'string');
 	}
 	
 	/**
