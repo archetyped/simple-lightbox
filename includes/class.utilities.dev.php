@@ -1261,7 +1261,7 @@ class SLB_Debug {
 		$msgs = array();
 		$formats = array(
 			'timer' 	=> '%s: %s',
-			'results_2'	=> '%s faster than %s by %.2fx'
+			'results_2'	=> '%s faster than %s by %.2fx (%d%%)'
 		);
 		foreach ( $ts as $t ) {
 			$r = $tr[$t] = $this->timer_get($t);
@@ -1272,7 +1272,11 @@ class SLB_Debug {
 			asort($tr);
 			//Build timer comparison message
 			$ts = array_keys($tr);
-			$r = array($ts[0], $ts[1], ($tr[$ts[1]]/$tr[$ts[0]]));
+			$fastest = $tr[$ts[0]];
+			$slowest = $tr[$ts[1]];
+			$factor = $slowest/$fastest;
+			$percent = round((($slowest - $fastest)/$fastest) * 100);
+			$r = array($ts[0], $ts[1], $factor, $percent);
 			$msgs[] = vsprintf($formats['results_2'], $r);
 		}
 		
