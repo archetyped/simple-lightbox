@@ -455,11 +455,13 @@ class SLB_Utilities {
 	 * @uses normalize_path()
 	 * @return string Base directory
 	 */
-	function get_plugin_base() {
+	function get_plugin_base($trim = false) {
 		static $plugin_dir = '';
 		if ( '' == $plugin_dir ) {
 			$plugin_dir = str_replace($this->normalize_path(WP_PLUGIN_DIR), '', $this->normalize_path(dirname(dirname(__FILE__))));
 		}
+		if ( $trim )
+			$plugin_dir = trim($plugin_dir, ' \/');
 		return $plugin_dir;
 	}
 	

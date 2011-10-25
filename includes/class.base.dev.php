@@ -17,7 +17,7 @@ class SLB_Base {
 	var $base = 'slb';
 	
 	/**
-	 * Prefix for Cornerstone-related data (attributes, DB tables, etc.)
+	 * Prefix for plugin-related data (attributes, DB tables, etc.)
 	 * @var string
 	 */
 	var $prefix = 'slb';
@@ -60,10 +60,21 @@ class SLB_Base {
 		if ( isset($this) && method_exists($this, $func) ) {
 			call_user_func($this->m($func));
 		}
-		//Environment
-		$func_env = 'init_env';
-		if ( isset($this) && method_exists($this, $func_env) ) {
-			add_action('init', $this->m($func_env));
+		add_action('init', $this->m('init_env'));
+	}
+	
+	function init_env() {
+		//Localization
+		$ldir = 'l10n';
+		$lpath = $this->util->get_plugin_file_path($ldir, array(false, false));
+		$lpath_abs = $this->util->get_file_path($ldir);
+		if ( is_dir($lpath_abs) ) {
+			load_plugin_textdomain($this->get_prefix(), false,	$lpath);
+		}
+		//Options
+		$func_opts = 'init_options';
+		if ( isset($this) && method_exists($this, $func_opts) ) {
+			call_user_func($this->m($func_opts));
 		}
 	}
 	
