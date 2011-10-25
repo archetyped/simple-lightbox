@@ -17,9 +17,6 @@ Main changes
 
 #### Beta 2
 * Add: Localization support
-
-#### Beta 2
-* Add: Localization support
 * Optimize: Improved link processing performance
 * Optimize: Improved image metadata support
 * Optimize: Improved support for HTTP/HTTPS requests
