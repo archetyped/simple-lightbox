@@ -17,7 +17,7 @@ class SLB_Base {
 	var $base = 'slb';
 	
 	/**
-	 * Prefix for Cornerstone-related data (attributes, DB tables, etc.)
+	 * Prefix for plugin-related data (attributes, DB tables, etc.)
 	 * @var string
 	 */
 	var $prefix = 'slb';
