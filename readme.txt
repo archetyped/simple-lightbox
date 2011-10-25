@@ -18,6 +18,13 @@ Main changes
 #### Beta 2
 * Add: Localization support
 
+#### Beta 2
+* Add: Localization support
+* Optimize: Improved link processing performance
+* Optimize: Improved image metadata support
+* Optimize: Improved support for HTTP/HTTPS requests
+* Fix: Links not fully processed when group is set manually
+
 #### Beta 1
 * Add: Option to group gallery links separately (supports WordPress & NextGen galleries)
 * Fix: Image activation is case-sensitive (Sensitive Tanya)

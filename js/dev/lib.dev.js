@@ -353,15 +353,8 @@ SLB = {
 	 * @return int Media ID (Default: 0 - No ID)
 	 */
 	getMediaId: function(el) {
-		var rel = $(el).attr('rel') || '',
-			mId = 0;
-		if (rel.length) {
-			var reId = new RegExp('\\b' + this.addPrefix(this.options.mId) + '\\[(.+?)\\](?:\\b|$)');
-			if (reId.test(rel)) {
-				mId = reId.exec(rel)[1];
-			}
-		}
-		return mId;
+		var h = ($(el).attr('href')).toString().toLowerCase() || '';
+		return h;
 	},
 	
 	/**
@@ -517,27 +510,24 @@ SLB = {
 			var gTmp = '',
 				gSt = '[',
 				gEnd = ']',
-				search = '',
+				search = this.addPrefix('group') + gSt,
 				idx,
 				prefix = ' ';
-			//Iterate through attributes to find group
-			for (var i = 0; i < this.relAttribute.length; i++) {
-				search = this.relAttribute[i];
+			//Find group indicator
+			idx = rel.indexOf(search);
+			//Prefix with space to find whole word
+			if (prefix != search.charAt(0) && idx > 0) {
+				search = prefix + search;
 				idx = rel.indexOf(search);
-				//Prefix with space to find whole word
-				if (prefix != search.charAt(0) && idx > 0) {
-					search = prefix + search;
-					idx = rel.indexOf(search);
-				}
-				//Stop processing if value is not found
-				if (idx == -1)
-					continue;
+			}
+			//Continue processing if value is found
+			if (idx != -1) {
+				//Extract group name
 				gTmp = $.trim(rel.substring(idx).replace(search, ''));
 				//Check if group defined
-				if (gTmp.length && gSt == gTmp.charAt(0) && gTmp.indexOf(gEnd) != -1) {
+				if (gTmp.length > 1 && gTmp.indexOf(gEnd) > 0) {
 					//Extract group name
-					g = gTmp.substring(1, gTmp.indexOf(gEnd));
-					continue;
+					g = gTmp.substring(0, gTmp.indexOf(gEnd));
 				}
 			}
 		}

@@ -1,6 +1,6 @@
 <?php 
 
-require_once 'includes/class.base.dev.php';
+require_once 'includes/class.base.php';
 require_once 'includes/class.options.php';
 
 /**
@@ -26,7 +26,7 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	var $options_admin_page = 'options-media.php';
 	
-	/**
+	/**`
 	 * Page that processes options
 	 * @var string
 	 */
@@ -47,7 +47,7 @@ class SLB_Lightbox extends SLB_Base {
 
 	/**
 	 * Properties for media attachments in current request
-	 * > Key (int) Attachment ID
+	 * > Key (string) Attachment URI
 	 * > Value (assoc-array) Attachment properties (url, etc.)
 	 *   > source: Source URL
 	 * @var array
@@ -81,6 +81,7 @@ class SLB_Lightbox extends SLB_Base {
 	
 	/**
 	 * Base field definitions
+	 * Stores system/user-defined field definitions
 	 * @var SLB_Fields
 	 */
 	var $fields = null;
@@ -585,16 +586,13 @@ class SLB_Lightbox extends SLB_Base {
 			global $post;
 			$types = $this->get_media_types();
 			$img_types = array('jpg', 'jpeg', 'gif', 'png');
-			$domain = str_replace(array('http://', 'https://'), '', get_bloginfo('url'));
+			$protocol = array('http://', 'https://');
+			$domain = str_replace($protocol, '', strtolower(get_bloginfo('url')));
 			
 			//Format Group
-			$g = ( is_null($group) || 0 == strlen(trim($group)) ) ? '' : '_g_' . $group;
-			if ( $this->options->get_bool('group_links') ) {
-				$g = ( ( $this->options->get_bool('group_post') ) ? $this->add_prefix($post->ID) : $this->get_prefix() ) . $g;
-			}
-			$lb_base = $lb = $this->attr;
-			if ( !empty($g) ) {
-				$lb .= '[' . $g . ']';
+			$group_base = ( !is_scalar($group) ) ? '' : trim(strval($group));
+			if ( !$this->options->get_bool('group_links') ) {
+				$group_base = null;
 			}
 			
 			//Iterate through links & add lightbox if necessary
@@ -603,24 +601,26 @@ class SLB_Lightbox extends SLB_Base {
 				$pid = 0;
 				$link_new = $link;
 				$internal = false;
+				$group = $group_base;
 				
 				//Parse link attributes
 				$attr = $this->util->parse_attribute_string($link_new, array('rel' => '', 'href' => ''));
 				$h =& $attr['href'];
 				$r =& $attr['rel'];
+				$attrs_all = $this->get_attributes($r, false);
+				$attrs = $this->get_attributes($attrs_all);
 				
-				//Stop processing link if lightbox attribute has already been set
-				if ( empty($h) || '#' == $h || ( !empty($r) && ( strpos($r, $lb_base) !== false || strpos($r, $this->add_prefix('off')) !== false || strpos($r, $this->attr_legacy) !== false ) ) )
+				//Stop processing invalid, disabled, or legacy links
+				if ( empty($h) 
+					|| 0 === strpos($h, '#') 
+					|| $this->has_attribute($attrs, $this->make_attribute_disabled())
+					|| $this->has_attribute($attrs_all, $this->attr_legacy, false) 
+					)
 					continue;
 				
-				//Process rel attribute
-				if ( empty($r) )
-					$r = array();
-				else
-					$r = explode(' ', trim($r));
-				
 				//Check if item links to internal media (attachment)
-				if ( strpos($h, $domain) !== false ) {
+				$hdom = str_replace($protocol, '', strtolower($h));
+				if ( strpos($hdom, $domain) === 0 ) {
 					//Save URL for further processing
 					$internal = true;
 				}
@@ -648,53 +648,40 @@ class SLB_Lightbox extends SLB_Base {
 				if ( !$type || ( $type == $types->att && !$this->options->get_bool('activate_attachments') ) )
 					continue;
 				
-				$r[] = $lb;
+				//Set group (if necessary)
+				if ( $this->options->get_bool('group_links') ) {
+					//Get preset group attribute
+					$g_name = $this->make_attribute_name('group');
+					$g = ( $this->has_attribute($attrs, $g_name) ) ? $this->get_attribute($attrs, $g_name) : $this->get_attribute($attrs, $this->attr); 
+					
+					if ( is_string($g) && ($g = trim($g)) && strlen($g) )
+						$group = $g;
+					
+					//Group links by post?
+					if ( $this->options->get_bool('group_post') ) {
+						if ( strlen($group) )
+							$group = '_' . $group; 
+						$group = $this->add_prefix($post->ID . $group);
+					}
+					//Set group attribute
+					if ( is_string($group) && !empty($group) ) {
+						$attrs = $this->set_attribute($attrs, $g_name, $group);
+					}
+				}
+				
+				//Activate link
+				$attrs = $this->set_attribute($attrs, $this->attr);
 				
 				//Process internal links
 				if ( $internal ) {
 					//Mark as internal
-					$r[] = $this->add_prefix('internal');
+					$attrs = $this->set_attribute($attrs, 'internal');
 					//Add to media items array
 					$this->cache_media_item($h, $type, $pid);
 				}
 				
-				/*
-				//Retrieve attachment properties
-				if ( !!$pid ) {
-					if ( !isset($this->media_attachments[$pid]) ) {
-						switch ($type) {
-							case $types->img:
-								$m_props['source'] = $h;
-								break;
-								
-							case $types->att:
-								//Source URL
-								$m_props['source'] = wp_get_attachment_url($pid);
-								break;
-						}
-														
-						//Retrieve attachment data
-						if ( $this->options->get_bool('enabled_desc') ) {
-							$m_props['p'] = get_post($pid);
-							//Description
-							$m_props['desc'] = $m_props['p']->post_content;
-							//Clear attachment data
-							unset($m_props['p']);
-						}
-						
-						//Add attachment properties
-						if ( !empty($m_props['source']) )
-							$this->media_attachments[$pid] = $m_props;
-					}
-					
-					//Check again if attachment ID exists (in case it was just added to array)
-					if ( isset($this->media_attachments[$pid]) )
-						$r[] = $this->add_prefix('id[' . $pid . ']');
-				}
-				*/
-				
 				//Convert rel attribute to string
-				$r = implode(' ', $r);
+				$r = $this->build_attributes(array_merge($attrs_all, $attrs));
 				
 				//Update link in content
 				$link_new = '<a ' . $this->util->build_attribute_string($attr) . '>';
@@ -703,6 +690,160 @@ class SLB_Lightbox extends SLB_Base {
 			}
 		}
 		return $content;
+	}
+	
+	/**
+	 * Generates link attributes from array
+	 * @param array $attrs Link Attributes
+	 * @return string Attribute string
+	 */
+	function build_attributes($attrs) {
+		$a = array();
+		//Validate attributes
+		$attrs = $this->get_attributes($attrs, false);
+		//Iterate through attributes and build output array
+		foreach ( $attrs as $key => $val ) {
+			//Standard attributes
+			if ( is_bool($val) && $val ) {
+				$a[] = $key;
+			}
+			//Attributes with values
+			elseif ( is_string($val) ) {
+				$a[] = $key . '[' . $val . ']';
+			}
+		}
+		return implode(' ', $a);
+	}
+
+	/**
+	 * Build attribute name
+	 * Makes sure name is only prefixed once
+	 * @return string Formatted attribute name 
+	 */
+	function make_attribute_name($name = '') {
+		$sep = '_';
+		$name = trim($name);
+		//Generate valid name
+		if ( $name != $this->attr ) {
+			//Use default name
+			if ( empty($name) )
+				$name = $this->attr;
+			//Add prefix if not yet set
+			elseif ( strpos($name, $this->attr . $sep) !== 0 )
+				$name = $this->attr . $sep . $name;
+		}
+		return $name;
+	}
+
+	/**
+	 * Create attribute to disable lightbox for current link
+	 * @return string Disabled lightbox attribute
+	 */
+	function make_attribute_disabled() {
+		static $ret = null;
+		if ( is_null($ret) ) {
+			$ret = $this->make_attribute_name('off');
+		}
+		return $ret;
+	}
+	
+	/**
+	 * Set attribute to array
+	 * Attribute is added to array if it does not exist
+	 * @param array $attrs Current attribute array
+	 * @param string $name Name of attribute to add
+	 * @param string (optional) $value Attribute value
+	 * @return array Updated attribute array
+	 */
+	function set_attribute($attrs, $name, $value = null) {
+		//Validate attribute array
+		$attrs = $this->get_attributes($attrs, false);
+		//Build attribute name
+		$name = $this->make_attribute_name($name);
+		//Set attribute
+		$attrs[$name] = true;
+		if ( !empty($value) && is_string($value) )
+			$attrs[$name] = $value;
+		return $attrs;
+	}
+	
+	/**
+	 * Convert attribute string into array
+	 * @param string $attr_string Attribute string
+	 * @param bool (optional) $internal Whether only internal attributes should be evaluated (Default: TRUE)
+	 * @return array Attributes as associative array
+	 */
+	function get_attributes($attr_string, $internal = true) {
+		$ret = array();
+		//Protect bracketed values prior to parsing attributes string
+	 	if ( is_string($attr_string) ) {
+	 		$attr_string = trim($attr_string);
+	 		$attr_vals = array();
+			$attr_keys = array();
+			$offset = 0;
+	 		while ( ($bo = strpos($attr_string,'[', $offset)) && $bo !== false
+	 			&& ($bc = strpos($attr_string,']', $bo)) && $bc !== false
+				) {
+	 			//Push all preceding attributes into array
+	 			$attr_temp = explode(' ', substr($attr_string, $offset, $bo));
+				//Get attribute name
+				$name = array_pop($attr_temp);
+				$attr_keys = array_merge($attr_keys, $attr_temp);
+				//Add to values array
+				$attr_vals[$name] = substr($attr_string, $bo+1, $bc-$bo-1);
+				//Update offset
+				$offset = $bc+1;
+	 		}
+			//Parse remaining attributes
+			$attr_keys = array_merge($attr_keys, array_filter(explode(' ', substr($attr_string, $offset))));
+			//Set default values for all keys
+			$attr_keys = array_fill_keys($attr_keys, TRUE);
+			//Merge attributes with values
+			$ret = array_merge($attr_keys, $attr_vals);
+	 	} elseif ( is_array($attr_string) )
+			$ret = $attr_string;
+		
+		//Filter non-internal attributes if necessary
+		if ( $internal && is_array($ret) ) {
+			foreach ( array_keys($ret) as $attr ) {
+				if ( $attr == $this->attr)
+					continue;
+				if ( strpos($attr, $this->attr . '_') !== 0 )
+					unset($ret[$attr]);
+			}
+		}
+		
+		return $ret;
+	}
+	
+	/**
+	 * Retrieve attribute value
+	 * @param string|array $attrs Attributes to retrieve attribute value from
+	 * @param string $attr Attribute name to retrieve
+	 * @param bool (optional) $internal Whether only internal attributes should be evaluated (Default: TRUE)
+	 * @return string|bool Attribute value (Default: FALSE)
+	 */
+	function get_attribute($attrs, $attr, $internal = true) {
+		$ret = false;
+		$attrs = $this->get_attributes($attrs, $internal);
+		//Validate attribute name for internal attributes
+		if ( $internal )
+			$attr = $this->make_attribute_name($attr);
+		if ( isset($attrs[$attr]) ) {
+			$ret = $attrs[$attr];
+		}
+		return $ret;
+	}
+	
+	/**
+	 * Checks if attribute exists
+	 * @param string|array $attrs Attributes to retrieve attribute value from
+	 * @param string $attr Attribute name to retrieve
+	 * @param bool (optional) $internal Whether only internal attributes should be evaluated (Default: TRUE)
+	 * @return bool Whether or not attribute exists
+	 */
+	function has_attribute($attrs, $attr, $internal = true) {
+		return ( $this->get_attribute($attrs, $attr, $internal) !== false ) ? true : false;
 	}
 	
 	/**
@@ -725,7 +866,7 @@ class SLB_Lightbox extends SLB_Base {
 			if ( $type == $t->img )
 				$i['source'] = $uri;
 			//ID
-			if ( $pid && is_numeric($id) )
+			if ( is_numeric($id) )
 				$i['id'] = absint($id);
 			
 			$this->media_items_raw[$uri] = $i;
@@ -846,18 +987,16 @@ class SLB_Lightbox extends SLB_Base {
 	 * > Media attachment URLs
 	 */
 	function client_footer() {
-		if ( !$this->is_enabled() )
+		//Stop if not enabled or if there are no media items to process
+		if ( !$this->is_enabled() || !$this->has_cached_media_items() )
 			return;
-		global $wpdb;
 		
-		//Stop if there are no internal links to be processed
-		if ( !$this->has_cached_media_items() ) {
-			return false;
-		}
+		global $wpdb;
 		
 		//Separate media into buckets by type
 		$m_bucket = array();
 		$type = $id = null;
+		$props = (object) array('id' => 'id');
 		$m_items = $this->get_cached_media_items();
 		foreach ( $m_items as $uri => $p ) {
 			$type = $p['type'];
@@ -882,7 +1021,7 @@ class SLB_Lightbox extends SLB_Base {
 			
 			//Retrieve attachment IDs
 			$uris_flat = "('" . implode("','", array_keys($uris_base)) . "')";
-			$q = $wpdb->prepare("SELECT post_id, meta_value FROM $wpdb->postmeta WHERE `meta_key` = %s AND LOWER(`meta_value`) IN $uris_flat LIMIT %s", '_wp_attached_file', count($b));
+			$q = $wpdb->prepare("SELECT post_id, meta_value FROM $wpdb->postmeta WHERE `meta_key` = %s AND LOWER(`meta_value`) IN $uris_flat LIMIT %d", '_wp_attached_file', count($b));
 			$pids_temp = $wpdb->get_results($q);
 			
 			//Match IDs with URIs
@@ -910,10 +1049,42 @@ class SLB_Lightbox extends SLB_Base {
 		}
 		
 		//Retrieve attachment properties
+		$ids = array();
 		foreach ( $m_items as $uri => $p ) {
-			//Basic post data
+			//Add post ID to query
+			if ( isset($p[$props->id]) ) {
+				$id = $p[$props->id];
+				//Create array for ID (support multiple URIs per ID)
+				if ( !isset($ids[$id]) ) {
+					$ids[$id] = array();
+				}
+				//Add URI to ID
+				$ids[$id][] = $uri;
+			}
+		}
+		//Retrieve attachments
+		$atts = get_posts(array('post_type' => 'attachment', 'include' => array_keys($ids)));
+		foreach ( $atts as $att ) {
+			if ( !isset($ids[$att->ID]) )
+				continue;
+			//Add attachment
+			//Set properties
+			$m = array(
+				'title' => $att->post_title,
+				'desc'	=> $att->post_content,
+			);
+			//Add dimensions
+			if ( wp_attachment_is_image($att->ID) ) {
+				$d = wp_get_attachment_image_src($att->ID, '');
+				if ( is_array($d) && count($d) >= 3 ) {
+					list($m['source'], $m['width'], $m['height']) = $d;
+				}
+			}
 			
-			//Dimensions
+			//Save to object
+			foreach ( $ids[$att->ID] as $uri ) {
+				$this->media_attachments[$uri] = $m;
+			}
 		}
 		
 		//Media attachments
