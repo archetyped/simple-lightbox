@@ -15,6 +15,9 @@ Simple Lightbox is a very simple and customizable lightbox that is easy to add t
 The current release is a beta version.  Please test and [provide feedback on the beta release page](http://archetyped.com/lab/slb-1-6-beta/).
 Main changes
 
+#### Beta 4
+* Optimize: File loading
+
 #### Beta 3
 * Fix: Issue when scanning links without valid URLs (McCloskey Iteration)
 * Optimize: Improved safeguards against interference by bugs in other plugins

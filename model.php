@@ -191,7 +191,7 @@ class SLB_Lightbox extends SLB_Base {
 		
 		//Init lightbox
 		add_action('wp_enqueue_scripts', $this->m('enqueue_files'));
-		add_action('wp_head', $this->m('client_init'), 9);
+		add_action('wp_head', $this->m('client_init'));
 		add_action('wp_footer', $this->m('client_footer'), 99);
 		//Link activation
 		$priority = 99;
@@ -946,6 +946,7 @@ class SLB_Lightbox extends SLB_Base {
 	function client_init() {
 		if ( ! $this->is_enabled() )
 			return;
+		echo '<!-- SLB -->' . PHP_EOL;
 		$options = array();
 		$out = array();
 		$out['script_start'] = '(function($){$(document).ready(function(){';
@@ -979,6 +980,7 @@ class SLB_Lightbox extends SLB_Base {
 		$js_code[] = $this->get_client_obj() . '.initialize(' . json_encode($options) . ');';
 		$js_out = $out['script_start'] . implode('', $js_code) . $out['script_end'];
 		echo $this->util->build_script_element($js_out, $this->add_prefix('init'));
+		echo PHP_EOL . '<!-- /SLB -->' . PHP_EOL;
 	}
 	
 	/**
@@ -989,6 +991,8 @@ class SLB_Lightbox extends SLB_Base {
 		//Stop if not enabled or if there are no media items to process
 		if ( !$this->is_enabled() || !$this->has_cached_media_items() )
 			return;
+		
+		echo '<!-- SLB -->' . PHP_EOL;
 		
 		global $wpdb;
 
@@ -1098,6 +1102,7 @@ class SLB_Lightbox extends SLB_Base {
 			$atch_out = $this->get_client_obj() . '.media = ' . json_encode($this->media_attachments) . ';';
 			echo $this->util->build_script_element($atch_out, $this->add_prefix('media'));
 		}
+		echo PHP_EOL . '<!-- /SLB -->' . PHP_EOL;
 	}
 	
 	/**
