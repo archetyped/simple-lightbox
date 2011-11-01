@@ -15,6 +15,12 @@ Simple Lightbox is a very simple and customizable lightbox that is easy to add t
 The current release is a beta version.  Please test and [provide feedback on the beta release page](http://archetyped.com/lab/slb-1-6-beta/).
 Main changes
 
+#### Beta 3
+* Fix: Issue when scanning links without valid URLs (McCloskey Iteration)
+* Optimize: Improved safeguards against interference by bugs in other plugins
+* Optimize: Link processing performance
+* Optimize: Lightbox styling isolated from site styles
+
 #### Beta 2
 * Add: Localization support
 * Optimize: Improved link processing performance
@@ -53,6 +59,7 @@ Options for customizing the lightbox behavior are located in the **Settings > Me
 == Installation ==
 
 1. Install and activate via admin dashboard
+1. Verify that your site’s theme uses the `wp_head()`, `wp_footer()`, & `the_content()` template tags (standard in any professional theme)
 
 == Upgrade Notice ==
 

@@ -18,7 +18,7 @@
 /**
  * Lightbox object
  */
-//var SLB = null;
+var SLB = null;
 (function($) {
 SLB = {
 	activeImage : null,
@@ -65,7 +65,6 @@ SLB = {
 			resizeSpeed : 400, // controls the speed of the image resizing (milliseconds)
 			showGroupName : false, // show group name of images in image details
 			slideTime : 4, // time to display images during slideshow
-			altsrc : 'src',
 			mId : 'id',
 			strings : { // allows for localization
 				closeLink : 'close',
@@ -288,7 +287,7 @@ SLB = {
 				order.sort(function(a, b) { return (a - b); });
 				for (x = 0; x < order.length; x++) {
 					el = groupTemp[order[x]];
-					//Check if link being evaluated is the same as the clicked link
+					// Check if link being evaluated is the same as the clicked link
 					if ($(el).get(0) == $(imageLink).get(0)) {
 						t.startImage = x;
 					}
@@ -300,16 +299,16 @@ SLB = {
 				t.get('lightbox').css('top', lightboxTop + 'px').show();
 				t.changeImage(t.startImage);
 			}
-			
 			// If image is NOT part of a group..
 			if (null == t.groupName) {
-			// Add single image to imageArray
-				addLink(imageLink, 0);			
+				// Add single image to array
 				t.startImage = 0;
+				addLink(imageLink, t.startImage);			
 				proceed();
 			} else {
-				// If image is part of a group
-				var els = $(t.container).find($(imageLink).get(0).tagName.toLowerCase());
+				// Image is part of a group
+				// var els = $(t.container).find($(imageLink).get(0).tagName.toLowerCase());
+				var els = $(t.container).find(t.refTags.join(',').toLowerCase());
 				// Loop through links on page & find other images in group
 				var grpLinks = [];
 				var i, el;
@@ -350,10 +349,11 @@ SLB = {
 	/**
 	 * Retrieve ID of media item
 	 * @param {Object} el Link element
-	 * @return int Media ID (Default: 0 - No ID)
+	 * @return string Media ID (Default: 0 - No ID)
 	 */
 	getMediaId: function(el) {
-		var h = ($(el).attr('href')).toString().toLowerCase() || '';
+		var h = $(el).attr('href');
+		h = ($.type(h) === 'string') ? h.toLowerCase() : ''; 
 		return h;
 	},
 	
@@ -365,7 +365,7 @@ SLB = {
 	getMediaProperties: function(el) {
 		var props = {},
 			mId = this.getMediaId(el);
-		if (mId in this.media) {
+		if (mId.length && mId in this.media) {
 			props = this.media[mId];
 		}
 		return props;
@@ -483,13 +483,6 @@ SLB = {
 		if (rel.length) {
 			//Attachment source
 			relSrc = this.getMediaProperty(el, 'source');
-			//Explicit source
-			if (!relSrc || !relSrc.length) {
-				var reSrc = new RegExp('\\b' + this.addPrefix(this.options.altsrc) + '\\[(.+?)\\](?:\\b|$)');
-				if (reSrc.test(rel)) {
-					relSrc = reSrc.exec(rel)[1];
-				}
-			}
 			//Set source using rel-derived value
 			if ( relSrc.length )
 				src = relSrc;

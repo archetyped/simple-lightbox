@@ -26,7 +26,7 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	var $options_admin_page = 'options-media.php';
 	
-	/**`
+	/**
 	 * Page that processes options
 	 * @var string
 	 */
@@ -191,7 +191,7 @@ class SLB_Lightbox extends SLB_Base {
 		
 		//Init lightbox
 		add_action('wp_enqueue_scripts', $this->m('enqueue_files'));
-		add_action('wp_head', $this->m('client_init'));
+		add_action('wp_head', $this->m('client_init'), 9);
 		add_action('wp_footer', $this->m('client_footer'), 99);
 		//Link activation
 		$priority = 99;
@@ -904,7 +904,7 @@ class SLB_Lightbox extends SLB_Base {
 	 * Retrieve cached media items
 	 * @return array Cached media items
 	 */
-	function get_cached_media_items() {
+	function &get_cached_media_items() {
 		return $this->media_items_raw;
 	}
 	
@@ -923,7 +923,7 @@ class SLB_Lightbox extends SLB_Base {
 		if ( ! $this->is_enabled() )
 			return;
 		
-		$lib = 'js/' . ( ( WP_DEBUG ) ? 'dev/lib.dev.js' : 'lib.js' );
+		$lib = 'js/' . ( ( ( defined('WP_DEBUG') && WP_DEBUG ) || isset($_REQUEST[$this->add_prefix('debug')]) ) ? 'dev/lib.dev.js' : 'lib.js' );
 		wp_enqueue_script($this->add_prefix('lib'), $this->util->get_file_url($lib), array('jquery'), $this->util->get_plugin_version());
 		wp_enqueue_style($this->add_prefix('style'), $this->get_theme_style(), array(), $this->util->get_plugin_version());
 	}
@@ -962,7 +962,6 @@ class SLB_Lightbox extends SLB_Base {
 			'captionEnabled'	=> $this->options->get_bool('enabled_caption'),
 			'captionSrc'		=> $this->options->get_bool('caption_src'),
 			'descEnabled'		=> $this->options->get_bool('enabled_desc'),
-			'altsrc'			=> $this->add_prefix('src'),
 			'relAttribute'		=> array($this->get_prefix()),
 			'prefix'			=> $this->get_prefix()
 		);
@@ -992,19 +991,23 @@ class SLB_Lightbox extends SLB_Base {
 			return;
 		
 		global $wpdb;
-		
+
+		$this->media_attachments = array();
+		$props = array('id', 'type', 'desc', 'title', 'source', 'width', 'height');
+		$props = (object) array_combine($props, $props);
+
 		//Separate media into buckets by type
 		$m_bucket = array();
 		$type = $id = null;
-		$props = (object) array('id' => 'id');
-		$m_items = $this->get_cached_media_items();
+		
+		$m_items =& $this->get_cached_media_items();
 		foreach ( $m_items as $uri => $p ) {
-			$type = $p['type'];
+			$type = $p[$props->type];
 			if ( empty($type) )
 				continue;
 			if ( !isset($m_bucket[$type]) )
 				$m_bucket[$type] = array();
-			//Add to bucket
+			//Add to bucket for type (by reference)
 			$m_bucket[$type][$uri] =& $m_items[$uri];
 		}
 		
@@ -1028,11 +1031,11 @@ class SLB_Lightbox extends SLB_Base {
 			foreach ( $pids_temp as $pd ) {
 				$f = strtolower($pd->meta_value);
 				if ( is_numeric($pd->post_id) && isset($uris_base[$f]) ) {
-					$b[$uris_base[$f]]['id'] = absint($pd->post_id);
+					$b[$uris_base[$f]][$props->id] = absint($pd->post_id);
 				}
 			}
 			//Destroy worker vars
-			unset($b, $uri, $uris_base, $uris_flat, $q, $pids_temp);
+			unset($b, $uri, $uris_base, $uris_flat, $q, $pids_temp, $pd);
 		}
 		
 		//Image attachments
@@ -1040,12 +1043,12 @@ class SLB_Lightbox extends SLB_Base {
 			$b =& $m_bucket[$t->att];
 			//Attachment source URI
 			foreach ( $b as $uri => $p ) {
-				$s = wp_get_attachment_url($p['id']);
+				$s = wp_get_attachment_url($p[$props->id]);
 				if ( !!$s )
-					$b[$uri]['source'] = $s;
+					$b[$uri][$props->source] = $s;
 			}
 			//Destroy worker vars
-			unset($b);
+			unset($b, $uri, $p);
 		}
 		
 		//Retrieve attachment properties
@@ -1062,28 +1065,31 @@ class SLB_Lightbox extends SLB_Base {
 				$ids[$id][] = $uri;
 			}
 		}
+		
 		//Retrieve attachments
-		$atts = get_posts(array('post_type' => 'attachment', 'include' => array_keys($ids)));
-		foreach ( $atts as $att ) {
-			if ( !isset($ids[$att->ID]) )
-				continue;
-			//Add attachment
-			//Set properties
-			$m = array(
-				'title' => $att->post_title,
-				'desc'	=> $att->post_content,
-			);
-			//Add dimensions
-			if ( wp_attachment_is_image($att->ID) ) {
-				$d = wp_get_attachment_image_src($att->ID, '');
-				if ( is_array($d) && count($d) >= 3 ) {
-					list($m['source'], $m['width'], $m['height']) = $d;
+		if ( !empty($ids) ) {
+			$atts = get_posts(array('post_type' => 'attachment', 'include' => array_keys($ids)));
+			foreach ( $atts as $att ) {
+				if ( !isset($ids[$att->ID]) )
+					continue;
+				//Add attachment
+				//Set properties
+				$m = array(
+					$props->title	=> $att->post_title,
+					$props->desc	=> $att->post_content,
+				);
+				//Add dimensions
+				if ( wp_attachment_is_image($att->ID) ) {
+					$d = wp_get_attachment_image_src($att->ID, '');
+					if ( is_array($d) && count($d) >= 3 ) {
+						list($m[$props->source], $m[$props->width], $m[$props->height]) = $d;
+					}
 				}
-			}
-			
-			//Save to object
-			foreach ( $ids[$att->ID] as $uri ) {
-				$this->media_attachments[$uri] = $m;
+				
+				//Save to object
+				foreach ( $ids[$att->ID] as $uri ) {
+					$this->media_attachments[$uri] = $m;
+				}
 			}
 		}
 		

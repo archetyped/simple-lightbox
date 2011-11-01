@@ -1,3 +1,25 @@
+/* Reset */
+#slb_lightbox * {
+	visibility: visible;
+	margin: 0;
+	padding: 0;
+	line-height: 1.4em;
+	text-align: left;
+	vertical-align: baseline;
+	white-space: normal;
+	outline: none;
+	border: 0px;
+	background: none;
+	opacity: 1;
+	width: auto;
+	height: auto;
+	position: static;
+	float: none;
+	clear: none;
+	font-family: Verdana, Helvetica, sans-serif;
+	color: #000;
+}
+
 /* General */
 
 #slb_lightbox {
@@ -69,8 +91,8 @@
 
 /* Navigation */
 
-.slb_navPrev,
-.slb_navNext {
+#slb_nav .slb_navPrev,
+#slb_nav .slb_navNext {
 	margin:0 8px 0 0;
 }
 
@@ -127,15 +149,22 @@
 	margin:0;
 	padding:0 0 10px 0;
 	text-decoration:none;
-	background:url("../images/closelabel.gif") no-repeat;
 	text-indent:-9999px;
 	overflow:hidden;
 }
 
 #slb_close {
 	float: right;
-	width:66px;
+}
+
+#slb_close,
+#slb_close .slb_slbClose {
 	height:28px;
+	width:66px;
+}
+
+#slb_close .slb_slbClose {
+	background:url("../images/closelabel.gif") no-repeat;
 }
 
 /* Content */
