@@ -31,7 +31,7 @@
 	background-image: url("../images/nextlabel_black.gif");
 }
 
-.slb_slbClose {
+#slb_close .slb_slbClose {
 	background-image: url("../images/closelabel_black.gif");
 }
 
