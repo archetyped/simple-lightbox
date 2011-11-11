@@ -327,11 +327,11 @@ class SLB_Lightbox extends SLB_Base {
 			return false;
 		$params = func_get_args();
 		//Start output buffer
-		ob_start($this->m('widget_process_links'));
+		ob_start();
 		//Call original callback
 		call_user_func_array($cb, $params);
 		//Flush output buffer
-		ob_end_flush();
+		echo $this->widget_process_links(ob_get_clean(), $wid);
 	}
 	
 	/**
@@ -340,8 +340,9 @@ class SLB_Lightbox extends SLB_Base {
 	 * @return string Processed widget content
 	 * @uses process_links() to process links
 	 */
-	function widget_process_links($content) {
-		return $this->process_links($content);
+	function widget_process_links($content, $id) {
+		$id = $this->add_prefix("widget_$id");
+		return $this->process_links($content, $id);
 	}
 	
 	/*-** Theme **-*/
