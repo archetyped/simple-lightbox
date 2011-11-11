@@ -284,7 +284,7 @@ class SLB_Lightbox extends SLB_Base {
 	function sidebars_widgets($sidebars_widgets) {
 		global $wp_registered_widgets;
 		static $widgets_processed = false;
-		if ( is_admin() || empty($wp_registered_widgets) || $widgets_processed || !$this->options->get_bool('enabled_widget') )
+		if ( is_admin() || empty($wp_registered_widgets) || $widgets_processed || !is_object($this->options) || !$this->options->get_bool('enabled_widget') )
 			return $sidebars_widgets; 
 		$widgets_processed = true;
 		//Fetch active widgets from all sidebars
