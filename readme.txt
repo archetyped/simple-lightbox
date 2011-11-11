@@ -3,7 +3,7 @@ Contributors: Archetyped
 Donate link: http://archetyped.com/tools/simple-lightbox/#donate
 Tags: lightbox, gallery, photography, images, theme, template, style
 Requires at least: 3.2.1
-Tested up to: 3.2.1
+Tested up to: 3.3
 Stable tag: trunk
 
 A simple, themeable, and customizable Lightbox for Wordpress
@@ -18,6 +18,7 @@ Main changes
 #### Beta 5
 * Add: Option to process links in Widgets
 * Fix: YouTube embed using iFrame overlaps lightbox
+* Fix: Inconsistent image metadata loading
 
 #### Beta 4
 * Optimize: File loading

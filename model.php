@@ -214,11 +214,11 @@ class SLB_Lightbox extends SLB_Base {
 		/* Client-side */
 		
 		//Init lightbox
+		$priority = 99;
 		add_action('wp_enqueue_scripts', $this->m('enqueue_files'));
 		add_action('wp_head', $this->m('client_init'));
-		add_action('wp_footer', $this->m('client_footer'), 99);
+		add_action('wp_footer', $this->m('client_footer'), $priority);
 		//Link activation
-		$priority = 99;
 		add_filter('the_content', $this->m('activate_links'), $priority);
 		//Gallery wrapping
 		add_filter('the_content', $this->m('gallery_wrap'), 1);
@@ -1110,7 +1110,6 @@ class SLB_Lightbox extends SLB_Base {
 			return;
 		echo '<!-- SLB -->' . PHP_EOL;
 		
-		
 		global $wpdb;
 
 		$this->media_attachments = array();
@@ -1139,15 +1138,16 @@ class SLB_Lightbox extends SLB_Base {
 		if ( isset($m_bucket[$t->img]) ) {
 			$b =& $m_bucket[$t->img];
 			$uris_base = array();
+			$uri_prefix = wp_upload_dir();
+			$uri_prefix = $this->util->normalize_path($uri_prefix['baseurl'], true);
 			foreach ( array_keys($b) as $uri ) {
-				$uris_base[basename($uri)] = $uri;
+				$uris_base[str_replace($uri_prefix, '', $uri)] = $uri;
 			}
 			
 			//Retrieve attachment IDs
 			$uris_flat = "('" . implode("','", array_keys($uris_base)) . "')";
 			$q = $wpdb->prepare("SELECT post_id, meta_value FROM $wpdb->postmeta WHERE `meta_key` = %s AND LOWER(`meta_value`) IN $uris_flat LIMIT %d", '_wp_attached_file', count($b));
 			$pids_temp = $wpdb->get_results($q);
-			
 			//Match IDs with URIs
 			if ( $pids_temp ) {
 				foreach ( $pids_temp as $pd ) {
