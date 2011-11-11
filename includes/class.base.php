@@ -26,12 +26,14 @@ class SLB_Base {
 	 * Client files
 	 * @var array
 	 * Structure
-	 * > file (string) File path (Relative to plugin base)
-	 * > deps (array) Script dependencies
+	 * > Key: unique file ID
+	 * > Properties
+	 *   > file (string) File path (Relative to plugin base)
+	 *   > deps (array) Script dependencies
 	 * 		> Internal dependencies are wrapped in square brackets ([])
-	 * > context (string|array)
+	 *   > context (string|array)
 	 * 		> Context in which the script should be included
-	 * > in_footer (bool) optional [Default: FALSE]
+	 *   > in_footer (bool) optional [Default: FALSE]
 	 * 		> If TRUE, file will be included in footer of page, otherwise it will be included in the header
 	 * 
 	 * Array is processed and converted to an object on init

@@ -17,8 +17,10 @@ Main changes
 
 #### Beta 5
 * Add: Option to process links in Widgets
-* Fix: YouTube embed using iFrame overlaps lightbox
-* Fix: Inconsistent image metadata loading
+* Add: WordPress 3.3 support
+* Optimize: Image metadata loading performance
+* Fix: YouTube embed using iFrame overlaps lightbox (Elena in Hiding)
+* Fix: Inconsistent loading of image metadata
 
 #### Beta 4
 * Optimize: File loading

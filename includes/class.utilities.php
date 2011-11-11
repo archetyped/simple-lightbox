@@ -239,6 +239,20 @@ class SLB_Utilities {
 		return $ret;
 	}
 	
+	/**
+	 * Build client method call
+	 * @uses get_client_object() to generate the body of the method call
+	 * @param string $method Method name
+	 * @param mixed Parameters to pass to method (will be JSON-encoded)
+	 * @return string Method call
+	 */
+	function call_client_method($method, $params = null) {
+		if ( !$method )
+			return '';
+		$params = ( !is_null($params) ) ? json_encode($params) : '';
+		return $this->get_client_object($method) . '(' . $params. ');';
+	}
+	
 	/*-** WP **-*/
 	
 	/**
@@ -1090,18 +1104,27 @@ class SLB_Utilities {
 		return $this->build_html_element(array('tag' => 'link', 'wrap' => false, 'attributes' => $attributes));
 	}
 	
-	function build_script_element($content = '', $id = '', $wrap_jquery = true) {
+	function build_script_element($content = '', $id = '', $wrap_jquery = true, $wait_doc_ready = false) {
 		//Stop processing invalid content
 		if ( empty($content) || !is_string($content) )
 			return ''; 
 		$attributes = array('type' => 'text/javascript');
-		$start = '/* <![CDATA[ */';
-		$end = '/* ]]> */';
+		$start = array('/* <![CDATA[ */');
+		$end = array('/* ]]> */');
 		if ( $wrap_jquery ) {
-			$start .= '(function($){';
-			$end .= '})(jQuery);';
+			$start[] = '(function($){';
+			$end[] = '})(jQuery);';
+			
+			//Add event handler (if necessary)
+			if ( $wait_doc_ready ) {
+				$start[] = '$(document).ready(function(){';
+				$end[] = '})';
+			}
 		}
-		$content = $start . $content . $end;
+		
+		//Reverse order of end values
+		$end = array_reverse($end);
+		$content = implode('', array_merge($start, array($content), $end));
 		if ( is_string($id) && !empty($id) ) {
 			$attributes['id'] = $this->add_prefix($id);
 		}

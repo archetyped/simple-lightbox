@@ -1045,17 +1045,6 @@ class SLB_Lightbox extends SLB_Base {
 	}
 	
 	/**
-	 * Build client (JS) object name
-	 * @return string Name of JS object
-	 */
-	function get_client_obj() {
-		static $obj = null;
-		if ( is_null($obj) )
-			$obj = strtoupper($this->get_prefix(''));
-		return $obj;
-	}
-	
-	/**
 	 * Sets options/settings to initialize lightbox functionality on page load
 	 * @return void
 	 */
@@ -1065,8 +1054,6 @@ class SLB_Lightbox extends SLB_Base {
 		echo '<!-- SLB -->' . PHP_EOL;
 		$options = array();
 		$out = array();
-		$out['script_start'] = '(function($){$(document).ready(function(){';
-		$out['script_end'] = '})})(jQuery);';
 		$js_code = array();
 		//Get options
 		$options = array(
@@ -1093,15 +1080,15 @@ class SLB_Lightbox extends SLB_Base {
 		$options['layout'] = $this->get_theme_layout();
 
 		//Build client output
-		$js_code[] = $this->get_client_obj() . '.initialize(' . json_encode($options) . ');';
-		$js_out = $out['script_start'] . implode('', $js_code) . $out['script_end'];
-		echo $this->util->build_script_element($js_out, $this->add_prefix('init'));
+		echo $this->util->build_script_element($this->util->call_client_method('initialize', $options), 'init', true, true);
 		echo PHP_EOL . '<!-- /SLB -->' . PHP_EOL;
 	}
 	
 	/**
 	 * Output code in footer
 	 * > Media attachment URLs
+	 * @uses `_wp_attached_file` to match attachment ID to URI
+	 * @uses `_wp_attachment_metadata` to retrieve attachment metadata
 	 */
 	function client_footer() {
 		echo '<!-- X -->';
@@ -1111,7 +1098,7 @@ class SLB_Lightbox extends SLB_Base {
 		echo '<!-- SLB -->' . PHP_EOL;
 		
 		global $wpdb;
-
+		
 		$this->media_attachments = array();
 		$props = array('id', 'type', 'desc', 'title', 'source', 'width', 'height');
 		$props = (object) array_combine($props, $props);
@@ -1174,7 +1161,7 @@ class SLB_Lightbox extends SLB_Base {
 			unset($b, $uri, $p);
 		}
 		
-		//Retrieve attachment properties
+		//Retrieve attachment IDs
 		$ids = array();
 		foreach ( $m_items as $uri => $p ) {
 			//Add post ID to query
@@ -1189,37 +1176,68 @@ class SLB_Lightbox extends SLB_Base {
 			}
 		}
 		
-		//Retrieve attachments
+		//Retrieve attachment properties
 		if ( !empty($ids) ) {
-			$atts = get_posts(array('post_type' => 'attachment', 'include' => array_keys($ids)));
-			foreach ( $atts as $att ) {
-				if ( !isset($ids[$att->ID]) )
-					continue;
-				//Add attachment
-				//Set properties
-				$m = array(
-					$props->title	=> $att->post_title,
-					$props->desc	=> $att->post_content,
-				);
-				//Add dimensions
-				if ( wp_attachment_is_image($att->ID) ) {
-					$d = wp_get_attachment_image_src($att->ID, '');
-					if ( is_array($d) && count($d) >= 3 ) {
-						list($m[$props->source], $m[$props->width], $m[$props->height]) = $d;
-					}
+			$ids_flat = array_keys($ids);
+			$atts = get_posts(array('post_type' => 'attachment', 'include' => $ids_flat));
+			$ids_flat = "('" . implode("','", $ids_flat) . "')";
+			$atts_meta = $wpdb->get_results($wpdb->prepare("SELECT `post_id`,`meta_value` FROM $wpdb->postmeta WHERE `post_id` IN $ids_flat AND `meta_key` = %s LIMIT %d", '_wp_attachment_metadata', count($ids)));
+			//Rebuild metadata array
+			if ( $atts_meta ) {
+				$meta = array();
+				foreach ( $atts_meta as $att_meta ) {
+					$meta[$att_meta->post_id] = $att_meta->meta_value;
 				}
-				
-				//Save to object
-				foreach ( $ids[$att->ID] as $uri ) {
-					$this->media_attachments[$uri] = $m;
+				$atts_meta = $meta;
+				unset($meta);
+			} else {
+				$atts_meta = array();
+			}
+			
+			//Process attachments
+			if ( $atts ) {
+				foreach ( $atts as $att ) {
+					if ( !isset($ids[$att->ID]) )
+						continue;
+					//Add attachment
+					//Set properties
+					$m = array(
+						$props->title	=> $att->post_title,
+						$props->desc	=> $att->post_content,
+					);
+					//Add metadata
+					if ( isset($atts_meta[$att->ID]) && ($a = unserialize($atts_meta[$att->ID])) && is_array($a) ) {
+						//Move original size into `sizes` array
+						foreach ( array('file', 'width', 'height') as $d ) {
+							if ( !isset($a[$d]) )
+								continue;
+							$a['sizes']['original'][$d] = $a[$d];
+							unset($a[$d]);
+						}
+
+						//Strip extraneous metadata
+						foreach ( array('hwstring_small') as $d ) {
+							if ( isset($a[$d]) )
+								unset($a[$d]);
+						}
+
+						$m = array_merge($a, $m);
+						unset($a, $d);
+					}
+					
+					//Save to object
+					foreach ( $ids[$att->ID] as $uri ) {
+						$this->media_attachments[$uri] = $m;
+					}
 				}
 			}
 		}
 		
 		//Media attachments
 		if ( !empty($this->media_attachments) ) {
-			$atch_out = $this->get_client_obj() . '.media = ' . json_encode($this->media_attachments) . ';';
-			echo $this->util->build_script_element($atch_out, $this->add_prefix('media'));
+			$obj = 'media';
+			$atch_out = $this->util->extend_client_object($obj, $this->media_attachments);
+			echo $this->util->build_script_element($atch_out, $obj);
 		}
 		echo PHP_EOL . '<!-- /SLB -->' . PHP_EOL;
 	}
