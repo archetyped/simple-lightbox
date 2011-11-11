@@ -1091,6 +1091,7 @@ class SLB_Lightbox extends SLB_Base {
 	 * @uses `_wp_attachment_metadata` to retrieve attachment metadata
 	 */
 	function client_footer() {
+		global $dbg;
 		echo '<!-- X -->';
 		//Stop if not enabled or if there are no media items to process
 		if ( !$this->is_enabled() || !$this->has_cached_media_items() )
@@ -1100,7 +1101,7 @@ class SLB_Lightbox extends SLB_Base {
 		global $wpdb;
 		
 		$this->media_attachments = array();
-		$props = array('id', 'type', 'desc', 'title', 'source', 'width', 'height');
+		$props = array('id', 'type', 'desc', 'title', 'source');
 		$props = (object) array_combine($props, $props);
 
 		//Separate media into buckets by type
@@ -1108,6 +1109,7 @@ class SLB_Lightbox extends SLB_Base {
 		$type = $id = null;
 		
 		$m_items =& $this->get_cached_media_items();
+		$dbg->print_message($m_items);
 		foreach ( $m_items as $uri => $p ) {
 			$type = $p[$props->type];
 			if ( empty($type) )
@@ -1151,6 +1153,7 @@ class SLB_Lightbox extends SLB_Base {
 		//Image attachments
 		if ( isset($m_bucket[$t->att]) ) {
 			$b =& $m_bucket[$t->att];
+			
 			//Attachment source URI
 			foreach ( $b as $uri => $p ) {
 				$s = wp_get_attachment_url($p[$props->id]);
@@ -1160,6 +1163,7 @@ class SLB_Lightbox extends SLB_Base {
 			//Destroy worker vars
 			unset($b, $uri, $p);
 		}
+		$dbg->print_message('Media', $m_items);
 		
 		//Retrieve attachment IDs
 		$ids = array();
@@ -1227,6 +1231,8 @@ class SLB_Lightbox extends SLB_Base {
 					
 					//Save to object
 					foreach ( $ids[$att->ID] as $uri ) {
+						if ( isset($m_items[$uri]) )
+							$m = array_merge($m_items[$uri], $m);
 						$this->media_attachments[$uri] = $m;
 					}
 				}
@@ -1239,6 +1245,8 @@ class SLB_Lightbox extends SLB_Base {
 			$atch_out = $this->util->extend_client_object($obj, $this->media_attachments);
 			echo $this->util->build_script_element($atch_out, $obj);
 		}
+		
+		$dbg->print_message($this->media_attachments);
 		echo PHP_EOL . '<!-- /SLB -->' . PHP_EOL;
 	}
 	
