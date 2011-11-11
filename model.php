@@ -341,7 +341,7 @@ class SLB_Lightbox extends SLB_Base {
 	 * @uses process_links() to process links
 	 */
 	function widget_process_links($content, $id) {
-		$id = $this->add_prefix("widget_$id");
+		$id = ( $this->options->get_bool('group_widget') ) ? "widget_$id" : null;
 		return $this->process_links($content, $id);
 	}
 	
@@ -1092,7 +1092,6 @@ class SLB_Lightbox extends SLB_Base {
 	 * @uses `_wp_attachment_metadata` to retrieve attachment metadata
 	 */
 	function client_footer() {
-		global $dbg;
 		echo '<!-- X -->';
 		//Stop if not enabled or if there are no media items to process
 		if ( !$this->is_enabled() || !$this->has_cached_media_items() )
@@ -1110,7 +1109,6 @@ class SLB_Lightbox extends SLB_Base {
 		$type = $id = null;
 		
 		$m_items =& $this->get_cached_media_items();
-		$dbg->print_message($m_items);
 		foreach ( $m_items as $uri => $p ) {
 			$type = $p[$props->type];
 			if ( empty($type) )
@@ -1164,7 +1162,6 @@ class SLB_Lightbox extends SLB_Base {
 			//Destroy worker vars
 			unset($b, $uri, $p);
 		}
-		$dbg->print_message('Media', $m_items);
 		
 		//Retrieve attachment IDs
 		$ids = array();
@@ -1247,7 +1244,6 @@ class SLB_Lightbox extends SLB_Base {
 			echo $this->util->build_script_element($atch_out, $obj);
 		}
 		
-		$dbg->print_message($this->media_attachments);
 		echo PHP_EOL . '<!-- /SLB -->' . PHP_EOL;
 	}
 	

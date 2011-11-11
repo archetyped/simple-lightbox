@@ -416,6 +416,11 @@ SLB = {
 				}
 			}
 			caption = $.trim(caption);
+			//Media properties
+			if ( '' == caption ) {
+				caption = this.getMediaProperty(els.link, 'title');
+			}
+			caption = $.trim(caption);
 			//Fall back Link Text
 			if ('' == caption) {
 				if ($.trim($(sels.link).text()).length) {
