@@ -142,6 +142,103 @@ class SLB_Utilities {
 		return $wpdb->prefix . $this->get_prefix('_');
 	}
 	
+	/*-** Client **-*/
+	
+	/**
+	 * Parses client files array
+	 * > Adds ID property (prefixed file key)
+	 * > Parses and validates internal dependencies
+	 * > Converts properties array to object
+	 * @param array $files Files array
+	 * @return object Client files
+	 */
+	function parse_client_files($files, $type = 'scripts') {
+		if ( is_array($files) && !empty($files) ) {
+			foreach ( $files as $h => $p ) {
+				//Defaults
+				$defaults = array(
+					'id' 		=> $this->add_prefix($h),
+					'deps' 		=> array(),
+					'context'	=> array()
+				);
+				switch ( $type ) {
+					case 'styles':
+						$defaults['media'] = 'all';
+						break;
+					default:
+						$defaults['in_footer'] = false;
+				}
+				
+				//Type Validation
+				foreach ( $defaults as $m => $d ) {
+					//Check if value requires validation
+					if ( !is_array($d) || !isset($p[$m]) || is_array($p[$m]) )
+						continue;
+					//Wrap value in array or destroy it
+					if ( is_scalar($p[$m]) )
+						$p[$m] = array($p[$m]);
+					else
+						unset($p[$m]);
+				}
+				
+				$p = array_merge($defaults, $p);
+	
+				//Format internal dependencies
+				foreach ( $p['deps'] as $idx => $dep ) {
+					if ( substr($dep, 0, 1) == '[' && substr($dep, -1, 1) == ']' ) {
+						$dep = trim($dep, '[]');
+						$p['deps'][$idx] = $this->add_prefix($dep);
+					}
+				}
+	
+				//Convert properties to object
+				$files[$h] = (object) $p;
+			}
+		}
+		//Cast to object before returning
+		if ( !is_object($files) )
+			$files = (object) $files;
+		return $files;
+	}
+	
+	/**
+	 * Build JS client object
+	 * @param string (optional) $path Additional object path
+	 * @return string Client object
+	 */
+	function get_client_object($path = null) {
+		$obj = strtoupper($this->get_prefix());
+		if ( !empty($path) && is_string($path) ) {
+			if ( 0 !== strpos($path, '[') )
+				$obj .= '.';
+			$obj .= $path;
+		}
+		return $obj;
+	}
+	
+	/**
+	 * Build jQuery JS expression to add data to specified client object
+	 * @param string $obj Name of client object (Set to root object if not a valid name)
+	 * @param mixed $data Data to add to client object
+	 * @return string JS expression to extend client object
+	 */
+	function extend_client_object($obj, $data = null) {
+		//Validate parameters
+		if ( func_num_args() == 1 ) {
+			$data = $obj;
+			$obj = null;
+		}
+		//Default client object
+		if ( !is_string($obj) || empty($obj) )
+			$obj = null;
+		//Default data
+		if ( is_array($data) )
+			$data = (object)$data;
+		//Build expression
+		$ret = ( !empty($data) ) ? '$.extend(' . $this->get_client_object($obj) . ', ' . json_encode($data) . ');' : '';
+		return $ret;
+	}
+	
 	/*-** WP **-*/
 	
 	/**
@@ -295,6 +392,50 @@ class SLB_Utilities {
 				 );
 	}
 	
+	/* Context */
+	
+	/**
+	 * Retrieve context for current request
+	 * @return array Context
+	 */
+	function get_context() {
+		//Context
+		static $ctx = null;
+		if ( !is_array($ctx) ) {
+			$ctx_base = ( is_admin() ) ? 'admin' : 'public';
+			$ctx = array($ctx_base);
+			
+			//Action
+			$action = $this->get_action();
+			//Build full context
+			if ( !empty($action) )
+				$ctx[] = $ctx_base . '_action_' . $action;
+			if ( is_admin() ) {
+				global $pagenow;
+				$ctx[] = $ctx_base . '_page_' . $this->strip_file_extension($pagenow);
+			}
+		}
+		
+		return $ctx;
+	}
+	
+	/**
+	 * Check if context exists in current request
+	 * @param string $context Context to check for
+	 * @return bool TRUE if context exists FALSE otherwise
+	 */
+	function is_context($context) {
+		$ret = false;
+		if ( is_scalar($context) )
+			$context = array($context);
+		if ( is_array($context) && !empty($context) ) {
+			$ictx = array_intersect($this->get_context(), $context);
+			if ( !empty($ictx) )
+				$ret = true;
+		}
+		return $ret;
+	}
+	
 	/**
 	 * Joins and normalizes the slashes in the paths passed to method
 	 * All forward/back slashes are converted to forward slashes
@@ -418,6 +559,21 @@ class SLB_Utilities {
 			$extension = array_map('strtolower', $extension);
 		} 
 		return ( in_array($this->get_file_extension($file, !$case_sensitive), $extension) ) ? true : false;
+	}
+	
+	/**
+	 * Removes file extension from file name
+	 * The extension is the text following the last period ('.') in the file name
+	 * @uses get_file_extension()
+	 * @param string $file File name
+	 * @return string File name without extension
+	 */
+	function strip_file_extension($file) {
+		$ext = $this->get_file_extension($file);
+		if ( !empty($ext) ) {
+			$file = substr($file, 0, (strlen($ext) + 1) * -1);
+		}
+		return $file;
 	}
 	
 	/**
@@ -934,13 +1090,22 @@ class SLB_Utilities {
 		return $this->build_html_element(array('tag' => 'link', 'wrap' => false, 'attributes' => $attributes));
 	}
 	
-	function build_script_element($content = '', $id = '') {
+	function build_script_element($content = '', $id = '', $wrap_jquery = true) {
+		//Stop processing invalid content
+		if ( empty($content) || !is_string($content) )
+			return ''; 
 		$attributes = array('type' => 'text/javascript');
-		$content = '/* <![CDATA[ */' . $content . '/* ]]> */';
-		if ( is_string($id) && !empty($id) ) {
-			$attributes['id'] = $id;
+		$start = '/* <![CDATA[ */';
+		$end = '/* ]]> */';
+		if ( $wrap_jquery ) {
+			$start .= '(function($){';
+			$end .= '})(jQuery);';
 		}
-		return $this->build_html_element(array('tag' => 'script', 'content' => $content, 'attributes' => $attributes));
+		$content = $start . $content . $end;
+		if ( is_string($id) && !empty($id) ) {
+			$attributes['id'] = $this->add_prefix($id);
+		}
+		return $this->build_html_element(array('tag' => 'script', 'content' => $content, 'attributes' => $attributes)) . PHP_EOL;
 	}
 	
 	/**

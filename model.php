@@ -71,6 +71,20 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	var $media_types = array('img' => 'image', 'att' => 'attachment');
 	
+	/* Widget properties */
+	
+	/**
+	 * Widget callback key
+	 * @var string
+	 */
+	var $widget_callback = 'callback';
+	
+	/**
+	 * Key to use to store original callback
+	 * @var string
+	 */
+	var $widget_callback_orig = 'callback_orig';
+	
 	/* Instance members */
 	
 	/**
@@ -88,7 +102,7 @@ class SLB_Lightbox extends SLB_Base {
 	
 	var $h_temp = array();
 	
-	/*-** Init **-*/
+	/* Constructor */
 	
 	function SLB_Lightbox() {
 		$this->__construct();
@@ -103,18 +117,26 @@ class SLB_Lightbox extends SLB_Base {
 		$this->fields =& new SLB_Fields();
 	}
 	
+	/* Init */
+	
 	function init_env() {
 		//Localization
 		$ldir = 'l10n';
+		$lpath = $this->util->get_plugin_file_path($ldir, array(false, false));
 		$lpath_abs = $this->util->get_file_path($ldir);
 		if ( is_dir($lpath_abs) ) {
-			load_plugin_textdomain($this->util->get_plugin_base(true), false, $this->util->get_plugin_file_path($ldir, array(false, false)));
+			load_plugin_textdomain($this->get_prefix(), false,	$lpath);
 		}
 		//Options
 		$func_opts = 'init_options';
 		if ( isset($this) && method_exists($this, $func_opts) ) {
 			call_user_func($this->m($func_opts));
 		}
+		
+		//Context
+		$func_context = $this->m('set_client_context');
+		$hook_context = ( is_admin() ) ? 'admin_head' : 'wp_head';
+		add_action($hook_context, $func_context);
 	}
 	
 	function init_options() {
@@ -133,12 +155,14 @@ class SLB_Lightbox extends SLB_Base {
 				'enabled_post'				=> array('title' => __('Enable on Posts', $p), 'default' => true, 'group' => 'activation'),
 				'enabled_page'				=> array('title' => __('Enable on Pages', $p), 'default' => true, 'group' => 'activation'),
 				'enabled_archive'			=> array('title' => __('Enable on Archive Pages (tags, categories, etc.)', $p), 'default' => true, 'group' => 'activation'),
+				'enabled_widget'			=> array('title' => __('Enable for Widgets', $p), 'default' => false, 'group' => 'activation'),
 				'enabled_compat'			=> array('title' => __('Enable backwards-compatibility with legacy lightbox links', $p), 'default' => false, 'group' => 'activation'),
 				'activate_attachments'		=> array('title' => __('Activate image attachment links', $p), 'default' => true, 'group' => 'activation'),
 				'validate_links'			=> array('title' => __('Validate links', $p), 'default' => false, 'group' => 'activation'),
 				'group_links'				=> array('title' => __('Group image links (for displaying as a slideshow)', $p), 'default' => true, 'group' => 'grouping'),
 				'group_post'				=> array('title' => __('Group image links by Post (e.g. on pages with multiple posts)', $p), 'default' => true, 'group' => 'grouping'),
 				'group_gallery'				=> array('title' => __('Group gallery links separately', $p), 'default' => false, 'group' => 'grouping'),
+				'group_widget'				=> array('title' => __('Group widget links separately', $p), 'default' => false, 'group' => 'grouping'),
 				'theme'						=> array('title' => __('Theme', $p), 'default' => 'default', 'group' => 'ui', 'parent' => 'option_theme'),
 				'animate'					=> array('title' => __('Animate lightbox resizing', $p), 'default' => true, 'group' => 'ui'),
 				'autostart'					=> array('title' => __('Automatically Start Slideshow', $p), 'default' => true, 'group' => 'ui'),
@@ -203,6 +227,23 @@ class SLB_Lightbox extends SLB_Base {
 		
 		/* Themes */
 		$this->util->add_action('init_themes', $this->m('init_default_themes'));
+		
+		/* Widgets */
+		add_filter('sidebars_widgets', $this->m('sidebars_widgets'));
+	}
+
+	/* Methods */
+	
+	/*-** Request **-*/
+
+	/**
+	 * Output current context to client-side
+	 * @return void
+	 */
+	function set_client_context() {
+		$ctx = new stdClass();
+		$ctx->context = $this->util->get_context();
+		echo $this->util->build_script_element($this->util->extend_client_object($ctx), 'context');
 	}
 
 	/*-** Helpers **-*/
@@ -229,6 +270,78 @@ class SLB_Lightbox extends SLB_Base {
 			}
 		}
 		return $ret;
+	}
+	
+	/*-** Widgets **-*/
+	
+	/**
+	 * Reroute widget display handlers to internal method
+	 * @param array $sidebar_widgets List of sidebars & their widgets
+	 * @uses WP Hook `sidebars_widgets` to intercept widget list
+	 * @global $wp_registered_widgets to reroute display callback
+	 * @return array Sidebars and widgets (unmodified)
+	 */
+	function sidebars_widgets($sidebars_widgets) {
+		global $wp_registered_widgets;
+		static $widgets_processed = false;
+		if ( is_admin() || empty($wp_registered_widgets) || $widgets_processed || !$this->options->get_bool('enabled_widget') )
+			return $sidebars_widgets; 
+		$widgets_processed = true;
+		//Fetch active widgets from all sidebars
+		foreach ( $sidebars_widgets as $sb => $ws ) {
+			//Skip inactive widgets and empty sidebars
+			if ( 'wp_inactive_widgets' == $sb || empty($ws) || !is_array($ws) )
+				continue;
+			foreach ( $ws as $w ) {
+				if ( isset($wp_registered_widgets[$w]) && isset($wp_registered_widgets[$w][$this->widget_callback]) ) {
+					$wref =& $wp_registered_widgets[$w];
+					//Backup original callback
+					$wref[$this->widget_callback_orig] = $wref[$this->widget_callback];
+					//Reroute callback
+					$wref[$this->widget_callback] = $this->m('widget_callback');
+					unset($wref);
+				}
+			}
+		}
+
+		return $sidebars_widgets;
+	}
+	
+	/**
+	 * Widget display handler
+	 * Widget output is rerouted to this method by sidebar_widgets()
+	 * @param array $args Widget instance properties
+	 * @param int (optional) $widget_args Additional widget args (usually the widget's instance number)
+	 * @see WP_Widget::display_callback() for more information
+	 * @global $wp_registered_widgets
+	 * @return void
+	 */
+	function widget_callback($args, $widget_args = 1) {
+		global $wp_registered_widgets;
+		$wid = ( isset($args['widget_id']) ) ? $args['widget_id'] : false;
+		//Stop processing if widget data invalid
+		if ( !$wid || !isset($wp_registered_widgets[$wid]) || !($w =& $wp_registered_widgets[$wid]) || !isset($w['id']) || $wid != $w['id'] )
+			return false;
+		//Get original callback
+		if ( !isset($w[$this->widget_callback_orig]) || !($cb = $w[$this->widget_callback_orig]) || !is_callable($cb) )
+			return false;
+		$params = func_get_args();
+		//Start output buffer
+		ob_start($this->m('widget_process_links'));
+		//Call original callback
+		call_user_func_array($cb, $params);
+		//Flush output buffer
+		ob_end_flush();
+	}
+	
+	/**
+	 * Process links in widget content
+	 * @param string $content Widget content
+	 * @return string Processed widget content
+	 * @uses process_links() to process links
+	 */
+	function widget_process_links($content) {
+		return $this->process_links($content);
 	}
 	
 	/*-** Theme **-*/
@@ -579,6 +692,9 @@ class SLB_Lightbox extends SLB_Base {
 	 * @return string Content with processed links 
 	 */
 	function process_links($content, $group = null) {
+		//Validate content before processing
+		if ( !is_string($content) || empty($content) )
+			return $content;
 		$links = $this->get_links($content, true);
 		//Process links
 		if ( count($links) > 0 ) {
@@ -988,11 +1104,12 @@ class SLB_Lightbox extends SLB_Base {
 	 * > Media attachment URLs
 	 */
 	function client_footer() {
+		echo '<!-- X -->';
 		//Stop if not enabled or if there are no media items to process
 		if ( !$this->is_enabled() || !$this->has_cached_media_items() )
 			return;
-		
 		echo '<!-- SLB -->' . PHP_EOL;
+		
 		
 		global $wpdb;
 
@@ -1032,10 +1149,12 @@ class SLB_Lightbox extends SLB_Base {
 			$pids_temp = $wpdb->get_results($q);
 			
 			//Match IDs with URIs
-			foreach ( $pids_temp as $pd ) {
-				$f = strtolower($pd->meta_value);
-				if ( is_numeric($pd->post_id) && isset($uris_base[$f]) ) {
-					$b[$uris_base[$f]][$props->id] = absint($pd->post_id);
+			if ( $pids_temp ) {
+				foreach ( $pids_temp as $pd ) {
+					$f = strtolower($pd->meta_value);
+					if ( is_numeric($pd->post_id) && isset($uris_base[$f]) ) {
+						$b[$uris_base[$f]][$props->id] = absint($pd->post_id);
+					}
 				}
 			}
 			//Destroy worker vars

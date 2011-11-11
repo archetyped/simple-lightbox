@@ -18,11 +18,10 @@
 /**
  * Lightbox object
  */
-var SLB = null;
 (function($) {
 SLB = {
 	activeImage : null,
-	badObjects : ['select','object','embed'],
+	badObjects : ['select','object','embed','iframe'],
 	container : null,
 	enableSlideshow : null,
 	groupName : null,
