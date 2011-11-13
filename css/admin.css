@@ -26,3 +26,8 @@
 .slb_option_item .input select {
 	min-width: 12em;
 }
+
+.slb_notice {
+	color: #f00;
+	font-weight: bold;
+}

@@ -210,6 +210,8 @@ class SLB_Lightbox extends SLB_Base {
 		add_action('admin_notices', $this->m('admin_notices'));
 		//Plugin listing
 		add_filter('plugin_action_links_' . $this->util->get_plugin_base_name(), $this->m('admin_plugin_action_links'), 10, 4);
+		add_action('in_plugin_update_message-' . $this->util->get_plugin_base_name(), $this->m('admin_plugin_update_message'), 10, 2);
+		add_filter('site_transient_update_plugins', $this->m('admin_plugin_update_transient'));
 		
 		/* Client-side */
 		
@@ -970,8 +972,6 @@ class SLB_Lightbox extends SLB_Base {
 	 * @param int (optional) $id ID of media item (if available) (Default: NULL)
 	 */
 	function cache_media_item($uri, $type, $id = null) {
-		//Normalize URI
-		$uri = strtolower($uri);
 		//Cache media item
 		if ( $this->is_media_type_supported($type) && !$this->media_item_cached($uri) ) {
 			//Set properties
@@ -999,7 +999,6 @@ class SLB_Lightbox extends SLB_Base {
 		$ret = false;
 		if ( !$uri || !is_string($uri) )
 			return $ret;
-		$uri = strtolower($uri);
 		return ( isset($this->media_items_raw[$uri]) ) ? true : false;
 	}
 	
@@ -1010,7 +1009,6 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	function get_cached_media_item($uri) {
 		$ret = null;
-		$uri = strtolower($uri);
 		if ( $this->media_item_cached($uri) ) {
 			$ret = $this->media_items_raw[$uri];
 		}
@@ -1030,7 +1028,7 @@ class SLB_Lightbox extends SLB_Base {
 	 * @return boolean
 	 */
 	function has_cached_media_items() {
-		return ( count($this->media_items_raw) > 0 ) ? true : false; 
+		return ( !empty($this->media_items_raw) ) ? true : false; 
 	}
 	
 	/**
@@ -1139,7 +1137,7 @@ class SLB_Lightbox extends SLB_Base {
 			//Match IDs with URIs
 			if ( $pids_temp ) {
 				foreach ( $pids_temp as $pd ) {
-					$f = strtolower($pd->meta_value);
+					$f = $pd->meta_value;
 					if ( is_numeric($pd->post_id) && isset($uris_base[$f]) ) {
 						$b[$uris_base[$f]][$props->id] = absint($pd->post_id);
 					}
@@ -1290,6 +1288,50 @@ class SLB_Lightbox extends SLB_Base {
 	}
 	
 	/**
+	 * Adds additional message for plugin updates
+	 * @var array $plugin_data Current plugin data
+	 * @var object $r Update response data
+	 */
+	function admin_plugin_update_message($plugin_data, $r) {
+		if ( !isset($r->new_version) )
+			return false;
+		if ( stripos($r->new_version, 'beta') !== false ) {
+			$cls_notice = $this->add_prefix('notice');
+			echo '<br />' . $this->admin_plugin_update_get_message($r);
+		}
+	}
+	
+	/**
+	 * Modify update plugins response data if necessary
+	 * @param obj $transient Transient data
+	 * @return obj Modified transient data
+	 */
+	function admin_plugin_update_transient($transient) {
+		$n = $this->util->get_plugin_base_name();
+		if ( isset($transient->response) && isset($transient->response[$n]) && is_object($transient->response[$n]) && !isset($transient->response[$n]->upgrade_notice) ) {
+			$r =& $transient->response[$n];
+			$r->upgrade_notice = $this->admin_plugin_update_get_message($r);
+		}
+		return $transient;
+	}
+	
+	/**
+	 * Retrieve custom update message
+	 * @param obj $r Response data from plugin update API
+	 * @return string Message (Default: empty string)
+	 */
+	function admin_plugin_update_get_message($r) {
+		$msg = '';
+		$cls_notice = $this->add_prefix('notice');
+		if ( !is_object($r) || !isset($r->new_version) )
+			return $msg;
+		if ( stripos($r->new_version, 'beta') !== false ) {
+			$msg = "<strong class=\"$cls_notice\">Notice:</strong> This update is a <strong class=\"$cls_notice\">Beta version</strong>. It is highly recommended that you test the update on a test server before updating the plugin on a production server.";
+		}
+		return $msg;
+	}
+	
+	/**
 	 * Reset plugin settings
 	 * Redirects to referring page upon completion
 	 */
@@ -1357,7 +1399,7 @@ class SLB_Lightbox extends SLB_Base {
  	 */
 	function admin_enqueue_files() {
 		//Enqueue custom CSS for options page
-		if ( is_admin() && basename($_SERVER['SCRIPT_NAME']) == $this->options_admin_page ) {
+		if ( is_admin() && ( basename($_SERVER['SCRIPT_NAME']) == $this->options_admin_page || $this->util->is_context('admin_page_plugins'))  ) {
 			wp_enqueue_style($this->add_prefix('admin'), $this->util->get_file_url('css/admin.css'), array(), $this->util->get_plugin_version());
 		}
 	}

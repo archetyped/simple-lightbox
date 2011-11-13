@@ -306,7 +306,6 @@ SLB = {
 				proceed();
 			} else {
 				// Image is part of a group
-				// var els = $(t.container).find($(imageLink).get(0).tagName.toLowerCase());
 				var els = $(t.container).find(t.refTags.join(',').toLowerCase());
 				// Loop through links on page & find other images in group
 				var grpLinks = [];
@@ -348,11 +347,12 @@ SLB = {
 	/**
 	 * Retrieve ID of media item
 	 * @param {Object} el Link element
-	 * @return string Media ID (Default: 0 - No ID)
+	 * @return string|bool Media ID (Default: FALSE - No ID)
 	 */
 	getMediaId: function(el) {
 		var h = $(el).attr('href');
-		h = ($.type(h) === 'string') ? h.toLowerCase() : ''; 
+		if ($.type(h) !== 'string') 
+			h = FALSE; 
 		return h;
 	},
 	
@@ -364,7 +364,7 @@ SLB = {
 	getMediaProperties: function(el) {
 		var props = {},
 			mId = this.getMediaId(el);
-		if (mId.length && mId in this.media) {
+		if (mId && mId in this.media) {
 			props = this.media[mId];
 		}
 		return props;
@@ -374,7 +374,7 @@ SLB = {
 	 * Retrieve single property for media item
 	 * @param {Object} el Link element
 	 * @param string prop Property to retrieve
-	 * @return mixed Item property (Default: false)
+	 * @return mixed Item property (Default: FALSE if property does not exist)
 	 */
 	getMediaProperty: function(el, prop) {
 		var props = this.getMediaProperties(el);
@@ -488,7 +488,7 @@ SLB = {
 			//Attachment source
 			relSrc = this.getMediaProperty(el, 'source');
 			//Set source using rel-derived value
-			if ( relSrc.length )
+			if ( $.type(relSrc) === 'string' && relSrc.length )
 				src = relSrc;
 		}
 		return src;
