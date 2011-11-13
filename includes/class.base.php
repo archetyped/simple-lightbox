@@ -82,7 +82,7 @@ class SLB_Base {
 		/* Environment */
 		$env = 'init_env';
 		if ( method_exists($this, $env) )
-			add_action('init', $this->m($env));
+			add_action('init', $this->m($env), 1);
 	}
 	
 	function register_hooks() {
