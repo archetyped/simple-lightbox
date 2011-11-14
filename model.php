@@ -84,7 +84,13 @@ class SLB_Lightbox extends SLB_Base {
 	 * @var string
 	 */
 	var $widget_callback_orig = 'callback_orig';
-	
+
+	/**
+	 * Used to track if widget is currently being processed or not
+	 * @var bool
+	 */
+	var $widget_processing = false;
+
 	/* Instance members */
 	
 	/**
@@ -240,9 +246,13 @@ class SLB_Lightbox extends SLB_Base {
 
 	/**
 	 * Output current context to client-side
+	 * @uses `wp_head` action as hook
+	 * @uses `admin_head` action as hook
 	 * @return void
 	 */
 	function set_client_context() {
+		if ( !$this->is_enabled() )
+			return false;
 		$ctx = new stdClass();
 		$ctx->context = $this->util->get_context();
 		echo $this->util->build_script_element($this->util->extend_client_object($ctx), 'context');
@@ -286,7 +296,7 @@ class SLB_Lightbox extends SLB_Base {
 	function sidebars_widgets($sidebars_widgets) {
 		global $wp_registered_widgets;
 		static $widgets_processed = false;
-		if ( is_admin() || empty($wp_registered_widgets) || $widgets_processed || !is_object($this->options) || !$this->options->get_bool('enabled_widget') )
+		if ( is_admin() || empty($wp_registered_widgets) || $widgets_processed || !is_object($this->options) || !$this->is_enabled() || !$this->options->get_bool('enabled_widget') )
 			return $sidebars_widgets; 
 		$widgets_processed = true;
 		//Fetch active widgets from all sidebars
@@ -311,11 +321,13 @@ class SLB_Lightbox extends SLB_Base {
 	
 	/**
 	 * Widget display handler
-	 * Widget output is rerouted to this method by sidebar_widgets()
+	 * Original widget display handler is called inside of an output buffer & links in output are processed before sending to browser 
 	 * @param array $args Widget instance properties
 	 * @param int (optional) $widget_args Additional widget args (usually the widget's instance number)
 	 * @see WP_Widget::display_callback() for more information
+	 * @see sidebars_widgets() for callback modification
 	 * @global $wp_registered_widgets
+	 * @uses widget_process_links() to Process links in widget content
 	 * @return void
 	 */
 	function widget_callback($args, $widget_args = 1) {
@@ -328,12 +340,14 @@ class SLB_Lightbox extends SLB_Base {
 		if ( !isset($w[$this->widget_callback_orig]) || !($cb = $w[$this->widget_callback_orig]) || !is_callable($cb) )
 			return false;
 		$params = func_get_args();
+		$this->widget_processing = true;
 		//Start output buffer
 		ob_start();
 		//Call original callback
 		call_user_func_array($cb, $params);
 		//Flush output buffer
 		echo $this->widget_process_links(ob_get_clean(), $wid);
+		$this->widget_processing = false;
 	}
 	
 	/**
@@ -529,10 +543,14 @@ class SLB_Lightbox extends SLB_Base {
 	
 	/**
 	 * Wraps galleries for grouping
+	 * @uses `the_content` Filter hook
+	 * @uses gallery_wrap_callback to Wrap shortcodes for grouping
 	 * @param string $content Post content
 	 * @return string Modified post content
 	 */
 	function gallery_wrap($content) {
+		if ( !$this->is_enabled() )
+			return $content;
 		//Stop processing if option not enabled
 		if ( !$this->options->get_bool('group_gallery') )
 			return $content;
@@ -574,10 +592,13 @@ class SLB_Lightbox extends SLB_Base {
 	
 	/**
 	 * Removes wrapping from galleries
+	 * @uses `the_content` filter hook
 	 * @param $content Post content
 	 * @return string Modified post content
 	 */
 	function gallery_unwrap($content) {
+		if ( !$this->is_enabled() )
+			return $content;
 		//Stop processing if option not enabled
 		if ( !$this->options->get_bool('group_gallery') )
 			return $content;
@@ -637,7 +658,7 @@ class SLB_Lightbox extends SLB_Base {
 		//Strip groups
 		if ( $this->options->get_bool('group_gallery') ) {
 			$groups = array();
-			$g_idx = 0;
+			static $g_idx = 1;
 			$g_end_idx = 0;
 			//Iterate through galleries
 			while ( ($g_start_idx = strpos($content, $w->open, $g_end_idx)) && $g_start_idx !== false 
@@ -667,7 +688,7 @@ class SLB_Lightbox extends SLB_Base {
 				continue;
 			}
 			//Replace placeholder with processed content
-			$content = str_replace($g_ph, $w->open . $this->process_links($g_content, $group) . $w->close, $content);
+			$content = str_replace($g_ph, $w->open . $this->process_links($g_content, 'gallery_' . $group) . $w->close, $content);
 		}
 		return $content;
 	}
@@ -690,6 +711,8 @@ class SLB_Lightbox extends SLB_Base {
 	
 	/**
 	 * Process links in content
+	 * @global obj $wpdb DB instance
+	 * @global obj $post Current post
 	 * @param string $content Text containing links
 	 * @param string (optional) $group Group to add links to (Default: none)
 	 * @return string Content with processed links 
@@ -703,13 +726,17 @@ class SLB_Lightbox extends SLB_Base {
 		if ( count($links) > 0 ) {
 			global $wpdb;
 			global $post;
+			/**
+			 * @var AR_DBG
+			 */
+			global $dbg;
 			$types = $this->get_media_types();
 			$img_types = array('jpg', 'jpeg', 'gif', 'png');
 			$protocol = array('http://', 'https://');
 			$domain = str_replace($protocol, '', strtolower(get_bloginfo('url')));
 			
 			//Format Group
-			$group_base = ( !is_scalar($group) ) ? '' : trim(strval($group));
+			$group_base = ( is_scalar($group) ) ? trim(strval($group)) : '';
 			if ( !$this->options->get_bool('group_links') ) {
 				$group_base = null;
 			}
@@ -769,23 +796,27 @@ class SLB_Lightbox extends SLB_Base {
 				
 				//Set group (if necessary)
 				if ( $this->options->get_bool('group_links') ) {
+					//Normalize group
+					if ( !is_string($group) )
+						$group = '';
 					//Get preset group attribute
 					$g_name = $this->make_attribute_name('group');
 					$g = ( $this->has_attribute($attrs, $g_name) ) ? $this->get_attribute($attrs, $g_name) : $this->get_attribute($attrs, $this->attr); 
 					
 					if ( is_string($g) && ($g = trim($g)) && strlen($g) )
 						$group = $g;
-					
 					//Group links by post?
-					if ( $this->options->get_bool('group_post') ) {
-						if ( strlen($group) )
-							$group = '_' . $group; 
-						$group = $this->add_prefix($post->ID . $group);
+					if ( !$this->widget_processing && $this->options->get_bool('group_post') ) {
+						$group = ( strlen($group) ) ? '_' . $group : '';
+						$group = $post->ID . $group;
 					}
+					
+					if ( empty($group) ) {
+						$group = $this->get_prefix();
+					}
+					
 					//Set group attribute
-					if ( is_string($group) && !empty($group) ) {
-						$attrs = $this->set_attribute($attrs, $g_name, $group);
-					}
+					$attrs = $this->set_attribute($attrs, $g_name, $group);
 				}
 				
 				//Activate link

@@ -346,7 +346,7 @@ SLB = {
 	
 	/**
 	 * Retrieve ID of media item
-	 * @param {Object} el Link element
+	 * @param obj el Link element
 	 * @return string|bool Media ID (Default: FALSE - No ID)
 	 */
 	getMediaId: function(el) {
@@ -358,8 +358,8 @@ SLB = {
 	
 	/**
 	 * Retrieve Media properties
-	 * @param {Object} el Link element
-	 * @return Object (Default: Empty)
+	 * @param obj el Link element
+	 * @return obj Properties for Media item (Default: Empty)
 	 */
 	getMediaProperties: function(el) {
 		var props = {},
@@ -372,18 +372,19 @@ SLB = {
 	
 	/**
 	 * Retrieve single property for media item
-	 * @param {Object} el Link element
+	 * @param obj el Image link DOM element
 	 * @param string prop Property to retrieve
-	 * @return mixed Item property (Default: FALSE if property does not exist)
+	 * @return mixed|null Item property (Default: NULL if property does not exist)
 	 */
 	getMediaProperty: function(el, prop) {
 		var props = this.getMediaProperties(el);
-		return (prop in props) ? props[prop] : false;
+		return (prop in props) ? props[prop] : null;
 	},
 	
 	/**
-	 * Build caption for displayed caption
-	 * @param {Object} imageLink
+	 * Build caption for displayed item
+	 * @param obj imageLink Image link DOM element
+	 * @return string Image caption
 	 */
 	getCaption: function(imageLink) {
 		imageLink = $(imageLink);
@@ -404,40 +405,59 @@ SLB = {
 				els.origin = $(els.link).parent();
 			}
 			if ( (els.sibs = $(els.origin).siblings(sels.capt)) && $(els.sibs).length > 0 ) {
-				caption = $(els.sibs).first().text();
+				caption = $.trim($(els.sibs).first().text());
 			}
-			caption = $.trim(caption);
+			
 			//Fall back to image properties
-			if ( '' == caption ) {
+			if ( !caption ) {
 				els.img = $(els.link).find('img').first();
 				if ( $(els.img).length ) {
 					//Image title / alt
 					caption = $(els.img).attr('title') || $(els.img).attr('alt');
+					caption = $.trim(caption);
 				}
 			}
-			caption = $.trim(caption);
+			
 			//Media properties
-			if ( '' == caption ) {
-				caption = this.getMediaProperty(els.link, 'title');
+			if ( !caption ) {
+				caption = this.getMediaProperty(els.link, 'title') || '';
+				caption = $.trim(caption);
 			}
-			caption = $.trim(caption);
+			
 			//Fall back Link Text
-			if ('' == caption) {
-				if ($.trim($(sels.link).text()).length) {
-					caption = $.trim($(sels.link).text());
+			if ( !caption ) {
+				var c = '';
+				if ( ( c = $.trim($(els.link).text()) ) && c.length) {
+					caption = c;
 				} else if (this.options.captionSrc) {
 					//Fall back to Link href
-					caption = $(sels.link).attr('href');
+					caption = $(els.link).attr('href');
+					var trimChars = ['/', '#', '.'];
+					//Trim invalid characters
+					while ( caption.length && $.inArray(caption.charAt(0), trimChars) != -1 )
+						caption = caption.substr(1);
+					while ( caption.length && $.inArray(caption.charAt(caption.length - 1), trimChars) != -1 )
+						caption = caption.substr(0, caption.length - 1);
+				
+					//Strip to base file name
+					var idx = caption.lastIndexOf('/');
+					if ( -1 != idx )
+						caption = caption.substr(idx + 1);
+					//Strip extension
+					idx = caption.lastIndexOf('.');
+					if ( -1 != idx ) {
+						caption = caption.slice(0, idx);
+					}
 				}
+				caption = $.trim(caption);
 			}
-			caption = $.trim(caption);
 		}
 		return caption;
 	},
 	
 	/**
 	 * Retrieve item description
-	 * @param {Object} imageLink
+	 * @param obj imageLink
 	 * @return string Item description (Default: empty string)
 	 */
 	getDescription: function(imageLink) {
@@ -458,7 +478,7 @@ SLB = {
 	
 	/**
 	 * Check if current link is part of a gallery
-	 * @param {Object} imageLink
+	 * @param obj imageLink
 	 * @param string gType Gallery type to check for
 	 * @return bool Whether link is part of a gallery
 	 */
@@ -478,7 +498,7 @@ SLB = {
 	
 	/**
 	 * Retrieve source URI in link
-	 * @param {Object} el
+	 * @param obj el
 	 * @return string Source file URI
 	 */
 	getSourceFile: function(el) {

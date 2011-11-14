@@ -18,8 +18,10 @@ Main changes
 As always, since there are so many different possible WordPress configurations (themes, plugins, etc.), it is recommended that you test any beta version on a test site before updating a production site.
 
 #### Beta 7
-* Optimize: Improved compatibility with URI case-sensitivity
 * Add: Upgrade notice functionality
+* Optimize: Improved compatibility with URI case-sensitivity
+* Optimize: Activation processing
+* Optimize: Image grouping
 
 #### Beta 6
 * Fix: Options availability for some users
