@@ -726,10 +726,6 @@ class SLB_Lightbox extends SLB_Base {
 		if ( count($links) > 0 ) {
 			global $wpdb;
 			global $post;
-			/**
-			 * @var AR_DBG
-			 */
-			global $dbg;
 			$types = $this->get_media_types();
 			$img_types = array('jpg', 'jpeg', 'gif', 'png');
 			$protocol = array('http://', 'https://');
@@ -1419,7 +1415,7 @@ class SLB_Lightbox extends SLB_Base {
 		$page = 'media';
 		$section = $this->get_prefix();
 		//Section
-		add_settings_section($section, '<span id="' . $this->admin_get_settings_section() . '">' . __('Lightbox Settings', $this->get_prefix()) . '</span>', $this->m('admin_section'), $page);
+		add_settings_section($section, '<div id="' . $this->admin_get_settings_section() . '">' . __('Lightbox Settings', $this->get_prefix()) . '</div>', $this->m('admin_section'), $page);
 		//Register settings container
 		register_setting($page, $this->add_prefix('options'), $this->options->m('validate'));
  	}
