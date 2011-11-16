@@ -1295,6 +1295,7 @@ class SLB_Lightbox extends SLB_Base {
 	
 	/**
 	 * Adds custom links below plugin on plugin listing page
+	 * @uses `plugin_action_links_$plugin-name` Filter hook
 	 * @param $actions
 	 * @param $plugin_file
 	 * @param $plugin_data
@@ -1316,6 +1317,7 @@ class SLB_Lightbox extends SLB_Base {
 	
 	/**
 	 * Adds additional message for plugin updates
+	 * @uses `in_plugin_update_message-$plugin-name` Action hook 
 	 * @var array $plugin_data Current plugin data
 	 * @var object $r Update response data
 	 */
@@ -1330,6 +1332,7 @@ class SLB_Lightbox extends SLB_Base {
 	
 	/**
 	 * Modify update plugins response data if necessary
+	 * @uses `site_transient_update_plugins` Filter hook
 	 * @param obj $transient Transient data
 	 * @return obj Modified transient data
 	 */

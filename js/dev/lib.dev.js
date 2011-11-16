@@ -224,6 +224,7 @@ SLB = {
 	
 	/**
 	 * Finds all compatible image links on page
+	 * @return void
 	 */
 	updateImageList: function() {
 		var el, els, rel, ph = '{relattr}', t = this;
@@ -347,12 +348,12 @@ SLB = {
 	/**
 	 * Retrieve ID of media item
 	 * @param obj el Link element
-	 * @return string|bool Media ID (Default: FALSE - No ID)
+	 * @return string|bool Media ID (Default: false - No ID)
 	 */
 	getMediaId: function(el) {
 		var h = $(el).attr('href');
 		if ($.type(h) !== 'string') 
-			h = FALSE; 
+			h = false; 
 		return h;
 	},
 	
@@ -683,7 +684,7 @@ SLB = {
 	
 	/**
 	 * Checks if slideshow is currently activated
-	 * @return bool TRUE if slideshow is active, FALSE otherwise
+	 * @return bool TRUE if slideshow is active, false otherwise
 	 * @uses playSlides to check slideshow activation status
 	 */
 	isSlideShowActive: function() {
