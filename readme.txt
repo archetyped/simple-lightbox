@@ -11,54 +11,10 @@ A simple, themeable, and customizable Lightbox for Wordpress
 == Description ==
 Simple Lightbox is a very simple and customizable lightbox that is easy to add to your Wordpress website.  It also [supports skins](http://archetyped.com/lab/slb-registering-themes/), so it can be fully integrated with your site's theme.
 
-### BETA NOTES
-The current release is a beta version.  Please test and [provide feedback on the beta release page](http://archetyped.com/lab/slb-1-6-beta/).
-Main changes
-
-As always, since there are so many different possible WordPress configurations (themes, plugins, etc.), it is recommended that you test any beta version on a test site before updating a production site.
-
-#### Beta 7
-* Fix: Boolean case-sensitivity (78 Truths)
-* Add: Upgrade notice functionality
-* Optimize: WP 3.3 compatibility
-* Optimize: Improved compatibility with URI case-sensitivity
-* Optimize: Activation processing
-* Optimize: Image grouping
-
-#### Beta 6
-* Fix: Options availability for some users
-
-#### Beta 5
-* Add: Option to process links in Widgets
-* Add: WordPress 3.3 support
-* Optimize: Image metadata loading performance
-* Fix: YouTube embed using iFrame overlaps lightbox (Elena in Hiding)
-* Fix: Inconsistent loading of image metadata
-
-#### Beta 4
-* Optimize: File loading
-
-#### Beta 3
-* Fix: Issue when scanning links without valid URLs (McCloskey Iteration)
-* Optimize: Improved safeguards against interference by bugs in other plugins
-* Optimize: Link processing performance
-* Optimize: Lightbox styling isolated from site styles
-
-#### Beta 2
-* Add: Localization support
-* Optimize: Improved link processing performance
-* Optimize: Improved image metadata support
-* Optimize: Improved support for HTTP/HTTPS requests
-* Fix: Links not fully processed when group is set manually
-
-#### Beta 1
-* Add: Option to group gallery links separately (supports WordPress & NextGen galleries)
-* Fix: Image activation is case-sensitive (Sensitive Tanya)
-* Fix: Visible lightbox overlay edges when image larger than browser window (Chibi Overlay) 
-
 #### Features
 Options for customizing the lightbox behavior are located in the **Settings > Media** admin menu in the **Lightbox Settings** section (or just click the **Settings** link below the plugin's name when viewing the list of installed plugins)
 
+* **Supports links in Widgets (New!)**
 * **Supports Image Attachment links**
 * **Display image metadata (caption, description, etc.) in lightbox**
 * Automatically activate links (no manual coding required)
@@ -81,7 +37,7 @@ Options for customizing the lightbox behavior are located in the **Settings > Me
 
 == Installation ==
 
-1. Install and activate via admin dashboard
+1. Install and activate SLB
 1. Verify that your site's theme uses the `wp_head()`, `wp_footer()`, & `the_content()` template tags (standard in any professional theme)
 
 == Upgrade Notice ==
@@ -98,6 +54,34 @@ Post your questions and comments on [Simple Lightbox's official page](http://arc
 2. Customized UI Text
 
 == Changelog ==
+
+= 1.6 =
+* Add: Widget support
+* Add: WordPress 3.3 support
+* Add: Localization support
+* Add: Option to group gallery links separately (supports WordPress & NextGen galleries)
+* Add: Upgrade notice
+* Optimize: WP 3.3 compatibility
+* Optimize: Improved compatibility with URI case-sensitivity
+* Optimize: Activation processing
+* Optimize: Image grouping
+* Optimize: Image metadata loading performance
+* Optimize: File loading
+* Optimize: Improved safeguards against interference by bugs in other plugins
+* Optimize: Link processing performance
+* Optimize: Lightbox styling isolated from site styles
+* Optimize: Improved link processing performance
+* Optimize: Improved image metadata support
+* Optimize: Improved support for HTTP/HTTPS requests
+* Fix: SLB is not defined in JS (Jezz Hands)
+* Fix: Boolean case-sensitivity (78 Truths)
+* Fix: YouTube embed using iFrame overlaps lightbox (Elena in Hiding)
+* Fix: Issue when scanning links without valid URLs (McCloskey Iteration)
+* Fix: Image activation is case-sensitive (Sensitive Tanya)
+* Fix: Visible lightbox overlay edges when image larger than browser window (Chibi Overlay) 
+* Fix: Options availability for some users
+* Fix: Inconsistent loading of image metadata
+* Fix: Links not fully processed when group is set manually
 
 = 1.5.6 =
 * Add: Display image description in lightbox (with HTML support)

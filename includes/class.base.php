@@ -80,9 +80,7 @@ class SLB_Base {
 		$this->register_hooks();
 		
 		/* Environment */
-		$env = 'init_env';
-		if ( method_exists($this, $env) )
-			add_action('init', $this->m($env), 1);
+		add_action('init', $this->m('init_env'), 1);
 	}
 	
 	function register_hooks() {
@@ -95,6 +93,13 @@ class SLB_Base {
 		if ( method_exists($this, $func_deactivate) )
 			register_deactivation_hook($this->util->get_plugin_base_file(), $this->m($func_deactivate));
 	}
+	
+	/**
+	 * Initialize environment (Localization, etc.)
+	 * To be overriden by child class
+	 * @uses `init` Action hook as trigger
+	 */
+	function init_env() {}
 	
 	function init_client_files() {
 		foreach ( $this->client_files as $key => $val ) {

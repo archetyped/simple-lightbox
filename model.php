@@ -265,7 +265,7 @@ class SLB_Lightbox extends SLB_Base {
 	 * @return bool TRUE if lightbox is currently enabled, FALSE otherwise
 	 */
 	function is_enabled($check_request = true) {
-		$ret = ( $this->options->get_bool('enabled') && !is_feed() ) ? true : false;
+		$ret = ( $this->options->get_bool('enabled') && !is_feed() && !is_admin() ) ? true : false;
 		if ( $ret && $check_request ) {
 			$opt = '';
 			//Determine option to check
