@@ -582,7 +582,8 @@ class SLB_Field_Base extends SLB_Base {
 	 * @param string $plural Plural form of title
 	 */
 	function set_title($title = '') {
-		$this->title = strip_tags(trim($title));
+		if ( is_scalar($title) )
+			$this->title = strip_tags(trim($title));
 	}
 
 	/**
@@ -618,7 +619,6 @@ class SLB_Field_Base extends SLB_Base {
 	function set_properties($properties) {
 		if ( !is_array($properties) )
 			return false;
-		
 		//Set Member properties
 		foreach ( $properties as $prop => $val ) {
 			if ( ( $m = 'set_' . $prop ) && method_exists($this, $m) ) {
@@ -654,7 +654,7 @@ class SLB_Field_Base extends SLB_Base {
 	 * Accepts a variable number of additional arrays of default properties
 	 * that will be merged in order from last to first
 	 * (e.g. first array overwrites duplicate members in last)
-	 * @uses SLB_Field_Base::remap() to remap properties members if necessary
+	 * @uses SLB_Field_Base::remap_properties() to remap properties members if necessary
 	 * @param array $props Instance properties
 	 * @param array $defaults Default properties
 	 * @return array Normalized properties

@@ -188,11 +188,16 @@ SLB = {
 	 */
 	setEvents: function() {
 		var t = this, delay = 500;
+		//Remove all previous handlers
+		this.get('container,details,navPrev,navNext,navSlideControl,slbClose').unbind('click');
+		
+		//Set event handlers
 		this.get('container,details').click(function(ev) {
 			ev.stopPropagation();
 		});
 		
 		var clickP = function() {
+			//Handle double clicks
 			t.get('navPrev').unbind('click').click(false);
 			setTimeout(function() {t.get('navPrev').click(clickP)}, delay);
 			t.showPrev();
@@ -203,6 +208,7 @@ SLB = {
 		});
 		
 		var clickN = function() {
+			//Handle double clicks
 			t.get('navNext').unbind('click').click(false);
 			setTimeout(function() {t.get('navNext').click(clickN)}, delay);
 			t.showNext();

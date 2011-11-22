@@ -68,15 +68,23 @@ class SLB_Base {
 	/**
 	 * Default initialization method
 	 * To be overridden by child classes
+	 * @uses this::init_options()
+	 * @uses this::init_client_files()
+	 * @uses this::register_hooks()
+	 * @uses this::init_env()
+	 * @uses add_action()
 	 */
 	function init() {
 		if ( !isset($this) )
 			return false;
 		
+		//Options
+		$this->init_options();
+		
 		/* Client files */
 		$this->init_client_files();
 		
-		/* Hook */
+		/* Hooks */
 		$this->register_hooks();
 		
 		/* Environment */
@@ -93,6 +101,12 @@ class SLB_Base {
 		if ( method_exists($this, $func_deactivate) )
 			register_deactivation_hook($this->util->get_plugin_base_file(), $this->m($func_deactivate));
 	}
+	
+	/**
+	 * Initialize options
+	 * To be overriden by child class
+	 */
+	function init_options() {}
 	
 	/**
 	 * Initialize environment (Localization, etc.)
@@ -119,15 +133,21 @@ class SLB_Base {
 		add_action($hook_enqueue, $this->m('enqueue_client_files'));
 	}
 	
+	/**
+	 * Register client files
+	 * @uses `init` Action hook for execution
+	 * @return void
+	 */
 	function register_client_files() {
-		//Scripts
+		$v = $this->util->get_plugin_version();
 		foreach ( $this->client_files as $type => $files ) {
 			if ( !empty($files) ) {
 				$func = $this->get_client_files_handler($type, 'register');
 				if ( !$func )
 					continue;
 				foreach ( $files as $f ) {
-					$params = array($f->id, $this->util->get_file_url($f->file), $f->deps, $this->util->get_plugin_version());
+					$f->file = ( is_array($f->file) && is_callable($f->file) ) ? call_user_func($f->file) : $this->util->get_file_url($f->file);
+					$params = array($f->id, $f->file, $f->deps, $v);
 					switch ( $type ) {
 						case 'scripts':
 							$params[] = $f->in_footer;
@@ -144,7 +164,8 @@ class SLB_Base {
 	
 	/**
 	 * Enqueues files for client output (scripts/styles)
-	 * Called by appropriate `enqueue_scripts` hook depending on context (admin or frontend)
+	 * @uses `admin_enqueue_scripts` Action hook depending on context
+	 * @uses `wp_enqueue_scripts` Action hook depending on context
 	 * @return void
 	 */
 	function enqueue_client_files() {
@@ -155,9 +176,18 @@ class SLB_Base {
 				if ( !$func )
 					continue;
 				foreach ( $files as $f ) {
-					if ( empty($f->context) || $this->util->is_context($f->context) ) {
+					$load = true;
+					//Callback
+					if ( is_callable($f->callback) && !call_user_func($f->callback) )
+						$load = false;
+					
+					//Context
+					if ( $load && !empty($f->context) && !$this->util->is_context($f->context) )
+						$load = false;
+					
+					//Load valid file
+					if ( $load )
 						$func($f->id);
-					}
 				}
 			}
 		}
