@@ -158,9 +158,7 @@ class SLB_Utilities {
 				//Defaults
 				$defaults = array(
 					'id' 		=> $this->add_prefix($h),
-					'file'		=> null,
 					'deps' 		=> array(),
-					'callback'	=> null,
 					'context'	=> array()
 				);
 				switch ( $type ) {
@@ -184,31 +182,6 @@ class SLB_Utilities {
 				}
 				
 				$p = array_merge($defaults, $p);
-				
-				//Validate file
-				$file =& $p['file'];
-					
-				//Callback
-				if ( is_array($file) ) {
-					$file = $this->m($this->parent, array_shift($file));
-					if ( !is_callable($file) )
-						$file = null;
-				}
-				
-				//Remove invalid files
-				if ( empty($file) ) {
-					unset($files[$h]);
-					continue;
-				}
-				
-				//Validate callback
-				$cb =& $p['callback'];
-				if ( !is_null($cb) ) {
-					if ( is_array($cb) )
-						$cb = $this->m($this->parent, array_shift($cb));
-					if ( !is_callable($cb) )
-						$cb = null;
-				}
 	
 				//Format internal dependencies
 				foreach ( $p['deps'] as $idx => $dep ) {
@@ -217,11 +190,9 @@ class SLB_Utilities {
 						$p['deps'][$idx] = $this->add_prefix($dep);
 					}
 				}
-				
+	
 				//Convert properties to object
 				$files[$h] = (object) $p;
-				
-				unset($file, $cb);
 			}
 		}
 		//Cast to object before returning

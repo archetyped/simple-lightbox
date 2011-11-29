@@ -55,6 +55,10 @@ Post your questions and comments on [Simple Lightbox's official page](http://arc
 
 == Changelog ==
 
+= 1.6.1 =
+* Optimize: Handle repeated initializations of lightbox on client-side
+* Fix: Localization not properly loaded (Mustafa Lingo)
+
 = 1.6 =
 * Add: Widget support
 * Add: WordPress 3.3 support
