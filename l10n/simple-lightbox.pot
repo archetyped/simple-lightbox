@@ -1,0 +1,161 @@
+# Copyright (C) 2010 
+# This file is distributed under the same license as the  package.
+msgid ""
+msgstr ""
+"Project-Id-Version:  \n"
+"Report-Msgid-Bugs-To: http://wordpress.org/tag/simple-lightbox\n"
+"POT-Creation-Date: 2011-10-14 03:38:17+00:00\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: 2010-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+
+#: model.php:88
+msgid "Activation"
+msgstr ""
+
+#: model.php:89
+msgid "Grouping"
+msgstr ""
+
+#: model.php:90
+msgid "UI"
+msgstr ""
+
+#: model.php:91
+msgid "Labels"
+msgstr ""
+
+#: model.php:94
+msgid "Enable Lightbox Functionality"
+msgstr ""
+
+#: model.php:95
+msgid "Enable on Home page"
+msgstr ""
+
+#: model.php:96
+msgid "Enable on Posts"
+msgstr ""
+
+#: model.php:97
+msgid "Enable on Pages"
+msgstr ""
+
+#: model.php:98
+msgid "Enable on Archive Pages (tags, categories, etc.)"
+msgstr ""
+
+#: model.php:99
+msgid "Enable backwards-compatibility with legacy lightbox links"
+msgstr ""
+
+#: model.php:100
+msgid "Activate image attachment links"
+msgstr ""
+
+#: model.php:101
+msgid "Validate links"
+msgstr ""
+
+#: model.php:102
+msgid "Group image links (for displaying as a slideshow)"
+msgstr ""
+
+#: model.php:103
+msgid "Group image links by Post (e.g. on pages with multiple posts)"
+msgstr ""
+
+#: model.php:104
+msgid "Group gallery links separately"
+msgstr ""
+
+#: model.php:105
+msgid "Theme"
+msgstr ""
+
+#: model.php:106
+msgid "Animate lightbox resizing"
+msgstr ""
+
+#: model.php:107
+msgid "Automatically Start Slideshow"
+msgstr ""
+
+#: model.php:108
+msgid "Slide Duration (Seconds)"
+msgstr ""
+
+#: model.php:109
+msgid "Loop through images"
+msgstr ""
+
+#: model.php:110
+msgid "Overlay Opacity (0 - 1)"
+msgstr ""
+
+#: model.php:111
+msgid "Enable caption"
+msgstr ""
+
+#: model.php:112
+msgid "Use image URI as caption when link title not set"
+msgstr ""
+
+#: model.php:113
+msgid "Enable description"
+msgstr ""
+
+#: model.php:114
+msgid "Close link (for accessibility only, image used for button)"
+msgstr ""
+
+#: model.php:115
+msgid "Loading indicator"
+msgstr ""
+
+#: model.php:116
+msgid "Next Image link"
+msgstr ""
+
+#: model.php:117
+msgid "Previous Image link"
+msgstr ""
+
+#: model.php:118
+msgid "Start Slideshow link"
+msgstr ""
+
+#: model.php:119
+msgid "Stop Slideshow link"
+msgstr ""
+
+#: model.php:120
+msgid "Image number prefix (e.g. <strong>Image</strong> x of y)"
+msgstr ""
+
+#: model.php:121
+msgid "Image number separator (e.g. Image x <strong>of</strong> y)"
+msgstr ""
+
+#: model.php:728
+msgid "Settings"
+msgstr ""
+
+#: model.php:729
+msgid "Reset"
+msgstr ""
+
+#: model.php:730
+msgid "Are you sure you want to reset your settings?"
+msgstr ""
+
+#: model.php:746
+msgid "You do not have sufficient permissions to manage plugins for this blog."
+msgstr ""
+
+#: model.php:796
+msgid "Lightbox Settings"
+msgstr ""
