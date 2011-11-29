@@ -582,8 +582,7 @@ class SLB_Field_Base extends SLB_Base {
 	 * @param string $plural Plural form of title
 	 */
 	function set_title($title = '') {
-		if ( is_scalar($title) )
-			$this->title = strip_tags(trim($title));
+		$this->title = strip_tags(trim($title));
 	}
 
 	/**
@@ -619,6 +618,7 @@ class SLB_Field_Base extends SLB_Base {
 	function set_properties($properties) {
 		if ( !is_array($properties) )
 			return false;
+		
 		//Set Member properties
 		foreach ( $properties as $prop => $val ) {
 			if ( ( $m = 'set_' . $prop ) && method_exists($this, $m) ) {

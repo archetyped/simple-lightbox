@@ -38,9 +38,6 @@ class SLB_Option extends SLB_Field {
 		$args = func_get_args();
 		$props = SLB_Utilities::func_get_options($args);
 		$props = wp_parse_args($props, array ('id' => $id, 'title' => $title, 'default' => $default));
-		//Validate
-		if ( !is_string($props['title']) )
-			$props['title'] = '';
 		//Send to parent constructor
 		parent::__construct($props);
 	}
