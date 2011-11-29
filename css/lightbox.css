@@ -1,0 +1,201 @@
+/* Reset */
+#slb_lightbox * {
+	visibility: visible;
+	margin: 0;
+	padding: 0;
+	line-height: 1.4em;
+	text-align: left;
+	vertical-align: baseline;
+	white-space: normal;
+	outline: none;
+	border: 0px;
+	background: none;
+	opacity: 1;
+	width: auto;
+	height: auto;
+	position: static;
+	float: none;
+	clear: none;
+	font-family: Verdana, Helvetica, sans-serif;
+}
+
+/* General */
+
+#slb_lightbox {
+	position: absolute;
+	top: 20px;
+	left: 0;
+	width: 100%;
+	z-index: 3100;
+	text-align: center;
+	line-height: 0;
+	color:#151410;
+}
+
+#slb_lightbox a,
+#slb_lightbox a:hover {
+	border-bottom:none;
+	color:#151410;
+	text-decoration:underline;
+}
+
+#slb_lightbox a img {
+	border: none;
+}
+
+#slb_container {
+	position: relative;
+	background-color: #fff;
+	width: 250px;
+	height: 250px;
+	margin: 0 auto;
+}
+
+#slb_content {
+	padding: 10px;
+}
+
+#slb_loading {
+	position: absolute;
+	top: 40%;
+	left: 0%;
+	height: 25%;
+	width: 100%;
+	text-align: center;
+	line-height: 0;
+}
+
+#slb_slbLoading {
+	display:block;
+	margin:0 auto;
+	padding:0;
+	width:32px;
+	height:32px;
+	background:url("../images/loading.gif") center center no-repeat;
+	text-indent:-9999px;
+}
+
+#slb_overlay {
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 3090;
+	width: 100%;
+	height: 500px;
+	background-color: #151410;
+	filter:alpha(opacity=60);
+	-moz-opacity: 0.6;
+	opacity: 0.6;
+}
+
+/* Navigation */
+
+#slb_nav .slb_navPrev,
+#slb_nav .slb_navNext {
+	margin:0 8px 0 0;
+}
+
+#slb_nav {
+	display: block;
+	clear: left;
+	padding:0 0 10px 0;
+}
+
+#slb_nav_hover {
+	position: absolute;
+	top: 0;
+	left: 0;
+	height: 100%;
+	width: 100%;
+	z-index: 10;
+	left: 0;
+}
+	
+#slb_nav_hover a {
+	outline: none;
+}
+
+#slb_nav_hover .slb_nav {
+	min-width: 65px;
+	width: 46%;
+	height: 98%;
+	background: transparent url("../images/blank.gif") no-repeat; /* Trick IE into showing hover */
+	display: block;
+	text-indent: -9999px;
+}
+
+#slb_nav_hover .slb_navPrev {
+	left: 0; float: left;
+}
+
+#slb_nav_hover .slb_navNext {
+	right: 0; float: right;
+	margin: 0;
+}
+
+#slb_nav_hover .slb_navPrev:hover, 
+#slb_nav_hover .slb_navPrev:visited:hover {
+	background: url("../images/prevlabel.gif") left 15% no-repeat;
+}
+
+#slb_nav_hover .slb_navNext:hover,
+#slb_nav_hover .slb_navNext:visited:hover {
+	background: url("../images/nextlabel.gif") right 15% no-repeat;
+}
+
+.slb_slbClose {
+	display:block;
+	margin:0;
+	padding:0 0 10px 0;
+	text-decoration:none;
+	text-indent:-9999px;
+	overflow:hidden;
+}
+
+#slb_close {
+	float: right;
+}
+
+#slb_close,
+#slb_close .slb_slbClose {
+	height:28px;
+	width:66px;
+}
+
+#slb_close .slb_slbClose {
+	background:url("../images/closelabel.gif") no-repeat;
+}
+
+/* Content */
+
+#slb_data {
+	padding: 0 10px;
+}
+
+#slb_data_content {
+	width: 70%;
+	float: left;
+}
+
+.slb_dataCaption {
+	font-weight: bold;
+}
+
+#slb_data_desc .slb_dataDescription {
+	display: block;
+	padding: .5em 0;
+}
+
+.slb_dataNumber {
+	display: block;
+	clear: left;
+}
+
+#slb_details {
+	font: 10px Verdana, Helvetica, sans-serif;
+	background-color: #fff;
+	margin: 0 auto;
+	line-height: 1.4em;
+	text-align: left;
+	overflow: hidden;
+}
