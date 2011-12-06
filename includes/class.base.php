@@ -43,11 +43,19 @@ class SLB_Base {
 		'styles'	=> array()
 	);
 	
+	/*-** Instances **-*/
+	
 	/**
 	 * Utilities
 	 * @var SLB_Utilities
 	 */
 	var $util = null;
+	
+	/**
+	 * Options
+	 * @var SLB_Options
+	 */
+	var $options = null;
 	
 	/**
 	 * Legacy constructor
@@ -80,6 +88,7 @@ class SLB_Base {
 		
 		//Options
 		$this->init_options();
+		add_action('admin_init', $this->m('init_options_text'));
 		
 		/* Client files */
 		$this->init_client_files();
@@ -103,10 +112,64 @@ class SLB_Base {
 	}
 	
 	/**
-	 * Initialize options
-	 * To be overriden by child class
+	 * Checks if options are valid
+	 * @param array $data Data to be used on options
+	 * @return bool TRUE if options are valid, FALSE otherwise
 	 */
-	function init_options() {}
+	function is_options_valid($data, $check_var = true) {
+		$class = $this->get_options_class();
+		$ret = ( empty($data) || !is_array($data) || !class_exists($class) ) ? false : true;
+		if ( $ret && $check_var && !is_a($this->options, $class) )
+			$ret = false;
+		return $ret;
+	}
+	
+	/**
+	 * Retrieves options class name
+	 * @return string
+	 */
+	function get_options_class() {
+		return $this->add_prefix_uc('Options');
+	}
+	
+	/**
+	 * Initialize options
+	 * To be called by child class
+	 */
+	function init_options($options_config = null) {
+		if ( !$this->is_options_valid($options_config, false) )
+			return false;
+		$class = $this->get_options_class();
+		$this->options =& new $class($options_config);
+	}
+	
+	/**
+	 * Initialize options text
+	 * Must be called separately from standard options init because textdomain is not available until later
+	 * To be called by method in child class
+	 * @param array $opts_text Options passed by method in child class
+	 * @return void
+	 */
+	function init_options_text($options_text = null) {
+		if ( !$this->is_options_valid($options_text) )
+			return false;
+		
+		//Groups
+		if ( isset($options_text['groups']) ) {
+			foreach ( $options_text['groups'] as $id => $title) {
+				$g_temp =& $this->options->get_group($id);
+				$g_temp->title = $title;
+			}
+		}
+		
+		//Options
+		if ( isset($options_text['items']) ) {
+			foreach ( $options_text['items'] as $opt => $title ) {
+				$option_temp =& $this->options->get($opt);
+				$option_temp->set_title($title);
+			}
+		}
+	}
 	
 	/**
 	 * Initialize environment (Localization, etc.)
@@ -259,6 +322,18 @@ class SLB_Base {
 	function add_prefix($text, $sep = null, $once = true) {
 		$args = func_get_args();
 		return call_user_func_array($this->util->m($this->util, 'add_prefix'), $args);
+	}
+	
+	/**
+	 * Prepend uppercased plugin prefix to some text
+	 * @param string $text Text to add to prefix
+	 * @param string $sep (optional) Text used to separate prefix and text
+	 * @param bool $once (optional) Whether to add prefix to text that already contains a prefix or not
+	 * @return string Text with prefix prepended
+	 */
+	function add_prefix_uc($text, $sep = null, $once = true) {
+		$args = func_get_args();
+		return call_user_func_array($this->util->m($this->util, 'add_prefix_uc'), $args);
 	}
 	
 	/**

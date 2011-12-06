@@ -15,9 +15,15 @@ class SLB_Lightbox extends SLB_Base {
 	/* Files */
 	
 	var $scripts = array (
-		'lib'		=> array (
-			'file'		=> 'js/lib.js',
+		'core'			=> array (
+			'file'		=> 'js/lib.core.js',
 			'deps'		=> 'jquery',
+			'callback'	=> array('is_enabled')
+		),
+		'lightbox'		=> array (
+			'file'		=> 'js/lib.lightbox.js',
+			'deps'		=> array('jquery', '[core]'),
+			'context'	=> 'public',
 			'callback'	=> array('is_enabled')
 		)
 	);
@@ -156,7 +162,7 @@ class SLB_Lightbox extends SLB_Base {
 	function init_client_files() {
 		//Load appropriate file for request
 		if ( ( defined('WP_DEBUG') && WP_DEBUG ) || isset($_REQUEST[$this->add_prefix('debug')]) )
-			$this->scripts['lib']['file'] = 'js/dev/lib.dev.js';
+			$this->scripts['lightbox']['file'] = 'js/dev/lib.lightbox.dev.js';
 		//Default init
 		parent::init_client_files();
 	}
@@ -177,13 +183,12 @@ class SLB_Lightbox extends SLB_Base {
 		}
 		
 		//Context
-		$func_context = $this->m('set_client_context');
-		$hook_context = ( is_admin() ) ? 'admin_head' : 'wp_head';
-		add_action($hook_context, $func_context);
+		add_action(( is_admin() ) ? 'admin_head' : 'wp_head', $this->m('set_client_context'));
 	}
 	
 	/**
 	 * Init options
+	 * 
 	 */
 	function init_options() {
 		//Setup options
@@ -198,20 +203,20 @@ class SLB_Lightbox extends SLB_Base {
 				'enabled_widget'			=> array('default' => false, 'group' => 'activation'),
 				'enabled_compat'			=> array('default' => false, 'group' => 'activation'),
 				'activate_attachments'		=> array('default' => true, 'group' => 'activation'),
-				'validate_links'			=> array('default' => false, 'group' => 'activation'),
+				'validate_links'			=> array('default' => false, 'group' => 'activation', 'in_client' => true),
 				'group_links'				=> array('default' => true, 'group' => 'grouping'),
 				'group_post'				=> array('default' => true, 'group' => 'grouping'),
 				'group_gallery'				=> array('default' => false, 'group' => 'grouping'),
 				'group_widget'				=> array('default' => false, 'group' => 'grouping'),
 				'theme'						=> array('default' => 'default', 'group' => 'ui', 'parent' => 'option_theme'),
-				'animate'					=> array('default' => true, 'group' => 'ui'),
-				'autostart'					=> array('default' => true, 'group' => 'ui'),
-				'duration'					=> array('default' => '6', 'attr' => array('size' => 3, 'maxlength' => 3), 'group' => 'ui'),
-				'loop'						=> array('default' => true, 'group' => 'ui'),
-				'overlay_opacity'			=> array('default' => '0.8', 'attr' => array('size' => 3, 'maxlength' => 3), 'group' => 'ui'),
-				'enabled_caption'			=> array('default' => true, 'group' => 'ui'),
-				'caption_src'				=> array('default' => true, 'group' => 'ui'),
-				'enabled_desc'				=> array('default' => true, 'group' => 'ui'),
+				'animate'					=> array('default' => true, 'group' => 'ui', 'in_client' => true),
+				'autostart'					=> array('default' => true, 'group' => 'ui', 'in_client' => true),
+				'duration'					=> array('default' => '6', 'attr' => array('size' => 3, 'maxlength' => 3), 'group' => 'ui', 'in_client' => true),
+				'loop'						=> array('default' => true, 'group' => 'ui', 'in_client' => true),
+				'overlay_opacity'			=> array('default' => '0.8', 'attr' => array('size' => 3, 'maxlength' => 3), 'group' => 'ui', 'in_client' => true),
+				'enabled_caption'			=> array('default' => true, 'group' => 'ui', 'in_client' => true),
+				'caption_src'				=> array('default' => true, 'group' => 'ui', 'in_client' => true),
+				'enabled_desc'				=> array('default' => true, 'group' => 'ui', 'in_client' => true),
 				'txt_closeLink'				=> array('default' => 'close', 'group' => 'labels'),
 				'txt_loadingMsg'			=> array('default' => 'loading', 'group' => 'labels'),
 				'txt_nextLink'				=> array('default' => 'next &raquo;', 'group' => 'labels'),
@@ -233,13 +238,13 @@ class SLB_Lightbox extends SLB_Base {
 		$opt_theme['default'] = $this->theme_default = $this->add_prefix($this->theme_default);
 		$opt_theme['options'] = $this->m('get_theme_options');
 		
-		$this->options =& new SLB_Options($options_config);
+		parent::init_options($options_config);
 	}
 
 	/**
 	 * Set option titles
 	 */
-	function set_option_titles() {
+	function init_options_text() {
 		$p = $this->util->get_plugin_textdomain();
 		$options_config = array (
 			'groups' 	=> array (
@@ -282,15 +287,7 @@ class SLB_Lightbox extends SLB_Base {
 			)
 		);
 		
-		foreach ( $options_config['groups'] as $id => $title) {
-			$g_temp =& $this->options->get_group($id);
-			$g_temp->title = $title;
-		}
-		
-		foreach ( $options_config['items'] as $opt => $title ) {
-			$option_temp =& $this->options->get($opt);
-			$option_temp->set_title($title);
-		}
+		parent::init_options_text($options_config);
 	}
 	
 	function register_hooks() {
@@ -334,8 +331,8 @@ class SLB_Lightbox extends SLB_Base {
 
 	/**
 	 * Output current context to client-side
-	 * @uses `wp_head` action as hook
-	 * @uses `admin_head` action as hook
+	 * @uses `wp_head` action hook
+	 * @uses `admin_head` action hook
 	 * @return void
 	 */
 	function set_client_context() {
@@ -343,7 +340,7 @@ class SLB_Lightbox extends SLB_Base {
 			return false;
 		$ctx = new stdClass();
 		$ctx->context = $this->util->get_context();
-		echo $this->util->build_script_element($this->util->extend_client_object($ctx), 'context');
+		$this->util->extend_client_object($ctx, true);
 	}
 
 	/*-** Helpers **-*/
@@ -1158,22 +1155,13 @@ class SLB_Lightbox extends SLB_Base {
 		$out = array();
 		$js_code = array();
 		//Get options
-		$options = array(
-			'validateLinks'		=> $this->options->get_bool('validate_links'),
-			'autoPlay'			=> $this->options->get_bool('autostart'),
-			'slideTime'			=> $this->options->get_value('duration'),
-			'loop'				=> $this->options->get_bool('loop'),
-			'overlayOpacity'	=> $this->options->get_value('overlay_opacity'),
-			'animate'			=> $this->options->get_bool('animate'),
-			'captionEnabled'	=> $this->options->get_bool('enabled_caption'),
-			'captionSrc'		=> $this->options->get_bool('caption_src'),
-			'descEnabled'		=> $this->options->get_bool('enabled_desc'),
-			'relAttribute'		=> array($this->get_prefix()),
+		$options = wp_parse_args($this->options->build_client_output(), array (
+			'identifier'		=> array($this->get_prefix()),
 			'prefix'			=> $this->get_prefix()
-		);
+		));
 		//Backwards compatibility
-		if ( $this->options->get_bool('enabled_compat'))
-			$options['relAttribute'][] = $this->attr_legacy;
+		if ( $this->options->get_bool('enabled_compat') )
+			$options['identifier'][] = $this->attr_legacy;
 			
 		//Load UI Strings
 		if ( ($strings = $this->build_strings()) && !empty($strings) )
@@ -1484,7 +1472,6 @@ class SLB_Lightbox extends SLB_Base {
 	 * @todo Move appropriate code to options class
 	 */
 	function admin_settings() {
-		$this->set_option_titles();
 		$page = $this->options_admin_page;
 		$form = $this->options_admin_form;
 		$curr = basename($_SERVER['SCRIPT_NAME']);	

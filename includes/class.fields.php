@@ -141,7 +141,7 @@ class SLB_Field_Base extends SLB_Base {
 		parent::__construct();
 		//Normalize Properties
 		$args = func_get_args();
-		if ( func_num_args() > 1 && empty($parent) ) {
+		if ( count($args) > 1 && empty($args[1]) ) {
 			unset($args[1]);
 			$args = array_values($args);
 		}

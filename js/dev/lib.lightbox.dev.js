@@ -16,27 +16,30 @@
 //
 // -----------------------------------------------------------------------------------
 /**
- * Lightbox object
+ * Lightbox
+ * @package SLB
+ * @subpackage Lightbox
+ * @author Archetyped
  */
 (function($) {
 SLB = {
-	activeImage : null,
-	badObjects : ['select','object','embed','iframe'],
+	active_image : null,
+	bad_objects : ['select','object','embed','iframe'],
 	container : null,
-	enableSlideshow : null,
-	groupName : null,
-	imageArray : [],
+	enabled_slideshow : null,
+	group_name : null,
+	image_array : [],
 	options : null,
-	overlayDuration : null,
-	overlayOpacity : null,
-	playSlides : null,
-	refTags : ['a'],
-	relAttribute : null,
-	resizeDuration : null,
-	slideShowTimer : null,
-	startImage : null,
+	overlay_duration : null,
+	overlay_opacity : null,
+	play_slides : null,
+	ref_tags : ['a'],
+	identifier : null,
+	resize_duration : null,
+	slideshow_timer : null,
+	start_image : null,
 	prefix : '',
-	checkedUrls : {},
+	checked_urls : {},
 	media : {},
 	
 	/**
@@ -46,25 +49,22 @@ SLB = {
 	initialize: function(options) {
 		this.options = $.extend(true, {
 			animate : true, // resizing animations
-			validateLinks : false, //Validate links before adding them to lightbox
-			captionEnabled: true, //Display caption
-			captionSrc : true, //Use image source URI if title not set
-			descEnabled: true, //Display description
-			autoPlay : true, // should slideshow start automatically
-			borderSize : 10, // if you adjust the padding in the CSS, you will need to update this variable
-			containerID : document, // lightbox container object
-			enableSlideshow : true, // enable slideshow feature
-			googleAnalytics : false, // track individual image views using Google Analytics
-			imageDataLocation : 'south', // location of image caption information
-			initImage : '', // ID of image link to automatically launch when upon script initialization
+			validate_links : false, //Validate links before adding them to lightbox
+			enabled_caption: true, //Display caption
+			caption_src : true, //Use image source URI if title not set
+			enabled_desc: true, //Display description
+			autostart : true, // should slideshow start automatically
+			border_size : 10, // if you adjust the padding in the CSS, you will need to update this variable
+			container_id : document, // lightbox container object
+			enabled_slideshow : true, // enable slideshow feature
+			init_image : '', // ID of image link to automatically launch when upon script initialization
 			loop : true, // whether to continuously loop slideshow images
-			overlayDuration : .2, // time to fade in shadow overlay
-			overlayOpacity : .8, // transparency of shadow overlay
-			relAttribute : null, // specifies the rel attribute value that triggers lightbox
-			resizeSpeed : 400, // controls the speed of the image resizing (milliseconds)
-			showGroupName : false, // show group name of images in image details
-			slideTime : 4, // time to display images during slideshow
-			mId : 'id',
+			overlay_duration : .2, // time to fade in shadow overlay
+			overlay_opacity : .8, // transparency of shadow overlay
+			identifier : null, // specifies the rel attribute value that triggers lightbox
+			resize_speed : 400, // controls the speed of the image resizing (milliseconds)
+			show_group_name : false, // show group name of images in image details
+			duration : 4, // time to display images during slideshow
 			strings : { // allows for localization
 				closeLink : 'close',
 				loadingMsg : 'loading',
@@ -98,23 +98,23 @@ SLB = {
 		if ( 'prefix' in this.options )
 			this.prefix = this.options.prefix;
 		  //Activation Attribute
-		if ( null == this.options.relAttribute )
-			 this.options.relAttribute = [this.prefix];
-		else if ( !$.isArray(this.options.relAttribute) )
-			this.options.relAttribute = [this.options.relAttribute.toString()];
-		this.relAttribute = this.options.relAttribute;
+		if ( null == this.options.identifier )
+			 this.options.identifier = [this.prefix];
+		else if ( !$.isArray(this.options.identifier) )
+			this.options.identifier = [this.options.identifier.toString()];
+		this.identifier = this.options.identifier;
 		
 		if ( this.options.animate ) {
-			this.overlayDuration = Math.max(this.options.overlayDuration,0);
-			this.resizeDuration = this.options.resizeSpeed;
+			this.overlay_duration = Math.max(this.options.overlay_duration,0);
+			this.resize_duration = this.options.resize_speed;
 		} else {
-			this.overlayDuration = 0;
-			this.resizeDuration = 0;
+			this.overlay_duration = 0;
+			this.resize_duration = 0;
 		}
-		this.enableSlideshow = this.options.enableSlideshow;
-		this.overlayOpacity = Math.max(Math.min(this.options.overlayOpacity,1),0);
-		this.playSlides = this.options.autoPlay;
-		this.container = $(this.options.containerID);
+		this.enabled_slideshow = this.options.enabled_slideshow;
+		this.overlay_opacity = Math.max(Math.min(this.options.overlay_opacity,1),0);
+		this.play_slides = this.options.autostart;
+		this.container = $(this.options.container_id);
 		this.updateImageList();
 		var t = this;
 		var objBody = $(this.container).get(0) != document ? this.container : $('body');
@@ -143,8 +143,8 @@ SLB = {
 		//Add events
 		this.setEvents();
 		
-		if (this.options.initImage != '') {
-			this.start($(this.options.initImage));
+		if (this.options.init_image != '') {
+			this.start($(this.options.init_image));
 		}
 	},
 	
@@ -180,7 +180,7 @@ SLB = {
 		this.get('slbClose').html(s.closeLink);
 		this.get('navNext').html(s.nextLink);
 		this.get('navPrev').html(s.prevLink);
-		this.get('navSlideControl').html(((this.playSlides) ? s.stopSlideshow : s.startSlideshow));
+		this.get('navSlideControl').html(((this.play_slides) ? s.stopSlideshow : s.startSlideshow));
 	},
 	
 	/**
@@ -244,9 +244,9 @@ SLB = {
 		};
 		
 		//Build selector
-		for (var i = 0; i < this.refTags.length; i++) {
-			for (var x = 0; x < this.relAttribute.length; x++) {
-				sel.push(this.refTags[i] + selBase.replace(ph, this.relAttribute[x]));
+		for (var i = 0; i < this.ref_tags.length; i++) {
+			for (var x = 0; x < this.identifier.length; x++) {
+				sel.push(this.ref_tags[i] + selBase.replace(ph, this.identifier[x]));
 			}
 		}
 		sel = sel.join(',');
@@ -255,15 +255,15 @@ SLB = {
 	},
 	
 	/**
-	 * Display overlay and lightbox. If image is part of a set, add siblings to imageArray.
+	 * Display overlay and lightbox. If image is part of a set, add siblings to image_array.
 	 * @param node imageLink Link element containing image URL
 	 */
 	start: function(imageLink) {
 		imageLink = $(imageLink);
 		this.hideBadObjects();
 
-		this.imageArray = [];
-		this.groupName = this.getGroup(imageLink);
+		this.image_array = [];
+		this.group_name = this.getGroup(imageLink);
 		
 		var rel = $(imageLink).attr('rel') || '';
 		var imageTitle = '';
@@ -274,7 +274,7 @@ SLB = {
 			// Stretch overlay to fill page and fade in
 			t.get('overlay')
 				.height($(document).height())
-				.fadeTo(t.overlayDuration, t.overlayOpacity);
+				.fadeTo(t.overlay_duration, t.overlay_opacity);
 			
 			// Add image to array closure
 			var addLink = function(el, idx) {
@@ -284,7 +284,7 @@ SLB = {
 			
 			//Build final image array & launch lightbox
 			var proceed = function() {
-				t.startImage = 0;
+				t.start_image = 0;
 				//Sort links by document order
 				var order = [], el;
 				for (var x in groupTemp) {
@@ -295,37 +295,37 @@ SLB = {
 					el = groupTemp[order[x]];
 					// Check if link being evaluated is the same as the clicked link
 					if ($(el).get(0) == $(imageLink).get(0)) {
-						t.startImage = x;
+						t.start_image = x;
 					}
-					t.imageArray.push({'link':t.getSourceFile($(el)), 'title':t.getCaption(el), 'desc': t.getDescription(el)});
+					t.image_array.push({'link':t.getSourceFile($(el)), 'title':t.getCaption(el), 'desc': t.getDescription(el)});
 				}
 				// Calculate top offset for the lightbox and display 
 				var lightboxTop = $(document).scrollTop() + ($(window).height() / 15);
 		
 				t.get('lightbox').css('top', lightboxTop + 'px').show();
-				t.changeImage(t.startImage);
+				t.changeImage(t.start_image);
 			}
 			// If image is NOT part of a group..
-			if (null == t.groupName) {
+			if (null == t.group_name) {
 				// Add single image to array
-				t.startImage = 0;
-				addLink(imageLink, t.startImage);			
+				t.start_image = 0;
+				addLink(imageLink, t.start_image);			
 				proceed();
 			} else {
 				// Image is part of a group
-				var els = $(t.container).find(t.refTags.join(',').toLowerCase());
+				var els = $(t.container).find(t.ref_tags.join(',').toLowerCase());
 				// Loop through links on page & find other images in group
 				var grpLinks = [];
 				var i, el;
 				for (i = 0; i < els.length; i++) {
 					el = $(els[i]);
-					if (t.getSourceFile(el) && (t.getGroup(el) == t.groupName)) {
+					if (t.getSourceFile(el) && (t.getGroup(el) == t.group_name)) {
 						//Add links in same group to temp array
 						grpLinks.push(el);
 					}
 				}
 				
-				//Loop through group links, validate, and add to imageArray
+				//Loop through group links, validate, and add to image_array
 				var processed = 0;
 				for (i = 0; i < grpLinks.length; i++) {
 					el = grpLinks[i];
@@ -370,9 +370,9 @@ SLB = {
 	 */
 	getMediaProperties: function(el) {
 		var props = {},
-			mId = this.getMediaId(el);
-		if (mId && mId in this.media) {
-			props = this.media[mId];
+			m_id = this.getMediaId(el);
+		if (m_id && m_id in this.media) {
+			props = this.media[m_id];
 		}
 		return props;
 	},
@@ -396,7 +396,7 @@ SLB = {
 	getCaption: function(imageLink) {
 		imageLink = $(imageLink);
 		var caption = '';
-		if (this.options.captionEnabled) {
+		if (this.options.enabled_caption) {
 			var sels = {
 				'capt': '.wp-caption-text',
 				'gIcon': '.gallery-icon'
@@ -436,7 +436,7 @@ SLB = {
 				var c = '';
 				if ( ( c = $.trim($(els.link).text()) ) && c.length) {
 					caption = c;
-				} else if (this.options.captionSrc) {
+				} else if (this.options.caption_src) {
 					//Fall back to Link href
 					caption = $(els.link).attr('href');
 					var trimChars = ['/', '#', '.'];
@@ -469,7 +469,7 @@ SLB = {
 	 */
 	getDescription: function(imageLink) {
 		var desc = '';
-		if (this.options.descEnabled) {
+		if (this.options.enabled_desc) {
 			//Retrieve description
 			if (this.inGallery(imageLink, 'ng')) {
 				desc = $(imageLink).attr('title');
@@ -560,12 +560,12 @@ SLB = {
 
 	/**
 	 * Preload requested image prior to displaying it in lightbox 
-	 * @param int imageNum Index of image in imageArray property
-	 * @uses imageArray to retrieve index at specified image
+	 * @param int imageNum Index of image in image_array property
+	 * @uses image_array to retrieve index at specified image
 	 * @uses resizeImageContainer() to resize lightbox after image has loaded
 	 */
 	changeImage: function(imageNum) {
-		this.activeImage = imageNum;
+		this.active_image = imageNum;
 
 		this.disableKeyboardNav();
 		this.pauseSlideShow();
@@ -587,7 +587,7 @@ SLB = {
 		});
 		
 		//Load image
-		imgPreloader.src = this.imageArray[this.activeImage].link;
+		imgPreloader.src = this.image_array[this.active_image].link;
 	},
 
 	/**
@@ -598,7 +598,7 @@ SLB = {
 	resizeImageContainer: function(w, h) {
 		var d = this.getContainerSize(w, h);
 		//Resize container
-		this.get('container').animate({width: d.width, height: d.height}, this.resizeDuration);
+		this.get('container').animate({width: d.width, height: d.height}, this.resize_duration);
 		//Resize overlay
 		this.get('overlay').css('min-width', d.width);
 		this.showImage();
@@ -611,7 +611,7 @@ SLB = {
 	 * @return obj Container width (w)/height (h) values
 	 */
 	getContainerSize: function(w, h) {
-		var b = this.options.borderSize * 2;
+		var b = this.options.border_size * 2;
 		var c = {
 			'width': w + b,
 			'height': h + b
@@ -634,28 +634,28 @@ SLB = {
 	 */
 	updateDetails: function() {
 		//Caption
-		if (this.options.captionEnabled) {
-			this.get('dataCaption').text(this.imageArray[this.activeImage].title);
+		if (this.options.enabled_caption) {
+			this.get('dataCaption').text(this.image_array[this.active_image].title);
 			this.get('dataCaption').show();
 		} else {
 			this.get('dataCaption').hide();
 		}
 		
 		//Description
-		this.get('dataDescription').html(this.imageArray[this.activeImage].desc);
+		this.get('dataDescription').html(this.image_array[this.active_image].desc);
 		
 		// if image is part of set display 'Image x of y' 
 		if (this.hasImages()) {
-			var num_display = this.options.strings.numDisplayPrefix + ' ' + (this.activeImage + 1) + ' ' + this.options.strings.numDisplaySeparator + ' ' + this.imageArray.length;
-			if (this.options.showGroupName && this.groupName != '') {
-				num_display += ' ' + this.options.strings.numDisplaySeparator + ' ' + this.groupName;
+			var num_display = this.options.strings.numDisplayPrefix + ' ' + (this.active_image + 1) + ' ' + this.options.strings.numDisplaySeparator + ' ' + this.image_array.length;
+			if (this.options.show_group_name && this.group_name != '') {
+				num_display += ' ' + this.options.strings.numDisplaySeparator + ' ' + this.group_name;
 			}
 			this.get('dataNumber')
 				.text(num_display)
 				.show();
 		}
 	
-		this.get('details').width(this.get('slbContent').width() + (this.options.borderSize * 2));
+		this.get('details').width(this.get('slbContent').width() + (this.options.border_size * 2));
 		this.updateNav();
 		var t = this;
 		this.get('details').animate({height: 'show', opacity: 'show'}, 650);
@@ -668,9 +668,9 @@ SLB = {
 		if (this.hasImages()) {
 			this.get('navPrev').show();
 			this.get('navNext').show();
-			if (this.enableSlideshow) {
+			if (this.enabled_slideshow) {
 				this.get('navSlideControl').show();
-				if (this.playSlides) {
+				if (this.play_slides) {
 					this.startSlideShow();
 				} else {
 					this.stopSlideShow();
@@ -691,20 +691,20 @@ SLB = {
 	/**
 	 * Checks if slideshow is currently activated
 	 * @return bool TRUE if slideshow is active, false otherwise
-	 * @uses playSlides to check slideshow activation status
+	 * @uses play_slides to check slideshow activation status
 	 */
 	isSlideShowActive: function() {
-		return this.playSlides;
+		return this.play_slides;
 	},
 	
 	/**
 	 * Start the slideshow
 	 */
 	startSlideShow: function() {
-		this.playSlides = true;
+		this.play_slides = true;
 		var t = this;
-		clearInterval(this.slideShowTimer);
-		this.slideShowTimer = setInterval(function() { t.showNext(); t.pauseSlideShow(); }, this.options.slideTime * 1000);
+		clearInterval(this.slideshow_timer);
+		this.slideshow_timer = setInterval(function() { t.showNext(); t.pauseSlideShow(); }, this.options.duration * 1000);
 		this.get('navSlideControl').text(this.options.strings.stopSlideshow);
 	},
 	
@@ -712,9 +712,9 @@ SLB = {
 	 * Stop the slideshow
 	 */
 	stopSlideShow: function() {
-		this.playSlides = false;
-		if (this.slideShowTimer) {
-			clearInterval(this.slideShowTimer);
+		this.play_slides = false;
+		if (this.slideshow_timer) {
+			clearInterval(this.slideshow_timer);
 		}
 		this.get('navSlideControl').text(this.options.strings.startSlideshow);
 	},
@@ -723,7 +723,7 @@ SLB = {
 	 * Toggles the slideshow status
 	 */
 	toggleSlideShow: function() {
-		if (this.playSlides) {
+		if (this.play_slides) {
 			this.stopSlideShow();
 		}else{
 			this.startSlideShow();
@@ -735,46 +735,46 @@ SLB = {
 	 * Stops the slideshow but does not change the slideshow's activation status
 	 */
 	pauseSlideShow: function() {
-		if (this.slideShowTimer) {
-			clearInterval(this.slideShowTimer);
+		if (this.slideshow_timer) {
+			clearInterval(this.slideshow_timer);
 		}
 	},
 	
 	/**
 	 * Check if there is at least one image to display in the lightbox
 	 * @return bool TRUE if at least one image is found
-	 * @uses imageArray to check for images
+	 * @uses image_array to check for images
 	 */
 	hasImage: function() {
-		return ( this.imageArray.length > 0 );
+		return ( this.image_array.length > 0 );
 	},
 	
 	/**
 	 * Check if there are multiple images to display in the lightbox
 	 * @return bool TRUE if there are multiple images
-	 * @uses imageArray to determine the number of images
+	 * @uses image_array to determine the number of images
 	 */
 	hasImages: function() {
-		return ( this.imageArray.length > 1 );
+		return ( this.image_array.length > 1 );
 	},
 	
 	/**
 	 * Check if the current image is the first image in the list
 	 * @return bool TRUE if image is first
-	 * @uses activeImage to check index of current image
+	 * @uses active_image to check index of current image
 	 */
 	isFirstImage: function() {
-		return ( this.activeImage == 0 );
+		return ( this.active_image == 0 );
 	},
 	
 	/**
 	 * Check if the current image is the last image in the list
 	 * @return bool TRUE if image is last
-	 * @uses activeImage to check index of current image
-	 * @uses imageArray to compare current image to total number of images
+	 * @uses active_image to check index of current image
+	 * @uses image_array to compare current image to total number of images
 	 */
 	isLastImage: function() {
-		return ( this.activeImage == this.imageArray.length - 1 );
+		return ( this.active_image == this.image_array.length - 1 );
 	},
 	
 	/**
@@ -788,7 +788,7 @@ SLB = {
 			if ( this.isLastImage() ) {
 				this.showFirst();
 			} else {
-				this.changeImage(this.activeImage + 1);
+				this.changeImage(this.active_image + 1);
 			}
 		}
 	},
@@ -800,10 +800,10 @@ SLB = {
 		if (this.hasImages()) {
 			if ( !this.options.loop && this.isFirstImage() )
 				return this.end();
-			if (this.activeImage == 0) {
+			if (this.active_image == 0) {
 				this.showLast();
 			} else {
-				this.changeImage(this.activeImage - 1);
+				this.changeImage(this.active_image - 1);
 			}
 		}
 	},
@@ -822,7 +822,7 @@ SLB = {
 	 */
 	showLast : function() {
 		if (this.hasImages()) {
-			this.changeImage(this.imageArray.length - 1);
+			this.changeImage(this.image_array.length - 1);
 		}
 	},
 
@@ -867,7 +867,7 @@ SLB = {
 		} else if (key == 'l') { // display last image
 			this.showLast();
 		} else if (key == 's') { // toggle slideshow
-			if (this.hasImage() && this.options.enableSlideshow) {
+			if (this.hasImage() && this.options.enabled_slideshow) {
 				this.toggleSlideShow();
 			}
 		}
@@ -877,13 +877,13 @@ SLB = {
 	 * Preloads images before/after current image
 	 */
 	preloadNeighborImages: function() {
-		var nextImageID = this.imageArray.length - 1 == this.activeImage ? 0 : this.activeImage + 1;
+		var nextImageID = this.image_array.length - 1 == this.active_image ? 0 : this.active_image + 1;
 		nextImage = new Image();
-		nextImage.src = this.imageArray[nextImageID].link;
+		nextImage.src = this.image_array[nextImageID].link;
 
-		var prevImageID = this.activeImage == 0 ? this.imageArray.length - 1 : this.activeImage - 1;
+		var prevImageID = this.active_image == 0 ? this.image_array.length - 1 : this.active_image - 1;
 		prevImage = new Image();
-		prevImage.src = this.imageArray[prevImageID].link;
+		prevImage.src = this.image_array[prevImageID].link;
 	},
 
 	/**
@@ -893,7 +893,7 @@ SLB = {
 		this.disableKeyboardNav();
 		this.pauseSlideShow();
 		this.get('lightbox').hide();
-		this.get('overlay').fadeOut(this.overlayDuration);
+		this.get('overlay').fadeOut(this.overlay_duration);
 		this.showBadObjects();
 	},
 	
@@ -904,7 +904,7 @@ SLB = {
 	showBadObjects: function (show) {
 		show = ( typeof(show) == 'undefined' ) ? true : !!show;
 		var vis = (show) ? 'visible' : 'hidden';
-		$(this.badObjects.join(',')).css('visibility', vis);
+		$(this.bad_objects.join(',')).css('visibility', vis);
 	},
 	
 	/**
@@ -1008,7 +1008,7 @@ SLB = {
 	 * @param obj args Arguments for callback
 	 */
 	fileExists: function(url, success, failure, args) {
-		if (!this.options.validateLinks)
+		if (!this.options.validate_links)
 			return success(args);
 		var statusFail = 400;
 		var stateCheck = 4;
@@ -1024,8 +1024,8 @@ SLB = {
 		};
 		
 		//Check if URL already processed
-		if (url in this.checkedUrls) {
-			proceed(this.checkedUrls[url]);
+		if (url in this.checked_urls) {
+			proceed(this.checked_urls[url]);
 		} else {
 			var req = new XMLHttpRequest();
 			req.open('HEAD', url, true);
@@ -1040,8 +1040,8 @@ SLB = {
 	},
 	
 	addUrl: function(url, res) {
-		if (!(url in this.checkedUrls))
-			this.checkedUrls[url] = res;
+		if (!(url in this.checked_urls))
+			this.checked_urls[url] = res;
 	}
 }
 })(jQuery);

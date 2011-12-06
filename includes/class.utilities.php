@@ -107,6 +107,20 @@ class SLB_Utilities {
 	}
 	
 	/**
+	 * Prepend uppercased plugin prefix to some text
+	 * @param string $text Text to add to prefix
+	 * @param string $sep (optional) Text used to separate prefix and text
+	 * @param bool $once (optional) Whether to add prefix to text that already contains a prefix or not
+	 * @return string Text with prefix prepended
+	 */
+	function add_prefix_uc($text, $sep = '_', $once = true) {
+		$args = func_get_args();
+		$var = call_user_func_array($this->m($this, 'add_prefix'), $args);
+		$pre = $this->get_prefix();
+		return str_replace($pre . $sep, strtoupper($pre) . $sep, $var);
+	}
+	
+	/**
 	 * Add prefix to variable reference
 	 * Updates actual variable rather than return value
 	 * @uses add_prefix() to add prefix to variable
@@ -247,13 +261,24 @@ class SLB_Utilities {
 	 * Build jQuery JS expression to add data to specified client object
 	 * @param string $obj Name of client object (Set to root object if not a valid name)
 	 * @param mixed $data Data to add to client object
+	 * @param bool (optional) $out Whether or not to output code (Default: false)
 	 * @return string JS expression to extend client object
 	 */
-	function extend_client_object($obj, $data = null) {
+	function extend_client_object($obj, $data = null, $out = false) {
 		//Validate parameters
-		if ( func_num_args() == 1 ) {
-			$data = $obj;
-			$obj = null;
+		$args = func_get_args();
+		switch ( count($args) ) {
+			case 2:
+				if ( !is_scalar($args[0]) ) {
+					if ( is_bool($args[1]) )
+						$out = $args[1];
+				} else {
+					break;
+				}
+			case 1:
+				$data = $args[0];
+				$obj = null;
+				break;
 		}
 		//Default client object
 		if ( !is_string($obj) || empty($obj) )
@@ -262,7 +287,30 @@ class SLB_Utilities {
 		if ( is_array($data) )
 			$data = (object)$data;
 		//Build expression
-		$ret = ( !empty($data) ) ? '$.extend(' . $this->get_client_object($obj) . ', ' . json_encode($data) . ');' : '';
+		if ( empty($data) || ( empty($obj) && is_scalar($data) ) ) {
+			$ret = '';
+		} else {
+			$ret = array();
+			//Validate object(s) being extended
+			$c_obj = $this->get_client_object($obj);
+			$pos = strpos($c_obj, '.');
+			$start = 0;
+			$objs = array();
+			global $dbg;
+			if ( false !== $pos ) {
+				while ( false !== $pos ) {
+					$objs[] = substr($c_obj, $start, $pos);
+					$start = $pos + 1;
+					$pos = strpos($c_obj, '.', $start);
+				}
+			} else {
+				$objs[] = $c_obj;
+			}
+			$condition = 'if ( ' . implode(' && ', $objs) . ' ) ';
+			$ret = $condition . '$.extend(' . $c_obj . ', ' . json_encode($data) . ');';
+			if ( $out )
+				echo $this->build_script_element($ret);
+		}
 		return $ret;
 	}
 	

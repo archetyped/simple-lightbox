@@ -8,7 +8,15 @@ require_once 'class.fields.php';
  * @author SM
  */
 class SLB_Option extends SLB_Field {
-
+	
+	/* Properties */
+	
+	/**
+	 * Determines whether option will be sent to client
+	 * @var bool
+	 */
+	var $in_client = false;
+	
 	/**
 	 * Child mapping
 	 * @see SLB_Field_Base::map
@@ -18,7 +26,7 @@ class SLB_Option extends SLB_Field {
 		'default'	=> 'data',
 		'attr'		=> 'properties'
 	);
-		
+	
 	/* Init */
 	
 	function SLB_Option($id, $title = '', $default = '') {
@@ -54,7 +62,7 @@ class SLB_Option extends SLB_Field {
 	function get_default($context = '') {
 		return $this->get_data($context, false);	
 	}
-	
+			
 	/**
 	 * Sets parent based on default value
 	 */
@@ -72,6 +80,25 @@ class SLB_Option extends SLB_Field {
 		parent::set_parent($parent);
 	}
 	
+	/**
+	 * Set in_client property
+	 * @uses this::in_client
+	 * @param bool Whether or not option should be included in client output (Default: false)
+	 * @return void
+	 */
+	function set_in_client($in_client = false) {
+		$this->in_client = !!$in_client;
+	}
+	
+	/**
+	 * Determines whether option should be included in client output
+	 * @uses this::in_client
+	 * @return bool TRUE if option is included in client output
+	 */
+	function get_in_client() {
+		return $this->in_client;
+	}
+	
 	/* Formatting */
 	
 	/**
@@ -83,14 +110,35 @@ class SLB_Option extends SLB_Field {
 	 */
 	function format_display($value, $context = '') {
 		if ( !is_string($value) ) {
-			if ( is_bool($value) )
-				$value = ( $value ) ? 'Enabled' : 'Disabled';
+			if ( is_bool($value) ) {
+				$p = $this->util->get_plugin_textdomain();
+				$value = ( $value ) ? __('Enabled', $p) : __('Disabled', $p);
+			}
 			elseif ( is_null($value) )
 				$value = '';
 			else
 				$value = strval($value);
 		}
 		return htmlentities($value);
+	}
+	
+	/**
+	 * Format data using same format as default value
+	 * @see SLB_Field_Base::format()
+	 * @param mixed $value Data to format
+	 * @param string $context (optional) Current context
+	 * @return mixed Formatted option value 
+	 */
+	function format_default($value, $context = '') {
+		//Get default value
+		$d = $this->get_default();
+		if ( empty($d) )
+			return $value;
+		if ( is_bool($d) )
+			$value = $this->format_bool($value);
+		elseif ( is_string($d) )
+			$value = $this->format_string($value);
+		return $value;
 	}
 	
 	/**
@@ -126,6 +174,7 @@ class SLB_Option extends SLB_Field {
 		else {
 			$value = strval($value);
 		}
+		return $value;
 	}
 }
 
@@ -291,7 +340,7 @@ class SLB_Options extends SLB_Field_Collection {
 		$field_post = '</div>';
 		$opt_pre = '<div class="' . $this->add_prefix('option_item') . '">';
 		$opt_post = '</div>';
-		$layout_form = '<{form_attr ref_base="layout"} /> <span class="description">(Default: {data context="display" top="0"})</span>'; 
+		$layout_form = '<{form_attr ref_base="layout"} /> <span class="description">(' . __('Default', $this->util->get_plugin_textdomain()) . ': {data context="display" top="0"})</span>'; 
 		
 		//Text input
 		$otxt =& new SLB_Field_Type('option_text', 'text');
@@ -516,5 +565,20 @@ class SLB_Options extends SLB_Field_Collection {
 		echo '<h4 class="subhead">' . $group->title . '</h4>';
 		//Build items
 		echo $this->build_items($group);
+	}
+	
+	/**
+	 * Build array of option values for client output
+	 * @return array Associative array of options
+	 */
+	function build_client_output() {
+		$items =& $this->get_items();
+		$out = array();
+		foreach ( $items as $option ) {
+			if ( !$option->get_in_client() )
+				continue;
+			$out[$option->get_id()] = $option->get_data('default');
+		}
+		return $out;
 	}
 }

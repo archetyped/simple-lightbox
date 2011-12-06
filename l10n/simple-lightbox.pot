@@ -159,3 +159,15 @@ msgstr ""
 #: model.php:796
 msgid "Lightbox Settings"
 msgstr ""
+
+#: Default option value identifier
+msgid "Default"
+msgstr ""
+
+#: Enabled option identifier
+msgid "Enabled"
+msgstr ""
+
+#: Disabled option identifier
+msgid "Disabled"
+msgstr ""
