@@ -70,9 +70,7 @@ class SLB_Utilities {
 	function get_sep($sep = false) {
 		if ( is_null($sep) )
 			$sep = '';
-		if ( !is_string($sep) )
-			$default = '_';
-		return ( is_string($sep) ) ? $sep : $default;
+		return ( is_string($sep) ) ? $sep : '_';
 	}
 	
 	/**
@@ -103,7 +101,7 @@ class SLB_Utilities {
 	 * @return string Text with prefix prepended
 	 */
 	function add_prefix($text, $sep = '_', $once = true) {
-		if ( $this->has_prefix($text, $sep) )
+		if ( $once && $this->has_prefix($text, $sep) )
 			return $text;
 		return $this->get_prefix($sep) . $text;
 	}
@@ -134,7 +132,7 @@ class SLB_Utilities {
 	}
 	
 	/**
-	 * Returns Database prefix for Cornerstone-related DB Tables
+	 * Returns Database prefix for plugin-related DB Tables
 	 * @return string Database prefix
 	 */
 	function get_db_prefix() {
@@ -445,21 +443,54 @@ class SLB_Utilities {
 		//Context
 		static $ctx = null;
 		if ( !is_array($ctx) ) {
-			$ctx_base = ( is_admin() ) ? 'admin' : 'public';
-			$ctx = array($ctx_base);
-			
+			//Standard
+			$ctx = array($this->build_context());
 			//Action
 			$action = $this->get_action();
-			//Build full context
 			if ( !empty($action) )
-				$ctx[] = $ctx_base . '_action_' . $action;
+				$ctx[] = $this->build_context('action', $action);
+			//Admin page
 			if ( is_admin() ) {
 				global $pagenow;
-				$ctx[] = $ctx_base . '_page_' . $this->strip_file_extension($pagenow);
+				$pg = $this->strip_file_extension($pagenow);
+				$ctx[] = $this->build_context('page', $pg);
+				if ( !empty($action) )
+					$ctx[] = $this->build_context('page', $pg, 'action', $action);
 			}
+			//User
+			$u = wp_get_current_user();
+			$ctx[] = $this->build_context('user', ( $u->ID ) ? 'registered' : 'guest', false);
 		}
 		
 		return $ctx;
+	}
+	
+	/**
+	 * Builds context from multiple components
+	 * Usage:
+	 * > $prefix can be omitted and context strings can be added as needed
+	 * > Multiple context strings may be passed to be joined together
+	 * 
+	 * @param string (optional) $context Variable number of components to add to context
+	 * @param bool (optional) $prefix Whether or not to prefix context with request type (public or admin) [Default: TRUE] 
+	 * @return string Context
+	 */
+	function build_context($context = null, $prefix = true) {
+		$args = func_get_args();
+		//Get prefix option
+		if ( !empty($args) ) {
+			$prefix = ( is_bool($args[count($args) - 1]) ) ? array_pop($args) : true;
+		}
+		
+		//Validate 
+		$context = array_filter($args, 'is_string');
+		$sep = '_';
+
+		//Context Prefix
+		if ( $prefix )
+			array_unshift($context, ( is_admin() ) ? 'admin' : 'public' );
+		global $dbg;
+		return implode($sep, $context);
 	}
 	
 	/**
@@ -672,7 +703,6 @@ class SLB_Utilities {
 	 */
 	function get_plugin_base_file() {
 		static $file = '';
-		global $cnr;
 		if ( empty($file) ) {
 			$dir = @ opendir($this->get_path_base());
 			if ( $dir ) {
