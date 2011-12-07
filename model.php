@@ -192,6 +192,7 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	function init_options() {
 		//Setup options
+		$this->add_prefix_ref($this->theme_default);
 		$p = $this->util->get_plugin_base(true);
 		$options_config = array (
 			'items'	=> array (
@@ -208,7 +209,7 @@ class SLB_Lightbox extends SLB_Base {
 				'group_post'				=> array('default' => true, 'group' => 'grouping'),
 				'group_gallery'				=> array('default' => false, 'group' => 'grouping'),
 				'group_widget'				=> array('default' => false, 'group' => 'grouping'),
-				'theme'						=> array('default' => 'default', 'group' => 'ui', 'parent' => 'option_theme'),
+				'theme'						=> array('default' => $this->theme_default, 'group' => 'ui', 'parent' => 'option_theme', 'options' => $this->m('get_theme_options')),
 				'animate'					=> array('default' => true, 'group' => 'ui', 'in_client' => true),
 				'autostart'					=> array('default' => true, 'group' => 'ui', 'in_client' => true),
 				'duration'					=> array('default' => '6', 'attr' => array('size' => 3, 'maxlength' => 3), 'group' => 'ui', 'in_client' => true),
@@ -234,9 +235,6 @@ class SLB_Lightbox extends SLB_Base {
 				'enabled_single'	=> array('enabled_post', 'enabled_page')
 			)
 		);
-		$opt_theme =& $options_config['items']['theme'];
-		$opt_theme['default'] = $this->theme_default = $this->add_prefix($this->theme_default);
-		$opt_theme['options'] = $this->m('get_theme_options');
 		
 		parent::init_options($options_config);
 	}

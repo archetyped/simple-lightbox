@@ -88,6 +88,13 @@ class SLB_Field_Base extends SLB_Base {
 	var $property_filter = array('group');
 	
 	/**
+	 * Define order of properties
+	 * Useful when processing order is important (e.g. one property depends on another)
+	 * @var array
+	 */
+	var $property_priority = array();
+	
+	/**
 	 * Data for object
 	 * May also contain data for nested objects
 	 * @var mixed
@@ -129,7 +136,7 @@ class SLB_Field_Base extends SLB_Base {
 	/**
 	 * Legacy Constructor
 	 */
-	function SLB_Field_Base($id = '', $parent = null) {
+	function SLB_Field_Base($id = '', $properties = null) {
 		$args = func_get_args();
 		call_user_func_array(array(&$this, '__construct'), $args);
 	}
@@ -137,18 +144,12 @@ class SLB_Field_Base extends SLB_Base {
 	/**
 	 * Constructor
 	 */
-	function __construct($id = '', $parent = null) {
+	function __construct($id = '', $properties = null) {
 		parent::__construct();
 		//Normalize Properties
 		$args = func_get_args();
-		if ( count($args) > 1 && empty($args[1]) ) {
-			unset($args[1]);
-			$args = array_values($args);
-		}
-		$properties = $this->make_properties($this->util->func_get_options($args), array('id' => $id, 'parent' => $parent));
-		//Remove empty variables
-		if ( empty($properties['parent']) )
-			unset($properties['parent']);
+		$defaults = $this->integrate_id($id);
+		$properties = $this->make_properties($args, $defaults);
 		//Save init properties
 		$this->properties_init = $properties;
 		//Set Properties
@@ -619,6 +620,9 @@ class SLB_Field_Base extends SLB_Base {
 	function set_properties($properties) {
 		if ( !is_array($properties) )
 			return false;
+		//Normalize properties
+		$properties = $this->remap_properties($properties);
+		$properties = $this->sort_properties($properties);
 		//Set Member properties
 		foreach ( $properties as $prop => $val ) {
 			if ( ( $m = 'set_' . $prop ) && method_exists($this, $m) ) {
@@ -630,7 +634,6 @@ class SLB_Field_Base extends SLB_Base {
 		
 		//Filter properties
 		$properties = $this->filter_properties($properties);
-		
 		//Set additional instance properties
 		foreach ( $properties as $name => $val) {
 			$this->set_property($name, $val);
@@ -650,23 +653,61 @@ class SLB_Field_Base extends SLB_Base {
 	}
 	
 	/**
+	 * Sort properties based on priority
+	 * @uses this::property_priority
+	 * @return array Sorted priorities
+	 */
+	function sort_properties($properties) {
+		//Stop if sorting not necessary
+		if ( empty($properties) || !is_array($properties) || empty($this->property_priority) || !is_array($this->property_priority) )
+			return $properties;
+		$props = array();
+		foreach ( $this->property_priority as $prop ) {
+			if ( !array_key_exists($prop, $properties) )
+				continue;
+			//Add to new array
+			$props[$prop] = $properties[$prop];
+			//Remove from old array
+			unset($properties[$prop]);
+		}
+		//Append any remaining properties
+		$props = array_merge($props, $properties);
+		return $props;
+	}
+	
+	/**
 	 * Build properties array
 	 * Accepts a variable number of additional arrays of default properties
 	 * that will be merged in order from last to first
 	 * (e.g. first array overwrites duplicate members in last)
 	 * @uses SLB_Field_Base::remap_properties() to remap properties members if necessary
+	 * @uses wp_parse_args()
+	 * @uses array_reverse()
+	 * @uses func_get_args()
 	 * @param array $props Instance properties
-	 * @param array $defaults Default properties
 	 * @return array Normalized properties
 	 */
-	function make_properties($props, $defaults = array()) {
-		$args = func_get_args();
-		$args = array_reverse($args);
-		$props = array();
-		foreach ( $args as $arg ) {
-			$props = wp_parse_args($arg, $props);
-		}
-		return $this->remap_properties($props);
+	function make_properties($props, $signature = array()) {
+		$p = array();
+		if ( is_array($props) && !empty($props) ) {
+			foreach ( $props as $prop ) {
+				if ( is_array($prop) ) {
+					$p = array_merge($prop, $p);
+				}
+			}
+			$props = $p;
+		} 
+		if ( is_array($signature) )
+			$props = array_merge($signature, $props);
+		return $props;
+	}
+	
+	function validate_id($id) {
+		return ( is_scalar($id) && !empty($id) ) ? true : false;
+	}
+	
+	function integrate_id($id) {
+		return ( $this->validate_id($id) ) ? array('id' => $id) : array();
 	}
 	
 	/**
@@ -986,7 +1027,13 @@ class SLB_Field_Type extends SLB_Field_Base {
 	}
 	
 	function __construct($id = '', $parent = null) {
-		parent::__construct($id, $parent);
+		$args = func_get_args();
+		$defaults = $this->integrate_id($id);
+		if ( !is_array($parent) )
+			$defaults['parent'] = $parent;
+		
+		$props = $this->make_properties($args, $defaults);
+		parent::__construct($props);
 	}
 
 	/* Getters/Setters */
@@ -1327,6 +1374,8 @@ class SLB_Field_Type extends SLB_Field_Base {
 		$out_default = '';
 		//Get base layout
 		$out = $this->get_layout($layout);
+		$par = $this->get_parent();
+		$ppar = $par->get_parent();
 		//Only parse valid layouts
 		if ( $this->is_valid_layout($out) ) {
 			//Parse Layout
@@ -1413,12 +1462,13 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	 * @param array $properties (optional) Properties to set for content type (Default: none)
 	 */
 	function __construct($id, $properties = null) {
+		$args = func_get_args();
+		$properties = $this->make_properties($args);
 		//Parent constructor
-		parent::__construct($id, $properties);
+		parent::__construct($properties);
 		
 		//Init
 		$this->init();
-		
 		//Setup object based on properties
 		if ( is_array($properties) && !empty($properties) ) {
 			//Groups
@@ -1479,23 +1529,33 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	 */
 	function &add($id, $parent = null, $properties = array(), $group = null) {
 		$args = func_get_args();
-		$properties = $this->make_properties($this->util->func_get_options($args), $properties, array('group' => $group));
-		$it = ( is_object($id) ) ? 'O:' . $id->get_id() . '(' . get_class($id) . ')' : $id;
+		$defaults = array (
+			'parent'		=> null,
+			'group'			=> null
+		);
+		if ( count($args) == 1 && is_array($args[0]) )
+			$properties = $args[0];
+			
+		$properties = array_merge($defaults, $properties);
+		
+		$ret = false;
 		//Check if previously created item is being added
 		if ( is_object($id) && strtolower(get_class($id)) == strtolower($this->item_type) ) {
 			$item =& $id;
 		} else {
 			//Create item
 			if ( !class_exists($this->item_type) )
-				return false;
+				return $ret;
 			$type = $this->item_type;
 			/**
 			 * @var SLB_Field
 			 */
-			$item =& new $type($id, $properties);
+			if ( is_scalar($id) )
+				$properties['id'] = $id;
+			$item =& new $type($properties);
 		}
 		if ( strlen($item->get_id()) == 0 ) {
-			return false;
+			return $ret;
 		}
 		
 		$item->set_container($this);

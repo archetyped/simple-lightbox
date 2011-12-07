@@ -296,7 +296,6 @@ class SLB_Utilities {
 			$pos = strpos($c_obj, '.');
 			$start = 0;
 			$objs = array();
-			global $dbg;
 			if ( false !== $pos ) {
 				while ( false !== $pos ) {
 					$objs[] = substr($c_obj, $start, $pos);
@@ -537,7 +536,6 @@ class SLB_Utilities {
 		//Context Prefix
 		if ( $prefix )
 			array_unshift($context, ( is_admin() ) ? 'admin' : 'public' );
-		global $dbg;
 		return implode($sep, $context);
 	}
 	

@@ -22,10 +22,12 @@ class SLB_Option extends SLB_Field {
 	 * @see SLB_Field_Base::map
 	 * @var array
 	 */
-	var $map = array(
+	var $map = array (
 		'default'	=> 'data',
 		'attr'		=> 'properties'
 	);
+	
+	var $property_priority = array ('id', 'data', 'parent');
 	
 	/* Init */
 	
@@ -44,9 +46,11 @@ class SLB_Option extends SLB_Field {
 	function __construct($id, $title = '', $default = '') {
 		//Normalize properties
 		$args = func_get_args();
-		$props = SLB_Utilities::func_get_options($args);
-		$props = wp_parse_args($props, array ('id' => $id, 'title' => $title, 'default' => $default));
+		$defaults = array ('title' => '', 'default' => '');
+		$props = $this->make_properties($args, $defaults);
 		//Validate
+		if ( is_scalar($id) )
+			$props['id'] = $id;
 		if ( !is_string($props['title']) )
 			$props['title'] = '';
 		//Send to parent constructor
@@ -212,17 +216,14 @@ class SLB_Options extends SLB_Field_Collection {
 	}
 	
 	function __construct($id = '', $props = array()) {
-		$args = func_get_args();
 		//Validate arguments
-		if ( count($args) == 1 && is_array($args[0]) ) {
-			$props = $id;
-			$id = '';
-		}
+		$args = func_get_args();
 		//Set default ID
-		if ( !is_string($id) || empty($id) ) {
+		if ( !$this->validate_id($id) )
 			$id = 'options';
-		}
-		parent::__construct($id, $props);
+		$defaults = $this->integrate_id($id);
+		$props = $this->make_properties($args, $defaults);
+		parent::__construct($props);
 		$this->add_prefix_ref($this->version_key);
 	}
 	
@@ -504,13 +505,26 @@ class SLB_Options extends SLB_Field_Collection {
 	 */
 	function &add($id, $title = '', $default = '', $group = null) {
 		//Build properties array
-		$properties = $this->make_properties($title, array('title' => $title, 'group' => $group, 'default' => $default));
-		
+		$defaults = array (
+			'id'		=> '',
+			'title'		=> '',
+			'default'	=> '',
+			'group'		=> null
+		);
+		$args = func_get_args();
+		$properties = array();
+		foreach ( array_reverse($args) as $arg ) {
+			if ( is_array($arg) )
+				$properties = array_merge($properties, $arg);
+		}
+		if ( is_scalar($id) )
+			$properties['id'] = $id;
+		$properties = array_merge($defaults, $properties);
 		//Create item
 		/**
 		 * @var SLB_Option
 		 */
-		$item =& parent::add($id, $properties);
+		$item =& parent::add($properties);
 		
 		return $item;
 	}
