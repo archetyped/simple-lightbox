@@ -5,7 +5,7 @@ require_once 'class.fields.php';
  * Option object
  * @package Simple Lightbox
  * @subpackage Options
- * @author SM
+ * @author Archetyped
  */
 class SLB_Option extends SLB_Field {
 	
@@ -186,7 +186,7 @@ class SLB_Option extends SLB_Field {
  * Options collection
  * @package Simple Lightbox
  * @subpackage Options
- * @author SM
+ * @author Archetyped
  * @uses SLB_Field_Collection
  */
 class SLB_Options extends SLB_Field_Collection {
@@ -329,41 +329,60 @@ class SLB_Options extends SLB_Field_Collection {
 	/* Option setup */
 	
 	/**
+	 * Get elements for creating fields
+	 * @return obj
+	 */
+	function get_field_elements() {
+		static $o = null;
+		if ( empty($o) ) {
+			$o = new stdClass();
+			/* Layout */
+			$layout = new stdClass();
+			$layout->label = '<label for="{field_id}" class="title block">{label}</label>';
+			$layout->label_ref = '{label ref_base="layout"}';
+			$layout->field_pre = '<div class="input block">';
+			$layout->field_post = '</div>';
+			$layout->opt_pre = '<div class="' . $this->add_prefix('option_item') . '">';
+			$layout->opt_post = '</div>';
+			$layout->form = '<{form_attr ref_base="layout"} /> <span class="description">(' . __('Default', $this->util->get_plugin_textdomain()) . ': {data context="display" top="0"})</span>';
+			/* Combine */
+			$o->layout =& $layout;
+		}
+		return $o;
+	}
+	
+	/**
 	 * Register option-specific fields
 	 * @param SLB_Fields $fields Reference to global fields object
 	 * @return void
 	 */
 	function register_fields(&$fields) {
 		//Layouts
-		$layout_label = '<label for="{field_id}" class="title block">{label}</label>';
-		$label_ref = '{label ref_base="layout"}';
-		$field_pre = '<div class="input block">';
-		$field_post = '</div>';
-		$opt_pre = '<div class="' . $this->add_prefix('option_item') . '">';
-		$opt_post = '</div>';
-		$layout_form = '<{form_attr ref_base="layout"} /> <span class="description">(' . __('Default', $this->util->get_plugin_textdomain()) . ': {data context="display" top="0"})</span>'; 
+		$o = $this->get_field_elements();
+		
+		$form = $o->layout->opt_pre . $o->layout->label_ref . $o->layout->field_pre . $o->layout->form . $o->layout->field_post . $o->layout->opt_post;
 		
 		//Text input
 		$otxt =& new SLB_Field_Type('option_text', 'text');
 		$otxt->set_property('class', '{inherit} code');
 		$otxt->set_property('size', null);
 		$otxt->set_property('value', '{data context="form"}');
-		$otxt->set_layout('label', $layout_label);
-		$otxt->set_layout('form', $opt_pre . $label_ref . $field_pre . $layout_form . $field_post . $opt_post);
+		$otxt->set_layout('label', $o->layout->label);
+		$otxt->set_layout('form', $form);
 		$fields->add($otxt);
 		
 		//Checkbox
 		$ocb =& new SLB_Field_Type('option_checkbox', 'checkbox');
-		$ocb->set_layout('label', $layout_label);
-		$ocb->set_layout('form', $opt_pre . $label_ref . $field_pre . $layout_form . $field_post . $opt_post);
+		$ocb->set_layout('label', $o->layout->label);
+		$ocb->set_layout('form', $form);
 		$fields->add($ocb);
 		
-		//Theme
-		$othm =& new SLB_Field_Type('option_theme', 'select');
-		$othm->set_layout('label', $layout_label);
-		$othm->set_layout('form_start', $field_pre . '{inherit}');
-		$othm->set_layout('form_end', '{inherit}' . $field_post);
-		$othm->set_layout('form', $opt_pre . '{inherit}' . $opt_post);
+		//Select
+		$othm =& new SLB_Field_Type('option_select', 'select');
+		$othm->set_layout('label', $o->layout->label);
+		$othm->set_layout('form_start', $o->layout->field_pre . '{inherit}');
+		$othm->set_layout('form_end', '{inherit}' . $o->layout->field_post);
+		$othm->set_layout('form', $o->layout->opt_pre . '{inherit}' . $o->layout->opt_post);
 		$fields->add($othm);
 	}
 	

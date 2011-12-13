@@ -1,6 +1,7 @@
 <?php 
 
 require_once 'includes/class.base.php';
+require_once 'includes/class.admin.php';
 require_once 'includes/class.options.php';
 
 /**
@@ -29,10 +30,6 @@ class SLB_Lightbox extends SLB_Base {
 	);
 	
 	var $styles = array (
-		'admin'		=> array (
-			'file'		=> 'css/admin.css',
-			'context'	=> array('admin_page_plugins', 'admin_page_options-media')
-		),
 		'theme'		=> array (
 			'file'		=> array('get_theme_style'),
 			'callback'	=> array('is_enabled')
@@ -47,17 +44,7 @@ class SLB_Lightbox extends SLB_Base {
 	
 	var $theme_default = 'default';
 	
-	/**
-	 * Page that plugin options are on
-	 * @var string
-	 */
 	var $options_admin_page = 'options-media.php';
-	
-	/**
-	 * Page that processes options
-	 * @var string
-	 */
-	var $options_admin_form = 'options.php';
 	
 	/**
 	 * Value to identify activated links
@@ -127,6 +114,12 @@ class SLB_Lightbox extends SLB_Base {
 	var $options = null;
 	
 	/**
+	 * Admin instance
+	 * @var SLB_Admin
+	 */
+	var $admin = null;
+	
+	/**
 	 * Base field definitions
 	 * Stores system/user-defined field definitions
 	 * @var SLB_Fields
@@ -143,11 +136,15 @@ class SLB_Lightbox extends SLB_Base {
 	
 	function __construct() {
 		parent::__construct();
-		$this->init();
 
 		//Init objects
+		$this->admin =& new SLB_Admin();
 		$this->attr = $this->get_prefix();
 		$this->fields =& new SLB_Fields();
+		
+		//Init instance
+		$this->init();
+
 	}
 	
 	/* Init */
@@ -193,7 +190,6 @@ class SLB_Lightbox extends SLB_Base {
 	function init_options() {
 		//Setup options
 		$this->add_prefix_ref($this->theme_default);
-		$p = $this->util->get_plugin_base(true);
 		$options_config = array (
 			'items'	=> array (
 				'enabled'					=> array('default' => true, 'group' => 'activation'),
@@ -209,7 +205,7 @@ class SLB_Lightbox extends SLB_Base {
 				'group_post'				=> array('default' => true, 'group' => 'grouping'),
 				'group_gallery'				=> array('default' => false, 'group' => 'grouping'),
 				'group_widget'				=> array('default' => false, 'group' => 'grouping'),
-				'theme'						=> array('default' => $this->theme_default, 'group' => 'ui', 'parent' => 'option_theme', 'options' => $this->m('get_theme_options')),
+				'theme'						=> array('default' => $this->theme_default, 'group' => 'ui', 'parent' => 'option_select', 'options' => $this->m('get_theme_options')),
 				'animate'					=> array('default' => true, 'group' => 'ui', 'in_client' => true),
 				'autostart'					=> array('default' => true, 'group' => 'ui', 'in_client' => true),
 				'duration'					=> array('default' => '6', 'attr' => array('size' => 3, 'maxlength' => 3), 'group' => 'ui', 'in_client' => true),
@@ -294,14 +290,14 @@ class SLB_Lightbox extends SLB_Base {
 		/* Admin */
 
 		//Init lightbox admin
-		add_action('admin_init', $this->m('admin_settings'));
-		//Reset Settings
-		add_action('admin_action_' . $this->add_prefix('reset'), $this->m('admin_reset'));
-		add_action('admin_notices', $this->m('admin_notices'));
-		//Plugin listing
-		add_filter('plugin_action_links_' . $this->util->get_plugin_base_name(), $this->m('admin_plugin_action_links'), 10, 4);
-		add_action('in_plugin_update_message-' . $this->util->get_plugin_base_name(), $this->m('admin_plugin_update_message'), 10, 2);
-		add_filter('site_transient_update_plugins', $this->m('admin_plugin_update_transient'));
+		// add_action('admin_init', $this->m('admin_settings'));
+		// //Reset Settings
+		// add_action('admin_action_' . $this->add_prefix('reset'), $this->m('admin_reset'));
+		// add_action('admin_notices', $this->m('admin_notices'));
+		// //Plugin listing
+		// add_filter('plugin_action_links_' . $this->util->get_plugin_base_name(), $this->m('admin_plugin_action_links'), 10, 4);
+		// add_action('in_plugin_update_message-' . $this->util->get_plugin_base_name(), $this->m('admin_plugin_update_message'), 10, 2);
+		// add_filter('site_transient_update_plugins', $this->m('admin_plugin_update_transient'));
 		
 		/* Client-side */
 		
@@ -324,6 +320,13 @@ class SLB_Lightbox extends SLB_Base {
 	}
 
 	/* Methods */
+	
+	/*-** Admin **-*/
+	
+	function init_admin() {
+		parent::init_admin();
+		$this->admin->add_section('options', __('Lightbox Settings', $this->util->get_plugin_textdomain()), $this->options_admin_page, $this->options);
+	}
 	
 	/*-** Request **-*/
 
@@ -447,8 +450,35 @@ class SLB_Lightbox extends SLB_Base {
 	/*-** Theme **-*/
 	
 	/**
+	 * Retrieve themes for use in option field
+	 * @uses self::theme_default
+	 * @uses self::get_themes()
+	 * @return array Theme options
+	 */
+	function get_theme_options() {
+		//Get themes
+		$themes = $this->get_themes();
+		
+		//Pop out default theme
+		$theme_default = $themes[$this->theme_default];
+		unset($themes[$this->theme_default]);
+		
+		//Sort themes by title
+		uasort($themes, create_function('$a,$b', 'return strcmp($a[\'title\'], $b[\'title\']);'));
+		
+		//Insert default theme at top of array
+		$themes = array($this->theme_default => $theme_default) + $themes;
+		
+		//Build options
+		foreach ( $themes as $name => $props ) {
+			$themes[$name] = $props['title'];
+		}
+		return $themes;
+	}
+	
+	/**
 	 * Retrieve themes
-	 * @uses do_action() Calls 'slb_init_themes' hook to allow plugins to register themes
+	 * @uses UTIL::do_action() Calls internal 'init_themes' hook to allow plugins to register themes
 	 * @uses $themes to return registered themes
 	 * @return array Retrieved themes
 	 */
@@ -1351,179 +1381,6 @@ class SLB_Lightbox extends SLB_Base {
 			}
 		}
 		return $ret;
-	}
-	
-	/*-** Admin **-*/
-	
-	/**
-	 * Adds custom links below plugin on plugin listing page
-	 * @uses `plugin_action_links_$plugin-name` Filter hook
-	 * @param $actions
-	 * @param $plugin_file
-	 * @param $plugin_data
-	 * @param $context
-	 */
-	function admin_plugin_action_links($actions, $plugin_file, $plugin_data, $context) {
-		//Add link to settings (only if active)
-		if ( is_plugin_active($this->util->get_plugin_base_name()) ) {
-			$settings = __('Settings', $this->get_prefix());
-			$reset = __('Reset', $this->get_prefix());
-			$reset_confirm = "'" . __('Are you sure you want to reset your settings?', $this->get_prefix()) . "'";
-			$action = $this->add_prefix('reset');
-			$reset_link = wp_nonce_url(add_query_arg('action', $action, remove_query_arg(array($this->add_prefix('action'), 'action'), $_SERVER['REQUEST_URI'])), $action);
-			array_unshift($actions, '<a class="delete" href="options-media.php#' . $this->admin_get_settings_section() . '" title="' . $settings . '">' . $settings . '</a>');
-			array_splice($actions, 1, 0, '<a id="' . $this->add_prefix('reset') . '" href="' . $reset_link . '" onclick="return confirm(' . $reset_confirm . ');" title="' . $reset . '">' . $reset . '</a>');
-		}
-		return $actions;
-	}
-	
-	/**
-	 * Adds additional message for plugin updates
-	 * @uses `in_plugin_update_message-$plugin-name` Action hook 
-	 * @var array $plugin_data Current plugin data
-	 * @var object $r Update response data
-	 */
-	function admin_plugin_update_message($plugin_data, $r) {
-		if ( !isset($r->new_version) )
-			return false;
-		if ( stripos($r->new_version, 'beta') !== false ) {
-			$cls_notice = $this->add_prefix('notice');
-			echo '<br />' . $this->admin_plugin_update_get_message($r);
-		}
-	}
-	
-	/**
-	 * Modify update plugins response data if necessary
-	 * @uses `site_transient_update_plugins` Filter hook
-	 * @param obj $transient Transient data
-	 * @return obj Modified transient data
-	 */
-	function admin_plugin_update_transient($transient) {
-		$n = $this->util->get_plugin_base_name();
-		if ( isset($transient->response) && isset($transient->response[$n]) && is_object($transient->response[$n]) && !isset($transient->response[$n]->upgrade_notice) ) {
-			$r =& $transient->response[$n];
-			$r->upgrade_notice = $this->admin_plugin_update_get_message($r);
-		}
-		return $transient;
-	}
-	
-	/**
-	 * Retrieve custom update message
-	 * @param obj $r Response data from plugin update API
-	 * @return string Message (Default: empty string)
-	 */
-	function admin_plugin_update_get_message($r) {
-		$msg = '';
-		$cls_notice = $this->add_prefix('notice');
-		if ( !is_object($r) || !isset($r->new_version) )
-			return $msg;
-		if ( stripos($r->new_version, 'beta') !== false ) {
-			$msg = "<strong class=\"$cls_notice\">Notice:</strong> This update is a <strong class=\"$cls_notice\">Beta version</strong>. It is highly recommended that you test the update on a test server before updating the plugin on a production server.";
-		}
-		return $msg;
-	}
-	
-	/**
-	 * Reset plugin settings
-	 * Redirects to referring page upon completion
-	 */
-	function admin_reset() {
-		//Validate user
-		if ( ! current_user_can('activate_plugins') || ! check_admin_referer($this->add_prefix('reset')) )
-			wp_die(__('You do not have sufficient permissions to manage plugins for this blog.', $this->get_prefix()));
-		$action = 'reset';
-		if ( isset($_REQUEST['action']) && $this->add_prefix($action) == $_REQUEST['action'] ) {
-			//Reset settings
-			$this->options->reset(true);
-			$uri = remove_query_arg(array('_wpnonce', 'action'), add_query_arg(array($this->add_prefix('action') => $action), $_SERVER['REQUEST_URI']));
-			//Redirect user
-			wp_redirect($uri);
-			exit;
-		}
-	}
-	
-	/**
-	 * Displays notices for admin operations
-	 */
-	function admin_notices() {
-		if ( is_admin() && isset($_REQUEST[$this->add_prefix('action')]) ) {
-			$action = $_REQUEST[$this->add_prefix('action')];
-			$msg = null;
-			if ( $action ) {
-				switch ( $action ) {
-					case 'reset':
-						$msg = "Simple Lightbox's settings have been <strong>reset</strong>";
-						break; 
-				}
-				if ( ! is_null($msg) ) {
-					?>
-					<div id="message" class="updated fade"><p><?php _e($msg); ?></p></div>
-					<?php 
-				}
-			}
-		}
-	}
-	
-	/**
-	 * Adds settings section for Lightbox functionality
-	 * Section is added to Settings > Media Admin menu
-	 * @todo Move appropriate code to options class
-	 */
-	function admin_settings() {
-		$page = $this->options_admin_page;
-		$form = $this->options_admin_form;
-		$curr = basename($_SERVER['SCRIPT_NAME']);	
-		if ( $curr != $page && $curr != $form ) {
-			return;
-		}
-		
-		$page = 'media';
-		$section = $this->get_prefix();
-		//Section
-		add_settings_section($section, '<div id="' . $this->admin_get_settings_section() . '">' . __('Lightbox Settings', $this->util->get_plugin_textdomain()) . '</div>', $this->m('admin_section'), $page);
-		//Register settings container
-		register_setting($page, $this->add_prefix('options'), $this->options->m('validate'));
- 	}
-	
- 	/**
-	 * Get ID of settings section on admin page
-	 * @return string ID of settings section
-	 * @todo Eval for moving to options class
-	 */
-	function admin_get_settings_section() {
-		return $this->add_prefix('settings');
-	}
-	
-	/**
-	 * Placeholder function for lightbox admin settings
-	 * Required because setting init function requires a callback
-	 * @todo Evaluate for moving to options class
-	 */
-	function admin_section() {
-		$this->options->build();		
-	}
-	
-	/* Custom fields */
-	
-	function get_theme_options() {
-		//Get themes
-		$themes = $this->get_themes();
-		
-		//Pop out default theme
-		$theme_default = $themes[$this->theme_default];
-		unset($themes[$this->theme_default]);
-		
-		//Sort themes by title
-		uasort($themes, create_function('$a,$b', 'return strcmp($a[\'title\'], $b[\'title\']);'));
-		
-		//Insert default theme at top of array
-		$themes = array($this->theme_default => $theme_default) + $themes;
-		
-		//Build options
-		foreach ( $themes as $name => $props ) {
-			$themes[$name] = $props['title'];
-		}
-		return $themes;
 	}
 }
 

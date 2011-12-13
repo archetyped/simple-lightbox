@@ -480,6 +480,10 @@ class SLB_Utilities {
 				 );
 	}
 	
+	function is_a($obj, $class_name) {
+		return ( is_object($obj) && is_a($obj, $this->add_prefix_uc('Options')) ) ? true : false;
+	}
+	
 	/* Context */
 	
 	/**

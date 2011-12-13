@@ -7,7 +7,7 @@ require_once 'class.base.php';
  * Core properties/methods for Content Type derivative classes
  * @package Simple Lightbox
  * @subpackage Fields
- * @author SM
+ * @author Archetyped
  */
 class SLB_Field_Base extends SLB_Base {
 	/**
@@ -985,7 +985,7 @@ class SLB_Field_Base extends SLB_Base {
  * Stores properties for a specific field
  * @package Simple Lightbox
  * @subpackage Fields
- * @author SM
+ * @author Archetyped
  */
 class SLB_Field_Type extends SLB_Field_Base {
 	/* Properties */
@@ -1417,7 +1417,7 @@ class SLB_Field extends SLB_Field_Type {}
  * Managed collection of fields
  * @package Simple Lightbox
  * @subpackage Fields
- * @author SM
+ * @author Archetyped
  */
 class SLB_Field_Collection extends SLB_Field_Base {
 	
@@ -1929,9 +1929,10 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	/**
 	 * Build entire collection of items
 	 */
-	function build() {
+	function build($groups = array()) {
 		//Get Groups
-		$groups = array_keys($this->get_groups());
+		if ( empty($groups) || !is_array($groups) )
+			$groups = array_keys($this->get_groups());
 		//Build groups
 		foreach ( $groups as $group ) {
 			$this->build_group($group);
@@ -1943,7 +1944,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
  * Collection of default system-wide fields
  * @package Simple Lightbox
  * @subpackage Fields
- * @author SM
+ * @author Archetyped
  *
  */
 class SLB_Fields extends SLB_Field_Collection {

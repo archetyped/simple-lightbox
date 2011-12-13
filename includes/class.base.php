@@ -90,6 +90,9 @@ class SLB_Base {
 		$this->init_options();
 		add_action('admin_init', $this->m('init_options_text'));
 		
+		//Admin
+		$this->init_admin();
+		
 		/* Client files */
 		$this->init_client_files();
 		
@@ -130,6 +133,15 @@ class SLB_Base {
 	 */
 	function get_options_class() {
 		return $this->add_prefix_uc('Options');
+	}
+	
+	/**
+	 * Initializes admin functionality
+	 * To be overridden by child class
+	 */
+	function init_admin() {
+		if ( !empty($this->admin) && is_a($this->admin, $this->add_prefix_uc('Admin')) )
+			$this->admin->init();
 	}
 	
 	/**
