@@ -36,10 +36,6 @@ class SLB_Utilities {
 	
 	/* Constructors */
 	
-	function SLB_Utilities(&$obj) {
-		$this->__construct(&$obj);
-	}
-	
 	function __construct(&$obj) {
 		if ( is_object($obj) )
 			$this->parent =& $obj;
@@ -152,6 +148,82 @@ class SLB_Utilities {
 	function get_db_prefix() {
 		global $wpdb;
 		return $wpdb->prefix . $this->get_prefix('_');
+	}
+	
+	/* Wrapped Values */
+	
+	/**
+	 * Returns validated object of start/end wrapper values
+	 * @param string|array $start Start text (Can also be array defining start & end values)
+	 * @param string $end (optional) End text
+	 * If $end not defined, then $start is used
+	 * @return obj Wrapper
+	 */
+	function get_wrapper($start, $end = null) {
+		if ( is_object($start) && isset($start->start) && isset($start->end) )
+			return $start;
+		$wrapper = compact('start', 'end');
+		if ( is_array($start) && count($start) > 1 ) {
+			$wrapper['start'] = $start[0];
+			$wrapper['end'] = $start[1];
+		}
+		if ( !is_string($wrapper['start']) || empty($wrapper['start'] ) )
+			$wrapper['start'] = '';
+		if ( !is_string($wrapper['end']) || empty($wrapper['end']) )
+			$wrapper['end'] = $wrapper['start'];
+		
+		return (object) $wrapper;
+	}
+	
+	/**
+	 * Check if text is wrapped by specified character(s)
+	 * @uses this->get_wrapper() to Validate wrapper text
+	 * @param string $text Text to check
+	 * @param string|array $start Start text (Array defines both start/end text)
+	 * @param string $end (optional) End text
+	 */
+	function has_wrapper($text, $start, $end = null) {
+		if ( !is_string($text) || empty($text) )
+			return false;
+		//Validate wrapper)
+		$w = $this->get_wrapper($start, $end);
+		
+		//Check for wrapper
+		return ( substr($text, 0, 1) == $w->start && substr($text, -1, 1) == $w->end ) ? true : false;
+	}
+	
+	/**
+	 * Remove wrapper from specified text
+	 * @uses this->has_wrapper() to check if text is wrapped
+	 * @uses this->get_wrapper() to retrieve wrapper object
+	 * @param string $text Text to check
+	 * @param string|array $start Start text (Array defines both start/end text)
+	 * @param string $end (optional) End text
+	 * @return string Unwrapped text
+	 */
+	function remove_wrapper($text, $start, $end = null) {
+		if ( $this->has_wrapper($text, $start, $end) ) {
+			$w = $this->get_wrapper($start, $end);
+			$text = substr($text, strlen($w->start), strlen($text) - strlen($w->start) - strlen($w->end) );
+		}
+		
+		return $text;
+	}
+	
+	/**
+	 * Add wrapper to specified text
+	 * @uses this->get_wrapper() to retrieve wrapper object
+	 * @param string $text Text to wrap
+	 * @param string|array $start Start text (Array defines both start/end text)
+	 * @param string $end (optional) End text
+	 * @param bool $once (optional) Whether to wrap text only once (Default: TRUE)
+	 * @return string Wrapped text
+	 */
+	function add_wrapper($text, $start, $end = null, $once = true) {
+		$w = $this->get_wrapper($start, $end);
+		if ( !$once || !$this->has_wrapper($text, $w) )
+			$text = $w->start . $text . $w->end;
+		return $text;
 	}
 	
 	/*-** Client **-*/
@@ -481,7 +553,7 @@ class SLB_Utilities {
 	}
 	
 	function is_a($obj, $class_name) {
-		return ( is_object($obj) && is_a($obj, $this->add_prefix_uc('Options')) ) ? true : false;
+		return ( is_object($obj) && is_a($obj, $this->add_prefix_uc($class_name)) ) ? true : false;
 	}
 	
 	/* Context */
@@ -1212,6 +1284,11 @@ class SLB_Utilities {
 			$ret = implode(' ', $attr_str);
 		}
 		return $ret;
+	}
+	
+	function build_html_link($uri, $content, $attributes = array()) {
+		$attributes = array_merge(array('href' => $uri, 'title' => $content), $attributes);
+		return $this->build_html_element(array('tag' => 'a', 'wrap' => true, 'content' => $content, 'attributes' => $attributes));
 	}
 	
 	/**

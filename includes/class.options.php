@@ -31,11 +31,6 @@ class SLB_Option extends SLB_Field {
 	
 	/* Init */
 	
-	function SLB_Option($id, $title = '', $default = '') {
-		$args = func_get_args();
-		call_user_func_array(array(&$this, '__construct'), $args);
-	}
-	
 	/**
 	 * @see SLB_Field::__construct()
 	 * @uses parent::__construct() to initialize instance
@@ -209,11 +204,6 @@ class SLB_Options extends SLB_Field_Collection {
 	var $version_checked = false;
 	
 	/* Init */
-	
-	function SLB_Options($id = '', $props = array()) {
-		$args = func_get_args();
-		call_user_func_array(array(&$this, '__construct'), $args);
-	}
 	
 	function __construct($id = '', $props = array()) {
 		//Validate arguments
@@ -410,7 +400,9 @@ class SLB_Options extends SLB_Field_Collection {
 	
 	/* Processing */
 	
-	function validate($values) {
+	function validate($values = null) {
+		if ( is_null($values) && isset($_REQUEST[$this->add_prefix('options')]) )
+			$values = $_REQUEST[$this->add_prefix('options')];
 		if ( is_array($values) ) {
 			//Format data based on option type (bool, string, etc.)
 			foreach ( $values as $id => $val ) {

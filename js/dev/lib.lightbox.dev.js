@@ -2,7 +2,6 @@
 // 
 // Simple Lightbox
 // by Archetyped - http://archetyped.com/tools/simple-lightbox/
-// Updated: 2011-01-27
 //
 //	Originally based on Lightbox Slideshow v1.1
 //	by Justin Barkhuff - http://www.justinbarkhuff.com/lab/lightbox_slideshow/
@@ -427,7 +426,11 @@ SLB = {
 			
 			//Media properties
 			if ( !caption ) {
+				console.log('Caption not set');
 				caption = this.getMediaProperty(els.link, 'title') || '';
+				if ( !caption && $(els.link).attr('title').length )
+					caption = $(els.link).attr('title').toString();
+				console.log('Caption: %o', caption);
 				caption = $.trim(caption);
 			}
 			

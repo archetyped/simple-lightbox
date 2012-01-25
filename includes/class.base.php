@@ -21,6 +21,8 @@ class SLB_Base {
 	 * @var string
 	 */
 	var $prefix = 'slb';
+	
+	/* Client */
 
 	/**
 	 * Client files
@@ -58,11 +60,12 @@ class SLB_Base {
 	var $options = null;
 	
 	/**
-	 * Legacy constructor
+	 * Admin instance
+	 * @var SLB_Admin
 	 */
-	function SLB_Base() {
-		$this->__construct();
-	}
+	var $admin = null;
+	
+	/*-** Init **-*/
 	
 	/**
 	 * Constructor
@@ -70,8 +73,6 @@ class SLB_Base {
 	function __construct() {
 		$this->util =& new SLB_Utilities($this);
 	}
-	
-	/*-** Init **-*/
 	
 	/**
 	 * Default initialization method
@@ -140,7 +141,7 @@ class SLB_Base {
 	 * To be overridden by child class
 	 */
 	function init_admin() {
-		if ( !empty($this->admin) && is_a($this->admin, $this->add_prefix_uc('Admin')) )
+		if ( !empty($this->admin) && $this->util->is_a($this->admin, 'Admin') )
 			$this->admin->init();
 	}
 	

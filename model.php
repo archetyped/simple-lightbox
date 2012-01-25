@@ -66,7 +66,7 @@ class SLB_Lightbox extends SLB_Base {
 	 *   > source: Source URL
 	 * @var array
 	 */
-	var $media_attachments = array();
+	var $media_items = array();
 	
 	/**
 	 * Raw media items
@@ -108,18 +108,6 @@ class SLB_Lightbox extends SLB_Base {
 	/* Instance members */
 	
 	/**
-	 * Options instance
-	 * @var SLB_Options
-	 */
-	var $options = null;
-	
-	/**
-	 * Admin instance
-	 * @var SLB_Admin
-	 */
-	var $admin = null;
-	
-	/**
 	 * Base field definitions
 	 * Stores system/user-defined field definitions
 	 * @var SLB_Fields
@@ -130,15 +118,11 @@ class SLB_Lightbox extends SLB_Base {
 	
 	/* Constructor */
 	
-	function SLB_Lightbox() {
-		$this->__construct();
-	}
-	
 	function __construct() {
 		parent::__construct();
 
 		//Init objects
-		$this->admin =& new SLB_Admin();
+		$this->admin =& new SLB_Admin($this);
 		$this->attr = $this->get_prefix();
 		$this->fields =& new SLB_Fields();
 		
@@ -180,6 +164,7 @@ class SLB_Lightbox extends SLB_Base {
 		}
 		
 		//Context
+		global $dbg;
 		add_action(( is_admin() ) ? 'admin_head' : 'wp_head', $this->m('set_client_context'));
 	}
 	
@@ -288,7 +273,7 @@ class SLB_Lightbox extends SLB_Base {
 		parent::register_hooks();
 
 		/* Admin */
-
+		add_action('admin_menu', $this->m('admin_menus'));
 		//Init lightbox admin
 		// add_action('admin_init', $this->m('admin_settings'));
 		// //Reset Settings
@@ -322,10 +307,16 @@ class SLB_Lightbox extends SLB_Base {
 	/* Methods */
 	
 	/*-** Admin **-*/
-	
-	function init_admin() {
-		parent::init_admin();
-		$this->admin->add_section('options', __('Lightbox Settings', $this->util->get_plugin_textdomain()), $this->options_admin_page, $this->options);
+
+	function admin_menus() {
+		// $this->admin->add_section('options', __('Lightbox Settings', $this->util->get_plugin_textdomain()), $this->options_admin_page, $this->options);
+		$this->admin->add_menu('menu_test', 'Test Menu');
+		// $this->admin->add_page('page_test', 'Test', '[theme]');
+		$options_title = array(
+			'menu'		=> __('Lightbox', $this->util->get_plugin_textdomain()),
+			'header'	=> __('Lightbox Settings', $this->util->get_plugin_textdomain())
+		);
+		$this->admin->add_theme_page('options', $options_title, array(&$this->options));
 	}
 	
 	/*-** Request **-*/
@@ -337,7 +328,8 @@ class SLB_Lightbox extends SLB_Base {
 	 * @return void
 	 */
 	function set_client_context() {
-		if ( !$this->is_enabled() )
+		global $dbg;
+		if ( !is_admin() && !$this->is_enabled() )
 			return false;
 		$ctx = new stdClass();
 		$ctx->context = $this->util->get_context();
@@ -1217,7 +1209,7 @@ class SLB_Lightbox extends SLB_Base {
 		
 		global $wpdb;
 		
-		$this->media_attachments = array();
+		$this->media_items = array();
 		$props = array('id', 'type', 'desc', 'title', 'source');
 		$props = (object) array_combine($props, $props);
 
@@ -1348,16 +1340,16 @@ class SLB_Lightbox extends SLB_Base {
 					foreach ( $ids[$att->ID] as $uri ) {
 						if ( isset($m_items[$uri]) )
 							$m = array_merge($m_items[$uri], $m);
-						$this->media_attachments[$uri] = $m;
+						$this->media_items[$uri] = $m;
 					}
 				}
 			}
 		}
 		
 		//Media attachments
-		if ( !empty($this->media_attachments) ) {
+		if ( !empty($this->media_items) ) {
 			$obj = 'media';
-			$atch_out = $this->util->extend_client_object($obj, $this->media_attachments);
+			$atch_out = $this->util->extend_client_object($obj, $this->media_items);
 			echo $this->util->build_script_element($atch_out, $obj);
 		}
 		

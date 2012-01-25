@@ -132,14 +132,6 @@ class SLB_Field_Base extends SLB_Base {
 	 * @var array
 	 */
 	var $map = null;
-	
-	/**
-	 * Legacy Constructor
-	 */
-	function SLB_Field_Base($id = '', $properties = null) {
-		$args = func_get_args();
-		call_user_func_array(array(&$this, '__construct'), $args);
-	}
 
 	/**
 	 * Constructor
@@ -1018,14 +1010,6 @@ class SLB_Field_Type extends SLB_Field_Base {
 	 */
 	var $caller = null;
 
-	/**
-	 * Legacy Constructor
-	 */
-	function SLB_Field_Type($id = '', $parent = null) {
-		$args = func_get_args();
-		call_user_func_array(array(&$this, '__construct'), $args);
-	}
-	
 	function __construct($id = '', $parent = null) {
 		$args = func_get_args();
 		$defaults = $this->integrate_id($id);
@@ -1445,16 +1429,6 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	var $item_type = 'SLB_Field';
 	
 	/* Constructors */
-
-	/**
-	 * Legacy constructor
-	 * @uses __construct() to init instance
-	 * @param string $id Content type ID
-	 */
-	function SLB_Field_Collection($id, $title = '', $properties = null) {
-		$args = func_get_args();
-		call_user_func_array(array(&$this, '__construct'), $args);
-	}
 
 	/**
 	 * Class constructor
@@ -1958,10 +1932,6 @@ class SLB_Fields extends SLB_Field_Collection {
 	var $placholders = null;
 	
 	/* Constructor */
-	
-	function SLB_Fields() {
-		$this->__construct();
-	}
 	
 	function __construct() {
 		parent::__construct('fields');
