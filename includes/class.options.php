@@ -198,7 +198,7 @@ class SLB_Options extends SLB_Field_Collection {
 	
 	
 	/**
-	 * Whether verison has been checked
+	 * Whether version has been checked
 	 * @var bool
 	 */
 	var $version_checked = false;
@@ -400,9 +400,21 @@ class SLB_Options extends SLB_Field_Collection {
 	
 	/* Processing */
 	
-	function validate($values = null) {
-		if ( is_null($values) && isset($_REQUEST[$this->add_prefix('options')]) )
+	/**
+	 * Validate option values
+	 * Used for validating options (e.g. admin form submission) prior to saving options to DB
+	 * Reformats values based on options' default values (i.e. bool, int, string, etc.)
+	 * Adds option items not included in original submission 
+	 * @param array $values (optional) Option values
+	 * @return array Full options data
+	 */
+	function validate($values = null, $force_save = false) {
+		if ( empty($values) && isset($_REQUEST[$this->add_prefix('options')]) ) {
+			$values_orig = $values;
+			if ( is_string($values_orig) ) 
+				$force_save = true;
 			$values = $_REQUEST[$this->add_prefix('options')];
+		}
 		if ( is_array($values) ) {
 			//Format data based on option type (bool, string, etc.)
 			foreach ( $values as $id => $val ) {
@@ -423,6 +435,11 @@ class SLB_Options extends SLB_Field_Collection {
 						$values[$id] = $opt->get_default();
 				}
 			}
+		}
+		
+		if ( $force_save ) {
+			$this->set_data($values);
+			$values = $values_orig;
 		}
 		
 		//Return value

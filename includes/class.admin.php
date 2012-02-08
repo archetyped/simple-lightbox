@@ -30,18 +30,27 @@ class SLB_Admin extends SLB_Base {
 	
 	/**
 	 * Custom admin top-level menus
+	 * Associative Array
+	 *  > Key: Menu ID
+	 *  > Val: Menu properties
 	 * @var array
 	 */
 	var $menus = array();
 	
 	/**
 	 * Custom admin pages
+	 * Associative Array
+	 *  > Key: Page ID
+	 *  > Val: Page properties
 	 * @var array
 	 */
 	var $pages = array();
 	
 	/**
 	 * Custom admin sections
+	 * Associative Array
+	 *  > Key: Section ID
+	 *  > Val: Section properties 
 	 * @var array
 	 */
 	var $sections = array();
@@ -64,6 +73,12 @@ class SLB_Admin extends SLB_Base {
 			'context'	=> array('admin')
 		)
 	);
+	
+	/* Constants */
+	
+	const TYPE_PAGE = 'page';
+	const TYPE_MENU = 'menu';
+	const TYPE_SECTION = 'section';
 	
 	/* Constructor */
 	
@@ -92,6 +107,23 @@ class SLB_Admin extends SLB_Base {
 		add_action('in_plugin_update_message-' . $this->util->get_plugin_base_name(), $this->m('plugin_update_message'), 10, 2);
 		add_filter('site_transient_update_plugins', $this->m('plugin_update_transient'));
 	}
+	
+	function test_globals() {
+		global $compat;
+		global $parent_file;
+		global $menu;
+		global $submenu;
+		global $pagenow;
+		global $typenow;
+		global $plugin_page;
+		global $_wp_real_parent_file;
+		global $_wp_menu_nopriv;
+		global $_wp_submenu_nopriv;
+		global $dbg;
+		global $admin_page_hooks;
+	}
+	
+	/* Parsers */
 	
 	/**
 	 * Retrieve properties for admin menu, page, or section
@@ -150,59 +182,7 @@ class SLB_Admin extends SLB_Base {
 		return $this->parse_item('section', $hook);
 	}
 	
-	/**
-	 * Output admin page
-	 * Passes request to page's callback or options building method
-	 * @see this->init_menus() Set as callback for custom admin pages
-	 * @uses current_user_can() to check if user has access to current page
-	 * @uses wp_die() to end execution when user does not have permission to access page
-	 * @uses this->menu_cap_default Default capability for page access
-	 * @uses this->parse_page
-	 */
-	function handle_page() {
-		if ( !current_user_can($this->menu_cap_default) )
-			wp_die('no permissions');
-		global $dbg;
-		//Retrieve page being displayed
-		$page =& $this->parse_page();
-		if ( !$page )
-			return false;
-		?>
-		<div class="wrap">
-		<?php screen_icon(); ?>
-		<h2><?php echo esc_html( $this->get_title($page, 'header') ); ?></h2>
-		<?php
-		//Process page output
-		if ( is_callable($page->callback) )
-			$page->callback($page);
-		elseif ( $this->util->is_a($page->options, 'Options') ) {
-			//TODO: Process form submission
-			$submit_id = $this->add_prefix('save_options');
-			if ( isset($_REQUEST[$submit_id]) ) {
-				$dbg->print_message('Processing submission');
-				$values = $page->options->validate();
-				$dbg->print_message($values);
-				$page->options->save();
-			}
-			
-			//Build form output
-			//TODO: Move form tag to options class
-			$form_id = $this->add_prefix('admin_page');
-			?>
-			<form id="<?php echo esc_attr($form_id); ?>" name="<?php echo esc_attr($form_id); ?>" action="" method="post"> 
-			<?php
-			$page->options->build();
-			?>
-			<p class="submit">
-				<input type="submit" class="button-primary" id="<?php echo esc_attr($submit_id); ?>" name="<?php echo esc_attr($submit_id); ?>" value="<?php _e('Save Changes'); ?>" />
-			</p>
-			</form>
-			<?php
-		}
-		?>
-		</div>
-		<?php
-	}
+	/* Handlers */
 	
 	function handle_section() {
 		
@@ -217,12 +197,23 @@ class SLB_Admin extends SLB_Base {
 		$dbg->print_message('Menu', $this->parse_menu());
 	}
 	
-	function get_title($obj, $type = '') {
+	function get_title($obj, $type = '', $safe = true) {
 		$ret = '';
+		$safe = !!$safe;
 		if ( isset($obj->title) ) {
 			$t = $obj->title;
-			if ( is_array($t) && isset($t[$type]) )
-				$t = $t[$type];
+			if ( is_array($t) && !empty($t) ) {
+				if ( isset($t[$type]) ) {
+					$t = $t[$type];
+				} elseif ( $safe ) {
+					//Use first element in array as fallback
+					$t = array_shift($t);
+				}
+			} elseif ( $safe && is_string($obj->title) ) {
+				//Use string value as fallback
+				$t = $obj->title;
+			}
+			
 			if ( is_string($t) )
 				$ret = $t;
 		}
@@ -238,36 +229,79 @@ class SLB_Admin extends SLB_Base {
 	 * @uses `admin_init` hook
 	 */
 	function init_menus() {
+		global $dbg;
 		//Add top level menus (when necessary)
-		$pre = 'menu';
+		/**
+		 * @var SLB_Admin_Menu
+		 */
+		$menu;
 		foreach ( $this->menus as $menu ) {
-			$menu = $menu;
-			$hook = add_menu_page($menu->title, $menu->title_menu, $this->menu_cap_default, $this->add_prefix($menu->id), $this->m('handle_menu'));
+			//Register menu
+			$hook = add_menu_page($menu->get_label('title'), $menu->get_label('menu'), $menu->get_capability(), $menu->get_id(), $menu->get_callback());
+			//Add hook to menu object
+			$menu->set_hookname($hook);
+			$this->menus[$menu->get_id_raw()] =& $menu;
 		}
 		
+		/**
+		 * @var SLB_Admin_Page
+		 */
+		$page;
 		//Add subpages
-		$wrapper = array('[', ']');
 		foreach ( $this->pages as $page ) {
+			//Build Arguments
+			$args = array ( $page->get_label('header'), $page->get_label('menu'), $page->get_capability(), $page->get_id(), $page->get_callback() );
+			$f = null;
 			//Handle pages for default WP menus
-			if ( $this->util->has_wrapper($page->parent, $wrapper) ) {
-				$f = 'add_' . $this->util->remove_wrapper($page->parent, $wrapper) . '_page';
-				if ( function_exists($f) )
-					$hook = $f($this->get_title($page, 'header'), $this->get_title($page, 'menu'), $this->menu_cap_default, $this->add_prefix($page->id), $this->m('handle_page'));
-			} else {
-				//Handle pages for custom menus
-				$this->add_prefix_ref($page->parent);
-				$hook = add_submenu_page($page->parent, $page->title, $page->title, $this->menu_cap_default, $this->add_prefix($page->id), $this->m('handle_page'));
+			if ( $page->is_parent_wp() ) {
+				$f = 'add_' . $page->get_parent() . '_page';
 			}
+			
+			//Handle pages for custom menus
+			if ( ! function_exists($f) ) {
+				array_unshift( $args, $page->get_parent() );
+				$f = 'add_submenu_page';
+			}
+			
+			//Add admin page
+			$hook = call_user_func_array($f, $args);
+			//Save hook to page properties
+			$page->set_hookname($hook);
+			$this->pages[$page->get_id_raw()] =& $page;
 		}
 		
 		//Add sections
-		foreach ( $this->sections as $s ) {
-			$this->add_prefix_ref($s->id);
-			add_settings_section($s->id, $this->get_section_title($s->id), $this->m('handle_section'), $s->parent);
-			if ( $this->util->is_a($s->options, 'Options') )
-				register_setting($s->parent, $s->id, $s->options->m('validate'));
+		/**
+		 * @var SLB_Admin_Section
+		 */
+		$section;
+		foreach ( $this->sections as $section ) {
+			add_settings_section($section->get_id(), $section->get_title(), $section->get_callback(), $section->get_parent());
+			if ( $section->is_options_valid() )
+				register_setting($section->get_parent(), $section->get_id(), $section->get_options()->m('validate'));
 		}
  	}
+
+
+	/**
+	 * Checks if parent menu of specified page is a default WP page
+	 * @param obj $page Custom Page to check
+	 * @return bool TRUE if parent is default WP page, FALSE otherwise
+	 */
+	function parent_is_default($page) {
+		$ret = false;
+		$wrapper = array('[', ']');
+		if ( is_object($page) && isset($page->parent) )
+			$ret = $this->util->has_wrapper($page->parent, $wrapper);
+		return $ret;
+	}
+	
+	function get_parent_wrapper() {
+		static $wrapper = null;
+		if ( empty($wrapper) )
+			$wrapper = array('[', ']');
+		return $wrapper;
+	}
 
 	/* Methods */
 	
@@ -276,20 +310,19 @@ class SLB_Admin extends SLB_Base {
 	/**
 	 * Adds custom admin panel
 	 * @param string $id Menu ID
-	 * @param string $title Page title
-	 * @param string $title_menu (optional) Nav title
+	 * @param string|array $labels Text labels
 	 * @param int $pos (optional) Menu position in navigation (index order)
 	 * @return string Menu ID
 	 */
-	function add_menu($id, $title, $title_menu = '', $pos = null) {
-		//Init args
-		$args = func_get_args();
-		if ( count($args) == 1 && is_array($args[0]) )
-			list($id, $title, $title_menu, $pos) = array_pad($args[0], 4, null);
-		if ( empty($title_menu) || !is_string($title_menu) )
-			$title_menu = $title;
-		//Add Menu
-		$this->menus[$id] = (object) compact('id', 'title', 'title_menu', 'pos');
+	function add_menu($id, $labels, $position = null) {
+		//Create menu instance
+		$menu =& new SLB_Admin_Menu($id, $labels, null, null, null, $position);
+		//Add to collection
+		if ( $menu->is_valid() )
+			$this->menus[$id] =& $menu;
+		else
+			$id = false;
+		
 		return $id;
 	}
 	
@@ -298,98 +331,103 @@ class SLB_Admin extends SLB_Base {
 	/**
 	 * Add admin page
 	 * @uses this->pages
-	 * @uses this->add_menu() to define menus on-demand
 	 * @param string $id Page ID (unique)
-	 * @param string|array Title value(s) (Associative array for multiple title values)
+	 * @param string|array $labels Text labels (Associative array for multiple labels)
 	 * 	> menu: Menu title
 	 * 	> header: Page header
-	 * @param string|array $menu Menu to add page to (Use array to create new menus on-demand)
+	 * @param string $menu Menu ID to add page to
 	 * @param obj|array $options (optional) Options object (Use array to define options object & specific group(s))
 	 * 	> Array Example: array($options, 'group_1') or array($options, array('group_1', 'group_3'))
 	 * @param callback $callback (optional) Callback for custom page building
-	 * @param int $pos (optional) Position in menu (index order)
+	 * @param string $capability (optional) Custom capability for accessing page
 	 * @return string Page ID
 	 */
-	function add_page($id, $title, $menu, $options = null, $callback = null, $pos = null, $capability = null) {
-		//Init args
-		$args = func_get_args();
-		if ( count($args) == 1 && is_array($args[0]) )
-			list($id, $title, $menu, $options, $callback, $pos) = array_pad($args[0], 6, null);
-		 
-		//Init menu
-		if ( is_array($menu) )
-			$menu = $this->add_menu($menu);
-		if ( !is_string($menu) )
-			return false;
-		
-		//Init page
-		$parent = $menu;
-		$this->parse_options($options);
-		$props = compact('id', 'title', 'parent', 'options', 'callback', 'pos', 'capability');
-		
-		$this->pages[$id] = (object) $props;
+	function add_page($id, $parent, $labels, $options = null, $callback = null, $capability = null) {
+		//Init
+		$page =& new SLB_Admin_Page($id, $parent, $labels, $options, $callback, $capability);
+		global $dbg;
+		//Add to collection
+		if ( $page->is_valid() )
+			$this->pages[$id] =& $page;
+		else
+			$id = false;
 		return $id;
 	}
 	
-	/* WP Menus */
+	/* WP Pages */
+	
+	/**
+	 * Add admin page to a standard WP menu
+	 * @uses this->add_page()
+	 * @param string $id Page ID (unique)
+	 * @param string|array $labels Text labels (Associative array for multiple labels)
+	 * 	> menu: Menu title
+	 * 	> header: Page header
+	 * @param string $menu Name of WP menu to add page to
+	 * @param obj|array $options (optional) Options object (Use array to define options object & specific group(s))
+	 * 	> Array Example: array($options, 'group_1') or array($options, array('group_1', 'group_3'))
+	 * @param callback $callback (optional) Callback for custom page building
+	 * @param string $capability (optional) Custom capability for accessing page
+	 * @return string Page ID
+	 */
+	function add_wp_page($id, $parent, $labels, $options = null, $callback = null, $capability = null) {
+		//Add page
+		$pid = $this->add_page($id, $parent, $labels, $options, $callback, $capability);
+		//Set parent as WP
+		global $dbg;
+		if ( $pid )
+			$this->pages[$pid]->set_parent_wp();
+		return $pid;
+	}
 	
 	/**
 	 * Add admin page to Dashboard menu
 	 * @see add_dashboard_page()
-	 * @uses this->add_page()
+	 * @uses this->add_wp_page()
 	 * @param string $id Page ID (unique)
-	 * @param string|array Title value(s) (Associative array for multiple title values)
-	 * 	> nav: Navigation title
-	 * 	> header: Page header
+	 * @param string|array $labels Text labels (Associative array for multiple labels)
 	 * @param obj|array $options (optional) Options object (Use array to define options object & specific group(s))
 	 * 	> Array Example: array($options, 'group_1') or array($options, array('group_1', 'group_3'))
 	 * @param callback $callback (optional) Callback for custom page building
-	 * @param int $pos (optional) Position in menu (index order)
+	 * @param string $capability (optional) Custom capability for accessing page
 	 * @return string Page ID
 	 */
-	function add_dashboard_page($id, $title, $options = null, $callback = null, $pos = null) {
-		$menu = 'dashboard';
-		$id = $this->add_page($id, $title, $this->util->add_wrapper($menu, '[', ']'), $options, $callback, $pos);
+	function add_dashboard_page($id, $labels, $options = null, $callback = null, $capability = null) {
+		$id = $this->add_wp_page($id, 'dashboard', $labels, $options, $callback, $capability);
 		return $id;
 	}
 
 	/**
 	 * Add admin page to Comments menu
 	 * @see add_comments_page()
-	 * @uses this->add_page()
+	 * @uses this->add_wp_page()
 	 * @param string $id Page ID (unique)
-	 * @param string|array Title value(s) (Associative array for multiple title values)
-	 * 	> nav: Navigation title
-	 * 	> header: Page header
+	 * @param string|array $labels Text labels (Associative array for multiple labels)
 	 * @param obj|array $options (optional) Options object (Use array to define options object & specific group(s))
 	 * 	> Array Example: array($options, 'group_1') or array($options, array('group_1', 'group_3'))
 	 * @param callback $callback (optional) Callback for custom page building
-	 * @param int $pos (optional) Position in menu (index order)
+	 * @param string $capability (optional) Custom capability for accessing page
 	 * @return string Page ID
 	 */
-	function add_comments_page($id, $title, $options = null, $callback = null, $pos = null) {
-		$menu = 'comments';
-		$id = $this->add_page($id, $title, $this->util->add_wrapper($menu, '[', ']'), $options, $callback, $pos);
+	function add_comments_page($id, $labels, $options = null, $callback = null, $capability = null) {
+		$id = $this->add_wp_page($id, 'comments', $labels, $options, $callback, $capability);
 		return $id;
 	}
 	
 	/**
 	 * Add admin page to Links menu
 	 * @see add_links_page()
-	 * @uses this->add_page()
+	 * @uses this->add_wp_page()
 	 * @param string $id Page ID (unique)
-	 * @param string|array Title value(s) (Associative array for multiple title values)
-	 * 	> nav: Navigation title
-	 * 	> header: Page header
+	 * @param string|array $labels Text labels (Associative array for multiple labels)
 	 * @param obj|array $options (optional) Options object (Use array to define options object & specific group(s))
 	 * 	> Array Example: array($options, 'group_1') or array($options, array('group_1', 'group_3'))
 	 * @param callback $callback (optional) Callback for custom page building
-	 * @param int $pos (optional) Position in menu (index order)
+	 * @param string $capability (optional) Custom capability for accessing page
 	 * @return string Page ID
 	 */
-	function add_links_page($id, $title, $options = null, $callback = null, $pos = null) {
-		$menu = 'links';
-		$id = $this->add_page($id, $title, $this->util->add_wrapper($menu, '[', ']'), $options, $callback, $pos);
+	function add_links_page($id, $labels, $options = null, $callback = null, $capability = null) {
+		$id = $this->add_wp_page($id, 'links', $labels, $options, $callback, $capability);
 		return $id;
 	}
 
@@ -397,159 +435,135 @@ class SLB_Admin extends SLB_Base {
 	/**
 	 * Add admin page to Posts menu
 	 * @see add_posts_page()
-	 * @uses this->add_page()
+	 * @uses this->add_wp_page()
 	 * @param string $id Page ID (unique)
-	 * @param string|array Title value(s) (Associative array for multiple title values)
-	 * 	> nav: Navigation title
-	 * 	> header: Page header
+	 * @param string|array $labels Text labels (Associative array for multiple labels)
 	 * @param obj|array $options (optional) Options object (Use array to define options object & specific group(s))
 	 * 	> Array Example: array($options, 'group_1') or array($options, array('group_1', 'group_3'))
 	 * @param callback $callback (optional) Callback for custom page building
-	 * @param int $pos (optional) Position in menu (index order)
+	 * @param string $capability (optional) Custom capability for accessing page
 	 * @return string Page ID
 	 */
-	function add_posts_page($id, $title, $options = null, $callback = null, $pos = null) {
-		$menu = 'posts';
-		$id = $this->add_page($id, $title, $this->util->add_wrapper($menu, '[', ']'), $options, $callback, $pos);
+	function add_posts_page($id, $labels, $options = null, $callback = null, $capability = null) {
+		$id = $this->add_wp_page($id, 'posts', $labels, $options, $callback, $capability);
 		return $id;
 	}
 	
 	/**
 	 * Add admin page to Pages menu
 	 * @see add_pages_page()
-	 * @uses this->add_page()
+	 * @uses this->add_wp_page()
 	 * @param string $id Page ID (unique)
-	 * @param string|array Title value(s) (Associative array for multiple title values)
-	 * 	> nav: Navigation title
-	 * 	> header: Page header
+	 * @param string|array $labels Text labels (Associative array for multiple labels)
 	 * @param obj|array $options (optional) Options object (Use array to define options object & specific group(s))
 	 * 	> Array Example: array($options, 'group_1') or array($options, array('group_1', 'group_3'))
 	 * @param callback $callback (optional) Callback for custom page building
-	 * @param int $pos (optional) Position in menu (index order)
+	 * @param string $capability (optional) Custom capability for accessing page
 	 * @return string Page ID
 	 */
-	function add_pages_page($id, $title, $options = null, $callback = null, $pos = null) {
-		$menu = 'pages';
-		$id = $this->add_page($id, $title, $this->util->add_wrapper($menu, '[', ']'), $options, $callback, $pos);
+	function add_pages_page($id, $labels, $options = null, $callback = null, $capability = null) {
+		$id = $this->add_wp_page($id, 'pages', $labels, $options, $callback, $capability);
 		return $id;
 	}
 	
 	/**
 	 * Add admin page to Media menu
 	 * @see add_media_page()
-	 * @uses this->add_page()
+	 * @uses this->add_wp_page()
 	 * @param string $id Page ID (unique)
-	 * @param string|array Title value(s) (Associative array for multiple title values)
-	 * 	> nav: Navigation title
-	 * 	> header: Page header
+	 * @param string|array $labels Text labels (Associative array for multiple labels)
 	 * @param obj|array $options (optional) Options object (Use array to define options object & specific group(s))
 	 * 	> Array Example: array($options, 'group_1') or array($options, array('group_1', 'group_3'))
 	 * @param callback $callback (optional) Callback for custom page building
-	 * @param int $pos (optional) Position in menu (index order)
+	 * @param string $capability (optional) Custom capability for accessing page
 	 * @return string Page ID
 	 */
-	function add_media_page($id, $title, $options = null, $callback = null, $pos = null) {
-		$menu = 'media';
-		$id = $this->add_page($id, $title, $this->util->add_wrapper($menu, '[', ']'), $options, $callback, $pos);
+	function add_media_page($id, $labels, $options = null, $callback = null, $capability = null) {
+		$id = $this->add_wp_page($id, 'media', $labels, $options, $callback, $capability);
 		return $id;
 	}
 	
 	/**
 	 * Add admin page to Themes menu
 	 * @see add_theme_page()
-	 * @uses this->add_page()
+	 * @uses this->add_wp_page()
 	 * @param string $id Page ID (unique)
-	 * @param string|array Title value(s) (Associative array for multiple title values)
-	 * 	> nav: Navigation title
-	 * 	> header: Page header
+	 * @param string|array $labels Text labels (Associative array for multiple labels)
 	 * @param obj|array $options (optional) Options object (Use array to define options object & specific group(s))
 	 * 	> Array Example: array($options, 'group_1') or array($options, array('group_1', 'group_3'))
 	 * @param callback $callback (optional) Callback for custom page building
-	 * @param int $pos (optional) Position in menu (index order)
+	 * @param string $capability (optional) Custom capability for accessing page
 	 * @return string Page ID
 	 */
-	function add_theme_page($id, $title, $options = null, $callback = null, $pos = null) {
-		$menu = 'theme';
-		$id = $this->add_page($id, $title, $this->util->add_wrapper($menu, '[', ']'), $options, $callback, $pos);
+	function add_theme_page($id, $labels, $options = null, $callback = null, $capability = null) {
+		$id = $this->add_wp_page($id, 'theme', $labels, $options, $callback, $capability);
 		return $id;
 	}
 	
 	/**
 	 * Add admin page to Plugins menu
 	 * @see add_plugins_page()
-	 * @uses this->add_page()
+	 * @uses this->add_wp_page()
 	 * @param string $id Page ID (unique)
-	 * @param string|array Title value(s) (Associative array for multiple title values)
-	 * 	> nav: Navigation title
-	 * 	> header: Page header
+	 * @param string|array $labels Text labels (Associative array for multiple labels)
 	 * @param obj|array $options (optional) Options object (Use array to define options object & specific group(s))
 	 * 	> Array Example: array($options, 'group_1') or array($options, array('group_1', 'group_3'))
 	 * @param callback $callback (optional) Callback for custom page building
-	 * @param int $pos (optional) Position in menu (index order)
+	 * @param string $capability (optional) Custom capability for accessing page
 	 * @return string Page ID
 	 */
-	function add_plugins_page($id, $title, $options = null, $callback = null, $pos = null) {
-		$menu = 'plugins';
-		$id = $this->add_page($id, $title, $this->util->add_wrapper($menu, '[', ']'), $options, $callback, $pos);
+	function add_plugins_page($id, $labels, $options = null, $callback = null, $capability = null) {
+		$id = $this->add_wp_page($id, 'plugins', $labels, $options, $callback, $capability);
 		return $id;
 	}
 	
 	/**
 	 * Add admin page to Options menu
 	 * @see add_options_page()
-	 * @uses this->add_page()
+	 * @uses this->add_wp_page()
 	 * @param string $id Page ID (unique)
-	 * @param string|array Title value(s) (Associative array for multiple title values)
-	 * 	> nav: Navigation title
-	 * 	> header: Page header
+	 * @param string|array $labels Text labels (Associative array for multiple labels)
 	 * @param obj|array $options (optional) Options object (Use array to define options object & specific group(s))
 	 * 	> Array Example: array($options, 'group_1') or array($options, array('group_1', 'group_3'))
 	 * @param callback $callback (optional) Callback for custom page building
-	 * @param int $pos (optional) Position in menu (index order)
+	 * @param string $capability (optional) Custom capability for accessing page
 	 * @return string Page ID
 	 */
-	function add_options_page($id, $title, $options = null, $callback = null, $pos = null) {
-		$menu = 'options';
-		$id = $this->add_page($id, $title, $this->util->add_wrapper($menu, '[', ']'), $options, $callback, $pos);
+	function add_options_page($id, $labels, $options = null, $callback = null, $capability = null) {
+		$id = $this->add_wp_page($id, 'options', $labels, $options, $callback, $capability);
 		return $id;
 	}
 	
 	/**
 	 * Add admin page to Tools menu
 	 * @see add_management_page()
-	 * @uses this->add_page()
+	 * @uses this->add_wp_page()
 	 * @param string $id Page ID (unique)
-	 * @param string|array Title value(s) (Associative array for multiple title values)
-	 * 	> nav: Navigation title
-	 * 	> header: Page header
+	 * @param string|array $labels Text labels (Associative array for multiple labels)
 	 * @param obj|array $options (optional) Options object (Use array to define options object & specific group(s))
 	 * 	> Array Example: array($options, 'group_1') or array($options, array('group_1', 'group_3'))
 	 * @param callback $callback (optional) Callback for custom page building
-	 * @param int $pos (optional) Position in menu (index order)
+	 * @param string $capability (optional) Custom capability for accessing page
 	 * @return string Page ID
 	 */
-	function add_management_page($id, $title, $options = null, $callback = null, $pos = null) {
-		$menu = 'management';
-		$id = $this->add_page($id, $title, $this->util->add_wrapper($menu, '[', ']'), $options, $callback, $pos);
+	function add_management_page($id, $labels, $options = null, $callback = null, $capability = null) {
+		$id = $this->add_wp_page($id, 'management', $labels, $options, $callback, $capability);
 		return $id;
 	}
 	
 	/**
 	 * Add admin page to Users menu
-	 * @uses this->add_page()
+	 * @uses this->add_wp_page()
 	 * @param string $id Page ID (unique)
-	 * @param string|array Title value(s) (Associative array for multiple title values)
-	 * 	> nav: Navigation title
-	 * 	> header: Page header
+	 * @param string|array $labels Text labels (Associative array for multiple labels)
 	 * @param obj|array $options (optional) Options object (Use array to define options object & specific group(s))
 	 * 	> Array Example: array($options, 'group_1') or array($options, array('group_1', 'group_3'))
 	 * @param callback $callback (optional) Callback for custom page building
-	 * @param int $pos (optional) Position in menu (index order)
+	 * @param string $capability (optional) Custom capability for accessing page
 	 * @return string Page ID
 	 */
-	function add_users_page($id, $title, $options = null, $callback = null, $pos = null) {
-		$menu = 'users';
-		$id = $this->add_page($id, $title, $this->util->add_wrapper($menu, '[', ']'), $options, $callback, $pos);
+	function add_users_page($id, $labels, $options = null, $callback = null, $capability = null) {
+		$id = $this->add_wp_page($id, 'users', $labels, $options, $callback, $capability);
 		return $id;
 	}
 	
@@ -559,38 +573,22 @@ class SLB_Admin extends SLB_Base {
 	 * Add section
 	 * @uses this->sections
 	 * @param string $id Unique section ID
-	 * @param string $title Section title
-	 * @param string|array Page ID (Use array to define page on-demand)
+	 * @param string $page Page ID
+	 * @param string $labels Label text
 	 * @param obj|array $options Options object (Use array to define options object & specific group(s))
 	 * 	> Array Example: array($options, 'group_1') or array($options, array('group_1', 'group_3'))
-	 * @param callback $callback (optional) Callback for custom page building
+	 * @param callback $callback (optional) Callback for custom building
 	 * @return string Section ID
 	 */
-	function add_section($id, $title, $page, $options = null, $callback = null) {
-		//Init page
-		if ( is_array($page) )
-			$page = $this->add_page($page);
-		
-		//Validate args
-		if ( !is_string($page) )
-			return false;
-		if ( !$options && !$callback )
-			return false;
-		
-		$parent = $page;
-		$this->parse_options($options);
-		$props = compact('id', 'title', 'parent', 'options', 'callback');
+	function add_section($id, $parent, $labels, $options = null, $callback = null) {
+		$section =& new SLB_Admin_Section($id, $parent, $labels, $options, $callback);
 		
 		//Add Section
-		$this->sections[$id] = (object) $props;
+		if ( $section->is_valid() )
+			$this->sections[$id] =& $section;
+		else
+			$id = false;
 		return $id;
-	}
-	
-	function parse_options(&$options) {
-		if ( is_array($options) && $this->util->is_a($options[0], 'Options') )
-			$options = $options[0];
-		if ( !$this->util->is_a($options, 'Options') )
-			$options = null;
 	}
 	
 	function get_section_title($id) {
@@ -645,7 +643,7 @@ class SLB_Admin extends SLB_Base {
 			}
 		}
 	}
-
+	
 	/**
 	* Adds custom links below plugin on plugin listing page
 	* @uses `plugin_action_links_$plugin-name` Filter hook
@@ -655,26 +653,47 @@ class SLB_Admin extends SLB_Base {
 	* @param $context
 	*/
 	function plugin_action_links($actions, $plugin_file, $plugin_data, $context) {
+		global $dbg;
+		global $admin_page_hooks;
 		//Add link to settings (only if active)
 		if ( is_plugin_active($this->util->get_plugin_base_name()) ) {
 			/* Get Actions */
 			
-			//Settings
-			$settings = __('Settings', $this->util->get_plugin_textdomain());
-			//TODO: Build method for retrieving page/section URI
-			$settings_uri = 'options-media.php';
-			$settings_link = $this->util->build_html_link($settings_uri, $settings, array('class' => 'delete'));
+			$acts = array();
+			$type = 'plugin_action';
+			
+			/* Get view links */
+			foreach ( array('menus', 'pages', 'sections') as $views ) {
+				foreach ( $this->{$views} as $view ) {
+					$label = $view->get_label($type);
+					if ( empty($label) )
+						continue;
+					$acts[] = (object) array(
+						'id'	=> $views . '_' . $view->get_id(),
+						'label'	=> $label,
+						'uri'	=> $view->get_uri()
+					);
+				}
+			}
+			
+			//Add links
+			$links = array();
+			foreach ( $acts as $act ) {
+				$links[$act->id] = $this->util->build_html_link($act->uri, $act->label);
+			}
 			
 			//Reset
+			/*
 			$reset = __('Reset', $this->util->get_plugin_textdomain());
 			$reset_confirm = "'" . __('Are you sure you want to reset your settings?', $this->util->get_plugin_textdomain()) . "'";
 			$action = $this->add_prefix('reset');
 			$reset_uri = wp_nonce_url(add_query_arg('action', $action, remove_query_arg(array($this->add_prefix('action'), 'action'), $_SERVER['REQUEST_URI'])), $action);
 			$reset_link = $this->util->build_html_link($reset_uri, $reset, array('id' => $this->add_prefix('reset'), 'onclick' => 'return confirm(' . $reset_confirm . ')'));
+			*/
 			
 			//Add links
-			array_unshift($actions, $settings_link);
-			array_splice($actions, 1, 0, $reset_link);
+			$actions = array_merge($links, $actions);
+			//array_splice($actions, 1, 0, $reset_link);
 		}
 		return $actions;
 	}
@@ -755,4 +774,677 @@ class SLB_Admin extends SLB_Base {
 		$this->messages[trim($id)] = $text;
 	}
 
+}
+
+/**
+ * Admin View Base functionality
+ * Core functionality for Menus/Pages/Sections 
+ * @package Simple Lightbox
+ * @subpackage Admin
+ * @author Archetyped
+ */
+class SLB_Admin_View extends SLB_Base {
+	/* Properties */
+	
+	/**
+	 * Unique ID
+	 * @var string
+	 */
+	var $id = null;
+	
+	/**
+	 * Labels
+	 * @var array (Associative)
+	 */
+	var $labels = array();
+	
+	/**
+	 * Options object to use
+	 * @var SLB_Options
+	 */
+	var $options = null;
+	
+	/**
+	 * Option groups to use
+	 * If empty, use entire options object
+	 * @var array
+	 */
+	var $option_groups = array();
+	
+	/**
+	 * Function to handle building UI
+	 * @var callback
+	 */
+	var $callback = null;
+	
+	/**
+	 * Capability for access control
+	 * @var string 
+	 */
+	var $capability = 'manage_options';
+	
+	/**
+	 * Icon to use
+	 * @var string
+	 */
+	var $icon = null;
+	
+	/**
+	 * View parent ID/Slug
+	 * @var string
+	 */
+	var $parent = null;
+	
+	/**
+	 * Whether parent is a custom view or a default WP one
+	 * @var bool
+	 */
+	var $parent_custom = true;
+		
+	/**
+	 * If view requires a parent
+	 * @var bool
+	 */
+	var $parent_required = false;
+	
+	/**
+	 * WP-Generated hook name for view
+	 * @var string
+	 */
+	var $hookname = null;
+	
+	/**
+	 * Required properties
+	 * Associative array
+	 * > Key: Property name
+	 * > Value: Required data type
+	 * @var array
+	 */
+	protected $required = array();
+	
+	/**
+	 * Default required properties
+	 * Merged into $required array with this->init_required()
+	 * @see this->required for more information
+	 * @var array
+	 */
+	protected $_required = array ( 'id' => 'string', 'labels' => 'array' );
+	
+	/* Init */
+	
+	function __construct($id, $labels, $options = null, $callback = null, $capability = null, $icon = null) {
+		parent::__construct();
+		
+		$this->init_required();
+		$this->set_id($id);
+		$this->set_labels($labels);
+		$this->set_options($options);
+		$this->set_callback($callback);
+		$this->set_capability($capability);
+		$this->set_icon($icon);
+	}
+	
+	function init_required() {
+		$this->required = array_merge($this->_required, $this->required);
+	}
+	
+	/* Getters/Setters */
+	
+	/**
+	 * Retrieve ID (Formatted by default)
+	 * @param bool $formatted (optional) Whether ID should be formatted for external use or not
+	 * @return string ID
+	 */
+	function get_id($formatted = true) {
+		$id = $this->id;
+		if ( $formatted )
+			$this->add_prefix_ref($id);
+		return $id;
+	}
+	
+	/**
+	 * Retrieve raw ID
+	 * @return string Raw ID
+	 */
+	function get_id_raw() {
+		return $this->get_id(false);
+	}
+	
+	/**
+	 * Set ID
+	 * @param string ID
+	 */
+	function set_id($id) {
+		if ( is_scalar($id) ) {
+			$this->id = trim(strval($id));
+			return true;
+		}
+		return false;
+	}
+	
+	/**
+	 * Retrieve label
+	 * Uses first label (or default if defined) if specified type does not exist
+	 * @param string $type Label type to retrieve
+	 * @param string $default (optional) Default value if label type does not exist
+	 * @return string Label text
+	 */
+	function get_label($type, $default = null) {
+		//Retrieve existing label type
+		if ( isset($this->labels[$type]) )
+			return $this->labels[$type];
+		//Use default label if type is not set
+		if ( empty($default) && !empty($this->labels) ) {
+			reset($this->labels);
+			$default = current($this->labels);
+		}
+		
+		return ( empty($default) ) ? '' : $default;
+	}
+	
+	/**
+	 * Set text labels
+	 * @param array|string $labels
+	 */
+	function set_labels($labels) {
+		if ( empty($labels) )
+			return false;
+		//Single string
+		if ( is_string($labels) ) {
+			$labels = array ( $labels );
+		} 
+		
+		//Array
+		if ( is_array($labels) ) {
+			//Merge with existing labels
+			if ( empty($this->labels) || !is_array($this->labels) ) {
+				$this->labels = array();
+			}
+			$this->labels = array_merge($this->labels, $labels);
+		}
+	}
+	
+	/**
+	 * Set single text label
+	 * @uses this->set_labels()
+	 * @param string $type Label type to set
+	 * @param string $value Label value
+	 */
+	function set_label($type, $value) {
+		if ( is_string($type) && is_string($value) ) {
+			$label = array( $type => $value );
+			$this->set_labels($label);
+		}
+	}
+	
+	/**
+	 * Retrieve instance options
+	 * @return SLB_Options Options instance
+	 */
+	function &get_options() {
+		return $this->options;
+	}
+	
+	/**
+	 * Set options object
+	 * @param obj|array $options Options instance
+	 *  > If array, Options instance and specific groups are specified
+	 *   > 0: Options instance
+	 * 	 > 1: Group(s)
+	 */
+	function set_options($options) {
+		if ( empty($options) )
+			return false;
+		
+		$groups = null;
+		
+		if ( is_array($options) ) {
+			$options = array_values($options);
+			//Set option groups
+			if ( isset($options[1]) ) {
+				$groups = $options[1];
+			}
+			//Set options object
+			$options =& $options[0];
+		}
+		
+		if ( $this->util->is_a($options, 'Options') ) {
+			//Save options
+			$this->options =& $options;
+			
+			//Save option groups for valid options
+			$this->set_option_groups($groups);
+		}
+	}
+	
+	/**
+	 * Set option groups
+	 * @param string|array $groups Specified group(s)
+	 */
+	function set_option_groups($groups) {
+		if ( empty($groups) )
+			return false;
+		
+		//Validate data
+		if ( !is_array($groups) ) {
+			if ( is_scalar($groups) ) {
+				$groups = array(strval($groups));
+			}
+		}
+		
+		if ( is_array($groups) ) {
+			$this->option_groups = $groups;
+		}
+	}
+	
+	/**
+	 * Retrieve view callback
+	 * @return callback Callback
+	 */
+	function get_callback() {
+		return ( empty($this->callback) ) ? $this->m('handle') : $this->callback;
+	}
+	
+	/**
+	 * Set callback function for building item
+	 * @param callback $callback Callback function to use
+	 */
+	function set_callback($callback) {
+		if ( is_callable($callback) )
+			$this->callback = $callback;
+	}
+	
+	/**
+	 * Retrieve capability
+	 * @return string Capability
+	 */
+	function get_capability() {
+		return $this->capability;
+	}
+	
+	/**
+	 * Set capability for access control
+	 * @param string $capability Capability
+	 */
+	function set_capability($capability) {
+		if ( is_string($capability) && !empty($capability) )
+			$this->capability = $capability;
+	}
+	
+	/**
+	 * Set icon
+	 * @param string $icon Icon URI
+	 */
+	function set_icon($icon) {
+		if ( !empty($icon) && is_string($icon) )
+			$this->icon = $icon;
+	}
+	
+	function get_hookname() {
+		return ( empty($this->hookname) ) ? '' : $this->hookname;
+	}
+	
+	/**
+	 * Set hookname
+	 * @param string $hookname Hookname value
+	 */
+	function set_hookname($hookname) {
+		if ( !empty($hookname) && is_string($hookname) )
+			$this->hookname = $hookname;
+	}
+	
+	/**
+	 * Retrieve parent
+	 * Formats parent ID for custom parents
+	 * @return string Parent ID
+	 */
+	function get_parent() {
+		$parent = $this->parent;
+		return ( $this->is_parent_custom() ) ? add_prefix($parent) : $parent;
+	}
+	
+	/**
+	 * Set parent for view
+	 * @param string $parent Parent ID
+	 */
+	function set_parent($parent) {
+		global $dbg;
+		if ( $this->parent_required ) {
+			if ( !empty($parent) && is_string($parent) )
+			$this->parent = $parent;
+		} else {
+			$this->parent = null;
+		}
+	}
+		
+	/**
+	 * Specify whether parent is a custom view or a WP view
+	 * @param bool $custom (optional) TRUE if custom, FALSE if WP
+	 */
+	function set_parent_custom($custom = true) {
+		if ( $this->parent_required ) {
+			$this->parent_custom = !!$custom;
+		}
+	}
+	
+	/**
+	 * Set parent as WP view
+	 * @uses this->set_parent_custom()
+	 */
+	function set_parent_wp() {
+		$this->set_parent_custom(false);
+	}
+	
+	/**
+	 * Get view URI
+	 * URI Structures:
+	 *  > Top Level Menus: admin.php?page={menu_id}
+	 *  > Pages: [parent_page_file.php|admin.php]?page={page_id}
+	 * 	> Section: [parent_menu_uri]#{section_id}
+	 * 
+	 * @uses $admin_page_hooks to determine if page is child of default WP page
+	 * @return string Object URI 
+	 */
+	function get_uri($file = null, $format = null) {
+		global $dbg;
+		static $page_hooks = null;
+		$uri = '';
+		if ( empty($file) )
+			$file = 'admin.php';
+		if ( $this->is_child() ) {
+			$parent = str_replace('_page_' . $this->get_id(), '', $this->get_hookname());
+			if ( is_null($page_hooks) ) {
+				$page_hooks = array_flip($GLOBALS['admin_page_hooks']);
+			}
+			if ( isset($page_hooks[$parent]) )
+				$file = $page_hooks[$parent];
+		}
+		
+		if ( empty($format) )
+			$format = '%1$s?page=%2$s';
+		$uri = sprintf($format, $file, $this->get_id());
+
+		return $uri;
+	}
+	
+	/* Handlers */
+	
+	/**
+	 * Default View handler
+	 * Used as callback when none set
+	 */
+	function handle() {
+		global $dbg;
+		$dbg->print_message('Default view handler');
+		
+	}
+	
+	/* Validation */
+	
+	/**
+	 * Check if instance is valid based on required properties/data types
+	 * @return bool TRUE if valid, FALSE if not valid 
+	 */
+	function is_valid() {
+		$valid = true;
+		global $dbg;
+		foreach ( $this->required as $prop => $type ) {
+			if ( empty($this->{$prop} )
+				|| ( !empty($type) && is_string($type) && ( $f = 'is_' . $type ) && function_exists($f) && !$f($this->{$prop}) ) ) {
+				$valid = false;
+				break;
+			}
+		}
+		return $valid;
+	}
+	
+	function has_callback() {
+		return ( !empty($this->callback) ) ? true : false;
+	}
+	
+	function do_callback() {
+		if ( $this->has_callback() ) {
+			call_user_func($this->get_callback(), $this);
+		}
+	}
+		
+	function is_child() {
+		return $this->parent_required;
+	}
+	
+	function is_parent_custom() {
+		return ( $this->is_child() && $this->parent_custom ) ? true : false;
+	}
+	
+	function is_parent_wp() {
+		return ( $this->is_child() && !$this->parent_custom ) ? true : false;
+	}
+	
+	function is_options_valid() {
+		return ( is_object($this->get_options()) && $this->util->is_a($this->get_options(), $this->get_options_class()) ) ? true : false;
+	}
+	
+	/* UI Elements */
+	
+	function show_options($show_submit = true) {
+		//Build options form
+		if ( $this->is_options_valid() ) {
+			if ( $show_submit ) {
+				$submit = $this->get_button_submit();
+				//Handle form submission
+				//TODO: Move submission processing to options class
+				if ( isset($_REQUEST[$submit->id]) ) {
+					//Validate
+					$values = $this->get_options()->validate();
+					//Set option data
+					
+					$this->get_options()->set_data($values);
+				}
+			
+				//Build form output
+				$form_id = $this->add_prefix('admin_form_' . $this->get_id_raw());
+				?>
+				<form id="<?php esc_attr_e($form_id); ?>" name="<?php esc_attr_e($form_id); ?>" action="" method="post">
+			<?php 
+			}
+			//Build options output
+			$this->get_options()->build();
+			if ( $show_submit ) {
+				echo $submit->output;
+				?>
+				</form>
+				<?php
+			}
+		}
+	}
+	
+	/**
+	 * Build submit button element
+	 * @param string $text (optional) Button text
+	 * @param string $id (optional) Button ID (prefixed on output)
+	 * @param object $parent (optional) Page/Section object that contains button
+	 * @return object Button properties (id, output)
+	 */
+	function get_button_submit($text = null, $id = null, $parent = null) {
+		//Format values
+		if ( !is_string($text) || empty($text) )
+			$text = __('Save Changes');
+		if ( is_object($parent) && isset($parent->id) )
+			$parent = $parent->id . '_';
+		else
+			$parent = '';
+		if ( !is_string($id) || empty($id) )
+			$id = 'submit';
+		$id = $this->add_prefix($parent . $id);
+		//Build HTML
+		$out = $this->util->build_html_element(array(
+			'tag'			=> 'input',
+			'wrap'			=> false,
+			'attributes'	=> array(
+				'type'	=> 'submit',
+				'class'	=> 'button-primary',
+				'id'	=> $id,
+				'name'	=> $id,
+				'value'	=> $text
+			)
+		));
+		$out = '<p class="submit">' . $out . '</p>';
+		$ret = new stdClass;
+		$ret->id = $id;
+		$ret->output = $out;
+		return $ret;
+	}
+	
+	/**
+	 * Output submit button element
+	 * @param string $text (optional) Button text
+	 * @param string $id (optional) Button ID (prefixed on output)
+	 * @param object $parent (optional) Page/Section object that contains button
+	 * @return object Button properties (id, output)
+	 */
+	function button_submit($text = null, $id = null, $parent = null) {
+		$btn = $this->get_button_submit($text, $id, $parent);
+		echo $btn->output;
+		return $btn;
+	}
+}
+
+/**
+ * Admin Menu functionality
+ * @package Simple Lightbox
+ * @subpackage Admin
+ * @author Archetyped
+ */
+class SLB_Admin_Menu extends SLB_Admin_View {
+	/* Properties */
+	
+	/**
+	 * Menu position
+	 * @var int
+	 */
+	var $position = null;
+	
+	/* Init */
+	
+	function __construct($id, $labels, $options = null, $callback = null, $capability = null, $icon = null, $position = null) {
+		//Default
+		parent::__construct($id, $labels, $options, $callback, $capability, $icon);
+		//Class specific
+		$this->set_position($position);
+	}
+	
+	/* Getters/Setters */
+	
+	function set_position($position) {
+		if ( is_int($position) )
+			$this->position = $position;
+	}
+	
+	/* Handlers */
+	
+	function handle() {
+		global $dbg;
+		$dbg->print_message('Menu Handler');
+	}
+}
+
+/**
+ * Admin Page functionality
+ * @package Simple Lightbox
+ * @subpackage Admin
+ * @author Archetyped
+ */
+class SLB_Admin_Page extends SLB_Admin_View {
+	/* Properties */
+	
+	protected $required = array ( 'parent' => 'string' );
+	
+	var $parent_required = true;
+	
+	/* Init */
+	
+	function __construct($id, $parent, $labels, $options = null, $callback = null, $capability = null, $icon = null) {
+		//Default
+		parent::__construct($id, $labels, $options, $callback, $capability, $icon);
+		//Class specific
+		$this->set_parent($parent);
+	}
+	
+	/* Operations */
+	
+	function show_icon() {
+		echo screen_icon();
+	}
+	
+	/* Handlers */
+	
+	/**
+	 * Default Page handler
+	 * Builds options form UI for page
+	 * @see this->init_menus() Set as callback for custom admin pages
+	 * @uses current_user_can() to check if user has access to current page
+	 * @uses wp_die() to end execution when user does not have permission to access page
+	 * @uses this->menu_cap_default Default capability for page access
+	 * @uses this->parse_page
+	 */
+	function handle() {
+		global $dbg;
+		if ( !current_user_can($this->get_capability()) )
+			wp_die('Access Denied');
+		?>
+		<div class="wrap">
+			<?php $this->show_icon(); ?>
+			<h2><?php esc_html_e( $this->get_label('header') ); ?></h2>
+			<?php
+			$this->show_options();
+			?>
+		</div>
+		<?php
+	}
+}
+
+/**
+ * Admin Section functionality
+ * @package Simple Lightbox
+ * @subpackage Admin
+ * @author Archetyped
+ */
+class SLB_Admin_Section extends SLB_Admin_View {
+	/* Properties */
+	
+	protected $required = array ( 'parent' => 'string' );
+	
+	var $parent_required = true;
+	var $parent_custom = false;
+	
+	/* Init */
+	
+	function __construct($id, $parent, $labels, $options = null, $callback = null, $capability = null) {
+		//Default
+		parent::__construct($id, $labels, $options, $callback, $capability);
+		//Class specific
+		$this->set_parent($parent);
+	}
+	
+	/* Getters/Setters */
+	
+	function get_uri() {
+		$file = 'options-' . $this->get_parent() . '.php';
+		return parent::get_uri($file, '%1$s#%2$s');
+	}
+
+	/**
+	 * Retrieve formatted title for section
+	 * Wraps title text in element with anchor so that it can be linked to
+	 * @return string Title
+	 */
+	function get_title() {
+		return '<span id="' . $this->get_id() . '">' . $this->get_label('title') . '</span>';
+	}
+	
+	/* Handlers */
+	
+	function handle() {
+		$this->show_options(false);
+	}
 }

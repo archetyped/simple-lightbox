@@ -22,6 +22,15 @@ class SLB_Base {
 	 */
 	var $prefix = 'slb';
 	
+	/**
+	 * Class type
+	 * Controls initialization, etc.
+	 * > full - Fully-functional class
+	 * > object - Simple object class (no hooks, etc.)
+	 * @var string
+	 */
+	var $mode = 'full';
+	
 	/* Client */
 
 	/**
@@ -87,21 +96,26 @@ class SLB_Base {
 		if ( !isset($this) )
 			return false;
 		
-		//Options
-		$this->init_options();
-		add_action('admin_init', $this->m('init_options_text'));
-		
-		//Admin
-		$this->init_admin();
-		
-		/* Client files */
-		$this->init_client_files();
-		
-		/* Hooks */
-		$this->register_hooks();
-		
-		/* Environment */
-		add_action('init', $this->m('init_env'), 1);
+		switch ( $this->mode ) {
+			case 'object' :
+				break;
+			default :
+				//Options
+				$this->init_options();
+				add_action('admin_init', $this->m('init_options_text'));
+				
+				//Admin
+				$this->init_admin();
+				
+				/* Client files */
+				$this->init_client_files();
+				
+				/* Hooks */
+				$this->register_hooks();
+				
+				/* Environment */
+				add_action('init', $this->m('init_env'), 1);
+		}
 	}
 	
 	function register_hooks() {

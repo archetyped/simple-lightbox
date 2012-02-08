@@ -86,7 +86,7 @@ class SLB_Utilities {
 	 * @param string $sep (optional) Separator used
 	 */
 	function has_prefix($text, $sep = null) {
-		return ( !empty($text) && strpos($text, $this->get_prefix($sep)) === 0 );
+		return ( !empty($text) && stripos($text, $this->get_prefix($sep)) === 0 );
 	}
 	
 	/**

@@ -1474,13 +1474,23 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	
 	/**
 	 * Set data for an item
-	 * @param string|object $item Reference or ID of Field to set data for
+	 * @param mixed $item Field to set data for
+	 *  > string	Field ID
+	 *  > object	Field Reference
+	 *  > array		Data for multiple items (associative array [field ID => data])
 	 * @param mixed $value Data to set
+	 * @param bool $save (optional) Whether or not data should be saved to DB (Default: Yes)
 	 */
 	function set_data($item, $value = '', $save = true) {
 		//Set data for entire collection
-		if ( 1 == func_num_args() && is_array($item) )
+		if ( is_array($item) ) {
 			$this->data = wp_parse_args($item, $this->data);
+			//Update save option
+			$args = func_get_args();
+			if ( 2 == count($args) && is_bool($args[1]) ) {
+				$save = $args[1];
+			}
+		}
 		//Get $item's ID
 		elseif ( is_object($item) && method_exists($item, 'get_id') )
 			$item = $item->get_id();

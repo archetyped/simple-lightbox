@@ -308,15 +308,25 @@ class SLB_Lightbox extends SLB_Base {
 	
 	/*-** Admin **-*/
 
+	/**
+	 * Add admin menus
+	 * @uses this->admin->add_theme_page
+	 * @uses this->util->get_plugin_textdomain()
+	 */
 	function admin_menus() {
-		// $this->admin->add_section('options', __('Lightbox Settings', $this->util->get_plugin_textdomain()), $this->options_admin_page, $this->options);
-		$this->admin->add_menu('menu_test', 'Test Menu');
-		// $this->admin->add_page('page_test', 'Test', '[theme]');
-		$options_title = array(
-			'menu'		=> __('Lightbox', $this->util->get_plugin_textdomain()),
-			'header'	=> __('Lightbox Settings', $this->util->get_plugin_textdomain())
+		$options_labels = array(
+			'menu'			=> __('Lightbox', $this->util->get_plugin_textdomain()),
+			'header'		=> __('Lightbox Settings', $this->util->get_plugin_textdomain()),
+			'plugin_action'	=> __('Settings', $this->util->get_plugin_textdomain())
 		);
-		$this->admin->add_theme_page('options', $options_title, array(&$this->options));
+		$menu_labels = $options_labels;
+		$menu_labels['plugin_action'] = 'Menu Link';
+		$section_labels = $options_labels;
+		$section_labels['plugin_action'] = 'Section Link';
+		$this->admin->add_menu('menu', $menu_labels);
+		global $dbg;
+		$this->admin->add_theme_page('options', $options_labels, $this->options);
+		$this->admin->add_section('section', 'media', $section_labels, $this->options);
 	}
 	
 	/*-** Request **-*/
