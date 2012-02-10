@@ -28,6 +28,8 @@ class SLB_Admin extends SLB_Base {
 		'access_denied'	=> 'You do not have sufficient permissions'
 	);
 	
+	/* Views */
+	
 	/**
 	 * Custom admin top-level menus
 	 * Associative Array
@@ -56,29 +58,20 @@ class SLB_Admin extends SLB_Base {
 	var $sections = array();
 	
 	/**
-	 * Default menu capability
-	 * @var string
+	 * Reset options
+	 * Indexed Array
+	 * @var array
 	 */
-	var $menu_cap_default = 'manage_options';
-	
-	/**
-	 * Section delimeter
-	 * @var string
-	 */
-	var $delim_section = '_sec_';
-	
+	var $resets = array();
+
+	/* Client */
+		
 	var $styles = array(
 		'admin'		=> array (
 			'file'		=> 'css/admin.css',
 			'context'	=> array('admin')
 		)
 	);
-	
-	/* Constants */
-	
-	const TYPE_PAGE = 'page';
-	const TYPE_MENU = 'menu';
-	const TYPE_SECTION = 'section';
 	
 	/* Constructor */
 	
@@ -97,10 +90,10 @@ class SLB_Admin extends SLB_Base {
 		add_action('admin_menu', $this->m('init_menus'), 11);
 		
 		//Reset Settings
-		add_action('admin_action_' . $this->add_prefix('reset'), $this->m('reset_settings'));
+		add_action('admin_action_' . $this->add_prefix('admin'), $this->m('handle_action'));
 		
 		//Notices
-		add_action('admin_notices', $this->m('show_notices'));
+		add_action('admin_notices', $this->m('handle_notices'));
 		
 		//Plugin listing
 		add_filter('plugin_action_links_' . $this->util->get_plugin_base_name(), $this->m('plugin_action_links'), 10, 4);
@@ -123,105 +116,68 @@ class SLB_Admin extends SLB_Base {
 		global $admin_page_hooks;
 	}
 	
-	/* Parsers */
-	
-	/**
-	 * Retrieve properties for admin menu, page, or section
-	 * @uses current_filter() to determine current item being processed
-	 * @uses this->menus
-	 * @uses this->pages
-	 * @uses this->sections
-	 * 
-	 * @param string $type (optional) Item type to retrieve (Singular form of collection)
-	 * @param string $hook (optional) Hook to process (Default: current_filter())
-	 * @return object Item properties (Default: NULL)
-	 */
-	function &parse_item($type = 'page', $hook = null) {
-		global $dbg;
-		$ret = null;
-		//Determine page being displayed
-		if ( !is_string($hook) || empty($hook) )
-			$hook = current_filter();
-		$pos = strpos($hook, $this->get_prefix());
-		$o = ( $pos !== false ) ? substr($hook, $pos) : $hook;
-		$o = $this->remove_prefix($o);
-		if ( !empty($o) ) {
-			$types = array('page' => 'pages', 'menu' => 'menus', 'section' => 'sections');
-			if ( isset($this->{$types[$type]}[$o]) )
-				$o =& $this->{$types[$type]}[$o];
-			if ( is_object($o) )
-				$ret =& $o;
-		}
-		
-		return $ret;
-	}
-	
-	/**
-	 * Retrieve menu properties
-	 * @see this->parse_item()
-	 * @uses this->parse_item()
-	 * @param string $hook (optional) Hook to process
-	 * @return object menu properties
-	 */
-	function &parse_menu($hook = null) {
-		return $this->parse_item('menu', $hook);
-	}
-	
-	/**
-	 * Retrieve page properties
-	 * @see this->parse_item()
-	 * @uses this->parse_item()
-	 * @param string $hook (optional) Hook to process
-	 * @return object Page properties
-	 */
-	function &parse_page($hook = null) {
-		return $this->parse_item('page', $hook);
-	}
-	
-	function &parse_section($hook = null) {
-		return $this->parse_item('section', $hook);
-	}
-	
 	/* Handlers */
 	
-	function handle_section() {
-		
-	}
-
-	/**
-	 * Output admin menu
-	 * TODO: Build out functionality
-	 */
-	function handle_menu() {
+	function handle_action() {
 		global $dbg;
-		$dbg->print_message('Menu', $this->parse_menu());
-	}
-	
-	function get_title($obj, $type = '', $safe = true) {
-		$ret = '';
-		$safe = !!$safe;
-		if ( isset($obj->title) ) {
-			$t = $obj->title;
-			if ( is_array($t) && !empty($t) ) {
-				if ( isset($t[$type]) ) {
-					$t = $t[$type];
-				} elseif ( $safe ) {
-					//Use first element in array as fallback
-					$t = array_shift($t);
-				}
-			} elseif ( $safe && is_string($obj->title) ) {
-				//Use string value as fallback
-				$t = $obj->title;
-			}
-			
-			if ( is_string($t) )
-				$ret = $t;
-		}
+		//Parse action
+		$t = 'type';
+		$g = 'group';
+		$o = 'obj';
+		$this->add_prefix_ref($t);
+		$this->add_prefix_ref($g);
+		$this->add_prefix_ref($o);
+		$r =& $_REQUEST;
 		
-		return $ret;
+		//Retrieve view that initiated the action
+		if ( isset($r[$t]) && 'view' == $r[$t] ) {
+			if ( isset($r[$g]) && ( $prop = $r[$g] . 's' ) && property_exists($this, $prop) && is_array($this->{$prop}) && isset($r[$o]) && isset($this->{$prop}[$r[$o]]) ) {
+				$view =& $this->{$prop}[$r[$o]];
+				//Pass request to view
+				$view->do_callback();
+			}
+		}
 	}
 	
-	/*-** START: Refactor **-*/
+	/**
+	 * Display notices
+	 * Messages are localized upon display
+	 * @uses `admin_notices` action hook to display messages
+	 */
+	function handle_notices() {
+		$msgs = $this->util->apply_filters('admin_messages', array());
+		foreach ( $msgs as $mid => $msg ) {
+			//Filter out empty messages
+			if ( empty($msg) )
+				continue;
+			//Build and display message
+			$mid = $this->add_prefix('msg_' . $mid);
+			?>
+			<div id="<?php echo esc_attr($mid); ?>" class="updated fade">
+				<p>
+					<?php esc_html_e($msg, $this->util->get_plugin_textdomain());?>
+				</p>
+			</div>
+			<?php
+		}
+	}
+	
+	/**
+	 * Displays notices for admin operations
+	 */
+	function show_notices() {
+		if ( is_admin() && isset($_REQUEST[$this->add_prefix('action')]) ) {
+			$action = $_REQUEST[$this->add_prefix('action')];
+			$msg = null;
+			if ( $action ) {
+				$msg = $this->get_message($action);
+				if ( ! empty($msg) ) {
+					
+				}
+			}
+		}
+	}
+	/* Views */
 	
 	/**
 	 * Adds settings section for plugin functionality
@@ -283,27 +239,46 @@ class SLB_Admin extends SLB_Base {
  	}
 
 
+	/* Methods */
+	
 	/**
-	 * Checks if parent menu of specified page is a default WP page
-	 * @param obj $page Custom Page to check
-	 * @return bool TRUE if parent is default WP page, FALSE otherwise
+	 * Add a new view
+	 * @param string $type View type
+	 * @param string $id Unique view ID
+	 * @param array $args Arguments to pass to view constructor
+	 * @return int|bool View ID (FALSE if view was not properly initialized)
 	 */
-	function parent_is_default($page) {
-		$ret = false;
-		$wrapper = array('[', ']');
-		if ( is_object($page) && isset($page->parent) )
-			$ret = $this->util->has_wrapper($page->parent, $wrapper);
-		return $ret;
+	private function add_view($type, $id, $args) {
+		//Validate request
+		$class = $this->add_prefix('admin_' . $type);
+		$collection = $type . 's';
+		if ( !class_exists($class) || !property_exists($this, $collection) || !is_array($this->{$collection}) )
+			return false;
+		//Create new instance
+		$r =& new ReflectionClass($class);
+		$view =& $r->newInstanceArgs($args);
+		if ( $view->is_valid() )
+			$this->{$collection}[$id] =& $view;
+		else 
+			$id = false;
+		unset($view, $r);
+		return $id;
 	}
 	
-	function get_parent_wrapper() {
-		static $wrapper = null;
-		if ( empty($wrapper) )
-			$wrapper = array('[', ']');
-		return $wrapper;
+	/**
+	 * Add reset option to plugin action links
+	 * @param string $id Unique ID
+	 * @param array $labels Text for reset instance
+	 * > title - Link text (also title attribute value)
+	 * > confirm - Confirmation message
+	 * > success - Success message
+	 * > failure - Failure message
+	 * @param SLB_Options|array $options Options instance (or instance + specific groups)
+	 */
+	function add_reset($id, $labels, $options) {
+		$args = func_get_args();
+		return $this->add_view('reset', $id, $args);
 	}
-
-	/* Methods */
 	
 	/*-** Menus **-*/
 	
@@ -315,15 +290,8 @@ class SLB_Admin extends SLB_Base {
 	 * @return string Menu ID
 	 */
 	function add_menu($id, $labels, $position = null) {
-		//Create menu instance
-		$menu =& new SLB_Admin_Menu($id, $labels, null, null, null, $position);
-		//Add to collection
-		if ( $menu->is_valid() )
-			$this->menus[$id] =& $menu;
-		else
-			$id = false;
-		
-		return $id;
+		$args = array ( $id, $labels, null, null, null, $position );
+		return $this->add_view('menu', $id, $args);
 	}
 	
 	/* Page */
@@ -343,15 +311,8 @@ class SLB_Admin extends SLB_Base {
 	 * @return string Page ID
 	 */
 	function add_page($id, $parent, $labels, $options = null, $callback = null, $capability = null) {
-		//Init
-		$page =& new SLB_Admin_Page($id, $parent, $labels, $options, $callback, $capability);
-		global $dbg;
-		//Add to collection
-		if ( $page->is_valid() )
-			$this->pages[$id] =& $page;
-		else
-			$id = false;
-		return $id;
+		$args = func_get_args();
+		return $this->add_view('page', $id, $args);
 	}
 	
 	/* WP Pages */
@@ -591,58 +552,7 @@ class SLB_Admin extends SLB_Base {
 		return $id;
 	}
 	
-	function get_section_title($id) {
-		$ret = '';
-		$s =& $this->parse_section($id);
-		if ( isset($s->title) && !empty($s->title) )
-			$ret = sprintf('<div id="%s">%s</div>', $s->id, esc_html($s->title));
-		return $ret;
-	}
-	
 	/* Operations */
-	
-	/**
-	 * Reset plugin settings
-	 * Redirects to referring page upon completion
-	 */
-	function reset_settings() {
-		//Validate user
-		if ( ! current_user_can('activate_plugins') || ! check_admin_referer($this->add_prefix('reset')) )
-			wp_die(__($this->get_message('access_denied'), $this->util->get_plugin_textdomain()));
-		//Check action
-		$action = 'reset';
-		if ( isset($_REQUEST['action']) && $this->add_prefix($action) == $_REQUEST['action'] ) {
-			//Reset settings
-			if ( isset($this->parent->options) && $this->util->is_a($this->parent->options, 'Options') )
-				$this->parent->options->reset(true);
-			//Redirect user
-			$uri = remove_query_arg(array('_wpnonce', 'action'), add_query_arg(array($this->add_prefix('action') => $action), $_SERVER['REQUEST_URI']));
-			wp_redirect($uri);
-			exit;
-		}
-	}
-	
-	/**
-	 * Displays notices for admin operations
-	 */
-	function show_notices() {
-		if ( is_admin() && isset($_REQUEST[$this->add_prefix('action')]) ) {
-			$action = $_REQUEST[$this->add_prefix('action')];
-			$msg = null;
-			if ( $action ) {
-				$msg = $this->get_message($action);
-				if ( ! empty($msg) ) {
-					?>
-					<div id="message" class="updated fade">
-						<p>
-							<?php echo $msg;?>
-						</p>
-					</div>
-					<?php
-				}
-			}
-		}
-	}
 	
 	/**
 	* Adds custom links below plugin on plugin listing page
@@ -665,40 +575,44 @@ class SLB_Admin extends SLB_Base {
 			/* Get view links */
 			foreach ( array('menus', 'pages', 'sections') as $views ) {
 				foreach ( $this->{$views} as $view ) {
-					$label = $view->get_label($type);
-					if ( empty($label) )
+					if ( !$view->has_label($type) )
 						continue;
-					$acts[] = (object) array(
+					$acts[] = (object) array (
 						'id'	=> $views . '_' . $view->get_id(),
-						'label'	=> $label,
-						'uri'	=> $view->get_uri()
+						'label'	=> $view->get_label($type),
+						'uri'	=> $view->get_uri(),
+						'attributes'	=> array()
 					);
 				}
+			}
+			
+			/* Get reset links */
+			$type = 'title';
+			foreach ( $this->resets as $reset )	 {
+				if ( !$reset->has_label($type) )
+					continue;
+				$id = 'reset_' . $reset->get_id();
+				$acts[] = (object) array (
+					'id'	=> $id,
+					'label'	=> $reset->get_label($type),
+					'uri'	=> $reset->get_uri(),
+					'attributes'	=> $reset->get_link_attr()
+				);
 			}
 			
 			//Add links
 			$links = array();
 			foreach ( $acts as $act ) {
-				$links[$act->id] = $this->util->build_html_link($act->uri, $act->label);
+				$links[$act->id] = $this->util->build_html_link($act->uri, $act->label, $act->attributes);
 			}
-			
-			//Reset
-			/*
-			$reset = __('Reset', $this->util->get_plugin_textdomain());
-			$reset_confirm = "'" . __('Are you sure you want to reset your settings?', $this->util->get_plugin_textdomain()) . "'";
-			$action = $this->add_prefix('reset');
-			$reset_uri = wp_nonce_url(add_query_arg('action', $action, remove_query_arg(array($this->add_prefix('action'), 'action'), $_SERVER['REQUEST_URI'])), $action);
-			$reset_link = $this->util->build_html_link($reset_uri, $reset, array('id' => $this->add_prefix('reset'), 'onclick' => 'return confirm(' . $reset_confirm . ')'));
-			*/
 			
 			//Add links
 			$actions = array_merge($links, $actions);
-			//array_splice($actions, 1, 0, $reset_link);
 		}
 		return $actions;
 	}
 	
-	/*-** END: Refactor **-*/
+	/*-** START: Refactor **-*/
 	
 	/**
 	* Adds additional message for plugin updates
@@ -773,6 +687,7 @@ class SLB_Admin extends SLB_Base {
 	function set_message($id, $text) {
 		$this->messages[trim($id)] = $text;
 	}
+	/*-** END: Refactor **-*/
 
 }
 
@@ -854,6 +769,13 @@ class SLB_Admin_View extends SLB_Base {
 	var $hookname = null;
 	
 	/**
+	 * Messages to be displayed
+	 * Indexed Array
+	 * @var array
+	 */
+	var $messages = array();
+	
+	/**
 	 * Required properties
 	 * Associative array
 	 * > Key: Property name
@@ -886,9 +808,12 @@ class SLB_Admin_View extends SLB_Base {
 	
 	function init_required() {
 		$this->required = array_merge($this->_required, $this->required);
+		//Check for parent requirement
+		if ( $this->parent_required )
+			$this->required['parent'] = 'string';
 	}
 	
-	/* Getters/Setters */
+	/* Property Methods */
 	
 	/**
 	 * Retrieve ID (Formatted by default)
@@ -931,7 +856,7 @@ class SLB_Admin_View extends SLB_Base {
 	 */
 	function get_label($type, $default = null) {
 		//Retrieve existing label type
-		if ( isset($this->labels[$type]) )
+		if ( $this->has_label($type) )
 			return $this->labels[$type];
 		//Use default label if type is not set
 		if ( empty($default) && !empty($this->labels) ) {
@@ -975,6 +900,15 @@ class SLB_Admin_View extends SLB_Base {
 			$label = array( $type => $value );
 			$this->set_labels($label);
 		}
+	}
+	
+	/**
+	 * Checks if specified label is set on view
+	 * @param string $type Label type
+	 * @return bool TRUE if label exists, FALSE otherwise
+	 */
+	function has_label($type) {
+		return ( isset($this->labels[$type]) );
 	}
 	
 	/**
@@ -1038,11 +972,46 @@ class SLB_Admin_View extends SLB_Base {
 	}
 	
 	/**
+	 * Retrieve view messages
+	 * @return array Messages
+	 */
+	function &get_messages() {
+		if ( !is_array($this->messages) )
+			$this->messages = array();
+		return $this->messages;
+	}
+	
+	/**
+	 * Save message
+	 * @param string $text Message text
+	 */
+	function set_message($text) {
+		$msgs =& $this->get_messages();
+		$text = trim($text);
+		if ( empty($msgs) && !empty($text) )
+			$this->util->add_filter('admin_messages', $this->m('do_messages'));
+		$msgs[] = $text;
+	}
+	
+	/**
+	 * Add messages to array
+	 * Called by internal `admin_messages` filter hook
+	 * @param array $msgs Aggregated messages
+	 * @return array Merged messages array
+	 */
+	function do_messages($msgs = array()) {
+		$m =& $this->get_messages();
+		if ( !empty($m) )
+			$msgs = array_merge($msgs, $m);
+		return $msgs;
+	}
+	
+	/**
 	 * Retrieve view callback
 	 * @return callback Callback
 	 */
 	function get_callback() {
-		return ( empty($this->callback) ) ? $this->m('handle') : $this->callback;
+		return ( $this->has_callback() ) ? $this->callback : $this->m('handle');
 	}
 	
 	/**
@@ -1052,6 +1021,14 @@ class SLB_Admin_View extends SLB_Base {
 	function set_callback($callback) {
 		if ( is_callable($callback) )
 			$this->callback = $callback;
+	}
+	
+	function has_callback() {
+		return ( !empty($this->callback) ) ? true : false;
+	}
+	
+	function do_callback() {
+		call_user_func($this->get_callback());
 	}
 	
 	/**
@@ -1198,16 +1175,6 @@ class SLB_Admin_View extends SLB_Base {
 		return $valid;
 	}
 	
-	function has_callback() {
-		return ( !empty($this->callback) ) ? true : false;
-	}
-	
-	function do_callback() {
-		if ( $this->has_callback() ) {
-			call_user_func($this->get_callback(), $this);
-		}
-	}
-		
 	function is_child() {
 		return $this->parent_required;
 	}
@@ -1357,8 +1324,6 @@ class SLB_Admin_Menu extends SLB_Admin_View {
 class SLB_Admin_Page extends SLB_Admin_View {
 	/* Properties */
 	
-	protected $required = array ( 'parent' => 'string' );
-	
 	var $parent_required = true;
 	
 	/* Init */
@@ -1384,8 +1349,6 @@ class SLB_Admin_Page extends SLB_Admin_View {
 	 * @see this->init_menus() Set as callback for custom admin pages
 	 * @uses current_user_can() to check if user has access to current page
 	 * @uses wp_die() to end execution when user does not have permission to access page
-	 * @uses this->menu_cap_default Default capability for page access
-	 * @uses this->parse_page
 	 */
 	function handle() {
 		global $dbg;
@@ -1411,8 +1374,6 @@ class SLB_Admin_Page extends SLB_Admin_View {
  */
 class SLB_Admin_Section extends SLB_Admin_View {
 	/* Properties */
-	
-	protected $required = array ( 'parent' => 'string' );
 	
 	var $parent_required = true;
 	var $parent_custom = false;
@@ -1447,4 +1408,75 @@ class SLB_Admin_Section extends SLB_Admin_View {
 	function handle() {
 		$this->show_options(false);
 	}
+}
+
+class SLB_Admin_Reset extends SLB_Admin_View {
+	/* Properties */
+	
+	var $required = array ( 'options' => 'object' );
+	
+	var $parent_required = false;
+	
+	/* Init */
+	
+	function __construct($id, $labels, $options) {
+		parent::__construct($id, $labels, $options);
+	}
+	
+	/* Handlers */
+	
+	/**
+	 * Default handler
+	 * Resets plugin settings
+	 * @return string Status message (success, fail, etc.)
+	 */
+	function handle() {
+		//Validate user
+		if ( ! current_user_can('activate_plugins') || ! check_admin_referer($this->get_id()) )
+			wp_die('Access Denied');
+
+		//Reset settings
+		if ( $this->is_options_valid() )
+			$this->get_options()->reset(true);
+		
+		//Set Status Message
+		$this->set_message($this->get_label('success'));
+		
+		/*
+		//Redirect user
+		$uri = remove_query_arg(array('_wpnonce', 'action'), add_query_arg(array($this->add_prefix('action') => $action), $_SERVER['REQUEST_URI']));
+		wp_redirect($uri);
+		exit;
+		*/
+	}
+	
+	function get_uri() {
+		return wp_nonce_url(add_query_arg($this->get_query_args(), remove_query_arg($this->get_query_args_remove(), $_SERVER['REQUEST_URI'])), $this->get_id());
+	}
+	
+	function get_query_args() {
+		return array (
+			'action'					=> $this->add_prefix('admin'),
+			$this->add_prefix('type')	=> 'view',
+			$this->add_prefix('group')	=> 'reset',
+			$this->add_prefix('obj')	=> $this->get_id_raw()
+		);
+	}
+	
+	function get_query_args_remove() {
+		$args_r = array (
+			'_wpnonce',
+			$this->add_prefix('action')
+		);
+		
+		return array_unique( array_merge( array_keys( $this->get_query_args() ), $args_r ) );
+	}
+	
+	function get_link_attr() {
+		return array (
+			'class' 	=> 'delete',
+			'onclick'	=> "return confirm('" . $this->get_label('confirm') . "')"
+		);
+	}
+	
 }

@@ -427,20 +427,40 @@ class SLB_Utilities {
 	
 	/* Hooks */
 	
+	/**
+	 * Run plugin-specific action
+	 * Namespaces $tag
+	 * @see do_action()
+	 */
 	function do_action($tag, $arg = '') {
-		do_action($this->add_prefix($tag), $arg);
+		return do_action($this->add_prefix($tag), $arg);
 	}
 	
+	/**
+	 * Run plugin-specific filter
+	 * Namespaces $tag
+	 * @see apply_filters()
+	 */
 	function apply_filters($tag, $value) {
-		apply_filters($this->add_prefix($tag), $value);
+		return apply_filters($this->add_prefix($tag), $value);
 	}
 	
+	/**
+	 * Add plugin-specific action
+	 * Namespaces $tag
+	 * @see add_action()
+	 */
 	function add_action($tag, $function_to_add, $priority = 10, $accepted_args = 1) {
 		return add_action($this->add_prefix($tag), $function_to_add, $priority, $accepted_args);
 	}
 	
+	/**
+	 * Add plugin-specific filter
+	 * Namespaces $tag
+	 * @see add_filter()
+	 */
 	function add_filter($tag, $function_to_add, $priority = 10, $accepted_args = 1) {
-		return add_filter($this->add_prefix(tag), $function_to_add, $priority, $accepted_args);
+		return add_filter($this->add_prefix($tag), $function_to_add, $priority, $accepted_args);
 	}
 
 	/* Meta */

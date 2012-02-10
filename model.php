@@ -314,19 +314,28 @@ class SLB_Lightbox extends SLB_Base {
 	 * @uses this->util->get_plugin_textdomain()
 	 */
 	function admin_menus() {
+		$dom = $this->util->get_plugin_textdomain();
 		$options_labels = array(
-			'menu'			=> __('Lightbox', $this->util->get_plugin_textdomain()),
-			'header'		=> __('Lightbox Settings', $this->util->get_plugin_textdomain()),
-			'plugin_action'	=> __('Settings', $this->util->get_plugin_textdomain())
+			'menu'			=> __('Lightbox', $dom),
+			'header'		=> __('Lightbox Settings', $dom),
+			'plugin_action'	=> __('Settings', $dom)
 		);
 		$menu_labels = $options_labels;
 		$menu_labels['plugin_action'] = 'Menu Link';
 		$section_labels = $options_labels;
 		$section_labels['plugin_action'] = 'Section Link';
 		$this->admin->add_menu('menu', $menu_labels);
-		global $dbg;
+		
+		$labels_reset = array (
+			'title'			=> __('Reset', $dom),
+			'confirm'		=> __('Are you sure you want to reset settings?', $dom),
+			'success'		=> __('Setting Reset', $dom),
+			'failure'		=> __('Settings were not reset', $dom)
+		);
+		
 		$this->admin->add_theme_page('options', $options_labels, $this->options);
 		$this->admin->add_section('section', 'media', $section_labels, $this->options);
+		$this->admin->add_reset('reset', $labels_reset, $this->options);
 	}
 	
 	/*-** Request **-*/
