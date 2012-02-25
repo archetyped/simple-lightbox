@@ -159,9 +159,13 @@ class SLB_Utilities {
 	 * If $end not defined, then $start is used
 	 * @return obj Wrapper
 	 */
-	function get_wrapper($start, $end = null) {
+	function get_wrapper($start = null, $end = null) {
+		//Return pre-built wrapper
 		if ( is_object($start) && isset($start->start) && isset($start->end) )
 			return $start;
+		//Default wrapper
+		if ( is_null($start) && is_null($end) )
+			$start = array('[', ']');
 		$wrapper = compact('start', 'end');
 		if ( is_array($start) && count($start) > 1 ) {
 			$wrapper['start'] = $start[0];
@@ -179,10 +183,10 @@ class SLB_Utilities {
 	 * Check if text is wrapped by specified character(s)
 	 * @uses this->get_wrapper() to Validate wrapper text
 	 * @param string $text Text to check
-	 * @param string|array $start Start text (Array defines both start/end text)
+	 * @param string|array $start (optional) Start text (Array defines both start/end text)
 	 * @param string $end (optional) End text
 	 */
-	function has_wrapper($text, $start, $end = null) {
+	function has_wrapper($text, $start = null, $end = null) {
 		if ( !is_string($text) || empty($text) )
 			return false;
 		//Validate wrapper)
@@ -197,11 +201,11 @@ class SLB_Utilities {
 	 * @uses this->has_wrapper() to check if text is wrapped
 	 * @uses this->get_wrapper() to retrieve wrapper object
 	 * @param string $text Text to check
-	 * @param string|array $start Start text (Array defines both start/end text)
+	 * @param string|array $start (optional) Start text (Array defines both start/end text)
 	 * @param string $end (optional) End text
 	 * @return string Unwrapped text
 	 */
-	function remove_wrapper($text, $start, $end = null) {
+	function remove_wrapper($text, $start = null, $end = null) {
 		if ( $this->has_wrapper($text, $start, $end) ) {
 			$w = $this->get_wrapper($start, $end);
 			$text = substr($text, strlen($w->start), strlen($text) - strlen($w->start) - strlen($w->end) );
@@ -214,12 +218,12 @@ class SLB_Utilities {
 	 * Add wrapper to specified text
 	 * @uses this->get_wrapper() to retrieve wrapper object
 	 * @param string $text Text to wrap
-	 * @param string|array $start Start text (Array defines both start/end text)
+	 * @param string|array $start (optional) Start text (Array defines both start/end text)
 	 * @param string $end (optional) End text
 	 * @param bool $once (optional) Whether to wrap text only once (Default: TRUE)
 	 * @return string Wrapped text
 	 */
-	function add_wrapper($text, $start, $end = null, $once = true) {
+	function add_wrapper($text, $start = null, $end = null, $once = true) {
 		$w = $this->get_wrapper($start, $end);
 		if ( !$once || !$this->has_wrapper($text, $w) )
 			$text = $w->start . $text . $w->end;
@@ -233,28 +237,40 @@ class SLB_Utilities {
 	 * > Adds ID property (prefixed file key)
 	 * > Parses and validates internal dependencies
 	 * > Converts properties array to object
+	 * Properties
+	 * > file (string|array): File name (string) or callback (array) to retrieve file name
+	 * > deps (array) [optional]: Dependencies
+	 *   > Values wrapped in square brackets (`[` & `]`) are internal files
+	 * > callback (string|array) [optional]: Global callback to determine whether file should be loaded
+	 *   > Values wrapped in square brackets (`[` & `]`) are internal methods (of parent object) 
+	 * > context (array) [optional]: Context(s) in which to load the file
+	 *   Acceptable values
+	 *   > string: Context name
+	 *   > array: Context name + callback (both must return TRUE to load file) 
+	 *     > Callback follows same pattern as `callback` member
 	 * @param array $files Files array
 	 * @return object Client files
 	 */
 	function parse_client_files($files, $type = 'scripts') {
 		if ( is_array($files) && !empty($files) ) {
+			//Defaults
+			$defaults = array(
+				'file'		=> null,
+				'deps' 		=> array(),
+				'callback'	=> null,
+				'context'	=> array()
+			);
+			switch ( $type ) {
+				case 'styles':
+					$defaults['media'] = 'all';
+					break;
+				default:
+					$defaults['in_footer'] = false;
+			}
+			//Iterate through files
 			foreach ( $files as $h => $p ) {
-				//Defaults
-				$defaults = array(
-					'id' 		=> $this->add_prefix($h),
-					'file'		=> null,
-					'deps' 		=> array(),
-					'callback'	=> null,
-					'context'	=> array()
-				);
-				switch ( $type ) {
-					case 'styles':
-						$defaults['media'] = 'all';
-						break;
-					default:
-						$defaults['in_footer'] = false;
-				}
-				
+				//Set ID
+				$p['id'] = $this->add_prefix($h);
 				//Type Validation
 				foreach ( $defaults as $m => $d ) {
 					//Check if value requires validation
@@ -269,38 +285,58 @@ class SLB_Utilities {
 				
 				$p = array_merge($defaults, $p);
 				
+				/* File name */
+				
 				//Validate file
 				$file =& $p['file'];
-					
-				//Callback
-				if ( is_array($file) ) {
-					$file = $this->m($this->parent, array_shift($file));
-					if ( !is_callable($file) )
-						$file = null;
-				}
 				
-				//Remove invalid files
+				//Determine if filename or callback
+				if ( !$this->is_file($file) )
+					$file = $this->parse_client_file_callback($file);
+				//Remove invalid file and move on to next
 				if ( empty($file) ) {
 					unset($files[$h]);
 					continue;
 				}
 				
-				//Validate callback
-				$cb =& $p['callback'];
-				if ( !is_null($cb) ) {
-					if ( is_array($cb) )
-						$cb = $this->m($this->parent, array_shift($cb));
-					if ( !is_callable($cb) )
-						$cb = null;
-				}
-	
+				/* Dependencies */
+				
 				//Format internal dependencies
 				foreach ( $p['deps'] as $idx => $dep ) {
-					if ( substr($dep, 0, 1) == '[' && substr($dep, -1, 1) == ']' ) {
-						$dep = trim($dep, '[]');
+					if ( $this->has_wrapper($dep) ) {
+						$dep = $this->remove_wrapper($dep);
 						$p['deps'][$idx] = $this->add_prefix($dep);
 					}
 				}
+				
+				/* Context */
+				
+				//Validate callback
+				$cb =& $p['callback'];
+				$cb = $this->parse_client_file_callback($cb);
+				
+				//Validate contexts
+				$ctxs =& $p['context'];
+				foreach ( $ctxs as $idx => $ctx ) {
+					$ctx =& $ctxs[$idx];
+					//Context + Callback
+					if ( is_array($ctx) ) {
+						if ( count($ctx) == 1 ) {
+							$ctxs[$idx] = $ctx[0];
+						}
+						elseif ( count($ctx) > 1 ) {
+							$ctx[1] = $this->parse_client_file_callback($ctx[1]);
+							if ( empty($ctx[1]) )
+								$ctx = null;
+						}
+					}
+					//Remove invalid contexts
+					if ( empty($ctx) )
+						unset($ctxs[$idx]);
+				}
+				$ctxs = array_values($ctxs);
+				
+				/* Finalize Properties */
 				
 				//Convert properties to object
 				$files[$h] = (object) $p;
@@ -312,6 +348,21 @@ class SLB_Utilities {
 		if ( !is_object($files) )
 			$files = (object) $files;
 		return $files;
+	}
+
+	/**
+	 * Parses callbacks set for client files
+	 * @param string $callback Callback value
+	 *  > Values wrapped in square brackets (`[` & `]`) are internal methods (of parent object)
+	 * @return callback|null Validated callback (NULL if callback is invalid)
+	 */
+	function parse_client_file_callback($callback) {
+		if ( $this->has_wrapper($callback) ) {
+			$callback = $this->m($this->parent, $this->remove_wrapper($callback));
+		}
+		if ( !is_callable($callback) )
+			$callback = null;
+		return $callback;
 	}
 	
 	/**
@@ -428,39 +479,123 @@ class SLB_Utilities {
 	/* Hooks */
 	
 	/**
-	 * Run plugin-specific action
+	 * Retrieve parent object
+	 * @return obj|bool Parent object (FALSE if no valid parent set)
+	 */
+	function &get_parent() {
+		if ( is_object($this->parent) )
+			return $this->parent;
+		else
+			return false; 
+	}
+	
+	/**
+	 * Retrieve parent property value
+	 * @uses self::get_parent()
+	 * @param string $prop Property name
+	 * @param mixed $default Default value
+	 * @return mixed Parent property value
+	 */
+	function get_parent_property($prop, $default = '') {
+		$p =& $this->get_parent();
+		return ( !!$p && property_exists($p, $prop) ) ? $p->{$prop} : $default; 
+	}	
+	
+	/**
+	 * Retrieve formatted name for internal hooks
+	 * Prefixes with parent prefix and hook prefix
+	 * @uses self::get_parent_property() to retrieve hook prefix
+	 * @uses self::add_prefix()
+	 * @param string $tag Base tag
+	 * @return string Formatted hook
+	 */
+	function get_hook($tag) {
+		//Hook prefix
+		$hook = $this->get_parent_property('hook_prefix', '');
+		if ( !empty($hook) )
+			$hook .= '_';
+		//Prefix
+		return $this->add_prefix($hook . $tag);
+	}
+	
+	/**
+	 * Run internal action
 	 * Namespaces $tag
+	 * @uses self::get_hook()
 	 * @see do_action()
 	 */
 	function do_action($tag, $arg = '') {
-		return do_action($this->add_prefix($tag), $arg);
+		$args = func_get_args();
+		$args[0] = $this->get_hook($tag);
+		return call_user_func_array('do_action', $args);
 	}
 	
 	/**
-	 * Run plugin-specific filter
+	 * Run internal action passing arguments in array
+	 * @uses do_action_ref_array()
+	 */
+	function do_action_ref_array($tag, $args) {
+		return do_action_ref_array($this->get_hook($tag), $args);
+	}
+	
+	/**
+	 * Run internal filter
 	 * Namespaces $tag
+	 * @uses self::get_hook()
 	 * @see apply_filters()
 	 */
 	function apply_filters($tag, $value) {
-		return apply_filters($this->add_prefix($tag), $value);
+		$args = func_get_args();
+		$args[0] = $this->get_hook($tag);
+		return call_user_func_array('apply_filters', $args);
 	}
 	
 	/**
-	 * Add plugin-specific action
+	 * Run internal filter passing arguments in array
+	 * @uses apply_filters_ref_array()
+	 */
+	function apply_filters_ref_array($tag, $args) {
+		return apply_filters_ref_array($this->get_hook($tag), $args);	
+	}
+	
+	/**
+	 * Add internal action
 	 * Namespaces $tag
+	 * @uses self::get_hook()
 	 * @see add_action()
 	 */
 	function add_action($tag, $function_to_add, $priority = 10, $accepted_args = 1) {
-		return add_action($this->add_prefix($tag), $function_to_add, $priority, $accepted_args);
+		return add_action($this->get_hook($tag), $function_to_add, $priority, $accepted_args);
 	}
 	
 	/**
-	 * Add plugin-specific filter
+	 * Add internal filter
 	 * Namespaces $tag
+	 * @uses self::get_hook()
 	 * @see add_filter()
 	 */
 	function add_filter($tag, $function_to_add, $priority = 10, $accepted_args = 1) {
-		return add_filter($this->add_prefix($tag), $function_to_add, $priority, $accepted_args);
+		return add_filter($this->get_hook($tag), $function_to_add, $priority, $accepted_args);
+	}
+	
+	/**
+	 * Remove internal action
+	 * Namespaces $tag
+	 * @uses self::get_hook()
+	 * @uses remove_action()
+	 */
+	function remove_action($tag, $function_to_remove, $priority = 10, $accepted_args = 1) {
+		return remove_action($this->get_hook($tag), $function_to_remove, $priority, $accepted_args);	
+	}
+	
+	/**
+	 * Remove internal filter
+	 * Namespaces $tag
+	 * @uses self::get_hook()
+	 * @uses remove_filter()
+	 */
+	function remove_filter($tag, $function_to_remove, $priority = 10, $accepted_args = 1) {
+		return remove_filter($this->get_hook($tag), $function_to_remove, $priority, $accepted_args);
 	}
 
 	/* Meta */
@@ -554,7 +689,7 @@ class SLB_Utilities {
 	 * @param string $filename Filename to check for
 	 * @return bool TRUE if current page matches specified filename, FALSE otherwise
 	 */
-	function is_file( $filename ) {
+	function is_current_file( $filename ) {
 		return ( $filename == basename( $_SERVER['SCRIPT_NAME'] ) );
 	}
 	
@@ -564,8 +699,8 @@ class SLB_Utilities {
 	 */
 	function is_admin_management_page() {
 		return ( is_admin()
-				 && ( $this->is_file('edit.php')
-				 	|| ( $this->is_file('admin.php')
+				 && ( $this->is_current_file('edit.php')
+				 	|| ( $this->is_current_file('admin.php')
 				 		&& isset($_GET['page'])
 				 		&& strpos($_GET['page'], 'cnr') === 0 )
 				 	)
@@ -744,6 +879,16 @@ class SLB_Utilities {
 	}
 	
 	/**
+	 * Checks if value is valid file name
+	 * @param string $filename File name to check
+	 * @return bool TRUE if valid file name, FALSE otherwise
+	 */
+	function is_file($filename) {
+		$ext = $this->get_file_extension($filename);
+		return ( empty($ext) ) ? false : true;
+	}
+	
+	/**
 	 * Retrieves file extension
 	 * @param string $file file name/path
 	 * @param bool (optional) $lowercase Whether lowercase extension should be returned (Default: TRUE)
@@ -752,9 +897,11 @@ class SLB_Utilities {
 	function get_file_extension($file, $lowercase = true) {
 		$ret = '';
 		$sep = '.';
-		if ( ( $rpos = strrpos($file, $sep) ) !== false ) 
+		if ( !is_string($file) )
+			return $ret;
+		if ( ( $rpos = strrpos($file, $sep) ) > 0 ) 
 			$ret = substr($file, $rpos + 1);
-		if ( $lowercase )
+		if ( !!$lowercase )
 			$ret = strtolower($ret);
 		return $ret;
 	}

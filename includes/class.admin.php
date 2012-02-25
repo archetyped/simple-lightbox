@@ -119,7 +119,6 @@ class SLB_Admin extends SLB_Base {
 	/* Handlers */
 	
 	function handle_action() {
-		global $dbg;
 		//Parse action
 		$t = 'type';
 		$g = 'group';
@@ -185,7 +184,6 @@ class SLB_Admin extends SLB_Base {
 	 * @uses `admin_init` hook
 	 */
 	function init_menus() {
-		global $dbg;
 		//Add top level menus (when necessary)
 		/**
 		 * @var SLB_Admin_Menu
@@ -335,7 +333,6 @@ class SLB_Admin extends SLB_Base {
 		//Add page
 		$pid = $this->add_page($id, $parent, $labels, $options, $callback, $capability);
 		//Set parent as WP
-		global $dbg;
 		if ( $pid )
 			$this->pages[$pid]->set_parent_wp();
 		return $pid;
@@ -563,7 +560,6 @@ class SLB_Admin extends SLB_Base {
 	* @param $context
 	*/
 	function plugin_action_links($actions, $plugin_file, $plugin_data, $context) {
-		global $dbg;
 		global $admin_page_hooks;
 		//Add link to settings (only if active)
 		if ( is_plugin_active($this->util->get_plugin_base_name()) ) {
@@ -725,6 +721,12 @@ class SLB_Admin_View extends SLB_Base {
 	 * @var array
 	 */
 	var $option_groups = array();
+	
+	/**
+	 * Option building arguments
+	 * @var array
+	 */
+	var $option_args = array();
 	
 	/**
 	 * Function to handle building UI
@@ -1085,7 +1087,6 @@ class SLB_Admin_View extends SLB_Base {
 	 * @param string $parent Parent ID
 	 */
 	function set_parent($parent) {
-		global $dbg;
 		if ( $this->parent_required ) {
 			if ( !empty($parent) && is_string($parent) )
 			$this->parent = $parent;
@@ -1123,7 +1124,6 @@ class SLB_Admin_View extends SLB_Base {
 	 * @return string Object URI 
 	 */
 	function get_uri($file = null, $format = null) {
-		global $dbg;
 		static $page_hooks = null;
 		$uri = '';
 		if ( empty($file) )
@@ -1164,7 +1164,6 @@ class SLB_Admin_View extends SLB_Base {
 	 */
 	function is_valid() {
 		$valid = true;
-		global $dbg;
 		foreach ( $this->required as $prop => $type ) {
 			if ( empty($this->{$prop} )
 				|| ( !empty($type) && is_string($type) && ( $f = 'is_' . $type ) && function_exists($f) && !$f($this->{$prop}) ) ) {
@@ -1191,39 +1190,78 @@ class SLB_Admin_View extends SLB_Base {
 		return ( is_object($this->get_options()) && $this->util->is_a($this->get_options(), $this->get_options_class()) ) ? true : false;
 	}
 	
-	/* UI Elements */
+	/* Options */
+	
+	/**
+	 * Parse options build vars
+	 * @uses `options_parse_build_vars` filter hook
+	 */
+	function options_parse_build_vars($vars, $opts) {
+		//Handle form submission
+		if ( isset($_REQUEST[$opts->get_id('formatted')]) ) {
+			$vars['validate_pre'] = $vars['save_pre'] = true;
+		}
+		return $vars;
+	}
+	
+	function options_build_pre(&$opts) {
+		//Build form output
+		$form_id = $this->add_prefix('admin_form_' . $this->get_id_raw());
+		?>
+		<form id="<?php esc_attr_e($form_id); ?>" name="<?php esc_attr_e($form_id); ?>" action="" method="post">
+		<?php
+	}
+	
+	function options_build_post(&$opts)	{
+		submit_button();
+		?>
+		</form>
+		<?php
+	}
+	
+	function options_build_group_pre(&$opts, $group) {
+		echo '<h4 class="subhead">' . $group->title . '</h4>';
+	}
+	
 	
 	function show_options($show_submit = true) {
-		//Build options form
-		if ( $this->is_options_valid() ) {
-			if ( $show_submit ) {
-				$submit = $this->get_button_submit();
-				//Handle form submission
-				//TODO: Move submission processing to options class
-				if ( isset($_REQUEST[$submit->id]) ) {
-					//Validate
-					$values = $this->get_options()->validate();
-					//Set option data
-					
-					$this->get_options()->set_data($values);
-				}
-			
-				//Build form output
-				$form_id = $this->add_prefix('admin_form_' . $this->get_id_raw());
-				?>
-				<form id="<?php esc_attr_e($form_id); ?>" name="<?php esc_attr_e($form_id); ?>" action="" method="post">
-			<?php 
+		//Build options output
+		if ( !$this->is_options_valid() )
+			return false;
+		/**
+		 * @var SLB_Options
+		 */
+		$opts =& $this->get_options();
+		$hooks = array (
+			'filter'	=> array (
+				'parse_build_vars'		=> array( $this->m('options_parse_build_vars'), 10, 2 )
+			),
+			'action'	=> array (
+				'build_pre'				=> array( $this->m('options_build_pre') ),
+				'build_post'			=> array ( $this->m('options_build_post') ),
+				'build_group_pre'		=> array( $this->m('options_build_group_pre'), 10, 2 )
+			)
+		);
+		//Add actions
+		foreach ( $hooks as $type => $hook ) {
+			foreach ( $hook as $tag => $args ) {
+				array_unshift($args, $tag);
+				$m = 'add_' . $type;
+				call_user_func_array($this->util->m($opts->util, $m), $args);
 			}
-			//Build options output
-			$this->get_options()->build();
-			if ( $show_submit ) {
-				echo $submit->output;
-				?>
-				</form>
-				<?php
+		}
+		//Build options
+		$opts->build($this->option_args);
+		//Remove actions
+		foreach ( $hooks as $type => $hook ) {
+			foreach ( $hook as $tag => $args ) {
+				$m = 'remove_' . $type;
+				call_user_func($this->util->m($opts->util, $m), $tag, $args[0]);
 			}
 		}
 	}
+
+	/* UI Elements */
 	
 	/**
 	 * Build submit button element
@@ -1310,8 +1348,16 @@ class SLB_Admin_Menu extends SLB_Admin_View {
 	/* Handlers */
 	
 	function handle() {
-		global $dbg;
-		$dbg->print_message('Menu Handler');
+		if ( !current_user_can($this->get_capability()) )
+			wp_die('Access Denied');
+		?>
+		<div class="wrap">
+			<h2><?php esc_html_e( $this->get_label('header') ); ?></h2>
+			<?php
+			$this->show_options();
+			?>
+		</div>
+		<?php
 	}
 }
 
@@ -1351,7 +1397,6 @@ class SLB_Admin_Page extends SLB_Admin_View {
 	 * @uses wp_die() to end execution when user does not have permission to access page
 	 */
 	function handle() {
-		global $dbg;
 		if ( !current_user_can($this->get_capability()) )
 			wp_die('Access Denied');
 		?>
@@ -1400,7 +1445,7 @@ class SLB_Admin_Section extends SLB_Admin_View {
 	 * @return string Title
 	 */
 	function get_title() {
-		return '<span id="' . $this->get_id() . '">' . $this->get_label('title') . '</span>';
+		return '<div id="' . $this->get_id() . '" class="' . $this->add_prefix('section_head') . '">' . $this->get_label('title') . '</div>';
 	}
 	
 	/* Handlers */
@@ -1408,6 +1453,14 @@ class SLB_Admin_Section extends SLB_Admin_View {
 	function handle() {
 		$this->show_options(false);
 	}
+	
+	function options_parse_build_vars($vars, $opts) {
+		return $vars;
+	}
+	
+	function options_build_pre() {}
+	
+	function options_build_post()	{}
 }
 
 class SLB_Admin_Reset extends SLB_Admin_View {

@@ -28,11 +28,6 @@ require_once 'model.php';
 
 $slb =& new SLB_Lightbox();
 
-function slb_enabled() {
-	global $slb;
-	return $slb->is_enabled();
-}
-
 function slb_register_theme($name, $title, $stylesheet_url, $layout) {
 	global $slb;
 	$slb->register_theme($name, $title, $stylesheet_url, $layout);

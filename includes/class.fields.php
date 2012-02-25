@@ -105,7 +105,7 @@ class SLB_Field_Base extends SLB_Base {
 	 * Whether data has been fetched or not
 	 * @var bool
 	 */
-	var $data_fetched = false;
+	var $data_loaded = false;
 	
 	/**
 	 * @var array Script resources to include for object
@@ -132,7 +132,18 @@ class SLB_Field_Base extends SLB_Base {
 	 * @var array
 	 */
 	var $map = null;
-
+	
+	/**
+	 * Options used when building collection (callbacks, etc.)
+	 * Associative array
+	 * > Key: Option name
+	 * > Value: Option value
+	 * @var array
+	 */
+	var $build_vars = array();
+	
+	var $build_vars_default = array();
+	
 	/**
 	 * Constructor
 	 */
@@ -267,8 +278,12 @@ class SLB_Field_Base extends SLB_Base {
 				$deeper = false;
 		}
 		if ( $deeper && 'current' != $dir ) {
+			$ex_val = '';
 			//Get Parent value (recursive)
-			$ex_val = ( 'parent' != $dir ) ? $this->get_container_value($member, $name, $default) : $this->get_parent_value($member, $name, $default);
+			if ( 'parent' == $dir )
+				$ex_val = $this->get_parent_value($member, $name, $default);
+			elseif ( method_exists($this, 'get_container_value') )
+				$ex_val =  $this->get_container_value($member, $name, $default); 
 			//Handle inheritance
 			if ( is_array($val) ) {
 				//Combine Arrays
@@ -319,7 +334,6 @@ class SLB_Field_Base extends SLB_Base {
 	 */
 	function get_id($options = array()) {
 		$item_id = trim($this->id);
-		
 		$formats = $this->get_id_formats();
 		
 		//Setup options
@@ -352,19 +366,19 @@ class SLB_Field_Base extends SLB_Base {
 		$segments_pre = array_reverse($segments_pre);
 		
 		//Format ID based on options
-
 		$item_id = array($item_id);
 
 		//Add parent objects to ID 
 		if ( !!$recursive ) {
 			//Create array of ID components
-			$c = $this->get_caller();
+			$m = 'get_caller';
+			$c = ( method_exists($this, $m) ) ? $this->{$m}() : null;
 			while ( !!$c ) {
 				//Add ID of current caller to array
 				if ( method_exists($c, 'get_id') && ( $itemp = $c->get_id() ) && !empty($itemp) )
 					$item_id = $itemp;
 				//Get parent object
-				$c = ( method_exists($c, 'get_caller') ) ? $c->get_caller() : null;
+				$c = ( method_exists($c, $m) ) ? $c->{$m}() : null;
 				$itemp = '';
 			}
 			unset($c);
@@ -392,12 +406,13 @@ class SLB_Field_Base extends SLB_Base {
 			$val = '';
 			//Iterate through methods
 			foreach ( $prefix as $m ) {
+				if ( !method_exists($p, $m) )
+					continue;
 				//Build callback
 				$m = $this->util->m($p, $m);
 				//Call callback 
-				if ( is_callable($m) )
-					$val = call_user_func_array($m, $args);
-				//Process returned value
+				$val = call_user_func_array($m, $args);
+				//Returned value may be an instance object
 				if ( is_object($val) )
 					$p = $val; //Use returned object in next round
 				else
@@ -1167,6 +1182,8 @@ class SLB_Field_Type extends SLB_Field_Base {
 	 */
 	function get_layout($name = 'form', $parse_nested = true) {
 		//Retrieve specified layout (use $name value if no layout by that name exists)
+		if ( empty($name) )
+			$name = $this->get_container_value('build_vars', 'layout', 'form');
 		$layout = $this->get_member_value('layout', $name, $name);
 
 		//Find all nested layouts in current layout
@@ -1322,31 +1339,11 @@ class SLB_Field_Type extends SLB_Field_Base {
 	 * Build item output
 	 * @param string $layout (optional) Layout to build
 	 * @param string $data Data to pass to layout
-	 * @return string Generated output
 	 */
-	function build($layout = 'form', $data = null) {
-		$out = array(
-			$this->build_pre($layout, $data),
-			$this->build_layout($layout,$data),
-			$this->build_post($layout, $data)
-		);
-		return implode('', $out);
-	}
-	
-	/**
-	 * Content to add before layout output
-	 * @return string
-	 */
-	function build_pre($layout = 'form', $data = null) {
-		return '';
-	}
-	
-	/**
-	 * Content to add after layout output
-	 * @return string
-	 */
-	function build_post($layout = 'form', $data = null) {
-		return '';
+	function build($layout = null, $data = null) {
+		$this->util->do_action_ref_array('build_pre', array(&$this));
+		echo $this->build_layout($layout, $data);
+		$this->util->do_action_ref_array('build_post', array(&$this));
 	}
 	
 	/**
@@ -1405,12 +1402,34 @@ class SLB_Field extends SLB_Field_Type {}
  */
 class SLB_Field_Collection extends SLB_Field_Base {
 	
+	/* Properties */
+	
+	/**
+	 * Item type
+	 * @var string
+	 */
+	var $item_type = 'SLB_Field';
+	
 	/**
 	 * Indexed array of items in collection
 	 * @var array
 	 */
 	var $items = array();
-
+	
+	var $id_formats = array (
+		'formatted' => array(
+			'wrap'		=> array ( 'open' => '_' ),
+			'recursive'	=> false,
+			'prefix'	=> array('get_prefix')
+		)
+	);
+	
+	var $build_vars_default = array ( 
+		'groups'	=> array(),
+		'context'	=> '',
+		'layout'	=> 'form',
+	);
+	
 	/**
 	 * Associative array of groups in content type
 	 * Key: Group name
@@ -1421,12 +1440,6 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	 * @var array
 	 */
 	var $groups = array();
-	
-	/**
-	 * Item type
-	 * @var string
-	 */
-	var $item_type = 'SLB_Field';
 	
 	/* Constructors */
 
@@ -1469,7 +1482,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	 * @return void
 	 */
 	function load_data() {
-		$this->data_fetched = true;
+		$this->data_loaded = true;
 	}
 	
 	/**
@@ -1481,7 +1494,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	 * @param mixed $value Data to set
 	 * @param bool $save (optional) Whether or not data should be saved to DB (Default: Yes)
 	 */
-	function set_data($item, $value = '', $save = true) {
+	function set_data($item, $value = '', $save = true, $force_set = false) {
 		//Set data for entire collection
 		if ( is_array($item) ) {
 			$this->data = wp_parse_args($item, $this->data);
@@ -1495,9 +1508,9 @@ class SLB_Field_Collection extends SLB_Field_Base {
 		elseif ( is_object($item) && method_exists($item, 'get_id') )
 			$item = $item->get_id();
 		//Set data
-		if ( is_string($item) && !empty($item) && isset($this->items[$item]) )
+		if ( is_string($item) && !empty($item) && ( isset($this->items[$item]) || !!$force_set ) )
 			$this->data[$item] = $value;
-		if ( $save )
+		if ( !!$save )
 			$this->save();
 	}
 
@@ -1563,8 +1576,10 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	/**
 	 * Removes item from collection
 	 * @param string|object $item Object or item ID to remove
+	 * @param bool $save (optional) Whether to save the collection after removing item (Default: YES)
 	 */
-	function remove($item) {
+	function remove($item, $save = true) {
+		//Remove item
 		if ( $this->has($item) ) {
 			$item = $this->get($item);
 			$item = $item->get_id();
@@ -1572,6 +1587,31 @@ class SLB_Field_Collection extends SLB_Field_Base {
 			unset($this->items[$item]);
 			//Remove item from groups
 			$this->remove_from_group($item);
+		}
+		//Remove item data from collection
+		$this->remove_data($item, false);
+		
+		if ( !!$save )
+			$this->save();
+	}
+	
+	/**
+	 * Remove item data from collection
+	 * @param string|object $item Object or item ID to remove
+	 * @param bool $save (optional) Whether to save the collection after removing item (Default: YES)
+	 */
+	function remove_data($item, $save = true) {
+		//Get item ID from object
+		if ( $this->has($item) ) {
+			$item = $this->get($item);
+			$item = $item->get_id();
+		}
+		
+		//Remove data from data member
+		if ( is_string($item) && is_array($this->data) ) {
+			unset($this->data[$item]);
+			if ( !!$save )
+				$this->save();
 		}
 	}
 
@@ -1602,18 +1642,19 @@ class SLB_Field_Collection extends SLB_Field_Base {
 			}
 		}
 		
-		if ( empty($item) ) {
-			//Return empty item if no item exists
-			$item =& new $this->item_type;
+		if ( !is_object($item) ) {
+			//Fallback: Return empty item if no item exists
+			$item =& new $this->item_type('');
 		}
 		return $item;
 	}
 	
 	/**
 	 * Retrieve item data
-	 * @param $item
-	 * @param $context
-	 * @param $top
+	 * @param $item Item to get data for
+	 * @param $context (optional) Context
+	 * @param $top (optional) Iterate through ancestors to get data (Default: Yes)
+	 * @return mixed Item data
 	 */
 	function get_data($item = null, $context = '', $top = true) {
 		$this->load_data();
@@ -1621,9 +1662,12 @@ class SLB_Field_Collection extends SLB_Field_Base {
 		if ( $this->has($item) ) {
 			$item =& $this->get($item);
 			$ret = $item->get_data($context, $top);
-		} elseif ( is_null($item) ) {
+		} else {
 			$ret = parent::get_data($context, $top);
 		}
+		
+		if ( is_string($item) && is_array($ret) && isset($ret[$item]) )
+			$ret = $ret[$item];
 		return $ret;
 	}
 
@@ -1659,19 +1703,21 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	}
 	
 	/**
-	 * Default bulk item building method
-	 * Children classes should implement their own functionality
+	 * Build output for items in specified group
 	 * If no group specified, all items in collection are built
 	 * @param string|object $group (optional) Group to build items for (ID or instance object)
-	 * @return void
 	 */
 	function build_items($group = null) {
+		//Get group items
 		$items =& $this->get_items($group);
-		$out = array();
+		if ( empty($items) )
+			return false;
+		
+		$this->util->do_action_ref_array('build_items_pre', array(&$this));
 		foreach ( $items as $item ) {
-			$out[] = $item->build();
+			$item->build();
 		}
-		return implode('', $out);
+		$this->util->do_action_ref_array('build_items_post', array(&$this));
 	}
 	
 	/* Group */
@@ -1864,63 +1910,82 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	function &get_groups() {
 		return $this->get_member_value('groups');
 	}
-
-	/**
-	 * Output items in a group
-	 * @param string $group ID of Group to output
-	 * @return string Group output
-	 * @todo Refactor to be general builder
-	 */
-	function build_group($group) {
-		$out = array();
-		$classnames = (object) array(
-			'multi'		=> 'multi_field',
-			'single'	=> 'single_field',
-			'elements'	=> 'has_elements'
-		);
-
-		//Stop execution if group does not exist
-		if ( $this->group_exists($group) && $group =& $this->get_group($group) ) {
-			$group_items = ( count($group->items) > 1 ) ? $classnames->multi : $classnames->single . ( ( ( $fs = array_keys($group->items) ) && ( $f =& $group->items[$fs[0]] ) && ( $els = $f->get_member_value('elements', '', null) ) && !empty($els) ) ? '_' . $classnames->elements : '' );
-			$classname = array($this->add_prefix('attributes_wrap'), $group_items);
-			$out[] = '<div class="' . implode(' ', $classname) . '">'; //Wrap all items in group
-
-			//Build layout for each item in group
-			foreach ( array_keys($group->items) as $item_id ) {
-				$item =& $group->items[$item_id];
-				$item->set_caller($this);
-				//Start item output
-				$id = $this->add_prefix('field_' . $item->get_id());
-				$out[] = '<div id="' . $id . '_wrap" class=' . $this->add_prefix('attribute_wrap') . '>';
-				//Build item layout
-				$out[] = $item->build_layout();
-				//end item output
-				$out[] = '</div>';
-				$item->clear_caller();
-			}
-			$out[] = '</div>'; //Close items container
-			//Add description if exists
-			if ( !empty($group->description) )
-				$out[] = '<p class=' . $this->add_prefix('group_description') . '>' . $group->description . '</p>';
-		}
-
-		//Return group output
-		return implode($out);
-	}
-	
-	/* Collection */
 	
 	/**
-	 * Build entire collection of items
+	 * Output groups
+	 * @uses self::build_vars to determine groups to build
 	 */
-	function build($groups = array()) {
-		//Get Groups
-		if ( empty($groups) || !is_array($groups) )
-			$groups = array_keys($this->get_groups());
+	function build_groups() {
+		$this->util->do_action_ref_array('build_groups_pre', array(&$this));
+		
+		//Get groups to build
+		$groups = ( !empty($this->build_vars['groups']) ) ? $this->build_vars['groups'] : array_keys($this->get_groups());
 		//Build groups
 		foreach ( $groups as $group ) {
 			$this->build_group($group);
 		}
+		
+		$this->util->do_action_ref_array('build_groups_post', array(&$this));
+	}
+
+	/**
+	 * Build group
+	 */
+	function build_group($group) {
+		if ( !$this->group_exists($group) )
+			return false;
+		$group =& $this->get_group($group);
+		//Stop processing if group contains no items
+		if ( !count($this->get_items($group)) )
+			return false;
+		
+		//Pre action
+		$this->util->do_action_ref_array('build_group_pre', array(&$this, $group));
+		
+		//Build items
+		$this->build_items($group);
+		
+		//Post action
+		$this->util->do_action_ref_array('build_group_post', array(&$this, $group));
+	}
+
+	/* Collection */
+	
+	/**
+	 * Build entire collection of items
+	 * Prints output
+	 */
+	function build($build_vars = array()) {
+		//Parse vars
+		$this->parse_build_vars($build_vars);
+		$this->util->do_action_ref_array('build_init', array(&$this));
+		//Pre-build output
+		$this->util->do_action_ref_array('build_pre', array(&$this));
+		//Build groups
+		$this->build_groups();
+		//Post-build output
+		$this->util->do_action_ref_array('build_post', array(&$this));
+	}
+	
+	/**
+	 * Parses build variables prior to use
+	 * @uses this->reset_build_vars() to reset build variables for each request
+	 * @param array $build_vars Variables to use for current request
+	 */
+	function parse_build_vars($build_vars = array()) {
+		$this->reset_build_vars();
+		$this->build_vars = $this->util->apply_filters('parse_build_vars', wp_parse_args($build_vars, $this->build_vars), $this);		
+	}
+	
+	/**
+	 * Reset build variables to defaults
+	 * Default Variables
+	 * > groups		- array - Names of groups to build
+	 * > context	- string - Context of current request
+	 * > layout		- string - Name of default layout to use
+	 */
+	function reset_build_vars() {
+		$this->build_vars = wp_parse_args($this->build_vars, $this->build_vars_default);
 	}
 }
 
@@ -2288,5 +2353,50 @@ class SLB_Fields extends SLB_Field_Collection {
 		}
 
 		return $output;
+	}
+	
+	/* Build */
+	
+	/**
+	 * Output items in a group
+	 * @param string $group ID of Group to output
+	 * @return string Group output
+	 * TODO Make compatible with parent::build_group()
+	 */
+	function build_group($group) {
+		$out = array();
+		$classnames = (object) array(
+			'multi'		=> 'multi_field',
+			'single'	=> 'single_field',
+			'elements'	=> 'has_elements'
+		);
+
+		//Stop execution if group does not exist
+		if ( $this->group_exists($group) && $group =& $this->get_group($group) ) {
+			$group_items = ( count($group->items) > 1 ) ? $classnames->multi : $classnames->single . ( ( ( $fs = array_keys($group->items) ) && ( $f =& $group->items[$fs[0]] ) && ( $els = $f->get_member_value('elements', '', null) ) && !empty($els) ) ? '_' . $classnames->elements : '' );
+			$classname = array($this->add_prefix('attributes_wrap'), $group_items);
+			$out[] = '<div class="' . implode(' ', $classname) . '">'; //Wrap all items in group
+
+			//Build layout for each item in group
+			foreach ( array_keys($group->items) as $item_id ) {
+				$item =& $group->items[$item_id];
+				$item->set_caller($this);
+				//Start item output
+				$id = $this->add_prefix('field_' . $item->get_id());
+				$out[] = '<div id="' . $id . '_wrap" class=' . $this->add_prefix('attribute_wrap') . '>';
+				//Build item layout
+				$out[] = $item->build_layout();
+				//end item output
+				$out[] = '</div>';
+				$item->clear_caller();
+			}
+			$out[] = '</div>'; //Close items container
+			//Add description if exists
+			if ( !empty($group->description) )
+				$out[] = '<p class=' . $this->add_prefix('group_description') . '>' . $group->description . '</p>';
+		}
+
+		//Return group output
+		return implode($out);
 	}
 }

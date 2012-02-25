@@ -19,20 +19,18 @@ class SLB_Lightbox extends SLB_Base {
 		'core'			=> array (
 			'file'		=> 'js/lib.core.js',
 			'deps'		=> 'jquery',
-			'callback'	=> array('is_enabled')
 		),
-		'lightbox'		=> array (
-			'file'		=> 'js/lib.lightbox.js',
+		'viewer'		=> array (
+			'file'		=> 'js/lib.viewer.js',
 			'deps'		=> array('jquery', '[core]'),
-			'context'	=> 'public',
-			'callback'	=> array('is_enabled')
+			'context'	=> array( array('public', '[is_enabled]') ),
 		)
 	);
 	
 	var $styles = array (
 		'theme'		=> array (
-			'file'		=> array('get_theme_style'),
-			'callback'	=> array('is_enabled')
+			'file'		=> '[get_theme_style]',
+			'context'	=> array( array('public', '[is_enabled]') )
 		)
 	);
 	
@@ -43,8 +41,6 @@ class SLB_Lightbox extends SLB_Base {
 	var $themes = array();
 	
 	var $theme_default = 'default';
-	
-	var $options_admin_page = 'options-media.php';
 	
 	/**
 	 * Value to identify activated links
@@ -114,8 +110,6 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	var $fields = null;
 	
-	var $h_temp = array();
-	
 	/* Constructor */
 	
 	function __construct() {
@@ -142,8 +136,10 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	function init_client_files() {
 		//Load appropriate file for request
+		/*
 		if ( ( defined('WP_DEBUG') && WP_DEBUG ) || isset($_REQUEST[$this->add_prefix('debug')]) )
 			$this->scripts['lightbox']['file'] = 'js/dev/lib.lightbox.dev.js';
+		*/
 		//Default init
 		parent::init_client_files();
 	}
@@ -164,7 +160,6 @@ class SLB_Lightbox extends SLB_Base {
 		}
 		
 		//Context
-		global $dbg;
 		add_action(( is_admin() ) ? 'admin_head' : 'wp_head', $this->m('set_client_context'));
 	}
 	
@@ -191,29 +186,44 @@ class SLB_Lightbox extends SLB_Base {
 				'group_gallery'				=> array('default' => false, 'group' => 'grouping'),
 				'group_widget'				=> array('default' => false, 'group' => 'grouping'),
 				'theme'						=> array('default' => $this->theme_default, 'group' => 'ui', 'parent' => 'option_select', 'options' => $this->m('get_theme_options')),
-				'animate'					=> array('default' => true, 'group' => 'ui', 'in_client' => true),
-				'autostart'					=> array('default' => true, 'group' => 'ui', 'in_client' => true),
-				'duration'					=> array('default' => '6', 'attr' => array('size' => 3, 'maxlength' => 3), 'group' => 'ui', 'in_client' => true),
-				'loop'						=> array('default' => true, 'group' => 'ui', 'in_client' => true),
-				'overlay_opacity'			=> array('default' => '0.8', 'attr' => array('size' => 3, 'maxlength' => 3), 'group' => 'ui', 'in_client' => true),
-				'enabled_caption'			=> array('default' => true, 'group' => 'ui', 'in_client' => true),
-				'caption_src'				=> array('default' => true, 'group' => 'ui', 'in_client' => true),
-				'enabled_desc'				=> array('default' => true, 'group' => 'ui', 'in_client' => true),
-				'txt_closeLink'				=> array('default' => 'close', 'group' => 'labels'),
-				'txt_loadingMsg'			=> array('default' => 'loading', 'group' => 'labels'),
-				'txt_nextLink'				=> array('default' => 'next &raquo;', 'group' => 'labels'),
-				'txt_prevLink'				=> array('default' => '&laquo; prev', 'group' => 'labels'),
-				'txt_startSlideshow'		=> array('default' => 'start slideshow', 'group' => 'labels'),
-				'txt_stopSlideshow'			=> array('default' => 'stop slideshow', 'group' => 'labels'),
-				'txt_numDisplayPrefix'		=> array('default' => 'Image', 'group' => 'labels'),
-				'txt_numDisplaySeparator'	=> array('default' => 'of', 'group' => 'labels')
+				'ui_animate'				=> array('default' => true, 'group' => 'ui', 'in_client' => true),
+				'slideshow_autostart'		=> array('default' => true, 'group' => 'ui', 'in_client' => true),
+				'slideshow_duration'		=> array('default' => '6', 'attr' => array('size' => 3, 'maxlength' => 3), 'group' => 'ui', 'in_client' => true),
+				'group_loop'				=> array('default' => true, 'group' => 'ui', 'in_client' => true),
+				'ui_overlay_opacity'		=> array('default' => '0.8', 'attr' => array('size' => 3, 'maxlength' => 3), 'group' => 'ui', 'in_client' => true),
+				'ui_enabled_caption'		=> array('default' => true, 'group' => 'ui', 'in_client' => true),
+				'ui_caption_src'			=> array('default' => true, 'group' => 'ui', 'in_client' => true),
+				'ui_enabled_desc'			=> array('default' => true, 'group' => 'ui', 'in_client' => true),
+				'txt_link_close'			=> array('default' => 'close', 'group' => 'labels'),
+				'txt_loading'				=> array('default' => 'loading', 'group' => 'labels'),
+				'txt_link_next'				=> array('default' => 'next &raquo;', 'group' => 'labels'),
+				'txt_link_prev'				=> array('default' => '&laquo; prev', 'group' => 'labels'),
+				'txt_slideshow_start'		=> array('default' => 'start slideshow', 'group' => 'labels'),
+				'txt_slideshow_stop'		=> array('default' => 'stop slideshow', 'group' => 'labels'),
+				'txt_slideshow_status'		=> array('default' => 'Image #current# of #total#', 'group' => 'labels')		
 			),
 			'legacy' => array (
-				'header_activation'	=> null,
-				'header_enabled'	=> null,
-				'header_strings'	=> null,
-				'header_ui'			=> null,
-				'enabled_single'	=> array('enabled_post', 'enabled_page')
+				'header_activation'			=> null,
+				'header_enabled'			=> null,
+				'header_strings'			=> null,
+				'header_ui'					=> null,
+				'txt_numDisplayPrefix' 		=> null,
+				'txt_numDisplaySeparator'	=> null,
+				'enabled_single'			=> array('enabled_post', 'enabled_page'),
+				'caption_src'				=> 'ui_caption_src',
+				'animate'					=> 'ui_animate',
+				'overlay_opacity'			=> 'ui_overlay_opacity',
+				'enabled_caption'			=> 'ui_enabled_caption',
+				'enabled_desc'				=> 'ui_enabled_desc',
+				'txt_closeLink'				=> 'txt_link_close',
+				'txt_nextLink'				=> 'txt_link_next',
+				'txt_prevLink'				=> 'txt_link_prev',
+				'txt_startSlideshow'		=> 'txt_slideshow_start',	
+				'txt_stopSlideshow'			=> 'txt_slideshow_stop',
+				'loop'						=> 'group_loop',
+				'autostart'					=> 'slideshow_autostart',
+				'duration'					=> 'slideshow_duration',
+				'txt_loadingMsg'			=> 'txt_loading'
 			)
 		);
 		
@@ -247,22 +257,21 @@ class SLB_Lightbox extends SLB_Base {
 				'group_gallery'				=> __('Group gallery links separately', $p),
 				'group_widget'				=> __('Group widget links separately', $p),
 				'theme'						=> __('Theme', $p),
-				'animate'					=> __('Animate lightbox resizing', $p),
-				'autostart'					=> __('Automatically Start Slideshow', $p),
-				'duration'					=> __('Slide Duration (Seconds)', $p),
-				'loop'						=> __('Loop through images', $p),
-				'overlay_opacity'			=> __('Overlay Opacity (0 - 1)', $p),
-				'enabled_caption'			=> __('Enable caption', $p),
-				'caption_src'				=> __('Use image URI as caption when link title not set', $p),
-				'enabled_desc'				=> __('Enable description', $p),
-				'txt_closeLink'				=> __('Close link (for accessibility only, image used for button)', $p),
-				'txt_loadingMsg'			=> __('Loading indicator', $p),
-				'txt_nextLink'				=> __('Next Image link', $p),
-				'txt_prevLink'				=> __('Previous Image link', $p),
-				'txt_startSlideshow'		=> __('Start Slideshow link', $p),
-				'txt_stopSlideshow'			=> __('Stop Slideshow link', $p),
-				'txt_numDisplayPrefix'		=> __('Image number prefix (e.g. <strong>Image</strong> x of y)', $p),
-				'txt_numDisplaySeparator'	=> __('Image number separator (e.g. Image x <strong>of</strong> y)', $p),
+				'ui_animate'				=> __('Animate lightbox resizing', $p),
+				'slideshow_autostart'		=> __('Automatically Start Slideshow', $p),
+				'slideshow_duration'		=> __('Slide Duration (Seconds)', $p),
+				'group_loop'				=> __('Loop through images', $p),
+				'ui_overlay_opacity'		=> __('Overlay Opacity (0 - 1)', $p),
+				'ui_enabled_caption'		=> __('Enable caption', $p),
+				'ui_enabled_desc'			=> __('Enable description', $p),
+				'ui_caption_src'			=> __('Set file name as caption when link title not set', $p),
+				'txt_link_close'			=> __('Close link (for accessibility only, image used for button)', $p),
+				'txt_loading'				=> __('Loading indicator', $p),
+				'txt_link_next'				=> __('Next Image link', $p),
+				'txt_link_prev'				=> __('Previous Image link', $p),
+				'txt_slideshow_start'		=> __('Start Slideshow link', $p),
+				'txt_slideshow_stop'		=> __('Stop Slideshow link', $p),
+				'txt_slideshow_status'		=> __('Slideshow status format', $p),
 			)
 		);
 		
@@ -288,7 +297,7 @@ class SLB_Lightbox extends SLB_Base {
 		
 		//Init lightbox
 		$priority = 99;
-		add_action('wp_head', $this->m('client_init'));
+		add_action('wp_head', $this->m('client_init'), 11);
 		add_action('wp_footer', $this->m('client_footer'), $priority);
 		//Link activation
 		add_filter('the_content', $this->m('activate_links'), $priority);
@@ -320,12 +329,13 @@ class SLB_Lightbox extends SLB_Base {
 			'header'		=> __('Lightbox Settings', $dom),
 			'plugin_action'	=> __('Settings', $dom)
 		);
+		/*
 		$menu_labels = $options_labels;
 		$menu_labels['plugin_action'] = 'Menu Link';
 		$section_labels = $options_labels;
 		$section_labels['plugin_action'] = 'Section Link';
 		$this->admin->add_menu('menu', $menu_labels);
-		
+		*/
 		$labels_reset = array (
 			'title'			=> __('Reset', $dom),
 			'confirm'		=> __('Are you sure you want to reset settings?', $dom),
@@ -334,7 +344,7 @@ class SLB_Lightbox extends SLB_Base {
 		);
 		
 		$this->admin->add_theme_page('options', $options_labels, $this->options);
-		$this->admin->add_section('section', 'media', $section_labels, $this->options);
+		// $this->admin->add_section('section', 'media', $section_labels, $this->options);
 		$this->admin->add_reset('reset', $labels_reset, $this->options);
 	}
 	
@@ -355,14 +365,14 @@ class SLB_Lightbox extends SLB_Base {
 		$this->util->extend_client_object($ctx, true);
 	}
 
-	/*-** Helpers **-*/
+	/*-** Functionality **-*/
 	
 	/**
 	 * Checks whether lightbox is currently enabled/disabled
 	 * @return bool TRUE if lightbox is currently enabled, FALSE otherwise
 	 */
 	function is_enabled($check_request = true) {
-		$ret = ( $this->options->get_bool('enabled') && !is_feed() && !is_admin() ) ? true : false;
+		$ret = ( $this->options->get_bool('enabled') && !is_feed() ) ? true : false;
 		if ( $ret && $check_request ) {
 			$opt = '';
 			//Determine option to check
@@ -376,387 +386,6 @@ class SLB_Lightbox extends SLB_Base {
 			//Check option
 			if ( !empty($opt) && ( $opt = 'enabled_' . $opt ) && $this->options->has($opt) ) {
 				$ret = $this->options->get_bool($opt);
-			}
-		}
-		return $ret;
-	}
-	
-	/*-** Widgets **-*/
-	
-	/**
-	 * Reroute widget display handlers to internal method
-	 * @param array $sidebar_widgets List of sidebars & their widgets
-	 * @uses WP Hook `sidebars_widgets` to intercept widget list
-	 * @global $wp_registered_widgets to reroute display callback
-	 * @return array Sidebars and widgets (unmodified)
-	 */
-	function sidebars_widgets($sidebars_widgets) {
-		global $wp_registered_widgets;
-		static $widgets_processed = false;
-		if ( is_admin() || empty($wp_registered_widgets) || $widgets_processed || !is_object($this->options) || !$this->is_enabled() || !$this->options->get_bool('enabled_widget') )
-			return $sidebars_widgets; 
-		$widgets_processed = true;
-		//Fetch active widgets from all sidebars
-		foreach ( $sidebars_widgets as $sb => $ws ) {
-			//Skip inactive widgets and empty sidebars
-			if ( 'wp_inactive_widgets' == $sb || empty($ws) || !is_array($ws) )
-				continue;
-			foreach ( $ws as $w ) {
-				if ( isset($wp_registered_widgets[$w]) && isset($wp_registered_widgets[$w][$this->widget_callback]) ) {
-					$wref =& $wp_registered_widgets[$w];
-					//Backup original callback
-					$wref[$this->widget_callback_orig] = $wref[$this->widget_callback];
-					//Reroute callback
-					$wref[$this->widget_callback] = $this->m('widget_callback');
-					unset($wref);
-				}
-			}
-		}
-
-		return $sidebars_widgets;
-	}
-	
-	/**
-	 * Widget display handler
-	 * Original widget display handler is called inside of an output buffer & links in output are processed before sending to browser 
-	 * @param array $args Widget instance properties
-	 * @param int (optional) $widget_args Additional widget args (usually the widget's instance number)
-	 * @see WP_Widget::display_callback() for more information
-	 * @see sidebars_widgets() for callback modification
-	 * @global $wp_registered_widgets
-	 * @uses widget_process_links() to Process links in widget content
-	 * @return void
-	 */
-	function widget_callback($args, $widget_args = 1) {
-		global $wp_registered_widgets;
-		$wid = ( isset($args['widget_id']) ) ? $args['widget_id'] : false;
-		//Stop processing if widget data invalid
-		if ( !$wid || !isset($wp_registered_widgets[$wid]) || !($w =& $wp_registered_widgets[$wid]) || !isset($w['id']) || $wid != $w['id'] )
-			return false;
-		//Get original callback
-		if ( !isset($w[$this->widget_callback_orig]) || !($cb = $w[$this->widget_callback_orig]) || !is_callable($cb) )
-			return false;
-		$params = func_get_args();
-		$this->widget_processing = true;
-		//Start output buffer
-		ob_start();
-		//Call original callback
-		call_user_func_array($cb, $params);
-		//Flush output buffer
-		echo $this->widget_process_links(ob_get_clean(), $wid);
-		$this->widget_processing = false;
-	}
-	
-	/**
-	 * Process links in widget content
-	 * @param string $content Widget content
-	 * @return string Processed widget content
-	 * @uses process_links() to process links
-	 */
-	function widget_process_links($content, $id) {
-		$id = ( $this->options->get_bool('group_widget') ) ? "widget_$id" : null;
-		return $this->process_links($content, $id);
-	}
-	
-	/*-** Theme **-*/
-	
-	/**
-	 * Retrieve themes for use in option field
-	 * @uses self::theme_default
-	 * @uses self::get_themes()
-	 * @return array Theme options
-	 */
-	function get_theme_options() {
-		//Get themes
-		$themes = $this->get_themes();
-		
-		//Pop out default theme
-		$theme_default = $themes[$this->theme_default];
-		unset($themes[$this->theme_default]);
-		
-		//Sort themes by title
-		uasort($themes, create_function('$a,$b', 'return strcmp($a[\'title\'], $b[\'title\']);'));
-		
-		//Insert default theme at top of array
-		$themes = array($this->theme_default => $theme_default) + $themes;
-		
-		//Build options
-		foreach ( $themes as $name => $props ) {
-			$themes[$name] = $props['title'];
-		}
-		return $themes;
-	}
-	
-	/**
-	 * Retrieve themes
-	 * @uses UTIL::do_action() Calls internal 'init_themes' hook to allow plugins to register themes
-	 * @uses $themes to return registered themes
-	 * @return array Retrieved themes
-	 */
-	function get_themes() {
-		static $fetched = false;
-		if ( !$fetched ) {
-			$this->themes = array();
-			$this->util->do_action('init_themes');
-			$fetched = true;
-		}
-		return $this->themes;
-	}
-	
-	/**
-	 * Retrieve theme
-	 * @param string $name Name of theme to retrieve
-	 * @uses theme_exists() to check for existence of theme
-	 * @return array Theme data
-	 */
-	function get_theme($name = '') {
-		$name = strval($name);
-		//Default: Get current theme if no theme specified
-		if ( empty($name) ) {
-			$name = $this->options->get_value('theme');
-		}
-		if ( !$this->theme_exists($name) )
-			$name = $this->theme_default;
-		return $this->themes[$name];
-	}
-	
-	/**
-	 * Retrieve specific of theme data
-	 * @uses get_theme() to retrieve theme data
-	 * @param string $name Theme name
-	 * @param string $field Theme field to retrieve
-	 * @return mixed Field data
-	 */
-	function get_theme_data($name = '', $field) {
-		$theme = $this->get_theme($name);
-		return ( isset($theme[$field]) ) ? $theme[$field] : '';
-	}
-	
-	/**
-	 * Retrieve theme stylesheet URL
-	 * @param string $name Theme name
-	 * @uses get_theme_data() to retrieve theme data
-	 * @return string Stylesheet URL
-	 */
-	function get_theme_style($name = '') {
-		return $this->get_theme_data($name, 'stylesheet_url');
-	}
-	
-	/**
-	 * Retrieve theme layout
-	 * @uses get_theme_data() to retrieve theme data
-	 * @param string $name Theme name
-	 * @param bool $filter (optional) Filter layout based on user preferences 
-	 * @return string Theme layout HTML
-	 */
-	function get_theme_layout($name = '', $filter = true) {
-		$l = $this->get_theme_data($name, 'layout');
-		//Filter
-		if ( !$this->options->get_bool('enabled_caption') )
-			$l = str_replace($this->get_theme_placeholder('dataCaption'), '', $l);
-		if ( !$this->options->get_bool('enabled_desc') )
-			$l = str_replace($this->get_theme_placeholder('dataDescription'), '', $l);
-		return $l;
-	}
-	
-	/**
-	 * Check whether a theme exists
-	 * @param string $name Theme to look for
-	 * @uses get_themes() to intialize themes if not already performed
-	 * @return bool TRUE if theme exists, FALSE otherwise
-	 */
-	function theme_exists($name) {
-		$this->get_themes();
-		return ( isset($this->themes[trim(strval($name))]) );
-	}
-	
-	/**
-	 * Register lightbox theme
-	 * @param string $name Unique theme name
-	 * @param string $title Display name for theme
-	 * @param string $stylesheet_url URL to stylesheet
-	 * @param string $layout Layout HTML
-	 * @uses $themes to store the registered theme
-	 */
-	function register_theme($name, $title, $stylesheet_url, $layout) {
-		if ( !is_array($this->themes) ) {
-			$this->themes = array();
-		}
-		
-		//Validate parameters
-		$name = trim(strval($name));
-		$title = trim(strval($title));
-		$stylesheet_url = trim(strval($stylesheet_url));
-		$layout = $this->format_theme_layout($layout);
-		
-		$defaults = array(
-			'name'				=> '',
-			'title'				=> '',
-			'stylesheet_url' 	=> '',
-			'layout'			=> ''
-		);
-		
-		//Add theme to array
-		$this->themes[$name] = wp_parse_args(compact(array_keys($defaults), $defaults)); 
-	}
-	
-	/**
-	 * Build theme placeholder
-	 * @param string $name Placeholder name
-	 * @return string Placeholder
-	 */
-	function get_theme_placeholder($name) {
-		return '{' . $name . '}';
-	}
-	
-	/**
-	 * Formats layout for usage in JS
-	 * @param string $layout Layout to format
-	 * @return string Formatted layout
-	 */
-	function format_theme_layout($layout = '') {
-		//Remove line breaks
-		$layout = str_replace(array("\r\n", "\n", "\r", "\t"), '', $layout);
-		
-		//Escape quotes
-		$layout = str_replace("'", "\'", $layout);
-		
-		//Return
-		return "'" . $layout . "'";
-	}
-	
-	/**
-	 * Add default themes
-	 * @uses register_theme() to register the theme(s)
-	 */
-	function init_default_themes() {
-		$name = $this->theme_default;
-		$title = 'Default';
-		$stylesheet_url = $this->util->get_file_url('css/lightbox.css');
-		$layout = file_get_contents($this->util->normalize_path($this->util->get_path_base(), 'templates', 'default', 'layout.html'));
-		$this->register_theme($name, $title, $stylesheet_url, $layout);
-		//Testing: Additional themes
-		$this->register_theme('black', 'Black', $this->util->get_file_url('css/lb_black.css'), $layout);
-	}
-
-	/*-** Frontend **-*/
-	
-	/**
-	 * Builds wrapper for grouping
-	 * @return object Wrapper properties
-	 *  > open
-	 *  > close
-	 */
-	function group_get_wrapper() {
-		static $wrapper = null;
-		if (  is_null($wrapper) ) {
-			$start = '<';
-			$end = '>';
-			$terminate = '/';
-			$val = $this->add_prefix('group');
-			//Build properties
-			$wrapper = array(
-				'open' => $start . $val . $end,
-				'close' => $start . $terminate . $val . $end
-			);
-			//Convert to object
-			$wrapper = (object) $wrapper;
-		}
-		return $wrapper;
-	}
-	
-	/**
-	 * Wraps galleries for grouping
-	 * @uses `the_content` Filter hook
-	 * @uses gallery_wrap_callback to Wrap shortcodes for grouping
-	 * @param string $content Post content
-	 * @return string Modified post content
-	 */
-	function gallery_wrap($content) {
-		if ( !$this->is_enabled() )
-			return $content;
-		//Stop processing if option not enabled
-		if ( !$this->options->get_bool('group_gallery') )
-			return $content;
-		global $shortcode_tags;
-		//Save default shortcode handlers to temp variable
-		$sc_temp = $shortcode_tags;
-		//Find gallery shortcodes
-		$shortcodes = array('gallery', 'nggallery');
-		$m = $this->m('gallery_wrap_callback');
-		$shortcode_tags = array();
-		foreach ( $shortcodes as $tag ) {
-			$shortcode_tags[$tag] = $m;
-		}
-		//Wrap gallery shortcodes
-		$content = do_shortcode($content);
-		//Restore default shortcode handlers
-		$shortcode_tags = $sc_temp;
-		
-		return $content;
-	}
-	
-	/**
-	 * Wraps gallery shortcodes for later processing
-	 * @param array $attr Shortcode attributes
-	 * @param string $content Content enclosed in shortcode
-	 * @param string $tag Shortcode name
-	 * @return string Wrapped gallery shortcode
-	 */
-	function gallery_wrap_callback($attr, $content = null, $tag) {
-		//Rebuild shortcode
-		$sc = '[' . $tag . ' ' . $this->util->build_attribute_string($attr) . ']';
-		if ( !empty($content) )
-			$sc .= $content . '[/' . $tag .']';
-		//Wrap shortcode
-		$w = $this->group_get_wrapper();
-		$sc = $w->open . $sc . $w->close;
-		return $sc;
-	}
-	
-	/**
-	 * Removes wrapping from galleries
-	 * @uses `the_content` filter hook
-	 * @param $content Post content
-	 * @return string Modified post content
-	 */
-	function gallery_unwrap($content) {
-		if ( !$this->is_enabled() )
-			return $content;
-		//Stop processing if option not enabled
-		if ( !$this->options->get_bool('group_gallery') )
-			return $content;
-		$w = $this->group_get_wrapper();
-		if ( strpos($content, $w->open) !== false ) {
-			$content = str_replace($w->open, '', $content);
-			$content = str_replace($w->close, '', $content);
-		}
-		return $content;
-	}
-	
-	/**
-	 * Retrieve supported media types
-	 * @return object Supported media types
-	 */
-	function get_media_types() {
-		static $t = null;
-		if ( is_null($t) )
-			$t = (object) $this->media_types;
-		return $t;
-	}
-	
-	/**
-	 * Check if media type is supported
-	 * @param string $type Media type
-	 * @return bool If media type is supported
-	 */
-	function is_media_type_supported($type) {
-		$ret = false;
-		$t = $this->get_media_types();
-		foreach ( $t as $n => $v ) {
-			if ( $type == $v ) {
-				$ret = true;
-				break;
 			}
 		}
 		return $ret;
@@ -815,22 +444,6 @@ class SLB_Lightbox extends SLB_Base {
 			$content = str_replace($g_ph, $w->open . $this->process_links($g_content, 'gallery_' . $group) . $w->close, $content);
 		}
 		return $content;
-	}
-	
-	/**
-	 * Retrieve HTML links in content
-	 * @param string $content Content to get links from
-	 * @param bool (optional) $unique Remove duplicates from returned links (Default: FALSE)
-	 * @return array Links in content
-	 */
-	function get_links($content, $unique = false) {
-		$rgx = "/\<a[^\>]+href=.*?\>/i";
-		$links = array();
-		preg_match_all($rgx, $content, $links);
-		$links = $links[0];
-		if ( $unique )
-			$links = array_unique($links);
-		return $links;
 	}
 	
 	/**
@@ -961,225 +574,21 @@ class SLB_Lightbox extends SLB_Base {
 		}
 		return $content;
 	}
-	
-	/**
-	 * Generates link attributes from array
-	 * @param array $attrs Link Attributes
-	 * @return string Attribute string
-	 */
-	function build_attributes($attrs) {
-		$a = array();
-		//Validate attributes
-		$attrs = $this->get_attributes($attrs, false);
-		//Iterate through attributes and build output array
-		foreach ( $attrs as $key => $val ) {
-			//Standard attributes
-			if ( is_bool($val) && $val ) {
-				$a[] = $key;
-			}
-			//Attributes with values
-			elseif ( is_string($val) ) {
-				$a[] = $key . '[' . $val . ']';
-			}
-		}
-		return implode(' ', $a);
-	}
 
 	/**
-	 * Build attribute name
-	 * Makes sure name is only prefixed once
-	 * @return string Formatted attribute name 
+	 * Retrieve HTML links in content
+	 * @param string $content Content to get links from
+	 * @param bool (optional) $unique Remove duplicates from returned links (Default: FALSE)
+	 * @return array Links in content
 	 */
-	function make_attribute_name($name = '') {
-		$sep = '_';
-		$name = trim($name);
-		//Generate valid name
-		if ( $name != $this->attr ) {
-			//Use default name
-			if ( empty($name) )
-				$name = $this->attr;
-			//Add prefix if not yet set
-			elseif ( strpos($name, $this->attr . $sep) !== 0 )
-				$name = $this->attr . $sep . $name;
-		}
-		return $name;
-	}
-
-	/**
-	 * Create attribute to disable lightbox for current link
-	 * @return string Disabled lightbox attribute
-	 */
-	function make_attribute_disabled() {
-		static $ret = null;
-		if ( is_null($ret) ) {
-			$ret = $this->make_attribute_name('off');
-		}
-		return $ret;
-	}
-	
-	/**
-	 * Set attribute to array
-	 * Attribute is added to array if it does not exist
-	 * @param array $attrs Current attribute array
-	 * @param string $name Name of attribute to add
-	 * @param string (optional) $value Attribute value
-	 * @return array Updated attribute array
-	 */
-	function set_attribute($attrs, $name, $value = null) {
-		//Validate attribute array
-		$attrs = $this->get_attributes($attrs, false);
-		//Build attribute name
-		$name = $this->make_attribute_name($name);
-		//Set attribute
-		$attrs[$name] = true;
-		if ( !empty($value) && is_string($value) )
-			$attrs[$name] = $value;
-		return $attrs;
-	}
-	
-	/**
-	 * Convert attribute string into array
-	 * @param string $attr_string Attribute string
-	 * @param bool (optional) $internal Whether only internal attributes should be evaluated (Default: TRUE)
-	 * @return array Attributes as associative array
-	 */
-	function get_attributes($attr_string, $internal = true) {
-		$ret = array();
-		//Protect bracketed values prior to parsing attributes string
-	 	if ( is_string($attr_string) ) {
-	 		$attr_string = trim($attr_string);
-	 		$attr_vals = array();
-			$attr_keys = array();
-			$offset = 0;
-	 		while ( ($bo = strpos($attr_string,'[', $offset)) && $bo !== false
-	 			&& ($bc = strpos($attr_string,']', $bo)) && $bc !== false
-				) {
-	 			//Push all preceding attributes into array
-	 			$attr_temp = explode(' ', substr($attr_string, $offset, $bo));
-				//Get attribute name
-				$name = array_pop($attr_temp);
-				$attr_keys = array_merge($attr_keys, $attr_temp);
-				//Add to values array
-				$attr_vals[$name] = substr($attr_string, $bo+1, $bc-$bo-1);
-				//Update offset
-				$offset = $bc+1;
-	 		}
-			//Parse remaining attributes
-			$attr_keys = array_merge($attr_keys, array_filter(explode(' ', substr($attr_string, $offset))));
-			//Set default values for all keys
-			$attr_keys = array_fill_keys($attr_keys, TRUE);
-			//Merge attributes with values
-			$ret = array_merge($attr_keys, $attr_vals);
-	 	} elseif ( is_array($attr_string) )
-			$ret = $attr_string;
-		
-		//Filter non-internal attributes if necessary
-		if ( $internal && is_array($ret) ) {
-			foreach ( array_keys($ret) as $attr ) {
-				if ( $attr == $this->attr)
-					continue;
-				if ( strpos($attr, $this->attr . '_') !== 0 )
-					unset($ret[$attr]);
-			}
-		}
-		
-		return $ret;
-	}
-	
-	/**
-	 * Retrieve attribute value
-	 * @param string|array $attrs Attributes to retrieve attribute value from
-	 * @param string $attr Attribute name to retrieve
-	 * @param bool (optional) $internal Whether only internal attributes should be evaluated (Default: TRUE)
-	 * @return string|bool Attribute value (Default: FALSE)
-	 */
-	function get_attribute($attrs, $attr, $internal = true) {
-		$ret = false;
-		$attrs = $this->get_attributes($attrs, $internal);
-		//Validate attribute name for internal attributes
-		if ( $internal )
-			$attr = $this->make_attribute_name($attr);
-		if ( isset($attrs[$attr]) ) {
-			$ret = $attrs[$attr];
-		}
-		return $ret;
-	}
-	
-	/**
-	 * Checks if attribute exists
-	 * @param string|array $attrs Attributes to retrieve attribute value from
-	 * @param string $attr Attribute name to retrieve
-	 * @param bool (optional) $internal Whether only internal attributes should be evaluated (Default: TRUE)
-	 * @return bool Whether or not attribute exists
-	 */
-	function has_attribute($attrs, $attr, $internal = true) {
-		return ( $this->get_attribute($attrs, $attr, $internal) !== false ) ? true : false;
-	}
-	
-	/**
-	 * Cache media properties for later processing
-	 * @param string $uri URI for internal media (e.g. direct uri, attachment uri, etc.) 
-	 * @param string $type Media type (image, attachment, etc.)
-	 * @param int (optional) $id ID of media item (if available) (Default: NULL)
-	 */
-	function cache_media_item($uri, $type, $id = null) {
-		//Cache media item
-		if ( $this->is_media_type_supported($type) && !$this->media_item_cached($uri) ) {
-			//Set properties
-			$i = array('type' => null, 'id' => null, 'source' => null);
-			//Type
-			$i['type'] = $type;
-			$t = $this->get_media_types();
-			//Source
-			if ( $type == $t->img )
-				$i['source'] = $uri;
-			//ID
-			if ( is_numeric($id) )
-				$i['id'] = absint($id);
-			
-			$this->media_items_raw[$uri] = $i;
-		}
-	}
-	
-	/**
-	 * Checks if media item has already been cached
-	 * @param string $uri URI of media item
-	 * @return boolean Whether media item has been cached
-	 */
-	function media_item_cached($uri) {
-		$ret = false;
-		if ( !$uri || !is_string($uri) )
-			return $ret;
-		return ( isset($this->media_items_raw[$uri]) ) ? true : false;
-	}
-	
-	/**
-	 * Retrieve cached media item
-	 * @param string $uri Media item URI
-	 * @return array|null Media item properties (NULL if not set)
-	 */
-	function get_cached_media_item($uri) {
-		$ret = null;
-		if ( $this->media_item_cached($uri) ) {
-			$ret = $this->media_items_raw[$uri];
-		}
-		return $ret;
-	}
-	
-	/**
-	 * Retrieve cached media items
-	 * @return array Cached media items
-	 */
-	function &get_cached_media_items() {
-		return $this->media_items_raw;
-	}
-	
-	/**
-	 * Check if media items have been cached
-	 * @return boolean
-	 */
-	function has_cached_media_items() {
-		return ( !empty($this->media_items_raw) ) ? true : false; 
+	function get_links($content, $unique = false) {
+		$rgx = "/\<a[^\>]+href=.*?\>/i";
+		$links = array();
+		preg_match_all($rgx, $content, $links);
+		$links = $links[0];
+		if ( $unique )
+			$links = array_unique($links);
+		return $links;
 	}
 	
 	/**
@@ -1189,7 +598,7 @@ class SLB_Lightbox extends SLB_Base {
 	function client_init() {
 		if ( ! $this->is_enabled() )
 			return;
-		echo '<!-- SLB -->' . PHP_EOL;
+		echo PHP_EOL . '<!-- SLB -->' . PHP_EOL;
 		$options = array();
 		$out = array();
 		$js_code = array();
@@ -1203,14 +612,14 @@ class SLB_Lightbox extends SLB_Base {
 			$options['identifier'][] = $this->attr_legacy;
 			
 		//Load UI Strings
-		if ( ($strings = $this->build_strings()) && !empty($strings) )
-			$options['strings'] = $strings;
+		if ( ($labels = $this->build_labels()) && !empty($labels) )
+			$options['ui_labels'] = $labels;
 		//Load Layout
 		$options['layout'] = $this->get_theme_layout();
 
 		//Build client output
-		echo $this->util->build_script_element($this->util->call_client_method('initialize', $options), 'init', true, true);
-		echo PHP_EOL . '<!-- /SLB -->' . PHP_EOL;
+		echo $this->util->build_script_element($this->util->call_client_method('viewer.init', $options), 'init', true, true);
+		echo '<!-- /SLB -->' . PHP_EOL;
 	}
 	
 	/**
@@ -1367,19 +776,624 @@ class SLB_Lightbox extends SLB_Base {
 		
 		//Media attachments
 		if ( !empty($this->media_items) ) {
-			$obj = 'media';
+			$obj = 'viewer.assets';
 			$atch_out = $this->util->extend_client_object($obj, $this->media_items);
 			echo $this->util->build_script_element($atch_out, $obj);
 		}
 		
 		echo PHP_EOL . '<!-- /SLB -->' . PHP_EOL;
 	}
+
+	/*-** Media **-*/
+	
+	/**
+	 * Retrieve supported media types
+	 * @return object Supported media types
+	 */
+	function get_media_types() {
+		static $t = null;
+		if ( is_null($t) )
+			$t = (object) $this->media_types;
+		return $t;
+	}
+	
+	/**
+	 * Check if media type is supported
+	 * @param string $type Media type
+	 * @return bool If media type is supported
+	 */
+	function is_media_type_supported($type) {
+		$ret = false;
+		$t = $this->get_media_types();
+		foreach ( $t as $n => $v ) {
+			if ( $type == $v ) {
+				$ret = true;
+				break;
+			}
+		}
+		return $ret;
+	}
+	
+	/**
+	 * Cache media properties for later processing
+	 * @param string $uri URI for internal media (e.g. direct uri, attachment uri, etc.) 
+	 * @param string $type Media type (image, attachment, etc.)
+	 * @param int (optional) $id ID of media item (if available) (Default: NULL)
+	 */
+	function cache_media_item($uri, $type, $id = null) {
+		//Cache media item
+		if ( $this->is_media_type_supported($type) && !$this->media_item_cached($uri) ) {
+			//Set properties
+			$i = array('type' => null, 'id' => null, 'source' => null);
+			//Type
+			$i['type'] = $type;
+			$t = $this->get_media_types();
+			//Source
+			if ( $type == $t->img )
+				$i['source'] = $uri;
+			//ID
+			if ( is_numeric($id) )
+				$i['id'] = absint($id);
+			
+			$this->media_items_raw[$uri] = $i;
+		}
+	}
+	
+	/**
+	 * Checks if media item has already been cached
+	 * @param string $uri URI of media item
+	 * @return boolean Whether media item has been cached
+	 */
+	function media_item_cached($uri) {
+		$ret = false;
+		if ( !$uri || !is_string($uri) )
+			return $ret;
+		return ( isset($this->media_items_raw[$uri]) ) ? true : false;
+	}
+	
+	/**
+	 * Retrieve cached media item
+	 * @param string $uri Media item URI
+	 * @return array|null Media item properties (NULL if not set)
+	 */
+	function get_cached_media_item($uri) {
+		$ret = null;
+		if ( $this->media_item_cached($uri) ) {
+			$ret = $this->media_items_raw[$uri];
+		}
+		return $ret;
+	}
+	
+	/**
+	 * Retrieve cached media items
+	 * @return array Cached media items
+	 */
+	function &get_cached_media_items() {
+		return $this->media_items_raw;
+	}
+	
+	/**
+	 * Check if media items have been cached
+	 * @return boolean
+	 */
+	function has_cached_media_items() {
+		return ( !empty($this->media_items_raw) ) ? true : false; 
+	}
+	
+	/*-** Theme **-*/
+	
+	/**
+	 * Retrieve themes for use in option field
+	 * @uses self::theme_default
+	 * @uses self::get_themes()
+	 * @return array Theme options
+	 */
+	function get_theme_options() {
+		//Get themes
+		$themes = $this->get_themes();
+		
+		//Pop out default theme
+		$theme_default = $themes[$this->theme_default];
+		unset($themes[$this->theme_default]);
+		
+		//Sort themes by title
+		uasort($themes, create_function('$a,$b', 'return strcmp($a[\'title\'], $b[\'title\']);'));
+		
+		//Insert default theme at top of array
+		$themes = array($this->theme_default => $theme_default) + $themes;
+		
+		//Build options
+		foreach ( $themes as $name => $props ) {
+			$themes[$name] = $props['title'];
+		}
+		return $themes;
+	}
+	
+	/**
+	 * Retrieve themes
+	 * @uses Util::do_action() Calls internal 'init_themes' hook to allow plugins to register themes
+	 * @uses $themes to return registered themes
+	 * @return array Retrieved themes
+	 */
+	function get_themes() {
+		static $fetched = false;
+		if ( !$fetched ) {
+			$this->themes = array();
+			$this->util->do_action('init_themes');
+			$fetched = true;
+		}
+		return $this->themes;
+	}
+	
+	/**
+	 * Retrieve theme
+	 * @param string $name Name of theme to retrieve
+	 * @uses theme_exists() to check for existence of theme
+	 * @return array Theme data
+	 */
+	function get_theme($name = '') {
+		$name = strval($name);
+		//Default: Get current theme if no theme specified
+		if ( empty($name) ) {
+			$name = $this->options->get_value('theme');
+		}
+		if ( !$this->theme_exists($name) )
+			$name = $this->theme_default;
+		return $this->themes[$name];
+	}
+	
+	/**
+	 * Retrieve specific of theme data
+	 * @uses get_theme() to retrieve theme data
+	 * @param string $name Theme name
+	 * @param string $field Theme field to retrieve
+	 * @return mixed Field data
+	 */
+	function get_theme_data($name = '', $field) {
+		$theme = $this->get_theme($name);
+		return ( isset($theme[$field]) ) ? $theme[$field] : '';
+	}
+	
+	/**
+	 * Retrieve theme stylesheet URL
+	 * @param string $name Theme name
+	 * @uses get_theme_data() to retrieve theme data
+	 * @return string Stylesheet URL
+	 */
+	function get_theme_style($name = '') {
+		return $this->get_theme_data($name, 'stylesheet_url');
+	}
+	
+	/**
+	 * Retrieve theme layout
+	 * @uses get_theme_data() to retrieve theme data
+	 * @param string $name Theme name
+	 * @param bool $filter (optional) Filter layout based on user preferences 
+	 * @return string Theme layout HTML
+	 */
+	function get_theme_layout($name = '', $filter = true) {
+		$l = $this->get_theme_data($name, 'layout');
+		//Filter
+		if ( !$this->options->get_bool('enabled_caption') )
+			$l = str_replace($this->get_theme_placeholder('dataCaption'), '', $l);
+		if ( !$this->options->get_bool('enabled_desc') )
+			$l = str_replace($this->get_theme_placeholder('dataDescription'), '', $l);
+		return $l;
+	}
+	
+	/**
+	 * Check whether a theme exists
+	 * @param string $name Theme to look for
+	 * @uses get_themes() to intialize themes if not already performed
+	 * @return bool TRUE if theme exists, FALSE otherwise
+	 */
+	function theme_exists($name) {
+		$this->get_themes();
+		return ( isset($this->themes[trim(strval($name))]) );
+	}
+	
+	/**
+	 * Register lightbox theme
+	 * @param string $name Unique theme name
+	 * @param string $title Display name for theme
+	 * @param string $stylesheet_url URL to stylesheet
+	 * @param string $layout Layout HTML
+	 * @uses $themes to store the registered theme
+	 */
+	function register_theme($name, $title, $stylesheet_url, $layout) {
+		if ( !is_array($this->themes) ) {
+			$this->themes = array();
+		}
+		
+		//Validate parameters
+		$name = trim(strval($name));
+		$title = trim(strval($title));
+		$stylesheet_url = trim(strval($stylesheet_url));
+		$layout = $this->format_theme_layout($layout);
+		
+		$defaults = array(
+			'name'				=> '',
+			'title'				=> '',
+			'stylesheet_url' 	=> '',
+			'layout'			=> ''
+		);
+		
+		//Add theme to array
+		$this->themes[$name] = wp_parse_args(compact(array_keys($defaults)), $defaults); 
+	}
+	
+	/**
+	 * Build theme placeholder
+	 * @param string $name Placeholder name
+	 * @return string Placeholder
+	 */
+	function get_theme_placeholder($name) {
+		return '{' . $name . '}';
+	}
+	
+	/**
+	 * Formats layout for usage in JS
+	 * @param string $layout Layout to format
+	 * @return string Formatted layout
+	 */
+	function format_theme_layout($layout = '') {
+		//Remove line breaks
+		$layout = str_replace(array("\r\n", "\n", "\r", "\t"), '', $layout);
+		
+		//Escape quotes
+		$layout = str_replace("'", "\'", $layout);
+		
+		//Return
+		return "'" . $layout . "'";
+	}
+	
+	/**
+	 * Add default themes
+	 * @uses register_theme() to register the theme(s)
+	 */
+	function init_default_themes() {
+		$name = $this->theme_default;
+		$title = 'Default';
+		$stylesheet_url = $this->util->get_file_url('css/lightbox.css');
+		$layout = file_get_contents($this->util->normalize_path($this->util->get_path_base(), 'templates', 'default', 'layout.html'));
+		$this->register_theme($name, $title, $stylesheet_url, $layout);
+		//Testing: Additional themes
+		$this->register_theme('black', 'Black', $this->util->get_file_url('css/lb_black.css'), $layout);
+	}
+	
+	/*-** Grouping **-*/
+	
+	/**
+	 * Builds wrapper for grouping
+	 * @return object Wrapper properties
+	 *  > open
+	 *  > close
+	 */
+	function group_get_wrapper() {
+		static $wrapper = null;
+		if (  is_null($wrapper) ) {
+			$start = '<';
+			$end = '>';
+			$terminate = '/';
+			$val = $this->add_prefix('group');
+			//Build properties
+			$wrapper = array(
+				'open' => $start . $val . $end,
+				'close' => $start . $terminate . $val . $end
+			);
+			//Convert to object
+			$wrapper = (object) $wrapper;
+		}
+		return $wrapper;
+	}
+	
+	/**
+	 * Wraps galleries for grouping
+	 * @uses `the_content` Filter hook
+	 * @uses gallery_wrap_callback to Wrap shortcodes for grouping
+	 * @param string $content Post content
+	 * @return string Modified post content
+	 */
+	function gallery_wrap($content) {
+		if ( !$this->is_enabled() )
+			return $content;
+		//Stop processing if option not enabled
+		if ( !$this->options->get_bool('group_gallery') )
+			return $content;
+		global $shortcode_tags;
+		//Save default shortcode handlers to temp variable
+		$sc_temp = $shortcode_tags;
+		//Find gallery shortcodes
+		$shortcodes = array('gallery', 'nggallery');
+		$m = $this->m('gallery_wrap_callback');
+		$shortcode_tags = array();
+		foreach ( $shortcodes as $tag ) {
+			$shortcode_tags[$tag] = $m;
+		}
+		//Wrap gallery shortcodes
+		$content = do_shortcode($content);
+		//Restore default shortcode handlers
+		$shortcode_tags = $sc_temp;
+		
+		return $content;
+	}
+	
+	/**
+	 * Wraps gallery shortcodes for later processing
+	 * @param array $attr Shortcode attributes
+	 * @param string $content Content enclosed in shortcode
+	 * @param string $tag Shortcode name
+	 * @return string Wrapped gallery shortcode
+	 */
+	function gallery_wrap_callback($attr, $content = null, $tag) {
+		//Rebuild shortcode
+		$sc = '[' . $tag . ' ' . $this->util->build_attribute_string($attr) . ']';
+		if ( !empty($content) )
+			$sc .= $content . '[/' . $tag .']';
+		//Wrap shortcode
+		$w = $this->group_get_wrapper();
+		$sc = $w->open . $sc . $w->close;
+		return $sc;
+	}
+	
+	/**
+	 * Removes wrapping from galleries
+	 * @uses `the_content` filter hook
+	 * @param $content Post content
+	 * @return string Modified post content
+	 */
+	function gallery_unwrap($content) {
+		if ( !$this->is_enabled() )
+			return $content;
+		//Stop processing if option not enabled
+		if ( !$this->options->get_bool('group_gallery') )
+			return $content;
+		$w = $this->group_get_wrapper();
+		if ( strpos($content, $w->open) !== false ) {
+			$content = str_replace($w->open, '', $content);
+			$content = str_replace($w->close, '', $content);
+		}
+		return $content;
+	}
+	
+	/*-** Widgets **-*/
+	
+	/**
+	 * Reroute widget display handlers to internal method
+	 * @param array $sidebar_widgets List of sidebars & their widgets
+	 * @uses WP Hook `sidebars_widgets` to intercept widget list
+	 * @global $wp_registered_widgets to reroute display callback
+	 * @return array Sidebars and widgets (unmodified)
+	 */
+	function sidebars_widgets($sidebars_widgets) {
+		global $wp_registered_widgets;
+		static $widgets_processed = false;
+		if ( is_admin() || empty($wp_registered_widgets) || $widgets_processed || !is_object($this->options) || !$this->is_enabled() || !$this->options->get_bool('enabled_widget') )
+			return $sidebars_widgets; 
+		$widgets_processed = true;
+		//Fetch active widgets from all sidebars
+		foreach ( $sidebars_widgets as $sb => $ws ) {
+			//Skip inactive widgets and empty sidebars
+			if ( 'wp_inactive_widgets' == $sb || empty($ws) || !is_array($ws) )
+				continue;
+			foreach ( $ws as $w ) {
+				if ( isset($wp_registered_widgets[$w]) && isset($wp_registered_widgets[$w][$this->widget_callback]) ) {
+					$wref =& $wp_registered_widgets[$w];
+					//Backup original callback
+					$wref[$this->widget_callback_orig] = $wref[$this->widget_callback];
+					//Reroute callback
+					$wref[$this->widget_callback] = $this->m('widget_callback');
+					unset($wref);
+				}
+			}
+		}
+
+		return $sidebars_widgets;
+	}
+	
+	/**
+	 * Widget display handler
+	 * Original widget display handler is called inside of an output buffer & links in output are processed before sending to browser 
+	 * @param array $args Widget instance properties
+	 * @param int (optional) $widget_args Additional widget args (usually the widget's instance number)
+	 * @see WP_Widget::display_callback() for more information
+	 * @see sidebars_widgets() for callback modification
+	 * @global $wp_registered_widgets
+	 * @uses widget_process_links() to Process links in widget content
+	 * @return void
+	 */
+	function widget_callback($args, $widget_args = 1) {
+		global $wp_registered_widgets;
+		$wid = ( isset($args['widget_id']) ) ? $args['widget_id'] : false;
+		//Stop processing if widget data invalid
+		if ( !$wid || !isset($wp_registered_widgets[$wid]) || !($w =& $wp_registered_widgets[$wid]) || !isset($w['id']) || $wid != $w['id'] )
+			return false;
+		//Get original callback
+		if ( !isset($w[$this->widget_callback_orig]) || !($cb = $w[$this->widget_callback_orig]) || !is_callable($cb) )
+			return false;
+		$params = func_get_args();
+		$this->widget_processing = true;
+		//Start output buffer
+		ob_start();
+		//Call original callback
+		call_user_func_array($cb, $params);
+		//Flush output buffer
+		echo $this->widget_process_links(ob_get_clean(), $wid);
+		$this->widget_processing = false;
+	}
+	
+	/**
+	 * Process links in widget content
+	 * @param string $content Widget content
+	 * @return string Processed widget content
+	 * @uses process_links() to process links
+	 */
+	function widget_process_links($content, $id) {
+		$id = ( $this->options->get_bool('group_widget') ) ? "widget_$id" : null;
+		return $this->process_links($content, $id);
+	}
+	
+	/*-** Helpers **-*/
+	
+	/**
+	 * Generates link attributes from array
+	 * @param array $attrs Link Attributes
+	 * @return string Attribute string
+	 */
+	function build_attributes($attrs) {
+		$a = array();
+		//Validate attributes
+		$attrs = $this->get_attributes($attrs, false);
+		//Iterate through attributes and build output array
+		foreach ( $attrs as $key => $val ) {
+			//Standard attributes
+			if ( is_bool($val) && $val ) {
+				$a[] = $key;
+			}
+			//Attributes with values
+			elseif ( is_string($val) ) {
+				$a[] = $key . '[' . $val . ']';
+			}
+		}
+		return implode(' ', $a);
+	}
+
+	/**
+	 * Build attribute name
+	 * Makes sure name is only prefixed once
+	 * @return string Formatted attribute name 
+	 */
+	function make_attribute_name($name = '') {
+		$sep = '_';
+		$name = trim($name);
+		//Generate valid name
+		if ( $name != $this->attr ) {
+			//Use default name
+			if ( empty($name) )
+				$name = $this->attr;
+			//Add prefix if not yet set
+			elseif ( strpos($name, $this->attr . $sep) !== 0 )
+				$name = $this->attr . $sep . $name;
+		}
+		return $name;
+	}
+
+	/**
+	 * Create attribute to disable lightbox for current link
+	 * @return string Disabled lightbox attribute
+	 */
+	function make_attribute_disabled() {
+		static $ret = null;
+		if ( is_null($ret) ) {
+			$ret = $this->make_attribute_name('off');
+		}
+		return $ret;
+	}
+	
+	/**
+	 * Set attribute to array
+	 * Attribute is added to array if it does not exist
+	 * @param array $attrs Current attribute array
+	 * @param string $name Name of attribute to add
+	 * @param string (optional) $value Attribute value
+	 * @return array Updated attribute array
+	 */
+	function set_attribute($attrs, $name, $value = null) {
+		//Validate attribute array
+		$attrs = $this->get_attributes($attrs, false);
+		//Build attribute name
+		$name = $this->make_attribute_name($name);
+		//Set attribute
+		$attrs[$name] = true;
+		if ( !empty($value) && is_string($value) )
+			$attrs[$name] = $value;
+		return $attrs;
+	}
+	
+	/**
+	 * Convert attribute string into array
+	 * @param string $attr_string Attribute string
+	 * @param bool (optional) $internal Whether only internal attributes should be evaluated (Default: TRUE)
+	 * @return array Attributes as associative array
+	 */
+	function get_attributes($attr_string, $internal = true) {
+		$ret = array();
+		//Protect bracketed values prior to parsing attributes string
+	 	if ( is_string($attr_string) ) {
+	 		$attr_string = trim($attr_string);
+	 		$attr_vals = array();
+			$attr_keys = array();
+			$offset = 0;
+	 		while ( ($bo = strpos($attr_string,'[', $offset)) && $bo !== false
+	 			&& ($bc = strpos($attr_string,']', $bo)) && $bc !== false
+				) {
+	 			//Push all preceding attributes into array
+	 			$attr_temp = explode(' ', substr($attr_string, $offset, $bo));
+				//Get attribute name
+				$name = array_pop($attr_temp);
+				$attr_keys = array_merge($attr_keys, $attr_temp);
+				//Add to values array
+				$attr_vals[$name] = substr($attr_string, $bo+1, $bc-$bo-1);
+				//Update offset
+				$offset = $bc+1;
+	 		}
+			//Parse remaining attributes
+			$attr_keys = array_merge($attr_keys, array_filter(explode(' ', substr($attr_string, $offset))));
+			//Set default values for all keys
+			$attr_keys = array_fill_keys($attr_keys, TRUE);
+			//Merge attributes with values
+			$ret = array_merge($attr_keys, $attr_vals);
+	 	} elseif ( is_array($attr_string) )
+			$ret = $attr_string;
+		
+		//Filter non-internal attributes if necessary
+		if ( $internal && is_array($ret) ) {
+			foreach ( array_keys($ret) as $attr ) {
+				if ( $attr == $this->attr)
+					continue;
+				if ( strpos($attr, $this->attr . '_') !== 0 )
+					unset($ret[$attr]);
+			}
+		}
+		
+		return $ret;
+	}
+	
+	/**
+	 * Retrieve attribute value
+	 * @param string|array $attrs Attributes to retrieve attribute value from
+	 * @param string $attr Attribute name to retrieve
+	 * @param bool (optional) $internal Whether only internal attributes should be evaluated (Default: TRUE)
+	 * @return string|bool Attribute value (Default: FALSE)
+	 */
+	function get_attribute($attrs, $attr, $internal = true) {
+		$ret = false;
+		$attrs = $this->get_attributes($attrs, $internal);
+		//Validate attribute name for internal attributes
+		if ( $internal )
+			$attr = $this->make_attribute_name($attr);
+		if ( isset($attrs[$attr]) ) {
+			$ret = $attrs[$attr];
+		}
+		return $ret;
+	}
+	
+	/**
+	 * Checks if attribute exists
+	 * @param string|array $attrs Attributes to retrieve attribute value from
+	 * @param string $attr Attribute name to retrieve
+	 * @param bool (optional) $internal Whether only internal attributes should be evaluated (Default: TRUE)
+	 * @return bool Whether or not attribute exists
+	 */
+	function has_attribute($attrs, $attr, $internal = true) {
+		return ( $this->get_attribute($attrs, $attr, $internal) !== false ) ? true : false;
+	}
 	
 	/**
 	 * Build JS object of UI strings when initializing lightbox
 	 * @return array UI strings
 	 */
-	function build_strings() {
+	function build_labels() {
 		$ret = array();
 		//Get all UI options
 		$prefix = 'txt_';

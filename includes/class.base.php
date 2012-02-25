@@ -23,6 +23,13 @@ class SLB_Base {
 	var $prefix = 'slb';
 	
 	/**
+	 * Prefix to be added when creating internal hook (action/filter) tags
+	 * Used by Utilities
+	 * @var string
+	 */
+	var $hook_prefix = '';
+	
+	/**
 	 * Class type
 	 * Controls initialization, etc.
 	 * > full - Fully-functional class
@@ -193,7 +200,9 @@ class SLB_Base {
 		if ( isset($options_text['items']) ) {
 			foreach ( $options_text['items'] as $opt => $title ) {
 				$option_temp =& $this->options->get($opt);
-				$option_temp->set_title($title);
+				if ( $option_temp->get_id() ) {
+					$option_temp->set_title($title);
+				}
 			}
 		}
 	}
@@ -213,6 +222,9 @@ class SLB_Base {
 			if ( is_array($g) && !empty($g) ) {
 				$g = $this->util->parse_client_files($g, $key);
 			}
+			//Remove empty file groups
+			if ( empty($g) )
+				unset($this->client_files[$key]);
 		}
 
 		//Register
@@ -225,35 +237,37 @@ class SLB_Base {
 	
 	/**
 	 * Register client files
+	 * @see self::enqueue_client_files() for actual loading of files based on context
 	 * @uses `init` Action hook for execution
 	 * @return void
 	 */
 	function register_client_files() {
 		$v = $this->util->get_plugin_version();
 		foreach ( $this->client_files as $type => $files ) {
-			if ( !empty($files) ) {
-				$func = $this->get_client_files_handler($type, 'register');
-				if ( !$func )
-					continue;
-				foreach ( $files as $f ) {
-					$f->file = ( is_array($f->file) && is_callable($f->file) ) ? call_user_func($f->file) : $this->util->get_file_url($f->file);
-					$params = array($f->id, $f->file, $f->deps, $v);
-					switch ( $type ) {
-						case 'scripts':
-							$params[] = $f->in_footer;
-							break;
-						case 'styles':
-							$params[] = $f->media;
-							break;
-					}
-					call_user_func_array($func, $params);
+			$func = $this->get_client_files_handler($type, 'register');
+			if ( !$func )
+				continue;
+			foreach ( $files as $f ) {
+				//Get file URI
+				$f->file = ( !$this->util->is_file($f->file) && is_callable($f->file) ) ? call_user_func($f->file) : $this->util->get_file_url($f->file);
+				$params = array($f->id, $f->file, $f->deps, $v);
+				//Set additional parameters based on file type (script, style, etc.)
+				switch ( $type ) {
+					case 'scripts':
+						$params[] = $f->in_footer;
+						break;
+					case 'styles':
+						$params[] = $f->media;
+						break;
 				}
+				//Register file
+				call_user_func_array($func, $params);
 			}
 		}
 	}
 	
 	/**
-	 * Enqueues files for client output (scripts/styles)
+	 * Enqueues files for client output (scripts/styles) based on context
 	 * @uses `admin_enqueue_scripts` Action hook depending on context
 	 * @uses `wp_enqueue_scripts` Action hook depending on context
 	 * @return void
@@ -261,24 +275,39 @@ class SLB_Base {
 	function enqueue_client_files() {
 		//Enqueue files
 		foreach ( $this->client_files as $type => $files ) {
-			if ( !empty($files) ) {
-				$func = $this->get_client_files_handler($type, 'enqueue');
-				if ( !$func )
-					continue;
-				foreach ( $files as $f ) {
-					$load = true;
-					//Callback
-					if ( is_callable($f->callback) && !call_user_func($f->callback) )
-						$load = false;
-					
-					//Context
-					if ( $load && !empty($f->context) && !$this->util->is_context($f->context) )
-						$load = false;
-					
-					//Load valid file
-					if ( $load )
-						$func($f->id);
+			$func = $this->get_client_files_handler($type, 'enqueue');
+			if ( !$func )
+				continue;
+			foreach ( $files as $f ) {
+				$load = true;
+				//Global Callback
+				if ( is_callable($f->callback) && !call_user_func($f->callback) )
+					$load = false;
+				
+				//Context
+				if ( $load && !empty($f->context) ) {
+					//Reset $load before evaluating context
+					$load = false;
+					//Iterate through contexts
+					foreach ( $f->context as $ctx ) {
+						//Context + Callback
+						if ( is_array($ctx) ) {
+							//Stop checking context if callback is invalid
+							if ( !is_callable($ctx[1]) || !call_user_func($ctx[1]) )
+								continue;
+							$ctx = $ctx[0];
+						}
+						//Stop checking context if valid context found
+						if ( $this->util->is_context($ctx) ) {
+							$load = true;
+							break;
+						}
+					}
 				}
+				
+				//Load valid file
+				if ( $load )
+					$func($f->id);
 			}
 		}
 	}

@@ -11,6 +11,8 @@ class SLB_Option extends SLB_Field {
 	
 	/* Properties */
 	
+	var $hook_prefix = 'option';
+	
 	/**
 	 * Determines whether option will be sent to client
 	 * @var bool
@@ -187,21 +189,31 @@ class SLB_Option extends SLB_Field {
 class SLB_Options extends SLB_Field_Collection {
 	
 	/* Properties */
+	
+	var $hook_prefix = 'options';
 
 	var $item_type = 'SLB_Option';
-	
+
 	/**
 	 * Key for saving version to DB
 	 * @var string
 	 */
 	var $version_key = 'version';
 	
-	
 	/**
 	 * Whether version has been checked
 	 * @var bool
 	 */
 	var $version_checked = false;
+	
+	var $items_migrated = false;
+		
+	var $build_vars = array (
+		'validate_pre'	=> false,
+		'validate_post'	=> false,
+		'save_pre'		=> false,
+		'save_post'		=> false
+	);
 	
 	/* Init */
 	
@@ -223,6 +235,8 @@ class SLB_Options extends SLB_Field_Collection {
 		add_action($this->add_prefix('register_fields'), $this->m('register_fields'));
 		//Set option parents
 		add_action($this->add_prefix('fields_registered'), $this->m('set_parents'));
+		//Building
+		$this->util->add_action('build_init', $this->m('build_init'));
 	}
 	
 	/* Legacy/Migration */
@@ -237,8 +251,9 @@ class SLB_Options extends SLB_Field_Collection {
 	function check_update() {
 		if ( !$this->version_checked ) {
 			$this->version_checked = true;
+			$version_changed = false;
 			//Get version from DB
-			$vo = get_option($this->version_key);
+			$vo = $this->get_version();
 			//Get current version
 			$vn = $this->util->get_plugin_version();
 			//Compare versions
@@ -247,11 +262,14 @@ class SLB_Options extends SLB_Field_Collection {
 				$this->set_version($vn);
 				//Migrate old version to new version
 				if ( strcasecmp($vo, $vn) < 0 ) {
-					//Migrate
-					$this->migrate();
+					//Force full migration
+					$version_changed = true;
 				}
 			}
+			//Migrate
+			$this->migrate($version_changed);
 		}
+		
 		return $this->version_checked;
 	}
 	
@@ -270,50 +288,93 @@ class SLB_Options extends SLB_Field_Collection {
 	}
 	
 	/**
-	 * Migrate options from old versions to current version
+	 * Retrieve saved version data
+	 * @return string Saved version
 	 */
-	function migrate() {
+	function get_version() {
+		return get_option($this->version_key, '');
+	}
+	
+	/**
+	 * Migrate options from old versions to current version
+	 * @uses self::items_migrated to determine if simple migration has been performed in current request or not
+	 * @uses self::save() to save data after migration
+	 * @param bool $full Whether to perform a full migration or not (Default: No)
+	 */
+	function migrate($full = false) {
+		if ( !$full && $this->items_migrated )
+			return false;
+		
 		//Legacy options
 		$d = null;
 		$this->load_data();
 		
-		//Migrate separate options to unified option
 		$items =& $this->get_items();
-		foreach ( $items as $id => $opt ) {
-			$oid = $this->add_prefix($id);
-			$o = get_option($oid, $d);
-			if ( $o !== $d ) {
-				//Migrate value to data array
-				$this->set_data($id, $o, false);
-				//Delete legacy option
-				delete_option($oid);
+		
+		//Migrate separate options to unified option
+		if ( $full ) {
+			foreach ( $items as $opt => $props ) {
+				$oid = $this->add_prefix($opt);
+				$o = get_option($oid, $d);
+				if ( $o !== $d ) {
+					//Migrate value to data array
+					$this->set_data($opt, $o, false);
+					//Delete legacy option
+					delete_option($oid);
+				}
 			}
 		}
 		
 		//Migrate legacy items
 		if ( is_array($this->properties_init) && isset($this->properties_init['legacy']) && is_array($this->properties_init['legacy']) ) {
-			foreach( $this->properties_init['legacy'] as $opt => $dest ) {
-				$oid = $this->add_prefix($opt);
-				$o = get_option($oid, $d);
-				//Only migrate valid values
-				if ( $o !== $d ) {
-					//Wrap single destination in array
-					if ( is_string($dest) ) {
-						$dest = array($dest);
-					}
-					//Process destinations
-					if ( is_array($dest) ) {
+			$l =& $this->properties_init['legacy'];
+			//Normalize legacy map
+			foreach ( $l as $opt => $dest ) {
+				if ( !is_array($dest) ) {
+					if ( is_string($dest) )
+						$l[$opt] = array($dest);
+					else
+						unset($l[$opt]);
+				}
+			}
+			
+			/* Separate options */
+			if ( $full ) {
+				foreach ( $l as $opt => $dest ) {
+					$oid = $this->add_prefix($opt);
+					$o = get_option($oid, $d);
+					//Only migrate valid values
+					if ( $o !== $d ) {
+						//Process destinations
 						foreach ( $dest as $id ) {
-							$this->set_data($id, $o, false);
+							$this->set_data($id, $o, false, true);
 						}
 					}
+					//Remove legacy option
+					delete_option($oid);
 				}
-				//Remove legacy item
-				delete_option($this->add_prefix($opt));
+			}
+			
+			/* Simple Migration (Internal options only) */
+			
+			//Get existing items that are also legacy items
+			$opts = array_intersect_key($this->get_data(), $l);
+			foreach ( $opts as $opt => $val ) {
+				$d = $this->get_data($opt);
+				//Migrate data from old option to new option
+				$dest = $l[$opt];
+				//Validate new options to send data to
+				foreach ( $dest as $id ) {
+					$this->set_data($id, $d, false, true);
+				}
+				//Remove legacy option
+				$this->remove($opt, false);
 			}
 		}
 		//Save changes
 		$this->save();
+		//Set flag
+		$this->items_migrated = true;
 	}
 	
 	/* Option setup */
@@ -454,8 +515,6 @@ class SLB_Options extends SLB_Field_Collection {
 	 * @return array Options data
 	 */
 	function fetch_data($sanitize = true) {
-		//Check update
-		$this->check_update();
 		//Get data
 		$data = get_option($this->get_key(), null);
 		if ( $sanitize && is_array($data) ) {
@@ -465,9 +524,10 @@ class SLB_Options extends SLB_Field_Collection {
 					$opt = $this->get($id);
 					if ( is_bool($opt->get_default()) )
 						$data[$id] = !!$val;
-				} else {
+				}/* else {
+					//Remove data that has no matching item
 					unset($data[$id]);
-				}
+				}*/
 			}
 		}
 		return $data;
@@ -478,10 +538,12 @@ class SLB_Options extends SLB_Field_Collection {
 	 * @see SLB_Field_Collection::load_data()
 	 */
 	function load_data() {
-		if ( !$this->data_fetched ) {
+		if ( !$this->data_loaded ) {
 			//Retrieve data
 			$this->data = $this->fetch_data();
-			$this->data_fetched = true;
+			$this->data_loaded = true;
+			//Check update
+			$this->check_update();
 		}
 	}
 	
@@ -503,13 +565,22 @@ class SLB_Options extends SLB_Field_Collection {
 	 * Save options data to database
 	 */
 	function save() {
-		$opts =& $this->get_items();
+		$this->normalize_data();
+		update_option($this->get_key(), $this->data);
+	}
+	
+	/**
+	 * Normalize data
+	 * Assures that data in collection match items
+	 * @uses self::data to reset and save collection data after normalization
+	 */
+	function normalize_data() {
 		$data = array();
-		foreach ( $opts as $id => $opt ) {
+		foreach ( $this->get_items() as $id => $opt ) {
 			$data[$id] = $opt->get_data();
 		}
-		$this->data = $data;
-		update_option($this->get_key(), $data);
+		$this->data =& $data;
+		return $data;
 	}
 
 	/* Collection */
@@ -595,18 +666,13 @@ class SLB_Options extends SLB_Field_Collection {
 	
 	/* Output */
 	
-	function build_group($group) {
-		if ( !$this->group_exists($group) )
-			return false;
-		$group =& $this->get_group($group);
-		//Stop processing if group contains no items
-		if ( !count($this->get_items($group)) )
-			return false;
-		
-		//Group header
-		echo '<h4 class="subhead">' . $group->title . '</h4>';
-		//Build items
-		echo $this->build_items($group);
+	function build_init() {
+		if ( $this->build_vars['validate_pre'] ) {
+			$values = $this->validate();
+			if ( $this->build_vars['save_pre'] ) {
+				$this->set_data($values);
+			}
+		}
 	}
 	
 	/**
