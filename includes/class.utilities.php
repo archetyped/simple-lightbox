@@ -269,6 +269,7 @@ class SLB_Utilities {
 			}
 			//Iterate through files
 			foreach ( $files as $h => $p ) {
+				unset($file, $cb, $ctxs, $ctx);
 				//Set ID
 				$p['id'] = $this->add_prefix($h);
 				//Type Validation
@@ -313,26 +314,51 @@ class SLB_Utilities {
 				
 				//Validate callback
 				$cb =& $p['callback'];
-				$cb = $this->parse_client_file_callback($cb);
+				if ( !is_null($cb) ) {
+					$cb = $this->parse_client_file_callback($cb);
+					//Remove files with invalid callbacks (will never be loaded)
+					if ( is_null($cb) ) {
+						unset($files[$h]);
+						continue;
+					}	
+				}
 				
 				//Validate contexts
 				$ctxs =& $p['context'];
+				$ctxs = array_unique($ctxs);
+				$has_contexts = ( count($ctxs) > 0 ) ? true : false;
 				foreach ( $ctxs as $idx => $ctx ) {
-					$ctx =& $ctxs[$idx];
-					//Context + Callback
-					if ( is_array($ctx) ) {
-						if ( count($ctx) == 1 ) {
-							$ctxs[$idx] = $ctx[0];
-						}
-						elseif ( count($ctx) > 1 ) {
+					//Convert to array
+					$ctx = array_values( array_slice( (array) $ctx, 0, 2 ) );
+					switch ( count($ctx) ) {
+						case 1 :
+							//Simple context
+							$ctx = $ctx[0];
+							break;
+						case 2 :
+							//Context + Callback
 							$ctx[1] = $this->parse_client_file_callback($ctx[1]);
-							if ( empty($ctx[1]) )
-								$ctx = null;
-						}
+							if ( !is_null($ctx[1]) ) {
+								break;
+							}
+							//Continue to default case if callback is invalid
+						default :
+							//Context is invalid
+							$ctx = false;
+							break;
 					}
+					
 					//Remove invalid contexts
-					if ( empty($ctx) )
+					if ( empty($ctx) ) {
 						unset($ctxs[$idx]);
+					} else {
+						$ctxs[$idx] = $ctx;
+					}
+				}
+				//Remove file if all specified contexts invalid (no context is OK)
+				if ( $has_contexts && empty($ctxs) ) {
+					unset($files[$h]);
+					continue;
 				}
 				$ctxs = array_values($ctxs);
 				
@@ -340,13 +366,10 @@ class SLB_Utilities {
 				
 				//Convert properties to object
 				$files[$h] = (object) $p;
-				
-				unset($file, $cb);
 			}
 		}
 		//Cast to object before returning
-		if ( !is_object($files) )
-			$files = (object) $files;
+		$files = (object) $files;
 		return $files;
 	}
 
@@ -382,7 +405,7 @@ class SLB_Utilities {
 	
 	/**
 	 * Build jQuery JS expression to add data to specified client object
-	 * @param string $obj Name of client object (Set to root object if not a valid name)
+	 * @param string|obj $obj Name of client object (Set to root object if not a valid name)
 	 * @param mixed $data Data to add to client object
 	 * @param bool (optional) $out Whether or not to output code (Default: false)
 	 * @return string JS expression to extend client object
@@ -416,19 +439,19 @@ class SLB_Utilities {
 			$ret = array();
 			//Validate object(s) being extended
 			$c_obj = $this->get_client_object($obj);
-			$pos = strpos($c_obj, '.');
-			$start = 0;
-			$objs = array();
-			if ( false !== $pos ) {
-				while ( false !== $pos ) {
-					$objs[] = substr($c_obj, $start, $pos);
-					$start = $pos + 1;
-					$pos = strpos($c_obj, '.', $start);
-				}
-			} else {
-				$objs[] = $c_obj;
+			$sep = '.';
+			$c_obj = trim($c_obj, $sep);
+			//Start with full object
+			$objs = array($c_obj);
+			$offset = 0;
+			$len = strlen($c_obj);
+			//Add segments to array (in reverse)
+			while ( ( $pos = strrpos($c_obj, $sep, $offset) ) && $pos !== false ) {
+				$objs[] = substr($c_obj, 0, $pos);
+				$offset = $pos - $len - 1;
 			}
-			$condition = 'if ( ' . implode(' && ', $objs) . ' ) ';
+			
+			$condition = 'if ( ' . implode(' && ', array_reverse($objs)) . ' ) ';
 			$ret = $condition . '$.extend(' . $c_obj . ', ' . json_encode($data) . ');';
 			if ( $out )
 				echo $this->build_script_element($ret);

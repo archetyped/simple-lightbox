@@ -20,11 +20,16 @@ class SLB_Lightbox extends SLB_Base {
 			'file'		=> 'js/lib.core.js',
 			'deps'		=> 'jquery',
 		),
-		'viewer'		=> array (
-			'file'		=> 'js/lib.viewer.js',
+		'view'			=> array (
+			'file'		=> 'js/lib.view.js',
 			'deps'		=> array('jquery', '[core]'),
 			'context'	=> array( array('public', '[is_enabled]') ),
-		)
+		),
+		'test'			=> array (
+			'file'		=> 'js/lib.test.js',
+			'deps'		=> array('jquery', '[core]'),
+			'context'	=> array( array('public', '[xvv]') ),
+		),
 	);
 	
 	var $styles = array (
@@ -618,7 +623,8 @@ class SLB_Lightbox extends SLB_Base {
 		$options['layout'] = $this->get_theme_layout();
 
 		//Build client output
-		echo $this->util->build_script_element($this->util->call_client_method('viewer.init', $options), 'init', true, true);
+		//DEBUG
+		//echo $this->util->build_script_element($this->util->call_client_method('View.init', $options), 'init', true, true);
 		echo '<!-- /SLB -->' . PHP_EOL;
 	}
 	
@@ -776,9 +782,10 @@ class SLB_Lightbox extends SLB_Base {
 		
 		//Media attachments
 		if ( !empty($this->media_items) ) {
-			$obj = 'viewer.assets';
-			$atch_out = $this->util->extend_client_object($obj, $this->media_items);
-			echo $this->util->build_script_element($atch_out, $obj);
+			//DEBUG
+			// $obj = 'View.assets';
+			// $atch_out = $this->util->extend_client_object($obj, $this->media_items);
+			// echo $this->util->build_script_element($atch_out, $obj);
 		}
 		
 		echo PHP_EOL . '<!-- /SLB -->' . PHP_EOL;

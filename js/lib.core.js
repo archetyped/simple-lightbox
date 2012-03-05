@@ -4,10 +4,9 @@
  * @author Archetyped
  */
 
-var SLB = {};
 
 (function($){
-	
+
 /* Prototypes */
 
 //Array
@@ -31,10 +30,16 @@ if ( !Array.compare ) {
 			return true;
 		}
 		return false;
-	}
+	};
 }
 
 if ( !Array.intersect ) {
+	/**
+	 * Find common elements of 2 arrays
+	 * @param array arr1 First array to compare
+	 * @param array arr2 Second array to compare
+	 * @return array Elements common to both arrays
+	 */
 	Array.prototype.intersect = function(arr) {
 		var ret = [];
 		if ( !$.isArray(arr) || !arr.length || !this.length )
@@ -60,102 +65,280 @@ if ( !Array.intersect ) {
 		
 		//Return intersection results
 		return ret;
-	}
+	};
 }
 
 //String
 
 if ( !String.trim ) {
+	/**
+	 * Trim whitespace from head/tail of string
+	 * @return string Trimmed string
+	 */
 	String.prototype.trim = function() {
 		return this.replace(/^\s+|\s+$/g,"");
-	}
+	};
 }
 if ( !String.ltrim ) {
+	/**
+	 * Trim whitespace from head of string
+	 * @return string Trimmed string
+	 */
 	String.prototype.ltrim = function() {
 		return this.replace(/^\s+/,"");
-	}
+	};
 }
 if ( !String.rtrim ) {
+	/**
+	 * Trim whitespace from tail of string
+	 * @return string Trimmed string
+	 */
 	String.prototype.rtrim = function() {
 		return this.replace(/\s+$/,"");
-	}
+	};
 }
 
-/* Classes */
+/* Extendible Class */
+var c_init = false;
+var Class = function() {};
 
-SLB = {
+Class.extend = function(members) {
+	//Copy instance to prototype
+	c_init = true;
+	var proto = new this();
+	c_init = false;
+	
+	var val; 
+	//Scrub prototype objects (Decouple from super class)
+	for ( var name in proto ) {
+		if ( $.isPlainObject(proto[name]) ) {
+			val = $.extend({}, proto[name]);
+			proto[name] = val;
+		}
+	}
+	
+	//Copy members
+	for ( var name in members ) {
+		val = members[name];
+		if ( $.isPlainObject(members[name]) ) {
+			val = $.extend({}, members[name]);
+		}
+		proto[name] = val;
+	}
+	
+	//Constructor
+	function Class() {
+		if ( !c_init ) {
+			//Private init
+			if ( this._init ) {
+				this._init.apply(this, arguments);
+			}
+			//Main Constructor
+			if ( this.init ) {
+				this.init.apply(this, arguments);
+			}
+		}
+	}
+	
+	
+	//Populate new prototype
+	Class.prototype = proto;
+	
+	//Set constructor
+	Class.prototype.constructor = Class;
+	
+	Class.extend = arguments.callee;
+	
+	//Return function
+	return Class;
+};
+
+/* Base */
+
+var SLB_Base = Class.extend({
+	/* Properties */
+	
+	base: false,
+	_parent: null,
 	prefix: 'slb',
-	context: 	[],	//Context
-	options:	{	//Options
+	obj: {data: 'Hello'},
+	
+	/* Methods */
+	
+	/**
+	 * Constructor
+	 */
+	_init: function() {
+		this.util['_parent'] = this;
 	},
 	
-	extend: function(member, data) {
+	set_parent: function(p) {
+		this._parent = p;
+	},
+	
+	/**
+	 * Attach member to object
+	 * @param string name Member name
+	 * @param mixed Member data
+	 * > obj: Member inherits from base object
+	 * > other: Simple data object
+	 */
+	attach: function(member, data, simple) {
+		simple = ( typeof simple == undefined ) ? false : !!simple;
 		if ( $.type(member) == 'string' && $.isPlainObject(data) ) {
 			//Add initial member
 			var obj = {};
-			obj[member] = $.extend({}, data);
-			$.extend(this, obj);
-			
-			if ( member in this ) {
-				//Add additional objects
-				var args = ( arguments.length > 2 ) ? [].slice.apply(arguments).slice(2) : [];
-				args.unshift(this[member]);
-				//Add base properties
-				args.push({
-					base: SLB,
-					parent: this,
-					extend: this.extend
-				});
-				$.extend.apply($, args);
+			if ( simple ) {
+				//Simple object
+				obj[member] = $.extend({}, data);
+				$.extend(this, obj);
+			} else {
+				//Add new instance object
+				data['_parent'] = this;
+				var c = this.Class.extend(data);
+				this[member] = new c();
 			}
 		}
 	},
 	
-	/* Prefix */
-	
 	/**
-	 * Retrieve valid separator
-	 * If supplied argument is not a valid separator, use default separator
-	 * @param string (optional) sep Separator text
-	 * @return string Separator text
+	 * Utility methods
 	 */
-	get_sep: function(sep) {
-		if ( typeof sep == 'undefined' || sep == null )
-			sep = '';
+	util: {
+		/* Properties  */
 		
-		return ( $.type(sep) == 'string' ) ? sep : '_';
-	},
+		_base: null,
+		_parent: null,
+		
+		/* Methods */
+		
+		get_base: function() {
+			if ( !this._base ) {
+				var p = this.get_parent();
+				var p_last = null;
+				//Iterate through parents
+				while ( !p.base && p_last != p && p._parent ) {
+					p_last = p;
+					p = p._parent;
+				}
+				//Set base
+				this._base = p;
+			}
+			return this._base;
+		},
+		
+		get_parent: function() {
+			return this._parent;
+		},
+		
+		/**
+		 * Retrieve valid separator
+		 * If supplied argument is not a valid separator, use default separator
+		 * @param string (optional) sep Separator text
+		 * @return string Separator text
+		 */
+		get_sep: function(sep) {
+			if ( typeof sep == 'undefined' || sep == null )
+				sep = '';
+			
+			return ( $.type(sep) == 'string' ) ? sep : '_';
+		},
+		
+		/**
+		 * Retrieve prefix
+		 * @param string (optional) sep Separator text
+		 * @return string Prefix (with separator if specified)
+		 */
+		get_prefix: function(sep) {
+			return ( this.get_parent().prefix && this.get_parent().prefix.length ) ? this.get_parent().prefix + this.get_sep(sep) : '';
+		},
+		
+		/**
+		 * Check if string is prefixed
+		 */
+		has_prefix: function(val, sep) {
+			return ( $.type(val) == 'string' && val.length && val.indexOf(this.get_prefix(sep)) === 0 );
+		},
+		
+		/**
+		 * Add Prefix to value
+		 * @param string val Value to add prefix to
+		 * @param string sep (optional) Separator (Default: `_`)
+		 * @param bool (optional) once If text should only be prefixed once (Default: true)
+		 */
+		add_prefix: function(val, sep, once) {
+			if ( typeof sep == 'undefined' )
+				sep = '_';
+			once = ( typeof once == 'undefined' ) ? true : !!once;
+			if ( once && this.has_prefix(val, sep) )
+				return val;	
+			return this.get_prefix(sep) + val;
+		},
+		
+		/**
+		 * Return formatted string
+		 */
+		sprintf: function() {
+			var format = '',
+				params = [];
+			if (arguments.length < 1)
+				return format;
+			if (arguments.length == 1) {
+				format = arguments[0];
+				return format;
+			}
+			params = arguments.slice(1);
+			return format;
+		},
+		
+		/* Request */
+		
+		/**
+		 * Retrieve valid context
+		 * @return array Context
+		 */
+		get_context: function() {
+			//Valid context
+			var b = this.get_base();
+			if ( !$.isArray(b.context) )
+				b.context = [];
+			//Return context
+			return b.context;
+		},
+				
+		/**
+		 * Check if a context exists in current request
+		 * If multiple contexts are supplied, result will be TRUE if at least ONE context exists
+		 * 
+		 * @param string|array ctx Context to check for
+		 * @return bool TRUE if context exists, FALSE otherwise
+		 */
+		is_context: function(ctx) {
+			var ret = false;
+			//Validate context
+			if ( typeof ctx == 'string' )
+				ctx = [ctx];
+			if ( $.isArray(ctx) && this.get_context().intersect(ctx).length )
+				ret = true;
+			return ret;
+		},
+	}
+});
+
+//Init global object
+var SLB_Core = SLB_Base.extend({
+	/* Properties */
+	
+	base: true,
+	context: [],
 	
 	/**
-	 * Retrieve prefix
-	 * @param string (optional) sep Separator text
-	 * @return string Prefix (with separator if specified)
+	 * New object initializer
+	 * @var obj
 	 */
-	get_prefix: function(sep) {
-		return ( this.prefix && this.prefix.length ) ? this.prefix + this.get_sep(sep) : '';
-	},
+	Class: SLB_Base,
 	
-	/**
-	 * Check if string is prefixed
-	 */
-	has_prefix: function(val, sep) {
-		return ( $.type(val) == 'string' && val.length && val.indexOf(this.get_prefix(sep)) === 0 );
-	},
-	
-	/**
-	 * Add Prefix to value
-	 * @param string val Value to add prefix to
-	 * @param string sep (optional) Separator (Default: `_`)
-	 * @param bool (optional) once If text should only be prefixed once (Default: true)
-	 */
-	add_prefix: function(val, sep, once) {
-		if ( typeof sep == 'undefined' )
-			sep = '_';
-		once = ( typeof once == 'undefined' ) ? true : !!once;
-		if ( once && this.has_prefix(val, sep) )
-			return val;	
-		return this.get_prefix(sep) + val;
-	},
+	/* Methods */
 	
 	/**
 	 * Setup client
@@ -163,59 +346,11 @@ SLB = {
 	 */
 	setup_client: function() {
 		/* Quick Hide */
-		$('html').addClass(this.get_prefix());
-	}
-}
-
-/* Utilities */
-SLB.extend('util', {
-	/**
-	 * Return formatted string
-	 */
-	sprintf: function() {
-		var format = '',
-			params = [];
-		if (arguments.length < 1)
-			return format;
-		if (arguments.length == 1) {
-			format = arguments[0];
-			return format;
-		}
-		params = arguments.slice(1);
-		return format;
-	},
-	
-	/* Request */
-	
-	/**
-	 * Retrieve valid context
-	 * @return array Context
-	 */
-	get_context: function() {
-		//Valid context
-		if ( !$.isArray(this.base.context) )
-			this.base.context = [];
-		//Return context
-		return this.base.context;
-	},
-			
-	/**
-	 * Check if a context exists in current request
-	 * If multiple contexts are supplied, result will be TRUE if at least ONE context exists
-	 * 
-	 * @param string|array ctx Context to check for
-	 * @return bool TRUE if context exists, FALSE otherwise
-	 */
-	is_context: function(ctx) {
-		var ret = false;
-		//Validate context
-		if ( typeof ctx == 'string' )
-			ctx = [ctx];
-		if ( $.isArray(ctx) && this.get_context().intersect(ctx).length )
-			ret = true;
-		return ret;
+		$('html').addClass(this.util.get_prefix());
 	},
 });
+
+this.SLB = new SLB_Core();
 
 SLB.setup_client();
 

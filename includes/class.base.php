@@ -283,7 +283,6 @@ class SLB_Base {
 				//Global Callback
 				if ( is_callable($f->callback) && !call_user_func($f->callback) )
 					$load = false;
-				
 				//Context
 				if ( $load && !empty($f->context) ) {
 					//Reset $load before evaluating context
@@ -306,8 +305,9 @@ class SLB_Base {
 				}
 				
 				//Load valid file
-				if ( $load )
+				if ( $load ) {
 					$func($f->id);
+				}
 			}
 		}
 	}

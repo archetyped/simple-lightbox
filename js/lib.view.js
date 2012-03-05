@@ -1,32 +1,34 @@
 /**
- * Lightbox functionality
+ * Viewer (Lightbox) functionality
  * @package Simple Lightbox
- * @subpackage Lightbox
+ * @subpackage Viewer
  * @author Archetyped
  */
 
 (function ($) {
 
-if ( !SLB || !SLB.extend )
+if ( !SLB || !SLB.attach )
 	return false; 
 
-var viewer = {
+/*-** Controller **-*/
+
+var View = {
 	
 	/* Properties */
 	features: { active: '', disabled: 'off', group: 'group', internal: 'internal' },
-	assets: {},
-	content_handlers: {},
 	items: null,
 	item_current: null,
 	group: null,
 	slideshow_active: true,
 	layout: false,
 	
+	/* Collections */
 	
-	/* Template */
-	template: {
-		/* Skin Placeholders, etc. */
-	},
+	viewers: {},
+	assets: {},
+	content_types: {},
+	groups: {},
+	themes: {},
 	
 	/* Options */
 	options: {
@@ -57,7 +59,7 @@ var viewer = {
 	/**
 	 * Initialization
 	 */
-	init: function(options) {
+	initx: function(options) {
 		console.group('Init');
 		//Set options
 		$.extend(true, this.options, options);
@@ -104,7 +106,7 @@ var viewer = {
 	
 	/* Items */
 	
-		/**
+	/**
 	 * Set event handlers
 	 */
 	init_items: function() {
@@ -340,6 +342,71 @@ var viewer = {
 	
 };
 
-SLB.extend('viewer', viewer);
+/* Components */
+
+var Component = SLB.Class.extend({
+	init: function() {},
+	test: function() {
+		console.log('Parent Test');
+	}
+});
+
+/**
+ * Content viewer
+ * @param obj options Init options
+ */
+View.Viewer = Component.extend({
+	init: function() {
+		console.log('Viewer');
+	}
+});
+
+/**
+ * Content group
+ * @param obj options Init options
+ */
+View.Group = Component.extend({
+	init: function() {
+		console.log('Group');
+	}
+});
+
+/**
+ * Content type
+ * @param obj options Init options
+ */
+View.Content_Type = Component.extend({
+	init: function() {
+		console.log('Content Type');
+	}
+});
+
+/**
+ * Content Item
+ * @param obj options Init options
+ */
+View.Content_Item = Component.extend({
+	init: function() {
+		console.log('Content Item');
+	}
+});
+
+/**
+ * Theme
+ * @param obj options Init options
+ */
+View.Theme = Component.extend({
+	init: function() {
+		console.log('Theme');
+	},
+	test: function() {
+		if ( this instanceof Component )
+			console.log('Component child');
+		console.log('Theme Override');
+	}
+});
+
+//Attach to global object
+SLB.attach('View', View);
 
 })(jQuery);
