@@ -59,7 +59,7 @@ var View = {
 	/**
 	 * Initialization
 	 */
-	initx: function(options) {
+	init: function(options) {
 		console.group('Init');
 		//Set options
 		$.extend(true, this.options, options);
@@ -71,13 +71,13 @@ var View = {
 		this.slideshow_active = this.options.slideshow_autostart;
 		
 		//Features
-		this.init_features();
+		// this.init_features();
 		
 		//Items
-		this.init_items();
+		// this.init_items();
 		
 		//UI
-		this.layout_init();
+		this.init_theme();
 		console.groupEnd();
 	},
 	
@@ -85,11 +85,12 @@ var View = {
 	
 	/**
 	 * Init link feature (activated, grouping, etc.) identifiers
+	 * @TODO Refactor
 	 */
 	init_features: function() {
 		console.groupCollapsed('Features');
 		for ( f in this.features ) {
-			this.features[f] = ( '' == this.features[f] ) ? this.base.get_prefix() : this.base.add_prefix(this.features[f]);
+			this.features[f] = ( '' == this.features[f] ) ? this.util.get_prefix() : this.util.add_prefix(this.features[f]);
 		}
 		console.dir(this.features);
 		console.groupEnd();
@@ -97,6 +98,7 @@ var View = {
 	
 	/**
 	 * Retrieve feature value
+	 * @TODO Refactor
 	 */
 	get_feature: function(f) {
 		if ( f in this.features )
@@ -136,61 +138,102 @@ var View = {
 		
 	},
 	
+	/* Theme */
+	
 	/**
-	 * Retrieve item's group
-	 * @param obj item Item to get group from
-	 * @return string Item group name (Empty string if no group)
+	 * Initialize default theme
 	 */
-	get_item_group: function(item) {
-		var g = this.get_item_attribute(item, this.get_feature('group'));
-		return ( g != null ) ? g : '';
+	init_theme: function() {
+		console.groupCollapsed('Theme');
+		//Initialize default theme
+		this.add_theme(this.util.add_prefix('default'), this.options.layout);
+		console.dir(this.themes);
+		console.groupEnd();
 	},
 	
 	/**
-	 * Retrieve value of specified attribute for value
-	 * @param obj item Content item
-	 * @param string attr Attribute to get value of
-	 * @return mixed Attribute value (NULL if attribute is not set)
+	 * Add theme
+	 * @param string name Theme name
+	 * @param string layout Layout HTML
+	 * @param obj options Theme options
+	 * @return obj New Theme instance
 	 */
-	get_item_attribute: function(item, attr) {
-		var attrs = this.get_item_attributes(item);
-		if ( attr in attrs )
-			return attrs[attr];
+	add_theme: function(id, layout, options) {
+		//Validate params
+		if ( typeof id != 'string' || id.length < 1 )
+			id = this.util.add_prefix('default');
+		//Create theme
+		var thm = new View.Theme(id, layout, options);
+		//Add to collection
+		this.themes[thm.get_id()] = thm;
+		if ( thm instanceof View.Theme )
+			console.log('Added theme: %o', thm);
+		//Return
+		return thm;
+	}
+};
+
+/* Components */
+var Component_Proto = {
+	/* Properties */
+	
+	/**
+	 * Component ID
+	 * @var string
+	 */
+	id: '',
+	
+	/**
+	 * Options
+	 * @var obj
+	 */
+	options: {},
+	
+	/* Init */
+	
+	_c: function() {},
+	
+	/* Methods */
+	
+	get_id: function() {
+		return this.id;
+	},
+	
+	set_id: function(id) {
+		this.id = id.toString();
+	},
+	
+	get_options: function() {
+		return this.options;
+	},
+	
+	get_option: function(option) {
+		if ( typeof option == 'string' && option.length > 0 && option in this.options )
+			return this.options[option];
 		return null;
 	},
 	
-	/**
-	 * Retrieve item attributes
-	 * @param obj item Item to get attributes for
-	 * @return object Item attributes
-	 */
-	get_item_attributes: function(item) {
-		console.groupCollapsed('Get Attributes');
-		//Get attribute values
-		var attrs = $(item).attr('rel');
-		attrs = attrs.split(' ');
-		var o = {};
-		var wrap = {start: '[', end: ']'};
-		var istart = -1, iend = -1;
-		var val;
-		//Format attributes
-		for ( var a = 0; a < attrs.length; a++ ) {
-			attr = attrs[a];
-			istart = attr.indexOf(wrap.start);
-			iend = attr.indexOf(wrap.end);
-			if ( istart > 0 && iend == ( attr.length - 1 ) ) {
-				//Extract attribute value
-				val = attr.substring(istart + 1, iend);
-				attr = attr.substr(0, istart);
-			} else {
-				val = true;
-			}
-			//Set attribute
-			o[attr] = val;
+	set_options: function(options) {
+		if ( $.isPlainObject(options) )
+			$.extend(this.options, options);
+	},
+	
+	set_option: function(option, value) {
+		if ( this.util.is_valid(option, 'string') && this.util.is_valid(value, null, false) ) {
+			this.options[option] = value;
 		}
-		console.dir(o);
-		console.groupEnd();
-		return o;
+	},
+};
+
+var Component = SLB.Class.extend(Component_Proto);
+
+/**
+ * Content viewer
+ * @param obj options Init options
+ */
+var Viewer = {
+	_c: function() {
+		console.log('Viewer');
 	},
 	
 	/* Display */
@@ -226,80 +269,6 @@ var View = {
 	 * Show overlapping DOM elements, etc.
 	 */
 	dom_restore: function() {
-		
-	},
-	
-	/* Template */
-	
-	/**
-	 * Initialize layout
-	 */
-	layout_init: function() {
-		console.groupCollapsed('Layout');
-		//Build layout
-		var layout = this.layout_build();
-		console.log('Layout\n %o', layout);
-		//Add to DOM
-		if ( '' != layout ) {
-			console.info('Adding layout to DOM');
-			$(document).append(layout);
-			this.layout = $(layout);
-		
-			//Set event handlers
-			this.layout_events();		
-		}
-		console.groupEnd();
-	},
-	
-	/**
-	 * Build layout
-	 */
-	layout_build: function() {
-		return '';
-	},
-	
-	/**
-	 * Retrieve layout element
-	 * @param string el Element ID
-	 * @return jQuery object Specified element
-	 * If element is not specified, then entire layout is returned
-	 */
-	layout_get: function(el) {
-		return $(this.layout);
-	},
-	
-	/**
-	 * Setup event handlers for layout
-	 * navigation, close, overlay, etc.
-	 */
-	layout_events: function() {
-		
-	},
-	
-	/* Data */
-	
-	/**
-	 * Load content
-	 */
-	content_fetch: function(item) {
-		
-	},
-	
-	/**
-	 * Get content type
-	 */
-	
-	/**
-	 * Setup group
-	 */
-	group_setup: function(item) {
-		
-	},
-	
-	/**
-	 * Setup content array
-	 */
-	group_get_items: function() {
 		
 	},
 	
@@ -339,72 +308,214 @@ var View = {
 	close: function() {
 		
 	}
-	
 };
 
-/* Components */
-
-var Component = SLB.Class.extend({
-	init: function() {},
-	test: function() {
-		console.log('Parent Test');
-	}
-});
-
-/**
- * Content viewer
- * @param obj options Init options
- */
-View.Viewer = Component.extend({
-	init: function() {
-		console.log('Viewer');
-	}
-});
+View.Viewer = Component.extend(Viewer);
 
 /**
  * Content group
  * @param obj options Init options
  */
-View.Group = Component.extend({
-	init: function() {
+var Group = {
+	_c: function() {
 		console.log('Group');
+	},
+	
+	/**
+	 * Setup group
+	 */
+	setup: function(item) {
+		
+	},
+	
+	/**
+	 * Retrieve group items
+	 */
+	get_items: function() {
+		
 	}
-});
+};
+
+View.Group = Component.extend(Group);
 
 /**
  * Content type
  * @param obj options Init options
  */
-View.Content_Type = Component.extend({
-	init: function() {
+var Content_Type = {
+	_c: function() {
 		console.log('Content Type');
 	}
-});
+};
+
+View.Content_Type = Component.extend(Content_Type);
 
 /**
  * Content Item
  * @param obj options Init options
  */
-View.Content_Item = Component.extend({
-	init: function() {
-		console.log('Content Item');
-	}
-});
+var Content_Item = {
+	/* Properties */
+	
+	attributes: {},
+	
+	/* Init */
+	
+	_c: function(item, attributes) {
+		console.log('New Content Item');
+		//Validate item
+		
+		//Set attributes
+		
+	},
+	
+	/* Methods */
+	
+	/**
+	 * Retrieve item's group
+	 * @param obj item Item to get group from
+	 * @return string Item group name (Empty string if no group)
+	 */
+	get_group: function() {
+		var g = this.get_attribute('group');
+		return ( g != null ) ? g : '';
+	},
+	
+	/**
+	 * Retrieve value of specified attribute for value
+	 * @param obj item Content item
+	 * @param string attr Attribute to get value of
+	 * @return mixed Attribute value (NULL if attribute is not set)
+	 */
+	get_attribute: function(attr) {
+		var attrs = this.get_attributes();
+		if ( attr in attrs )
+			return attrs[attr];
+		return null;
+	},
+	
+	/**
+	 * Retrieve item attributes
+	 * @param obj item Item to get attributes for
+	 * @return object Item attributes
+	 */
+	get_attributes: function() {
+		//Debug: Temp item
+		var item = '';
+		console.groupCollapsed('Get Attributes');
+		//Get attribute values
+		var attrs = $(item).attr('rel');
+		attrs = attrs.split(' ');
+		var o = {};
+		var wrap = {start: '[', end: ']'};
+		var istart = -1, iend = -1;
+		var val;
+		//Format attributes
+		for ( var a = 0; a < attrs.length; a++ ) {
+			attr = attrs[a];
+			istart = attr.indexOf(wrap.start);
+			iend = attr.indexOf(wrap.end);
+			if ( istart > 0 && iend == ( attr.length - 1 ) ) {
+				//Extract attribute value
+				val = attr.substring(istart + 1, iend);
+				attr = attr.substr(0, istart);
+			} else {
+				val = true;
+			}
+			//Set attribute
+			o[attr] = val;
+		}
+		console.dir(o);
+		console.groupEnd();
+		return o;
+	},
+};
+
+View.Content_Item = Component.extend(Content_Item);
 
 /**
  * Theme
  * @param obj options Init options
  */
-View.Theme = Component.extend({
-	init: function() {
-		console.log('Theme');
+var Theme = {
+	
+	/* Properties */
+	
+	/**
+	 * Raw layout
+	 * @var string
+	 */	
+	_layout: '',
+	
+	/**
+	 * Parsed layout
+	 * Placeholders processed
+	 * @var string
+	 */
+	layout: '',
+	
+	/* Init */
+	
+	/**
+	 * Constructor
+	 * @param string id Theme ID
+	 * @param string layout Theme HTML
+	 * @param obj options Theme options
+	 * @return obj Theme instance
+	 */
+	_c: function(id, layout, options) {
+		console.groupCollapsed('New Theme');
+		this.set_id(id);
+		this.set_layout(layout);
+		this.set_options(options);
+		console.log('Name: %o \nLayout: %o \nOptions: %o', this.get_id(), this.get_layout(), this.get_options());
+		console.groupEnd();
 	},
-	test: function() {
-		if ( this instanceof Component )
-			console.log('Component child');
-		console.log('Theme Override');
-	}
-});
+	
+	/* Methods */
+	
+	/**
+	 * Retrieve layout
+	 * @uses layout
+	 * @return string Layout HTML
+	 */
+	get_layout: function() {
+		return this.layout;
+	},
+	
+	/**
+	 * Set layout
+	 * @uses _layout to set raw layout
+	 * @uses layout to set parsed layout
+	 * @uses parse_layout to pare raw layout
+	 * @param string layout Layout HTML
+	 */
+	set_layout: function(layout) {
+		console.log('Setting Layout: %o', layout);
+		//Validate layout
+		if ( !this.util.is_valid(layout, 'string') ) {
+			console.warn('Layout invalid');
+			//Clear layout
+			layout = '';
+		}
+		//Save raw layout
+		this._layout = layout;
+		//Parse layout
+		this.layout = this.parse_layout();
+	},
+	
+	/**
+	 * Parse raw layout
+	 * @uses _layout to retrieve raw layout HTML
+	 * @return string Parsed layout
+	 */
+	parse_layout: function() {
+		//Parse raw layout
+		return this._layout;
+	},
+};
+
+View.Theme = Component.extend(Theme);
 
 //Attach to global object
 SLB.attach('View', View);

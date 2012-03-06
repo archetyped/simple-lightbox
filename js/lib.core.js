@@ -134,8 +134,8 @@ Class.extend = function(members) {
 				this._init.apply(this, arguments);
 			}
 			//Main Constructor
-			if ( this.init ) {
-				this.init.apply(this, arguments);
+			if ( this._c ) {
+				this._c.apply(this, arguments);
 			}
 		}
 	}
@@ -161,7 +161,6 @@ var SLB_Base = Class.extend({
 	base: false,
 	_parent: null,
 	prefix: 'slb',
-	obj: {data: 'Hello'},
 	
 	/* Methods */
 	
@@ -320,6 +319,49 @@ var SLB_Base = Class.extend({
 				ctx = [ctx];
 			if ( $.isArray(ctx) && this.get_context().intersect(ctx).length )
 				ret = true;
+			return ret;
+		},
+		
+		/* Helpers */
+		
+		/**
+		 * Checks if value is valid based on type
+		 * All undefined values are immediately invalid
+		 * @var mixed value Value to check
+		 * @var string type (optional) Required data type (string, array, etc. - Default: Anything)
+		 * @var bool nonempty (optional) Whether value must not be empty (Default: Yes)
+		 * @return bool Whether value is valid (TRUE if valid, FALSE otherwise)
+		 */
+		is_valid: function(value, type, nonempty) {
+			var ret = false;
+			var tvalue = typeof value;
+			console.groupCollapsed('Validity check');
+			console.log('Value: %o \nValue Type: %o \nType: %o \nNonempty: %s', value, tvalue, type, nonempty);
+			if ( tvalue != 'undefined' ) {
+				ret = true;	
+				console.log('Value is set, continuing');
+				//Check data type (only if set)
+				if ( typeof type == 'string' && tvalue != type ) {
+					console.warn('%o is not equal to %o', tvalue, type);
+					ret = false;
+				}
+				
+				//Check if data is empty
+				nonempty = ( typeof nonempty == 'undefined' ) ? true : !!nonempty; 
+				if ( ret && nonempty ) {
+					console.log('Checking nonempty');
+					switch ( type ) {
+						case 'string':
+						case 'array':
+						case 'object':
+							if ( value.length == 0 )
+								ret = false;
+							break;
+					}
+				}
+			}
+			console.log('Return value: %o', ret);
+			console.groupEnd();
 			return ret;
 		},
 	}

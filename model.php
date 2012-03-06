@@ -624,7 +624,7 @@ class SLB_Lightbox extends SLB_Base {
 
 		//Build client output
 		//DEBUG
-		//echo $this->util->build_script_element($this->util->call_client_method('View.init', $options), 'init', true, true);
+		echo $this->util->build_script_element($this->util->call_client_method('View.init', $options), 'init', true, true);
 		echo '<!-- /SLB -->' . PHP_EOL;
 	}
 	
