@@ -1,31 +1,31 @@
 <div id="slb_container">
 	<div id="slb_content">
-		{slbContent}
+		{item.content}
 		<div id="slb_nav_hover">
-			{navPrev}
-			{navNext}
+			{ui.nav_prev}
+			{ui.nav_next}
 		</div>
 		<div id="slb_loading">
-			{slbLoading}
+			{ui.loading}
 		</div>
 	</div>
 </div>
 <div id="slb_details">
 	<div id="slb_data">
 		<div id="slb_data_content">
-			{dataCaption}
+			{item.caption}
 			<span id="slb_data_desc">
-			{dataDescription}
+			{item.description}
 			</span>
-			{dataNumber}
+			{group.number}
 			<span id="slb_nav">
-				{navPrev}
-				{navNext}
-				{navSlideControl}
+				{ui.nav_prev}
+				{ui.nav_next}
+				{ui.nav_slide_control}
 			</span>
 		</div>
 		<div id="slb_close">
-			{slbClose}
+			{ui.close}
 		</div>
 	</div>
 </div>

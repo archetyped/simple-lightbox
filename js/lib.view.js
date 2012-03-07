@@ -25,11 +25,10 @@ var View = {
 	/* Collections */
 	
 	viewers: {},
-	assets: {},
+	items: [],
 	content_types: {},
 	groups: {},
 	themes: {},
-	theme_tags: {},
 	
 	/* Options */
 	options: {
@@ -72,10 +71,10 @@ var View = {
 		this.slideshow_active = this.options.slideshow_autostart;
 		
 		//Features
-		// this.init_features();
+		this.init_features();
 		
 		//Items
-		// this.init_items();
+		this.init_items();
 		
 		//UI
 		this.init_theme();
@@ -117,13 +116,13 @@ var View = {
 		//Define handler
 		var t = this;
 		var handler = function() {
-			t.show(this);
+			t.show_item(this);
 			return false;
 		};
 		
 		//Get activated links
 		var sel = 'a[href][rel~="' + this.get_feature('active') + '"]:not([rel~="' + this.get_feature('disabled') + '"])';
-		console.log('Selector: ' + sel);
+		console.log('Selector: %o', sel);
 		console.dir($(sel));
 		//Add event handler
 		$(sel).live('click', handler);
@@ -137,6 +136,21 @@ var View = {
 	 */
 	get_items: function(group) {
 		
+	},
+	
+	/**
+	 * Display item in viewer
+	 */
+	show_item: function(item) {
+		console.groupCollapsed('Show Item');
+		//Parse item
+		if ( ! ( item instanceof this.Content_Item ) ) {
+			var oItem = item;
+			var nItem = new this.Content_Item(item);
+			//Save content item
+			this.items.push(nItem);
+		}
+		console.groupEnd();
 	},
 	
 	/* Theme */
@@ -175,19 +189,26 @@ var View = {
 		return thm;
 	},
 	
+	/**
+	 * Add Theme Tag Handler to Theme prototype
+	 * @param string id Unique ID
+	 * @param function (optional) build Tag parser/builder
+	 * @param obj attrs (optional) Default tag attributes/values
+	 * @param bool dynamic (optional) Whether tag is dynamically rendered (per item) or not
+	 */
 	add_theme_tag: function(id, build, attrs, dynamic) {
 		//Validate ID
-		if ( this.util.id_valid(id) ) {
+		if ( this.util.is_valid(id, 'string', true) ) {
 			//Create new instance
 			var tag = new this.Theme_Tag(id, build, attrs, dynamic);
-			//Add to collection
-			this.theme_tags[tag.get_id()] = tag;
+			//Add to Theme prototype
+			this.Theme.prototype.tags[tag.get_id()] = tag;
 		}
 	}
 };
 
 /* Components */
-var Component_Proto = {
+var Component = {
 	/* Properties */
 	
 	/**
@@ -243,7 +264,7 @@ var Component_Proto = {
 	},
 };
 
-var Component = SLB.Class.extend(Component_Proto);
+Component = SLB.Class.extend(Component);
 
 /**
  * Content viewer
@@ -375,19 +396,113 @@ View.Content_Type = Component.extend(Content_Type);
 var Content_Item = {
 	/* Properties */
 	
+	_el: null,
+		
+	_attributes: {
+		src: null,
+		permalink: null,
+		title: '',
+		group: null,
+		internal: false
+	},
+	
 	attributes: {},
+	
+	type: null,
 	
 	/* Init */
 	
 	_c: function(item, attributes) {
 		console.log('New Content Item');
 		//Validate item
+		if ( ( item instanceof this ) ) {
+			this = item;
+		} else {
+			this.set_element(item);
+			//Create new instance
+			this.parse();
+		}
 		
 		//Set attributes
-		
+		this.set_attributes(attributes, true);
 	},
 	
 	/* Methods */
+	
+	parse: function(item) {
+		if ( !this.util.is_valid(item) )
+			item = this.get_element();
+		//Set permalink
+		this.set_permalink();
+		//Set title
+		this.set_title();
+		//Set type
+		this.set_type();
+		//Get options from rel attribute
+		var opts = $(item).attr('rel');
+		if ( opts ) {
+			//Find options
+			opts = opts.split(' ');
+			var wrap = {
+				open: '[',
+				close: ']' 
+			};
+			var attrs = {};
+			var attr = key = val = open = null;
+			var prefix = this.util.add_prefix('');
+			
+			for ( var x = 0; x < opts.length; x++ ) {
+				attr = opts[x];
+				//Process options
+				if ( attr.indexOf(prefix) === 0 ) {
+					//Set attributes
+					if ( attr.indexOf(wrap.close) === ( attr.length - 1 ) ) {
+						//Strip prefix
+						open = attr.indexOf(wrap.open);
+						key = attr.substring(prefix.length, open);
+						val = attr.substring(open + 1, attr.length - 1);
+						//Set attribute
+						this.set_attribute(key, val);
+						continue;
+					}
+					//Set flags
+					this.set_attribute(attr.substr(prefix.length), true);
+				}
+			}
+		}
+		//Retrieve attributes passed from backend
+		
+		//ID
+		
+		//Group
+		
+		//Source URI
+		
+	},
+	
+	set_element: function(el) {
+		this._el = $(el);
+	},
+	
+	get_element: function() {
+		return $(this._el);
+	},
+	
+	set_permalink: function(uri) {
+		this.set_attribute(this.get_element().attr('href'));
+	},
+	
+	set_title: function(title) {
+		
+	},
+	
+	set_type: function(type) {
+		
+	},
+	
+	set_group: function(group) {
+		
+	},
 	
 	/**
 	 * Retrieve item's group
@@ -399,53 +514,38 @@ var Content_Item = {
 		return ( g != null ) ? g : '';
 	},
 	
+	set_attributes: function(attributes, full) {
+		if ( !this.util.is_valid(full, 'bool') )
+			full = false;
+		//Full attribute rebuild
+		if ( full ) {
+			this.attributes = $.extend({}, this._attributes);
+		}
+		
+		//Merge new/existing attributes
+		if ( $.isPlainObject(attributes) ) {
+			$.extend(this.attributes, attributes);
+		}
+	},
+	
+	set_attribute: function(key, val) {
+		this.attributes[key] = val;
+	},
+	
+	get_attributes: function() {
+		return this.attributes;
+	},
+	
 	/**
 	 * Retrieve value of specified attribute for value
 	 * @param obj item Content item
 	 * @param string attr Attribute to get value of
 	 * @return mixed Attribute value (NULL if attribute is not set)
 	 */
-	get_attribute: function(attr) {
-		var attrs = this.get_attributes();
-		if ( attr in attrs )
-			return attrs[attr];
-		return null;
-	},
-	
-	/**
-	 * Retrieve item attributes
-	 * @param obj item Item to get attributes for
-	 * @return object Item attributes
-	 */
-	get_attributes: function() {
-		//Debug: Temp item
-		var item = '';
-		console.groupCollapsed('Get Attributes');
-		//Get attribute values
-		var attrs = $(item).attr('rel');
-		attrs = attrs.split(' ');
-		var o = {};
-		var wrap = {start: '[', end: ']'};
-		var istart = -1, iend = -1;
-		var val;
-		//Format attributes
-		for ( var a = 0; a < attrs.length; a++ ) {
-			attr = attrs[a];
-			istart = attr.indexOf(wrap.start);
-			iend = attr.indexOf(wrap.end);
-			if ( istart > 0 && iend == ( attr.length - 1 ) ) {
-				//Extract attribute value
-				val = attr.substring(istart + 1, iend);
-				attr = attr.substr(0, istart);
-			} else {
-				val = true;
-			}
-			//Set attribute
-			o[attr] = val;
-		}
-		console.dir(o);
-		console.groupEnd();
-		return o;
+	get_attribute: function(key, def) {
+		if ( !this.util.is_valid(def) )
+			def = null;
+		return ( key in this.attributes ) ? this.attributes[key] : def;
 	},
 };
 
@@ -471,6 +571,13 @@ var Theme = {
 	 * @var string
 	 */
 	layout: '',
+	
+	/**
+	 * Layout tags
+	 * Processes tag
+	 * @var Theme_Tag
+	 */
+	tags: {},
 	
 	/* Init */
 	
@@ -530,6 +637,15 @@ var Theme = {
 	parse_layout: function() {
 		//Parse raw layout
 		return this._layout;
+	},
+	
+	/**
+	 * Render Theme output
+	 * @return string Theme output
+	 */
+	render: function() {
+		//Parse layout
+		return this.parse_layout();
 	},
 };
 
