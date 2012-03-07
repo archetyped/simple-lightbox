@@ -1,7 +1,7 @@
 /**
- * Viewer (Lightbox) functionality
+ * View (Lightbox) functionality
  * @package Simple Lightbox
- * @subpackage Viewer
+ * @subpackage View
  * @author Archetyped
  */
 
@@ -29,6 +29,7 @@ var View = {
 	content_types: {},
 	groups: {},
 	themes: {},
+	theme_tags: {},
 	
 	/* Options */
 	options: {
@@ -160,16 +161,28 @@ var View = {
 	 */
 	add_theme: function(id, layout, options) {
 		//Validate params
-		if ( typeof id != 'string' || id.length < 1 )
+		if ( !this.util.is_valid(id, 'string', true) )
 			id = this.util.add_prefix('default');
 		//Create theme
-		var thm = new View.Theme(id, layout, options);
+		var thm = new this.Theme(id, layout, options);
+		//DEBUG: Set Parent
+		thm._set_parent(this);
 		//Add to collection
 		this.themes[thm.get_id()] = thm;
-		if ( thm instanceof View.Theme )
+		if ( thm instanceof this.Theme )
 			console.log('Added theme: %o', thm);
 		//Return
 		return thm;
+	},
+	
+	add_theme_tag: function(id, build, attrs, dynamic) {
+		//Validate ID
+		if ( this.util.id_valid(id) ) {
+			//Create new instance
+			var tag = new this.Theme_Tag(id, build, attrs, dynamic);
+			//Add to collection
+			this.theme_tags[tag.get_id()] = tag;
+		}
 	}
 };
 
@@ -192,6 +205,11 @@ var Component_Proto = {
 	/* Init */
 	
 	_c: function() {},
+	
+	_set_parent: function() {
+		this._parent = View;
+		this.util._parent = this;
+	},
 	
 	/* Methods */
 	
@@ -516,6 +534,90 @@ var Theme = {
 };
 
 View.Theme = Component.extend(Theme);
+
+/**
+ * Theme tag handler
+ */
+var Theme_Tag = {
+	/* Properties */
+	
+	/**
+	 * Indicates if tag is dynamic or not
+	 * @param bool
+	 */
+	dynamic: false,
+	
+	/**
+	 * Default tag attributes/values
+	 * @param obj
+	 */
+	attrs: {},
+	
+	/* Init */
+	
+	/**
+	 * Constructor
+	 * @param string id Unique ID
+	 * @param obj attrs (optional) Default attributes
+	 * @param bool dynamic (optional) Whether or not tag is dynamically built
+	 */
+	_c: function(id, build, attrs, dynamic) {
+		this.set_id(id);
+		this.set_build(build);
+		this.set_attrs(attrs);
+		this.set_dynamic(dynamic);
+	},
+	
+	/* Methods */
+	
+	/**
+	 * Parse tag and return output
+	 * @param obj theme Theme instance
+	 * @param obj tag Parsed tag properties
+	 * @return string Tag output
+	 */
+	parse: function(theme, tag) {
+		return this.build(theme, tag);
+	},
+	
+	/**
+	 * Build tag output
+	 * @param obj theme Theme instance
+	 * @param obj tag Parsed tag properties
+	 * @return string Tag output
+	 */
+	build: function(theme, tag) {
+		return 'build';
+	},
+	
+	/**
+	 * Set instance build method
+	 * @param function build Build method
+	 */
+	set_build: function(build) {
+		if ( $.isFunction(build) )
+			this.build = build;
+	},
+	
+	/**
+	 * Set default attributes for tag
+ 	 * @param obj attrs Default attributes
+	 */
+	set_attrs: function(attrs) {
+		if ( $.isPlainObject(attrs) )
+			this.attrs = attrs;
+	},
+	
+	/**
+	 * Set tag as dynamic or not
+	 * @param bool dynamic (Default: No)
+	 */
+	set_dynamic: function(dynamic) {
+		this.dynamic = ( this.util.is_valid(dynamic, 'bool', true) ) ? dynamic : false;
+	}
+};
+
+View.Theme_Tag = Component.extend(Theme_Tag);
 
 //Attach to global object
 SLB.attach('View', View);

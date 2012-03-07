@@ -154,8 +154,7 @@ Class.extend = function(members) {
 };
 
 /* Base */
-
-var SLB_Base = Class.extend({
+var Base = {
 	/* Properties */
 	
 	base: false,
@@ -168,11 +167,13 @@ var SLB_Base = Class.extend({
 	 * Constructor
 	 */
 	_init: function() {
-		this.util['_parent'] = this;
+		this._set_parent();
 	},
 	
-	set_parent: function(p) {
-		this._parent = p;
+	_set_parent: function(p) {
+		if ( typeof p != 'undefined' )
+			this._parent = p;
+		this.util._parent = this;
 	},
 	
 	/**
@@ -198,6 +199,14 @@ var SLB_Base = Class.extend({
 				this[member] = new c();
 			}
 		}
+	},
+	
+	/**
+	 * Get parent object
+	 * @return obj Parent object
+	 */
+	get_parent: function() {
+		return this._parent();
 	},
 	
 	/**
@@ -365,10 +374,11 @@ var SLB_Base = Class.extend({
 			return ret;
 		},
 	}
-});
+};
+var SLB_Base = Class.extend(Base);
 
 //Init global object
-var SLB_Core = SLB_Base.extend({
+var Core = {
 	/* Properties */
 	
 	base: true,
@@ -390,7 +400,8 @@ var SLB_Core = SLB_Base.extend({
 		/* Quick Hide */
 		$('html').addClass(this.util.get_prefix());
 	},
-});
+};
+var SLB_Core = SLB_Base.extend(Core);
 
 this.SLB = new SLB_Core();
 

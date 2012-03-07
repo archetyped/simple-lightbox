@@ -1061,11 +1061,11 @@ class SLB_Lightbox extends SLB_Base {
 	function init_default_themes() {
 		$name = $this->theme_default;
 		$title = 'Default';
-		$stylesheet_url = $this->util->get_file_url('css/lightbox.css');
-		$layout = file_get_contents($this->util->normalize_path($this->util->get_path_base(), 'templates', 'default', 'layout.html'));
+		$stylesheet_url = $this->util->get_file_url('themes/default/style.css');
+		$layout = file_get_contents($this->util->normalize_path($this->util->get_path_base(), 'themes', 'default', 'layout.html'));
 		$this->register_theme($name, $title, $stylesheet_url, $layout);
 		//Testing: Additional themes
-		$this->register_theme('black', 'Black', $this->util->get_file_url('css/lb_black.css'), $layout);
+		$this->register_theme('black', 'Black', $this->util->get_file_url('themes/black/style.css'), $layout);
 	}
 	
 	/*-** Grouping **-*/
