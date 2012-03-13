@@ -206,7 +206,7 @@ var Base = {
 	 * @return obj Parent object
 	 */
 	get_parent: function() {
-		return this._parent();
+		return this._parent;
 	},
 	
 	/**
@@ -217,6 +217,14 @@ var Base = {
 		
 		_base: null,
 		_parent: null,
+		
+		/* Constants */
+		
+		string: 'string',
+		bool: 'boolean',
+		array: 'array',
+		obj: 'object',
+		func: 'function',
 		
 		/* Methods */
 		
@@ -332,6 +340,88 @@ var Base = {
 		},
 		
 		/* Helpers */
+
+		is_set: function(value) {
+			return ( typeof value != 'undefined' ) ? true : false;
+		},
+		
+		is_type: function(value, type) {
+			var ret = false;
+			if ( this.is_set(value) && this.is_set(type) ) {
+				switch ( typeof type ) {
+					case this.func:
+						ret = ( value instanceof type ) ? true : false;
+						break;
+					case this.string:
+						ret = ( typeof value == type ) ? true : false;
+						break;
+					default:
+						ret = false;
+						break;
+				}
+			}
+			
+			return ret;
+		},
+		
+		is_string: function(value) {
+			return this.is_type(value, this.string);
+		},
+		
+		is_array: function(value) {
+			return ( this.is_type(value, this.array) || ( this.is_obj(value) && value.length ) );
+		},
+		
+		is_bool: function(value) {
+			return this.is_type(value, this.bool);
+		},
+		
+		is_obj: function(value) {
+			return this.is_type(value, this.obj);
+		},
+		
+		is_func: function(value) {
+			return this.is_type(value, this.func);
+		},
+		
+		/**
+		 * Checks if value is empty
+		 * @param mixed value Value to check
+		 * @param string type (optional) Data type
+		 * @return bool TRUE if value is empty, FALSE if not empty
+		 */
+		is_empty: function(value, type) {
+			ret = false;
+			//Initial check for empty value
+			if ( !this.is_set(value) || null === value || false === value ) {
+				ret = true;
+			} else {
+				//Validate type
+				if ( !this.is_set(type) ) {
+					type = typeof value;
+				}
+				//Type-based check
+				if ( this.is_type(value, type) ) {
+					switch ( type ) {
+						case this.string:
+						case this.array:
+							if ( value.length == 0 )
+								ret = true;
+							break;
+						case this.object:
+							ret = true;
+							for ( var p in value ) {
+								ret = false;
+								break;
+							}
+							break;
+					}
+				} else {
+					ret = true;
+				}
+			}
+			return ret;
+		},
 		
 		/**
 		 * Checks if value is valid based on type
@@ -343,34 +433,21 @@ var Base = {
 		 */
 		is_valid: function(value, type, nonempty) {
 			var ret = false;
-			var tvalue = typeof value;
-			console.groupCollapsed('Validity check');
-			console.log('Value: %o \nValue Type: %o \nType: %o \nNonempty: %s', value, tvalue, type, nonempty);
-			if ( tvalue != 'undefined' ) {
-				ret = true;	
-				console.log('Value is set, continuing');
+			//Only process defined values
+			if ( this.is_set(value) ) {
+				ret = true;
 				//Check data type (only if set)
-				if ( typeof type == 'string' && tvalue != type ) {
-					console.warn('%o is not equal to %o', tvalue, type);
+				if ( !this.is_type(value, type) ) {
 					ret = false;
 				}
 				
 				//Check if data is empty
-				nonempty = ( typeof nonempty == 'undefined' ) ? true : !!nonempty; 
+				if ( !this.is_set(nonempty) )
+					nonempty = true;
 				if ( ret && nonempty ) {
-					console.log('Checking nonempty');
-					switch ( type ) {
-						case 'string':
-						case 'array':
-						case 'object':
-							if ( value.length == 0 )
-								ret = false;
-							break;
-					}
+					ret = !this.is_empty(value, type);
 				}
 			}
-			console.log('Return value: %o', ret);
-			console.groupEnd();
 			return ret;
 		},
 	}

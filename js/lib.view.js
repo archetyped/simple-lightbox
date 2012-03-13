@@ -1,4 +1,4 @@
-/**
+/** 
  * View (Lightbox) functionality
  * @package Simple Lightbox
  * @subpackage View
@@ -30,6 +30,11 @@ var View = {
 	groups: {},
 	themes: {},
 	
+	collection_add: {
+		'viewer': this.Viewer,
+		'group': this.Group
+	},
+	
 	/* Options */
 	options: {
 		validate_links: false,
@@ -60,27 +65,84 @@ var View = {
 	 * Initialization
 	 */
 	init: function(options) {
-		console.group('Init');
+		console.groupCollapsed('Init');
 		//Set options
 		$.extend(true, this.options, options);
 		console.groupCollapsed('Options');
 		console.dir(this.options);
 		console.groupEnd();
 		
-		//Set properties
-		this.slideshow_active = this.options.slideshow_autostart;
+		/* Set defaults */
 		
 		//Features
 		this.init_features();
 		
+		//Theme
+		this.init_theme();
+		
+		//Viewer
+		this.init_viewers();
+		
 		//Items
 		this.init_items();
-		
-		//UI
-		this.init_theme();
+		console.info('Init complete');
 		console.groupEnd();
 	},
 	
+	/* Components */
+	
+	/**
+	 * Retrieve collection of components of specified type
+	 * @param function type Component type
+	 * @return object Component collection
+	 */
+	get_components: function(type) {
+		//Validate
+		if ( !this.util.is_func(type) || !('_slug' in type.prototype) ) {
+			return {};
+		}
+		//Get collection
+		var coll = type.prototype._slug + 's';
+		if ( ( coll in this ) ) {
+			return this[coll];
+		}
+	},
+	
+	/**
+	 * Retrieve component from specific collection
+	 * @param string id Component ID
+	 * @param function type Component type
+	 * @return object|null Component reference
+	 */
+	get_component: function(id, type) {
+		console.group('View.get_component');
+		console.log('ID: %o \nType: %o', id, type);
+		var ret = null;
+		//Only type specified Retrieve default component
+		if ( arguments.length == 1 && this.util.is_func(arguments[0]) ) {
+			type = id;
+			id = null;
+		}
+		//Validate type
+		if ( !this.util.is_func(type) ) {
+			console.groupEnd();
+			return ret;
+		}
+		console.log('Component type is valid');
+		//Sanitize id
+		if ( this.util.is_empty(id) ) {
+			id = this.util.add_prefix('default');
+		}
+		//Get component from collection
+		var coll = this.get_components(type);
+		if ( this.util.is_empty(coll) && ( id in this.collection_add ) && ( 'add_' +  ))
+		if ( this.util.is_obj(coll) && ( id in coll ) ) {
+			ret = coll[id];
+		}
+		console.groupEnd();
+		return ret;
+	},
+		
 	/* Properties */
 	
 	/**
@@ -104,6 +166,39 @@ var View = {
 		if ( f in this.features )
 			return this.features[f];
 		return '';
+	},
+	
+	/* Viewers */
+	
+	init_viewers: function() {
+		//Reset viewers
+		this.viewers = {};
+		//Add default viewer
+		this.add_viewer(this.util.add_prefix('default'));
+	},
+	
+	add_viewer: function(v) {
+		if ( !this.util.is_valid(v, this.util.string) )
+			return false;
+		//Create viewer
+		var v = new this.Viewer(v);
+		//Add to collection
+		this.viewers[v.get_id()] = v;
+	},
+	
+	get_viewers: function() {
+		return this.viewers;
+	},
+	
+	has_viewer: function(v) {
+		return ( this.util.is_valid(v, this.util.string) && v in this.get_viewers() ) ? true : false;
+	},
+	
+	get_viewer: function(v) {
+		//Retrieve default viewer if specified viewer not set
+		if ( !this.has_viewer(v) )
+			v = this.util.add_prefix('default');
+		return this.get_viewers()[v];
 	},
 	
 	/* Items */
@@ -142,15 +237,72 @@ var View = {
 	 * Display item in viewer
 	 */
 	show_item: function(item) {
-		console.groupCollapsed('Show Item');
+		console.groupCollapsed('View.show_item');
 		//Parse item
-		if ( ! ( item instanceof this.Content_Item ) ) {
-			var oItem = item;
-			var nItem = new this.Content_Item(item);
-			//Save content item
-			this.items.push(nItem);
+		if ( ! this.util.is_type(item, this.Content_Item) ) {
+			//Create new instance
+			var item = new this.Content_Item(item);
+			item.show();
 		}
 		console.groupEnd();
+	},
+	
+	/* Group */
+	
+	/**
+	 * Add new group
+	 * @param string g Group ID
+	 *  > If group with same ID already set, new group replaces existing one
+	 * @param object attrs (optional) Group attributes
+	 */
+	add_group: function(g, attrs) {
+		console.group('View.add_group');
+		//Create new group
+		g = new this.Group(g, attrs);
+		console.log('New group: %o', g.get_id());
+		//Add group to collection
+		if ( this.util.is_valid(g.get_id(), this.util.string) ) {
+			this.groups[g.get_id()] = g;
+			console.log('Add group to collection');
+		}
+		console.groupEnd();
+	},
+	
+	/**
+	 * Retrieve groups
+	 * @uses groups property
+	 * @return object Registered groups
+	 */
+	get_groups: function() {
+		return this.groups;
+	},
+	
+	/**
+	 * Retrieve specified group
+	 * @param string g Group ID
+	 * @return object|null Group instance (NULL if group does not exist)
+	 */
+	get_group: function(g) {
+		console.group('View.get_group');
+		if ( this.util.is_string(g) ) {
+			if ( !this.has_group(g) ) {
+				//Add new group (if necessary)
+				this.add_group(g);
+			}
+			//Retrieve group
+			g = this.get_groups()[g];
+		}
+		console.groupEnd();
+		return ( this.util.is_type(g, this.Group) ) ? g : null;
+	},
+	
+	/**
+	 * Checks if group is registered
+	 * @uses get_groups() to retrieve registered groups
+	 * @return bool TRUE if group exists, FALSE otherwise
+	 */
+	has_group: function(g) {
+		return ( this.util.is_valid(g, 'string') && ( g in this.get_groups() ) ) ? true : false;
 	},
 	
 	/* Theme */
@@ -175,7 +327,7 @@ var View = {
 	 */
 	add_theme: function(id, layout, options) {
 		//Validate params
-		if ( !this.util.is_valid(id, 'string', true) )
+		if ( !this.util.is_valid(id, this.util.string) )
 			id = this.util.add_prefix('default');
 		//Create theme
 		var thm = new this.Theme(id, layout, options);
@@ -212,16 +364,28 @@ var Component = {
 	/* Properties */
 	
 	/**
+	 * Base name of component type
+	 */
+	
+	_slug: 'component',
+	
+	_container: [],
+	
+	_reciprocal: false,
+	
+	_el: null,
+	
+	_el_attr: null,
+		
+	_attributes: {},
+	
+	attributes: false,
+	
+	/**
 	 * Component ID
 	 * @var string
 	 */
 	id: '',
-	
-	/**
-	 * Options
-	 * @var obj
-	 */
-	options: {},
 	
 	/* Init */
 	
@@ -242,25 +406,240 @@ var Component = {
 		this.id = id.toString();
 	},
 	
-	get_options: function() {
-		return this.options;
-	},
+	/* Components */
 	
-	get_option: function(option) {
-		if ( typeof option == 'string' && option.length > 0 && option in this.options )
-			return this.options[option];
-		return null;
-	},
-	
-	set_options: function(options) {
-		if ( $.isPlainObject(options) )
-			$.extend(this.options, options);
-	},
-	
-	set_option: function(option, value) {
-		if ( this.util.is_valid(option, 'string') && this.util.is_valid(value, null, false) ) {
-			this.options[option] = value;
+	get_container: function() {
+		console.groupCollapsed('Component.get_container');
+		console.log('Initial container value:');
+		console.dir(this._container);
+		//Sanitize property
+		if ( this.util.is_string(this._container) ) {
+			this._container = [this._container];
 		}
+		if ( !this.util.is_array(this._container) ) {
+			this._container = [];
+		}
+		//Return value
+		console.log('Final container value');
+		console.dir(this._container);
+		console.groupEnd();
+		return this._container;
+	},
+	
+	/**
+	 * Retrieve component reference from current object
+	 * > Procedure:
+	 *   > Check attributes
+	 *   > Check container object(s)
+	 * 	 > Check parent object (controller)
+	 * @uses _containers to check potential container components for references
+	 * @param string cname Component name
+	 * @param type (function) ctype Component type
+	 * @param array hierarchy Hierarchy of other components to search for component reference
+	 * @return object Component reference (FALSE if no component found)
+	 */
+	get_component: function(cname, ctype) {
+		console.groupCollapsed('Component.get_component');
+		console.log('Property: %o \nType: %o', cname, ctype);
+		//Validate request
+		if ( !this.util.is_set(cname) || !this.util.is_set(ctype) || !( cname in this) )
+			return false;
+		//Check if component reference previously set
+		if ( this.util.is_type(this[cname], ctype) ) {
+			console.log('Component is set returning immediately: %o', this[cname]);
+			return this[cname];
+		}
+		
+		//If viewer not set, iterate through component hierarchy until viewer is found
+		var c = this[cname];
+				
+		//Check attributes
+		if ( this.util.is_empty(c) ) {
+			console.log('Check for component in attributes');
+			c = this.get_attribute(cname);
+			console.log('Attribute value: %o', c);
+			//Save object-specific component reference
+			if ( !this.util.is_empty(c) ) {
+				console.log('Saving component');
+				c = this.set_component(c, cname, ctype);
+			}
+		}
+		
+		//Check Container(s)
+		if ( this.util.is_empty(c) && this.get_container().length > 0 ) {
+			console.log('Checking object container(s)');
+			var containers = this.get_container();
+			console.log('Container: %o', containers);
+			var con = null;
+			for ( var i = 0; i < containers.length; i++ ) {
+				con = containers[i];
+				console.info('Container %d : %s', i, con);
+				fget = 'get_' + con;
+				if ( ! ( fget in this ) || !this.util.is_func(this[fget]) ) {
+					console.warn('Container invalid\nFunc: %o \nIn object: %o', fget, ( fget in this) );
+					continue;
+				}
+				console.log('Retrieve container object: %o ( %o )', con, fget);
+				//Retrieve container
+				con = this[fget]();
+				console.log('Container: %o', con);
+				//Validate container
+				if ( !this.util.is_obj(con) || !con.get_component || !this.util.is_func(con.get_component) ) {
+					continue;
+				}
+				console.log('Check for component in container: %o', con);
+				//Attempt to retrieve component from container
+				c = con.get_component(cname, ctype);
+				console.info('Component: %o', c);
+				//Stop iterating if valid component found
+				if ( !this.util.is_empty(c) ) {
+					break;
+				}
+			}
+		}
+		
+		//Default (Controller)
+		if ( this.util.is_empty(c) ) {
+			console.log('Get default component (from controller)');
+			c = this.get_parent().get_component(ctype);
+		}
+		console.log('Component: %o', c);
+		console.groupEnd();		
+		return c;
+	},
+	
+	/**
+	 * Sets component reference on current object
+	 *  > Component property reset (set to NULL) if invalid component supplied
+	 * @param string|object c Component or Component ID (to be retrieved from controller)
+	 * @param string name Name of property to set component on object
+	 * @param function type Component type
+	 * @return object Component (NULL if invalid)
+	 */
+	set_component: function(c, name, type) {
+		console.groupCollapsed('Component.set_component');
+		console.log('Component: %o \nName: %o \nType: %o', c, name, type);
+		//Make sure component property exists
+		if ( ! ( name in this) ) {
+			return null;
+		}
+		
+		//Get component from controller if ID supplied
+		if ( this.util.is_string(c) ) {
+			c = this.get_parent().get_component(c, type);
+		}
+		
+		//Set or clear viewer property
+		this[name] = ( this.util.is_type(c, type) ) ? c : null;
+		console.groupEnd();
+		//Return value for confirmation
+		return this[name];
+	},
+
+	/* Attributes */
+	
+	parse_attributes: function(attributes) {
+		console.groupCollapsed('Item.parse_attributes');
+		//Reset attributes
+		this.set_attributes(attributes, true);
+		
+		el = this.get_element();
+		if ( !this.util.is_empty(el) ) {
+			//Get attributes from element
+			var opts = $(el).attr(this._el_attr);
+			if ( opts ) {
+				opts = opts.split(' ');
+				var wrap = {
+					open: '[',
+					close: ']' 
+				};
+				var attrs = {};
+				var attr = key = val = open = null;
+				var prefix = this.util.add_prefix('');
+				
+				for ( var x = 0; x < opts.length; x++ ) {
+					attr = opts[x];
+					//Process options
+					if ( attr.indexOf(prefix) === 0 ) {
+						//Set attributes
+						if ( attr.indexOf(wrap.close) === ( attr.length - 1 ) ) {
+							//Strip prefix
+							open = attr.indexOf(wrap.open);
+							key = attr.substring(prefix.length, open);
+							val = attr.substring(open + 1, attr.length - 1);
+							//Set attribute
+							this.set_attribute(key, val);
+							continue;
+						}
+						//Set flags
+						this.set_attribute(attr.substr(prefix.length), true);
+					}
+				}
+			}
+		}
+		console.groupEnd();
+	},
+	
+	get_attributes: function() {
+		console.groupCollapsed('Item.get_attributes()');
+		//Parse attributes on first access
+		if ( this.util.is_bool(this.attributes) ) {
+			console.log('Attibutes need to be initialized');
+			this.parse_attributes();
+		}
+		console.log('Attributes retrieved: %o', this.attributes);
+		console.groupEnd();
+		return this.attributes;
+	},
+	
+	/**
+	 * Retrieve value of specified attribute for value
+	 * @param string key Attribute to retrieve
+	 * @param mixed def (optional) Default value if attribute is not set
+	 * @return mixed Attribute value (NULL if attribute is not set)
+	 */
+	get_attribute: function(key, def) {
+		console.log('Getting attribute: %o', key);
+		if ( !this.util.is_set(def) )
+			def = null;
+		var a = this.get_attributes();
+		return ( key in this.get_attributes() ) ? this.attributes[key] : def;
+	},
+	
+	set_attributes: function(attributes, full) {
+		if ( !this.util.is_bool(full) )
+			full = false;
+		//Reset attributes
+		if ( full || this.util.is_empty(this.attributes) ) {
+			this.attributes = $.extend({}, this._attributes);
+		}
+		
+		//Merge new/existing attributes
+		if ( $.isPlainObject(attributes) && !this.util.is_empty(attributes) ) {
+			$.extend(this.attributes, attributes);
+		}
+	},
+	
+	set_attribute: function(key, val) {
+		if ( this.util.is_valid(key, 'string') && this.util.is_set(val, true) ) {
+			this.get_attributes()[key] = val;
+		}
+	},
+	
+	/* DOM Element */
+	
+	get_element: function() {
+		return $(this._el);
+	},
+	
+	/**
+	 * Set reference of instance on DOM element
+	 */
+	set_ref: function(el) {
+		var key = this.util.add_prefix(this._slug);
+		$(el).data(key, this);
+		if ( this._reciprocal )
+			this._el = $(el);
 	},
 };
 
@@ -271,8 +650,67 @@ Component = SLB.Class.extend(Component);
  * @param obj options Init options
  */
 var Viewer = {
-	_c: function() {
-		console.log('Viewer');
+	
+	/* Properties */
+	_slug: 'viewer',
+	
+	/* References */
+	
+	item: null,
+	
+	theme: null,
+	
+	/* Status */
+	
+	loading: false,
+	
+	_c: function(id, attributes) {
+		//Set ID
+		this.set_id(id);
+		//Set attributes
+		this.set_attributes(attributes);
+	},
+	
+		
+	/* Setup */
+	
+	set_item: function(item) {
+		console.groupCollapsed('Viewer.set_item');
+		if ( this.util.is_type(item, View.Content_Item) ) {
+			console.log('Item set: %o', item);
+			this.item = item;
+			return true;
+		} else {
+			this.item = null;
+		}
+		console.groupEnd();
+		return false;
+	},
+	
+	/**
+	 * Sets loading mode
+	 * @param bool mode (optional) Set (TRUE) or unset (FALSE) loading mode (Default: TRUE)
+	 */
+	set_loading: function(mode) {
+		if ( !this.util.is_bool(mode) )
+			loading = true;
+		this.loading = loading;
+	},
+	
+	/**
+	 * Retrieve loading status
+	 * @return bool Loading status (Default: FALSE)
+	 */
+	get_loading: function() {
+		return ( this.util.is_bool(this.loading) ) ? this.loading : false;
+	},
+	
+	/**
+	 * Check if viewer is currently loading content
+	 * @return bool Loading status (Default: FALSE)
+	 */
+	is_loading: function() {
+		return this.get_loading(); 
 	},
 	
 	/* Display */
@@ -281,11 +719,52 @@ var Viewer = {
 	 * Display content in lightbox
 	 */
 	show: function(item) {
-		console.groupCollapsed('Show Item');
-		console.log(item);
-		this.get_item_attributes(item);
-		var group = this.get_item_group(item);
+		console.groupCollapsed('Viewer.show');
+		console.log('Add item reference');
+		//Add item reference to viewer
+		i = this.set_item(item);
+		//Make sure item was properly set
+		if ( !i ) {
+			this.exit();
+			return false;
+		}
+		console.log('Set loading flag');
+		this.set_loading();
 		console.groupEnd();
+	},
+	
+	exit: function() {
+		this.reset();
+	},
+	
+	reset: function() {
+		this.set_item(false);
+		this.set_loading(false);
+	},
+	
+	/* Theme */
+	
+	/**
+	 * Retrieve theme reference
+	 * @return object Theme reference
+	 */
+	get_theme: function() {
+		return this.get_component('theme', View.Theme);
+	},
+	
+	/**
+	 * Set viewer's theme
+	 * @param object theme Theme object
+	 */
+	set_theme: function(theme) {
+		//Get theme using ID
+		if ( this.util.is_string(theme) ) {
+			this.get_parent().get_theme(theme);
+		}
+		//Set theme for viewer
+		if ( this.util.is_type(theme, View.Theme) ) {
+			this.theme = theme;
+		}
 	},
 	
 	/**
@@ -356,8 +835,18 @@ View.Viewer = Component.extend(Viewer);
  * @param obj options Init options
  */
 var Group = {
-	_c: function() {
-		console.log('Group');
+	
+	/* Properties */
+	_slug: 'group',
+	
+	items: [],
+	
+	viewer: null,
+	
+	_c: function(id, attributes) {
+		console.log('New Group');
+		this.set_id(id);
+		this.set_attributes(attributes);
 	},
 	
 	/**
@@ -372,6 +861,10 @@ var Group = {
 	 */
 	get_items: function() {
 		
+	},
+	
+	get_viewer: function() {
+		return false;
 	}
 };
 
@@ -382,6 +875,13 @@ View.Group = Component.extend(Group);
  * @param obj options Init options
  */
 var Content_Type = {
+	
+	/* Properties */
+	
+	_slug: 'content_type',
+	
+	item: null,
+		
 	_c: function() {
 		console.log('Content Type');
 	}
@@ -396,7 +896,15 @@ View.Content_Type = Component.extend(Content_Type);
 var Content_Item = {
 	/* Properties */
 	
-	_el: null,
+	_slug: 'content_item',
+	_reciprocal: true,
+	_container: ['group'],
+	
+	group: null,
+	viewer: null,
+	content_type: null,
+	
+	_el_attr: 'rel',
 		
 	_attributes: {
 		src: null,
@@ -406,93 +914,88 @@ var Content_Item = {
 		internal: false
 	},
 	
-	attributes: {},
-	
-	type: null,
-	
 	/* Init */
 	
-	_c: function(item, attributes) {
+	_c: function(el) {
 		console.log('New Content Item');
-		//Validate item
-		if ( ( item instanceof this ) ) {
-			this = item;
-		} else {
-			this.set_element(item);
-			//Create new instance
-			this.parse();
-		}
-		
-		//Set attributes
-		this.set_attributes(attributes, true);
+		//Save element to instance
+		this.set_ref(el);
 	},
 	
 	/* Methods */
 	
-	parse: function(item) {
-		if ( !this.util.is_valid(item) )
-			item = this.get_element();
-		//Set permalink
-		this.set_permalink();
-		//Set title
-		this.set_title();
-		//Set type
-		this.set_type();
-		//Get options from rel attribute
-		var opts = $(item).attr('rel');
-		if ( opts ) {
-			//Find options
-			opts = opts.split(' ');
-			var wrap = {
-				open: '[',
-				close: ']' 
-			};
-			var attrs = {};
-			var attr = key = val = open = null;
-			var prefix = this.util.add_prefix('');
-			
-			for ( var x = 0; x < opts.length; x++ ) {
-				attr = opts[x];
-				//Process options
-				if ( attr.indexOf(prefix) === 0 ) {
-					//Set attributes
-					if ( attr.indexOf(wrap.close) === ( attr.length - 1 ) ) {
-						//Strip prefix
-						open = attr.indexOf(wrap.open);
-						key = attr.substring(prefix.length, open);
-						val = attr.substring(open + 1, attr.length - 1);
-						//Set attribute
-						this.set_attribute(key, val);
-						continue;
-					}
-					//Set flags
-					this.set_attribute(attr.substr(prefix.length), true);
-				}
-			}
+	/*-** Instances **-*/
+	
+	get_viewer: function() {
+		return this.get_component('viewer', View.Viewer);
+		// return v;
+	},
+	
+	/**
+	 * Sets item's viewer property
+	 * @uses View.get_viewer() to retrieve global viewer
+	 * @uses this.viewer to save item's viewer
+	 * @param string|View.Viewer v Viewer to set for item
+	 *  > Item's viewer is reset if invalid viewer provided
+	 */
+	set_viewer: function(v) {
+		if ( this.util.is_valid(v, this.util.string) && this.get_parent().has_viewer(v) ) {
+			v = this.get_parent().get_viewer(v);
 		}
-		//Retrieve attributes passed from backend
 		
-		//ID
+		//Set or clear viewer property
+		this.viewer = ( this.util.is_type(v, View.Viewer) ) ? v : false;
 		
-		//Group
-		
-		//Source URI
-		
+		//Return value for confirmation
+		return this.viewer;
+	},
+
+	has_group: function() {
+		return ( this.util.is_set(this.get_group()) ) ? true : false;
+	},
+
+	/**
+	 * Retrieve item's group
+	 * @param obj item Item to get group from
+	 * @return View.Group|bool Group reference item belongs to (FALSE if no group)
+	 */
+	get_group: function() {
+		console.groupCollapsed('Item.get_group');
+		var g = this.get_component('group', View.Group);
+		/*
+		//Check if group already set
+		if ( !this.util.is_type(this.group, View.Group) && !this.util.is_bool(this.group) ) {
+			//If group not set, check attributes
+			var g = this.get_attribute('group');
+			console.log('Group attribute: %o', g);
+			this.set_group(g);
+		}
+		*/
+		console.groupEnd();
+		return this.group;
 	},
 	
-	set_element: function(el) {
-		this._el = $(el);
+	/**
+	 * Sets item's group property
+	 * @uses View.get_group() to retrieve global group
+	 * @uses this.group to set item's group
+	 * @param string|View.Group g Group to set for item
+	 *  > Item's group is reset if invalid group provided
+	 */
+	set_group: function(g) {
+		console.groupCollapsed('Item.set_group');
+		console.log('Group: %o', g);
+		//If group ID set, get object reference
+		if ( this.util.is_string(g) ) {
+			g = this.get_parent().get_group(g);
+		}
+		
+		//Set (or clear) group property
+		this.group = ( this.util.is_type(g, View.Group) ) ? g : false;
+		console.groupEnd();
 	},
 	
-	get_element: function() {
-		return $(this._el);
-	},
-	
-	set_permalink: function(uri) {
-		this.set_attribute(this.get_element().attr('href'));
-	},
-	
-	set_title: function(title) {
+	get_type: function() {
 		
 	},
 	
@@ -500,53 +1003,16 @@ var Content_Item = {
 		
 	},
 	
-	set_group: function(group) {
-		
-	},
+	/* Actions */
 	
-	/**
-	 * Retrieve item's group
-	 * @param obj item Item to get group from
-	 * @return string Item group name (Empty string if no group)
-	 */
-	get_group: function() {
-		var g = this.get_attribute('group');
-		return ( g != null ) ? g : '';
-	},
-	
-	set_attributes: function(attributes, full) {
-		if ( !this.util.is_valid(full, 'bool') )
-			full = false;
-		//Full attribute rebuild
-		if ( full ) {
-			this.attributes = $.extend({}, this._attributes);
-		}
-		
-		//Merge new/existing attributes
-		if ( $.isPlainObject(attributes) ) {
-			$.extend(this.attributes, attributes);
-		}
-	},
-	
-	set_attribute: function(key, val) {
-		this.attributes[key] = val;
-	},
-	
-	get_attributes: function() {
-		return this.attributes;
-	},
-	
-	/**
-	 * Retrieve value of specified attribute for value
-	 * @param obj item Content item
-	 * @param string attr Attribute to get value of
-	 * @return mixed Attribute value (NULL if attribute is not set)
-	 */
-	get_attribute: function(key, def) {
-		if ( !this.util.is_valid(def) )
-			def = null;
-		return ( key in this.attributes ) ? this.attributes[key] : def;
-	},
+	show: function() {
+		console.groupCollapsed('Item.show');
+		//Retrieve viewer
+		var v = this.get_viewer();
+		console.log('Viewer retrieved: %o', v);
+		// v.show(item);
+		console.groupEnd();
+	}
 };
 
 View.Content_Item = Component.extend(Content_Item);
@@ -558,6 +1024,12 @@ View.Content_Item = Component.extend(Content_Item);
 var Theme = {
 	
 	/* Properties */
+	
+	_slug: 'theme',
+	
+	viewer: null,
+	group: null,
+	item: null,
 	
 	/**
 	 * Raw layout
@@ -592,8 +1064,7 @@ var Theme = {
 		console.groupCollapsed('New Theme');
 		this.set_id(id);
 		this.set_layout(layout);
-		this.set_options(options);
-		console.log('Name: %o \nLayout: %o \nOptions: %o', this.get_id(), this.get_layout(), this.get_options());
+		console.log('Name: %o \nLayout: %o', this.get_id(), this.get_layout());
 		console.groupEnd();
 	},
 	
@@ -656,6 +1127,8 @@ View.Theme = Component.extend(Theme);
  */
 var Theme_Tag = {
 	/* Properties */
+	
+	_slug: 'theme_tag',
 	
 	/**
 	 * Indicates if tag is dynamic or not
@@ -729,7 +1202,7 @@ var Theme_Tag = {
 	 * @param bool dynamic (Default: No)
 	 */
 	set_dynamic: function(dynamic) {
-		this.dynamic = ( this.util.is_valid(dynamic, 'bool', true) ) ? dynamic : false;
+		this.dynamic = ( this.util.is_valid(dynamic, 'boolean', true) ) ? dynamic : false;
 	}
 };
 
@@ -737,5 +1210,6 @@ View.Theme_Tag = Component.extend(Theme_Tag);
 
 //Attach to global object
 SLB.attach('View', View);
+View = SLB.View;
 
 })(jQuery);
