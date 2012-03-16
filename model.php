@@ -1103,13 +1103,13 @@ class SLB_Lightbox extends SLB_Base {
 			$options['relAttribute'][] = $this->attr_legacy;
 			
 		//Load UI Strings
-		if ( ($strings = $this->build_strings()) && !empty($strings) )
-			$options['strings'] = $strings;
+		if ( ($strings = $this->build_labels()) && !empty($strings) )
+			$options['labels'] = $strings;
 		//Load Layout
 		$options['layout'] = $this->get_theme_layout();
 
 		//Build client output
-		echo $this->util->build_script_element($this->util->call_client_method('initialize', $options), 'init', true, true);
+		echo $this->util->build_script_element($this->util->call_client_method('init', $options), 'init', true, true);
 		echo PHP_EOL . '<!-- /SLB -->' . PHP_EOL;
 	}
 	
@@ -1279,7 +1279,7 @@ class SLB_Lightbox extends SLB_Base {
 	 * Build JS object of UI strings when initializing lightbox
 	 * @return array UI strings
 	 */
-	function build_strings() {
+	function build_labels() {
 		$ret = array();
 		//Get all UI options
 		$prefix = 'txt_';
