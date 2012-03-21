@@ -22,7 +22,13 @@ var View = {
 	slideshow_active: true,
 	layout: false,
 	
-	/* Collections */
+	/**
+	 * Component types that can have default instances
+	 * @var array
+	 */
+	component_defaults: [],
+	
+	/* Component Collections */
 	
 	viewers: {},
 	items: [],
@@ -30,10 +36,13 @@ var View = {
 	groups: {},
 	themes: {},
 	
-	collection_add: {
-		'viewer': this.Viewer,
-		'group': this.Group
-	},
+	/**
+	 * Collection/Data type mapping
+	 * > Key: Collection name
+	 * > Value: Data type
+	 * @var object
+	 */
+	collection_types: {},
 	
 	/* Options */
 	options: {
@@ -74,6 +83,8 @@ var View = {
 		
 		/* Set defaults */
 		
+		this.init_components();
+		
 		//Features
 		this.init_features();
 		
@@ -89,60 +100,166 @@ var View = {
 		console.groupEnd();
 	},
 	
+	init_components: function() {
+		this.collection_types = {
+			'viewers':	 		this.Viewer,
+			'items': 			this.Content_Item,
+			'content_types': 	this.Content_Type,
+			'groups': 			this.Group,
+			'themes': 			this.Theme
+		};
+		
+		this.component_defaults = [
+			this.Viewer,
+			this.Theme
+		];
+	
+	},
+	
 	/* Components */
+	
+	component_make_default: function(type) {
+		console.group('View.component_make_default');
+		var ret = false;
+		console.dir(this.component_defaults);
+		for ( var x = 0; x < this.component_defaults.length; x++ ) {
+			console.log(x);
+			console.log('Checking: %o \nMatch: %o', this.component_defaults[x].prototype._slug);
+			if ( type == this.component_defaults[x] ) {
+				ret = true;
+				break;
+			}
+		}
+		console.log('Type: %o \nDefaults: %o', type.prototype._slug, ret);
+		console.groupEnd();
+		return ret;
+	},
 	
 	/**
 	 * Retrieve collection of components of specified type
 	 * @param function type Component type
-	 * @return object Component collection
+	 * @return object|array|null Component collection (NULL if invalid)
 	 */
 	get_components: function(type) {
-		//Validate
-		if ( !this.util.is_func(type) || !('_slug' in type.prototype) ) {
-			return {};
+		var ret = null;
+		if ( this.util.is_func(type) ) {
+			//Determine collection
+			for ( var coll in this.collection_types ) {
+				if ( type == this.collection_types[coll] && coll in this ) {
+					ret = this[coll];
+					break;
+				}
+			}
 		}
-		//Get collection
-		var coll = type.prototype._slug + 's';
-		if ( ( coll in this ) ) {
-			return this[coll];
-		}
+		return ret;
 	},
 	
 	/**
 	 * Retrieve component from specific collection
-	 * @param string id Component ID
 	 * @param function type Component type
-	 * @return object|null Component reference
+	 * @param string id Component ID
+	 * @return object|null Component reference (NULL if invalid)
 	 */
-	get_component: function(id, type) {
+	get_component: function(type, id) {
 		console.group('View.get_component');
-		console.log('ID: %o \nType: %o', id, type);
+		console.log('Type: %o \nID: %o', type, id);
 		var ret = null;
-		//Only type specified Retrieve default component
-		if ( arguments.length == 1 && this.util.is_func(arguments[0]) ) {
-			type = id;
-			id = null;
-		}
-		//Validate type
+		//Validate parameters
 		if ( !this.util.is_func(type) ) {
+			console.warn('Data type is invalid');
 			console.groupEnd();
 			return ret;
 		}
 		console.log('Component type is valid');
+
 		//Sanitize id
+		if ( !this.util.is_string(id) || this.util.is_empty(id) ) {
+			console.log('ID is invalid, unsetting');
+			id = null;
+		}
+		
+		//Get component from collection
+		var coll = this.get_components(type);
+		console.log('Components: %o', coll);
+		console.log('ID: %o', id);
+		if ( this.util.is_obj(coll) ) {
+			var tid = ( this.util.is_string(id) ) ? id : this.util.add_prefix('default');
+			console.log('Checking for component: %o', tid);
+			if ( tid in coll ) {
+				console.log('Component found, retrieving');
+				ret = coll[tid];
+			}
+		}
+		
+		//Default: Create default component
+		if ( this.util.is_empty(ret) ) {
+			console.log('Component does not exist\nID: %o \nType: %o \nReturn: %o', id, type.prototype._slug, ret);
+			if ( !this.util.is_empty(id) || this.component_make_default(type) ) {
+				console.log('Creating new component instance');
+				ret = this.add_component(type, id);
+			}
+		}
+
+		console.groupEnd();
+		//Return component
+		return ret;
+	},
+	
+	/**
+	 * Create new component instance and save to appropriate collection
+	 * @param function type Component type to create
+	 * @param string id ID of component
+	 * @param object options Component initialization options (Default options used if default component is allowed)
+	 * @return object|null New component (NULL if invalid)
+	 */
+	add_component: function(type, id, options) {
+		//Validate type
+		if ( !this.util.is_func(type) ) {
+			return false;
+		}
+		//Validate request
+		if ( ( this.util.is_empty(id) || !this.util.is_obj(options) || this.util.is_empty(options) ) && !this.component_make_default(type) ) {
+			return false;
+		}
+		//Defaults
+		var ret = null;
 		if ( this.util.is_empty(id) ) {
 			id = this.util.add_prefix('default');
 		}
-		//Get component from collection
-		var coll = this.get_components(type);
-		if ( this.util.is_empty(coll) && ( id in this.collection_add ) && ( 'add_' +  ))
-		if ( this.util.is_obj(coll) && ( id in coll ) ) {
-			ret = coll[id];
+		if ( !this.util.is_obj(options) ) {
+			options = {};
 		}
-		console.groupEnd();
+		//Check if specialized method exists for component type
+		var m = ( 'component' != type.prototype._slug ) ? 'add_' + type.prototype._slug : null;
+		if ( !this.util.is_empty(m) && ( m in this ) && this.util.is_func(this[m]) ) {
+			ret = this[m](id, options);
+		}
+		//Default process
+		else {
+			ret = new type(id, options);
+		}
+		
+		//Add new component to collection
+		if ( this.util.is_type(ret, type) ) {
+			//Get collection
+			var coll = this.get_components(type);
+			//Add to collection
+			switch ( $.type(coll) ) {
+				case 'object' :
+					coll[id] = ret;
+					break;
+				case 'array' :
+					coll.push(ret);
+					break;
+			}
+		} else {
+			ret = null;
+		}
+		
+		//Return new component
 		return ret;
 	},
-		
+	
 	/* Properties */
 	
 	/**
@@ -361,7 +478,9 @@ var View = {
 
 /* Components */
 var Component = {
-	/* Properties */
+	/*-** Properties **-*/
+	
+	/* Internal/Configuration */
 	
 	/**
 	 * Base name of component type
@@ -369,7 +488,22 @@ var Component = {
 	
 	_slug: 'component',
 	
-	_container: [],
+	/**
+	 * Valid component references for current component
+	 * > Key (string): Property name that stores reference
+	 * > Value (function): Data type of component
+	 * @var object
+	 */
+	_refs: {},
+	
+	/**
+	 * Components that may contain current object
+	 * Used for retrieving data from a parent object
+	 * Example: An Item may be contained by a Group
+	 * > Value (strong): Property name of container component
+	 * @var array
+	 */
+	_containers: [],
 	
 	_reciprocal: false,
 	
@@ -378,6 +512,8 @@ var Component = {
 	_el_attr: null,
 		
 	_attributes: {},
+	
+	/* Public */
 	
 	attributes: false,
 	
@@ -408,99 +544,145 @@ var Component = {
 	
 	/* Components */
 	
-	get_container: function() {
-		console.groupCollapsed('Component.get_container');
-		console.log('Initial container value:');
-		console.dir(this._container);
+	/**
+	 * Retrieve component containers
+	 * @uses _container property
+	 * @return array Component containers
+	 */
+	get_containers: function() {
 		//Sanitize property
-		if ( this.util.is_string(this._container) ) {
-			this._container = [this._container];
-		}
-		if ( !this.util.is_array(this._container) ) {
-			this._container = [];
+		if ( !this.util.is_array(this._containers) ) {
+			this._containers = [];
 		}
 		//Return value
-		console.log('Final container value');
-		console.dir(this._container);
-		console.groupEnd();
-		return this._container;
+		return this._containers;
+	},
+	
+	/**
+	 * Check if current object has potential container objects
+	 * @return bool TRUE if containers exist, FALSE otherwise
+	 */
+	has_containers: function() {
+		return ( this.get_containers().length > 0 );
+	},
+	
+	/**
+	 * Retrieve object references
+	 * @uses _refs
+	 * @return obj References object
+
+	 */
+	get_references: function() {
+		return this._refs;
+	},
+	
+	/**
+	 * Check if reference exists in object
+	 * @param string ref Reference ID
+	 * @return bool TRUE if reference exists, FALSE otherwise
+	 */
+	has_reference: function(ref) {
+		return ( this.util.is_string(ref) && ( ref in this ) && ( ref in this.get_references() ) ) ? true : false;
+	},
+	
+	/**
+	 * Retrieve reference data type
+	 * @param string ref Reference ID
+	 * @return function Reference data type (NULL if invalid)
+	 */
+	get_reference: function(ref) {
+		return ( this.has_reference(ref) ) ? this._refs[ref] : null;
 	},
 	
 	/**
 	 * Retrieve component reference from current object
 	 * > Procedure:
+	 *   > Check if property already set
 	 *   > Check attributes
 	 *   > Check container object(s)
 	 * 	 > Check parent object (controller)
 	 * @uses _containers to check potential container components for references
 	 * @param string cname Component name
-	 * @param type (function) ctype Component type
-	 * @param array hierarchy Hierarchy of other components to search for component reference
+	 * @param bool get_default (optional) Whether or not to retrieve default object from controller if none exists in current instance (Default: TRUE) 
 	 * @return object Component reference (FALSE if no component found)
 	 */
-	get_component: function(cname, ctype) {
-		console.groupCollapsed('Component.get_component');
-		console.log('Property: %o \nType: %o', cname, ctype);
+	get_component: function(cname, get_default) {
+		console.group('Component.get_component');
+		console.log('Property: %o \nType: %o \nGet Default: %o', cname, ctype, get_default);
+		var c = null;
 		//Validate request
-		if ( !this.util.is_set(cname) || !this.util.is_set(ctype) || !( cname in this) )
-			return false;
-		//Check if component reference previously set
+		if ( !this.util.is_string(cname) || this.util.is_empty(cname) || !( cname in this ) || !this.has_reference(cname) ) {
+			console.warn('Request is invalid, quitting');
+			console.groupEnd();
+			return c;
+		}
+		
+		//Normalize parameters
+		if ( !this.util.is_bool(get_default) ) {
+			get_default = true;
+		}
+		var ctype = this._refs[cname];
+
+		//Phase 1: Check if component reference previously set
+		console.info('Check for property');
 		if ( this.util.is_type(this[cname], ctype) ) {
 			console.log('Component is set returning immediately: %o', this[cname]);
+			console.groupEnd();
 			return this[cname];
 		}
 		
-		//If viewer not set, iterate through component hierarchy until viewer is found
-		var c = this[cname];
+		//If reference not set, iterate through component hierarchy until reference is found
+		c = this[cname] = null;
 				
-		//Check attributes
-		if ( this.util.is_empty(c) ) {
-			console.log('Check for component in attributes');
-			c = this.get_attribute(cname);
-			console.log('Attribute value: %o', c);
-			//Save object-specific component reference
-			if ( !this.util.is_empty(c) ) {
-				console.log('Saving component');
-				c = this.set_component(c, cname, ctype);
-			}
+		//Phase 2: Check attributes
+		console.info('Check for component in attributes');
+		c = this.get_attribute(cname);
+		console.log('Attribute value: %o', c);
+		//Save object-specific component reference
+		if ( !this.util.is_empty(c) ) {
+			console.log('Saving component');
+			c = this.set_component(cname, c);
 		}
-		
-		//Check Container(s)
-		if ( this.util.is_empty(c) && this.get_container().length > 0 ) {
-			console.log('Checking object container(s)');
-			var containers = this.get_container();
-			console.log('Container: %o', containers);
+
+		//Phase 3: Check Container(s)
+		if ( this.util.is_empty(c) && this.has_containers() ) {
+			console.info('Checking object container(s)');
+			var containers = this.get_containers();
+			console.log('Containers: %o', containers);
 			var con = null;
 			for ( var i = 0; i < containers.length; i++ ) {
 				con = containers[i];
-				console.info('Container %d : %s', i, con);
-				fget = 'get_' + con;
-				if ( ! ( fget in this ) || !this.util.is_func(this[fget]) ) {
-					console.warn('Container invalid\nFunc: %o \nIn object: %o', fget, ( fget in this) );
+				console.groupCollapsed('Container %d : %s', i, con);
+				//Validate container
+				if ( con == cname ) {
+					console.warn('Container is current component, skipping');
+					console.groupEnd();
 					continue;
 				}
-				console.log('Retrieve container object: %o ( %o )', con, fget);
 				//Retrieve container
-				con = this[fget]();
+				con = this.get_component(con, false);
 				console.log('Container: %o', con);
-				//Validate container
-				if ( !this.util.is_obj(con) || !con.get_component || !this.util.is_func(con.get_component) ) {
+				if ( this.util.is_empty(con) ) {
+					console.warn('Container could not be found, skipping');
+					console.groupEnd();
 					continue;
 				}
 				console.log('Check for component in container: %o', con);
 				//Attempt to retrieve component from container
-				c = con.get_component(cname, ctype);
+				c = con.get_component(cname);
 				console.info('Component: %o', c);
 				//Stop iterating if valid component found
 				if ( !this.util.is_empty(c) ) {
+					console.groupEnd();
 					break;
 				}
+				console.groupEnd();
 			}
 		}
 		
-		//Default (Controller)
-		if ( this.util.is_empty(c) ) {
-			console.log('Get default component (from controller)');
+		//Phase 4: From controller (optional)
+		if ( get_default && this.util.is_empty(c) ) {
+			console.info('Get default component (from controller)');
 			c = this.get_parent().get_component(ctype);
 		}
 		console.log('Component: %o', c);
@@ -511,26 +693,26 @@ var Component = {
 	/**
 	 * Sets component reference on current object
 	 *  > Component property reset (set to NULL) if invalid component supplied
-	 * @param string|object c Component or Component ID (to be retrieved from controller)
 	 * @param string name Name of property to set component on object
+	 * @param string|object ref Component or Component ID (to be retrieved from controller)
 	 * @param function type Component type
 	 * @return object Component (NULL if invalid)
 	 */
-	set_component: function(c, name, type) {
+	set_component: function(name, ref) {
 		console.groupCollapsed('Component.set_component');
-		console.log('Component: %o \nName: %o \nType: %o', c, name, type);
+		console.log('Component: %o \nObject: %o', name, ref);
 		//Make sure component property exists
-		if ( ! ( name in this) ) {
+		if ( !this.has_reference(name) )
 			return null;
-		}
+		var ctype = this.get_reference(name); 
 		
 		//Get component from controller if ID supplied
-		if ( this.util.is_string(c) ) {
-			c = this.get_parent().get_component(c, type);
+		if ( this.util.is_string(ref) ) {
+			c = this.get_parent().get_component(ctype, ref);
 		}
 		
-		//Set or clear viewer property
-		this[name] = ( this.util.is_type(c, type) ) ? c : null;
+		//Set (or clear) component reference
+		this[name] = ( this.util.is_type(ref, ctype) ) ? ref : null;
 		console.groupEnd();
 		//Return value for confirmation
 		return this[name];
@@ -898,7 +1080,11 @@ var Content_Item = {
 	
 	_slug: 'content_item',
 	_reciprocal: true,
-	_container: ['group'],
+	_refs: {
+		'viewer': View.Viewer,
+		'group': View.Group
+	},
+	_containers: ['group'],
 	
 	group: null,
 	viewer: null,
@@ -927,7 +1113,7 @@ var Content_Item = {
 	/*-** Instances **-*/
 	
 	get_viewer: function() {
-		return this.get_component('viewer', View.Viewer);
+		return this.get_component('viewer');
 		// return v;
 	},
 	

@@ -347,7 +347,7 @@ var Base = {
 		
 		is_type: function(value, type) {
 			var ret = false;
-			if ( this.is_set(value) && this.is_set(type) ) {
+			if ( this.is_set(value) && null != value && this.is_set(type) ) {
 				switch ( typeof type ) {
 					case this.func:
 						ret = ( value instanceof type ) ? true : false;
