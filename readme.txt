@@ -13,6 +13,9 @@ A simple, themeable, and customizable Lightbox for Wordpress
 ### BETA NOTES
 The current release is a beta version.  Please test and [provide feedback on the beta release page](http://archetyped.com/lab/slb-1-6-2-beta/).
 
+#### Beta 2
+* Optimize: Improved compatibility with PHP 5+
+
 #### Beta 1
 * Update: Rebuild JS code
 * Fix: Some elements can overlap lightbox

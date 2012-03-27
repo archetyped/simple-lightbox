@@ -120,7 +120,7 @@ class SLB_Lightbox extends SLB_Base {
 
 		//Init objects
 		$this->attr = $this->get_prefix();
-		$this->fields =& new SLB_Fields();
+		$this->fields = new SLB_Fields();
 	}
 	
 	/* Init */
@@ -202,7 +202,7 @@ class SLB_Lightbox extends SLB_Base {
 		$opt_theme['default'] = $this->theme_default = $this->add_prefix($this->theme_default);
 		$opt_theme['options'] = $this->m('get_theme_options');
 		
-		$this->options =& new SLB_Options($options_config);
+		$this->options = new SLB_Options($options_config);
 	}
 	
 	function register_hooks() {
