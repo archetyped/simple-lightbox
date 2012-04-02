@@ -572,7 +572,8 @@ class SLB_Lightbox extends SLB_Base {
 				$r = $this->build_attributes(array_merge($attrs_all, $attrs));
 				
 				//Update link in content
-				$link_new = '<a ' . $this->util->build_attribute_string($attr) . '>';
+				//TODO Optimize concatentation once Aptana bug fixed (2012-03-27)
+				$link_new = '<' . 'a ' . $this->util->build_attribute_string($attr) . '>';
 				$content = str_replace($link, $link_new, $content);
 				unset($h, $r);
 			}
@@ -620,7 +621,7 @@ class SLB_Lightbox extends SLB_Base {
 		if ( ($labels = $this->build_labels()) && !empty($labels) )
 			$options['ui_labels'] = $labels;
 		//Load Layout
-		$options['layout'] = $this->get_theme_layout();
+		$options['template'] = $this->get_theme_layout();
 
 		//Build client output
 		//DEBUG

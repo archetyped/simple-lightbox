@@ -414,7 +414,7 @@ class SLB_Options extends SLB_Field_Collection {
 		$form = $o->layout->opt_pre . $o->layout->label_ref . $o->layout->field_pre . $o->layout->form . $o->layout->field_post . $o->layout->opt_post;
 		
 		//Text input
-		$otxt =& new SLB_Field_Type('option_text', 'text');
+		$otxt = new SLB_Field_Type('option_text', 'text');
 		$otxt->set_property('class', '{inherit} code');
 		$otxt->set_property('size', null);
 		$otxt->set_property('value', '{data context="form"}');
@@ -423,13 +423,13 @@ class SLB_Options extends SLB_Field_Collection {
 		$fields->add($otxt);
 		
 		//Checkbox
-		$ocb =& new SLB_Field_Type('option_checkbox', 'checkbox');
+		$ocb = new SLB_Field_Type('option_checkbox', 'checkbox');
 		$ocb->set_layout('label', $o->layout->label);
 		$ocb->set_layout('form', $form);
 		$fields->add($ocb);
 		
 		//Select
-		$othm =& new SLB_Field_Type('option_select', 'select');
+		$othm = new SLB_Field_Type('option_select', 'select');
 		$othm->set_layout('label', $o->layout->label);
 		$othm->set_layout('form_start', $o->layout->field_pre . '{inherit}');
 		$othm->set_layout('form_end', '{inherit}' . $o->layout->field_post);

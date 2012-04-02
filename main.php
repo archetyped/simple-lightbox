@@ -26,7 +26,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 require_once 'model.php';
 
-$slb =& new SLB_Lightbox();
+$slb = new SLB_Lightbox();
 
 function slb_register_theme($name, $title, $stylesheet_url, $layout) {
 	global $slb;

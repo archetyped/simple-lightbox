@@ -1549,7 +1549,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 			 */
 			if ( is_scalar($id) )
 				$properties['id'] = $id;
-			$item =& new $type($properties);
+			$item = new $type($properties);
 		}
 		if ( strlen($item->get_id()) == 0 ) {
 			return $ret;
@@ -1644,7 +1644,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 		
 		if ( !is_object($item) ) {
 			//Fallback: Return empty item if no item exists
-			$item =& new $this->item_type('');
+			$item = new $this->item_type('');
 		}
 		return $item;
 	}
@@ -2030,7 +2030,7 @@ class SLB_Fields extends SLB_Field_Collection {
 		/* Field Types */
 
 		//Base
-		$base =& new SLB_Field_Type('base');
+		$base = new SLB_Field_Type('base');
 		$base->set_description('Default Element');
 		$base->set_property('tag', 'span');
 		$base->set_property('class', '', 'attr');
@@ -2041,7 +2041,7 @@ class SLB_Fields extends SLB_Field_Collection {
 		$this->add($base);
 
 		//Base closed
-		$base_closed =& new SLB_Field_Type('base_closed');
+		$base_closed = new SLB_Field_Type('base_closed');
 		$base_closed->set_parent('base');
 		$base_closed->set_description('Default Element (Closed Tag)');
 		$base_closed->set_layout('form_start', '<{tag} id="{field_id}" name="{field_name}" {properties ref_base="root" group="attr"}>');
@@ -2050,7 +2050,7 @@ class SLB_Fields extends SLB_Field_Collection {
 		$this->add($base_closed);
 
 		//Input
-		$input =& new SLB_Field_Type('input', 'base');
+		$input = new SLB_Field_Type('input', 'base');
 		$input->set_description('Default Input Element');
 		$input->set_property('tag', 'input');
 		$input->set_property('type', 'text', 'attr');
@@ -2058,7 +2058,7 @@ class SLB_Fields extends SLB_Field_Collection {
 		$this->add($input);
 
 		//Text input
-		$text =& new SLB_Field_Type('text', 'input');
+		$text = new SLB_Field_Type('text', 'input');
 		$text->set_description('Text Box');
 		$text->set_property('size', 15, 'attr');
 		$text->set_property('label');
@@ -2066,7 +2066,7 @@ class SLB_Fields extends SLB_Field_Collection {
 		$this->add($text);
 		
 		//Checkbox
-		$cb =& new SLB_Field_Type('checkbox', 'input');
+		$cb = new SLB_Field_Type('checkbox', 'input');
 		$cb->set_property('type', 'checkbox');
 		$cb->set_property('value', null);
 		$cb->set_layout('form_attr', '{inherit} {checked}');
@@ -2074,28 +2074,28 @@ class SLB_Fields extends SLB_Field_Collection {
 		$this->add($cb);
 
 		//Textarea
-		$ta =& new SLB_Field_Type('textarea', 'base_closed');
+		$ta = new SLB_Field_Type('textarea', 'base_closed');
 		$ta->set_property('tag', 'textarea');
 		$ta->set_property('cols', 40, 'attr');
 		$ta->set_property('rows', 3, 'attr');
 		$this->add($ta);
 		
 		//Rich Text
-		$rt =& new SLB_Field_Type('richtext', 'textarea');
+		$rt = new SLB_Field_Type('richtext', 'textarea');
 		$rt->set_property('class', 'theEditor {inherit}');
 		$rt->set_layout('form', '<div class="rt_container">{inherit}</div>');
 		$rt->add_action('admin_print_footer_scripts', 'wp_tiny_mce', 25);
 		$this->add($rt);
 
 		//Hidden
-		$hidden =& new SLB_Field_Type('hidden');
+		$hidden = new SLB_Field_Type('hidden');
 		$hidden->set_parent('input');
 		$hidden->set_description('Hidden Field');
 		$hidden->set_property('type', 'hidden');
 		$this->add($hidden);
 
 		//Select
-		$select =& new SLB_Field_Type('select', 'base_closed');
+		$select = new SLB_Field_Type('select', 'base_closed');
 		$select->set_description('Select tag');
 		$select->set_property('tag', 'select');
 		$select->set_property('tag_option', 'option');
@@ -2107,7 +2107,7 @@ class SLB_Fields extends SLB_Field_Collection {
 		$this->add($select);
 		
 		//Span
-		$span =& new SLB_Field_Type('span', 'base_closed');
+		$span = new SLB_Field_Type('span', 'base_closed');
 		$span->set_description('Inline wrapper');
 		$span->set_property('tag', 'span');
 		$span->set_property('value', 'Hello there!');

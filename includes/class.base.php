@@ -87,7 +87,7 @@ class SLB_Base {
 	 * Constructor
 	 */
 	function __construct() {
-		$this->util =& new SLB_Utilities($this);
+		$this->util = new SLB_Utilities($this);
 	}
 	
 	/**
@@ -174,7 +174,7 @@ class SLB_Base {
 		if ( !$this->is_options_valid($options_config, false) )
 			return false;
 		$class = $this->get_options_class();
-		$this->options =& new $class($options_config);
+		$this->options = new $class($options_config);
 	}
 	
 	/**

@@ -253,7 +253,7 @@ class SLB_Admin extends SLB_Base {
 		if ( !class_exists($class) || !property_exists($this, $collection) || !is_array($this->{$collection}) )
 			return false;
 		//Create new instance
-		$r =& new ReflectionClass($class);
+		$r = new ReflectionClass($class);
 		$view =& $r->newInstanceArgs($args);
 		if ( $view->is_valid() )
 			$this->{$collection}[$id] =& $view;
@@ -539,7 +539,7 @@ class SLB_Admin extends SLB_Base {
 	 * @return string Section ID
 	 */
 	function add_section($id, $parent, $labels, $options = null, $callback = null) {
-		$section =& new SLB_Admin_Section($id, $parent, $labels, $options, $callback);
+		$section = new SLB_Admin_Section($id, $parent, $labels, $options, $callback);
 		
 		//Add Section
 		if ( $section->is_valid() )
