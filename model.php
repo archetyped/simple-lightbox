@@ -1068,7 +1068,8 @@ class SLB_Lightbox extends SLB_Base {
 		if ( ! $this->is_enabled() )
 			return;
 		
-		$lib = 'js/' . ( ( ( defined('WP_DEBUG') && WP_DEBUG ) || isset($_REQUEST[$this->add_prefix('debug')]) ) ? 'dev/lib.dev.js' : 'lib.js' );
+		//$lib = 'js/' . ( ( ( defined('WP_DEBUG') && WP_DEBUG ) || isset($_REQUEST[$this->add_prefix('debug')]) ) ? 'dev/lib.dev.js' : 'lib.js' );
+		$lib = 'js/lib.js';
 		wp_enqueue_script($this->add_prefix('lib'), $this->util->get_file_url($lib), array('jquery'), $this->util->get_plugin_version());
 		wp_enqueue_style($this->add_prefix('style'), $this->get_theme_style(), array(), $this->util->get_plugin_version());
 	}
