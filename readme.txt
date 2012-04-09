@@ -2,26 +2,15 @@
 Contributors: Archetyped
 Donate link: http://archetyped.com/tools/simple-lightbox/#donate
 Tags: lightbox, gallery, photography, images, theme, template, style
-Requires at least: 3.2.1
-Tested up to: 3.3
+Requires at least: 3.3.1
+Tested up to: 3.3.1
 Stable tag: trunk
 
-A simple, themeable, and customizable Lightbox for Wordpress
+A simple, themeable, and highly customizable Lightbox for Wordpress
 
 == Description ==
 
-### BETA NOTES
-The current release is a beta version.  Please test and [provide feedback on the beta release page](http://archetyped.com/lab/slb-1-6-2-beta/).
-
-#### Beta 2
-* Optimize: Improved compatibility with PHP 5+
-
-#### Beta 1
-* Update: Rebuild JS code
-* Fix: Some elements can overlap lightbox
-* Optimize: Improved utility code
-
-Simple Lightbox is a very simple and customizable lightbox that is easy to add to your Wordpress website.  It also [supports skins](http://archetyped.com/lab/slb-registering-themes/), so it can be fully integrated with your site's theme.
+Simple Lightbox is a very simple and highly customizable lightbox that is easy to add to your Wordpress website.  It also [supports skins](http://archetyped.com/lab/slb-registering-themes/), so it can be fully integrated with your site's theme.
 
 #### Features
 Options for customizing the lightbox behavior are located in the **Settings > Media** admin menu in the **Lightbox Settings** section (or just click the **Settings** link below the plugin's name when viewing the list of installed plugins)
@@ -66,6 +55,13 @@ Post your questions and comments on [Simple Lightbox's official page](http://arc
 2. Customized UI Text
 
 == Changelog ==
+
+= 1.6.2 =
+* Update: Rebuild JS code
+* Optimize: Improved compatibility with PHP 5+
+* Optimize: Improved utility code
+* Fix: Some elements can overlap lightbox
+* Fix: Slideshow not automatically starting (Laurence of Autoplay)
 
 = 1.6.1 =
 * Optimize: Handle repeated initializations of lightbox on client-side
