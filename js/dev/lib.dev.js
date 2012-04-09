@@ -168,6 +168,7 @@ SLB = {
 		//Slideshow
 		$.extend(this.slideshow, {
 			play: !!this.options.autoPlay,
+			active: !!this.options.autoPlay,
 			enabled: !!this.options.enableSlideshow,
 			loop: ( !!this.options.enableSlideshow && !!this.options.loop ),
 			duration: ( $.isNumeric(this.options.slideTime) ) ? parseInt(this.options.slideTime) : 0
