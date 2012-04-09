@@ -730,17 +730,6 @@ class SLB_Utilities {
 	}
 	
 	/**
-	 * Retrieve plugin textdomain (for localization)
-	 * @return string
-	 */
-	function get_plugin_textdomain() {
-		static $dom = '';
-		if ( empty($dom) )
-			$dom = $this->get_plugin_base(true);
-		return $dom;
-	}
-	
-	/**
 	 * Retrieve current action based on URL query variables
 	 * @param mixed $default (optional) Default action if no action exists
 	 * @return string Current action

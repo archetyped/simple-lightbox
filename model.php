@@ -131,7 +131,7 @@ class SLB_Lightbox extends SLB_Base {
 		$lpath = $this->util->get_plugin_file_path($ldir, array(false, false));
 		$lpath_abs = $this->util->get_file_path($ldir);
 		if ( is_dir($lpath_abs) ) {
-			load_plugin_textdomain($this->util->get_plugin_textdomain(), false,	$lpath);
+			load_plugin_textdomain($this->get_prefix(), false,	$lpath);
 		}
 		//Options
 		$func_opts = 'init_options';
@@ -145,9 +145,6 @@ class SLB_Lightbox extends SLB_Base {
 		add_action($hook_context, $func_context);
 	}
 	
-	/**
-	 * Init options
-	 */
 	function init_options() {
 		//Setup options
 		$p = $this->util->get_plugin_base(true);
@@ -1421,7 +1418,7 @@ class SLB_Lightbox extends SLB_Base {
 		$page = 'media';
 		$section = $this->get_prefix();
 		//Section
-		add_settings_section($section, '<div id="' . $this->admin_get_settings_section() . '">' . __('Lightbox Settings', $this->util->get_plugin_textdomain()) . '</div>', $this->m('admin_section'), $page);
+		add_settings_section($section, '<div id="' . $this->admin_get_settings_section() . '">' . __('Lightbox Settings', $this->get_prefix()) . '</div>', $this->m('admin_section'), $page);
 		//Register settings container
 		register_setting($page, $this->add_prefix('options'), $this->options->m('validate'));
  	}
