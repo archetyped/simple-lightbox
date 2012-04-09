@@ -2,12 +2,12 @@
 
 /* General */
 
-#slb_lightbox {
+#slb_viewer {
 	color:#fff;
 }
 
-#slb_lightbox a, 
-#slb_lightbox a:hover {
+#slb_viewer a, 
+#slb_viewer a:hover {
 	color:#fff;
 }
 

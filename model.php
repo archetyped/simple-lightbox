@@ -120,7 +120,7 @@ class SLB_Lightbox extends SLB_Base {
 
 		//Init objects
 		$this->attr = $this->get_prefix();
-		$this->fields =& new SLB_Fields();
+		$this->fields = new SLB_Fields();
 	}
 	
 	/* Init */
@@ -131,7 +131,7 @@ class SLB_Lightbox extends SLB_Base {
 		$lpath = $this->util->get_plugin_file_path($ldir, array(false, false));
 		$lpath_abs = $this->util->get_file_path($ldir);
 		if ( is_dir($lpath_abs) ) {
-			load_plugin_textdomain($this->get_prefix(), false,	$lpath);
+			load_plugin_textdomain($this->util->get_plugin_textdomain(), false,	$lpath);
 		}
 		//Options
 		$func_opts = 'init_options';
@@ -145,6 +145,9 @@ class SLB_Lightbox extends SLB_Base {
 		add_action($hook_context, $func_context);
 	}
 	
+	/**
+	 * Init options
+	 */
 	function init_options() {
 		//Setup options
 		$p = $this->util->get_plugin_base(true);
@@ -199,7 +202,7 @@ class SLB_Lightbox extends SLB_Base {
 		$opt_theme['default'] = $this->theme_default = $this->add_prefix($this->theme_default);
 		$opt_theme['options'] = $this->m('get_theme_options');
 		
-		$this->options =& new SLB_Options($options_config);
+		$this->options = new SLB_Options($options_config);
 	}
 	
 	function register_hooks() {
@@ -1100,13 +1103,13 @@ class SLB_Lightbox extends SLB_Base {
 			$options['relAttribute'][] = $this->attr_legacy;
 			
 		//Load UI Strings
-		if ( ($strings = $this->build_strings()) && !empty($strings) )
-			$options['strings'] = $strings;
+		if ( ($strings = $this->build_labels()) && !empty($strings) )
+			$options['labels'] = $strings;
 		//Load Layout
 		$options['layout'] = $this->get_theme_layout();
 
 		//Build client output
-		echo $this->util->build_script_element($this->util->call_client_method('initialize', $options), 'init', true, true);
+		echo $this->util->build_script_element($this->util->call_client_method('init', $options), 'init', true, true);
 		echo PHP_EOL . '<!-- /SLB -->' . PHP_EOL;
 	}
 	
@@ -1276,7 +1279,7 @@ class SLB_Lightbox extends SLB_Base {
 	 * Build JS object of UI strings when initializing lightbox
 	 * @return array UI strings
 	 */
-	function build_strings() {
+	function build_labels() {
 		$ret = array();
 		//Get all UI options
 		$prefix = 'txt_';
@@ -1418,7 +1421,7 @@ class SLB_Lightbox extends SLB_Base {
 		$page = 'media';
 		$section = $this->get_prefix();
 		//Section
-		add_settings_section($section, '<div id="' . $this->admin_get_settings_section() . '">' . __('Lightbox Settings', $this->get_prefix()) . '</div>', $this->m('admin_section'), $page);
+		add_settings_section($section, '<div id="' . $this->admin_get_settings_section() . '">' . __('Lightbox Settings', $this->util->get_plugin_textdomain()) . '</div>', $this->m('admin_section'), $page);
 		//Register settings container
 		register_setting($page, $this->add_prefix('options'), $this->options->m('validate'));
  	}

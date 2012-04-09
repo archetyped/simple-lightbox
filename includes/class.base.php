@@ -60,7 +60,7 @@ class SLB_Base {
 	 * Constructor
 	 */
 	function __construct() {
-		$this->util =& new SLB_Utilities($this);
+		$this->util = new SLB_Utilities($this);
 	}
 	
 	/*-** Init **-*/
