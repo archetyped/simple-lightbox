@@ -9,6 +9,42 @@
 
 /* Prototypes */
 
+//Object
+
+if (!Object.keys) {
+  Object.keys = (function () {
+    var hasOwnProperty = Object.prototype.hasOwnProperty,
+        hasDontEnumBug = !({toString: null}).propertyIsEnumerable('toString'),
+        dontEnums = [
+          'toString',
+          'toLocaleString',
+          'valueOf',
+          'hasOwnProperty',
+          'isPrototypeOf',
+          'propertyIsEnumerable',
+          'constructor'
+        ],
+        dontEnumsLength = dontEnums.length
+
+    return function (obj) {
+      if (typeof obj !== 'object' && typeof obj !== 'function' || obj === null) throw new TypeError('Object.keys called on non-object')
+
+      var result = []
+
+      for (var prop in obj) {
+        if (hasOwnProperty.call(obj, prop)) result.push(prop)
+      }
+
+      if (hasDontEnumBug) {
+        for (var i=0; i < dontEnumsLength; i++) {
+          if (hasOwnProperty.call(obj, dontEnums[i])) result.push(dontEnums[i])
+        }
+      }
+      return result
+    }
+  })()
+};
+
 //Array
 
 if ( !Array.compare ) {
@@ -225,6 +261,7 @@ var Base = {
 		array: 'array',
 		obj: 'object',
 		func: 'function',
+		num: 'number',
 		
 		/* Methods */
 		
@@ -296,14 +333,34 @@ var Base = {
 		 */
 		sprintf: function() {
 			var format = '',
-				params = [];
-			if (arguments.length < 1)
-				return format;
-			if (arguments.length == 1) {
-				format = arguments[0];
+				params = [],
+				ph = '%s';
+			console.log(arguments);
+			if (arguments.length < 1) {
 				return format;
 			}
-			params = arguments.slice(1);
+			format = arguments[0];
+			if ( arguments.length > 1 ) {
+				params = Array.prototype.slice.call(arguments);
+				params = params.slice(1);
+			}
+			console.log('Format: %o \nParameters: %o', format, params);
+			//Replace placeholders in string with parameters
+			if ( format.indexOf(ph) != -1 ) {
+				//Replace all placeholders at once if single parameter set
+				if ( params.length == 1 ) {
+					format = format.replace(ph, params[0].toString());
+				} else {
+					var idx = 0,
+						pos = 0;
+					while ( ( pos = format.indexOf(ph) ) && idx < params.length ) {
+						format = format.substr(0, pos - 1) + params[idx].toString() + format.substr(pos + ph.length);
+						idx++;
+					}
+					//Remove any remaining placeholders
+					format = format.replace(ph, '');
+				}
+			}
 			return format;
 		},
 		
@@ -382,6 +439,14 @@ var Base = {
 		
 		is_func: function(value) {
 			return this.is_type(value, this.func);
+		},
+		
+		is_num: function(value) {
+			return ( this.is_type(value, this.num) );
+		},
+		
+		is_int: function(value) {
+			return ( this.is_num(value) && Math.round(value) === value );
 		},
 		
 		/**

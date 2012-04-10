@@ -15,7 +15,7 @@ if ( !SLB || !SLB.attach )
 var View = {
 	
 	/* Properties */
-	items: null,
+
 	item_current: null,
 	group: null,
 	slideshow_active: true,
@@ -85,6 +85,11 @@ var View = {
 			}
 			console.groupEnd();
 		}
+		
+		/* Initialize components */
+		console.log('Initializing components');
+		this.init_components();
+		
 		console.groupEnd();
 	},
 	
@@ -100,8 +105,6 @@ var View = {
 		console.groupEnd();
 		
 		/* Set defaults */
-		
-		this.init_components();
 		
 		//Theme
 		this.init_theme();
@@ -134,7 +137,7 @@ var View = {
 	/* Components */
 	
 	component_make_default: function(type) {
-		console.group('View.component_make_default');
+		console.groupCollapsed('View.component_make_default');
 		var ret = false;
 		console.dir(this.component_defaults);
 		for ( var x = 0; x < this.component_defaults.length; x++ ) {
@@ -382,13 +385,88 @@ var View = {
 	 * Display item in viewer
 	 */
 	show_item: function(item) {
-		console.groupCollapsed('View.show_item');
+		console.group('View.show_item');
 		//Parse item
 		if ( ! this.util.is_type(item, this.Content_Item) ) {
 			//Create new instance
 			var item = new this.Content_Item(item);
 			item.show();
 		}
+		console.groupEnd();
+	},
+	
+	/* Content Type */
+	
+	get_content_types: function() {
+		return this.get_components(this.Content_Type);
+	},
+	
+	/**
+	 * Find matching content type for item
+	 * @param Content_Item item Item to find type for
+	 * @return Content_Type|null Matching content type (NULL if no matching type found) 
+	 */
+	get_content_type: function(item) {
+		console.group('View.get_content_type');
+		var types = this.get_content_types();
+		//Iterate through types until match found
+		var pri = Object.keys(types).sort(function(a, b){return a - b;});
+		console.log('Type Priorities: %o', pri);
+		var g, type, match;
+		console.log('Iterating by priority');
+		for ( var p = 0; p < pri.length; p++ ) {
+			console.log('Priority: %o', pri[p]);
+			g = types[pri[p]];
+			for ( var x = 0; x < g.length; x++ ) {
+				console.groupCollapsed('Checking Type: %o', g[x]);
+				type = g[x];
+				//Init type if necessary
+				if ( this.util.is_array(type) ) {
+					console.log('Initializing type');
+					type = g[x] = new this.Content_Type(type[0], type[1]);
+				}
+				console.log('Checking Type Match: %o', type);
+				if ( type.match(item) ) {
+					console.info('Matching type found: %o', type.get_id());
+					console.groupEnd();
+					console.groupEnd();
+					return type;
+				}
+				console.groupEnd();
+			}
+		}
+		console.groupEnd();
+		return null;
+	},
+	
+	add_content_type: function(id, attributes, priority) {
+		console.groupCollapsed('View.add_content_type');
+		//Validate
+		if ( !this.util.is_string(id) || this.util.is_empty(id) ) {
+			console.error('ID not set');
+			console.groupEnd();
+			return false;
+		}
+		if ( !this.util.is_obj(attributes) ) {
+			attributes = {};
+		}
+		if ( !this.util.is_int(priority) || priority < 0 ) {
+			priority = 10;
+		}
+		console.log('Default values set\nID: %o \nAttr: %o \nPriority: %o', id, attributes, priority);
+		console.info('Saving content type properties');
+		//Save
+		var types = this.get_components(this.Content_Type);
+		console.log(types);
+		if ( !this.util.is_obj(types) ) {
+			console.log('Init types');
+			types = {};
+		}
+		if ( !(priority in types) ) {
+			types[priority] = [];
+		}
+		types[priority].push([id, attributes]);
+		console.log('Types: %o \nCollection: %o', types, this.get_components(this.Content_Type));
 		console.groupEnd();
 	},
 	
@@ -401,7 +479,7 @@ var View = {
 	 * @param object attrs (optional) Group attributes
 	 */
 	add_group: function(g, attrs) {
-		console.group('View.add_group');
+		console.groupCollapsed('View.add_group');
 		//Create new group
 		g = new this.Group(g, attrs);
 		console.log('New group: %o', g.get_id());
@@ -428,7 +506,7 @@ var View = {
 	 * @return object|null Group instance (NULL if group does not exist)
 	 */
 	get_group: function(g) {
-		console.group('View.get_group');
+		console.groupCollapsed('View.get_group');
 		if ( this.util.is_string(g) ) {
 			if ( !this.has_group(g) ) {
 				//Add new group (if necessary)
@@ -492,11 +570,11 @@ var View = {
 	 * @param obj attrs (optional) Default tag attributes/values
 	 * @param bool dynamic (optional) Whether tag is dynamically rendered (per item) or not
 	 */
-	add_theme_tag: function(id, build, attrs, dynamic) {
+	add_template_tag: function(id, build, attrs, dynamic) {
 		//Validate ID
 		if ( this.util.is_valid(id, 'string', true) ) {
 			//Create new instance
-			var tag = new this.Theme_Tag(id, build, attrs, dynamic);
+			var tag = new this.Template_Tag(id, build, attrs, dynamic);
 			//Add to Theme prototype
 			this.Theme.prototype.tags[tag.get_id()] = tag;
 		}
@@ -668,6 +746,40 @@ var Component = {
 	},
 	
 	/**
+	 * Checks if component is valid
+	 * @param obj|string Component instance or ID
+	 *  > If ID is specified then it will check for component on current instance
+	 * @param function|string ctype Component type
+	 *  > If component is an object, then ctype is required
+	 *  > If component is string ID, then ctype is optional (Default: reference type)
+	 *  > If ctype is a function, then it is compared to component directly
+	 *  > If ctype is a string, then the component reference type is retrieved
+	 * @uses get_reference()
+	 * @return bool TRUE if component is valid, FALSE otherwise
+	 */
+	check_component: function(comp, ctype) {
+		//Validate
+		if ( this.util.is_empty(comp)
+			|| ( this.util.is_obj(comp) && !this.util.is_func(ctype) )
+			|| ( this.util.is_string(comp) && !this.has_reference(comp) )
+			|| ( this.util.is_empty(ctype) && !this.util.is_string(comp) )
+			|| ( !this.util.is_obj(comp) && !this.util.is_string(comp) )
+		) {
+			return false;
+		}
+		//Get component type
+		if ( !this.util.is_func(ctype) ) {
+			//Component is a string ID
+			ctype = this.get_reference(comp);
+		}
+		//Get component instance
+		if ( this.util.is_string(comp) ) {
+			comp = this.get_component(comp, false);
+		}
+		return this.util.is_type(comp, ctype);
+	},
+	
+	/**
 	 * Retrieve component reference from current object
 	 * > Procedure:
 	 *   > Check if property already set
@@ -676,11 +788,12 @@ var Component = {
 	 * 	 > Check parent object (controller)
 	 * @uses _containers to check potential container components for references
 	 * @param string cname Component name
-	 * @param bool get_default (optional) Whether or not to retrieve default object from controller if none exists in current instance (Default: TRUE) 
+	 * @param bool get_default (optional) Whether or not to retrieve default object from controller if none exists in current instance (Default: TRUE)
+	 * @param bool recursive (optional) Whether or not to check containers for specified component reference (Default: TRUE) 
 	 * @return object Component reference (FALSE if no component found)
 	 */
-	get_component: function(cname, get_default) {
-		console.groupCollapsed('Component.get_component: %o', cname);
+	get_component: function(cname, get_default, recursive) {
+		console.groupCollapsed('Component.get_component(): %o', cname);
 		console.log('Property: %o \nGet Default: %o', cname, get_default);
 		var c = null;
 		//Validate request
@@ -693,6 +806,9 @@ var Component = {
 		//Normalize parameters
 		if ( !this.util.is_bool(get_default) ) {
 			get_default = true;
+		}
+		if ( !this.util.is_bool(recursive) ) {
+			recursive = true;
 		}
 		var ctype = this._refs[cname];
 
@@ -718,7 +834,7 @@ var Component = {
 		}
 
 		//Phase 3: Check Container(s)
-		if ( this.util.is_empty(c) && this.has_containers() ) {
+		if ( recursive && this.util.is_empty(c) && this.has_containers() ) {
 			console.info('Checking object container(s)');
 			var containers = this.get_containers();
 			console.log('Containers: %o', containers);
@@ -772,11 +888,12 @@ var Component = {
 	 * @return object Component (NULL if invalid)
 	 */
 	set_component: function(name, ref) {
-		console.groupCollapsed('Component.set_component');
+		console.groupCollapsed('Component.set_component: %o', name);
 		console.log('Component: %o \nObject: %o', name, ref);
 		//Make sure component property exists
-		if ( !this.has_reference(name) )
+		if ( !this.has_reference(name) || this.util.is_empty(ref) ) {
 			return null;
+		}
 		var ctype = this.get_reference(name); 
 		
 		//Get component from controller if ID supplied
@@ -854,10 +971,12 @@ var Component = {
 	 * @return mixed Attribute value (NULL if attribute is not set)
 	 */
 	get_attribute: function(key, def) {
-		console.log('Getting attribute: %o', key);
-		if ( !this.util.is_set(def) )
+		console.groupCollapsed('Component.get_attribute(): %o', key);
+		if ( !this.util.is_set(def) ) {
 			def = null;
+		}
 		var a = this.get_attributes();
+		console.groupEnd();
 		return ( key in this.get_attributes() ) ? this.attributes[key] : def;
 	},
 	
@@ -1054,6 +1173,8 @@ var Viewer = {
 			return end();
 		}
 		console.log('Theme layout: %o', t.render());
+		var out = item.get_output();
+		console.log('Item output: %o', out);
 		console.groupEnd();
 	},
 	
@@ -1193,14 +1314,141 @@ View.Group = Component.extend(Group);
  */
 var Content_Type = {
 	
-	/* Properties */
+	/* Configuration */
 	
 	_slug: 'content_type',
+	_refs: {
+		'item': 'Content_Item'
+	},
+	
+	/* References */
 	
 	item: null,
+	
+	/* Properties */
+	
+	/**
+	 * Raw layout template
+	 * @var string 
+	 */
+	template: '',
+	
+	/* Methods */
+	
+	/* Item */
+	
+	/**
+	 * Check if item instance set for type
+	 * @uses get_item()
+	 * @uses clear_item() to remove invalid item values
+	 * @return bool TRUE if valid item set, FALSE otherwise
+	 */
+	has_item: function() {
+		return ( this.util.is_empty(this.get_item()) ) ? false : true;
+	},
+	
+	/**
+	 * Retrieve item instance set on type
+	 * @uses get_component()
+	 * @return mixed Content_Item if valid item set, NULL otherwise
+	 */
+	get_item: function() {
+		return this.get_component('item', false);
+	},
+	
+	/**
+	 * Set item instance for type
+	 * Items are only meant to be set/used while item is being processed
+	 * @uses set_component()
+	 * @param Content_Item item Item instance
+	 * @return obj|null Item instance if item successfully set, NULL otherwise
+	 */
+	set_item: function(item) {
+		return this.set_component('item', item);
+	},
+	
+	/**
+	 * Clear item instance from type
+	 * Sets value to NULL
+	 */
+	clear_item: function() {
+		this.item = null;
+	},
+	
+	/* Evaluation */
 		
-	_c: function() {
-		console.log('Content Type');
+	/**
+	 * Check if item matches content type
+	 * @param object item Content_Item instance to check for type match
+	 * @return bool TRUE if type matches, FALSE otherwise 
+	 */
+	match: function(item) {
+		console.group('Content_Type.match');
+		//Validate
+		var attr = 'match';
+		var m = this.get_attribute(attr, null);
+		//Stop processing types with no matching algorithm
+		if ( !this.util.is_empty(m) ) {
+			//Process regex patterns
+			
+			//String-based
+			if ( this.util.is_string(m) ) {
+				//Create new regexp object
+				console.log('Processing string regex');
+				m = new RegExp(m, "i");
+				this.set_attribute(attr, m);
+			}
+			//RegExp based
+			if ( this.util.is_type(m, RegExp) ) {
+				console.info('Checking regex: %o \nMatch: %o', m, m.test(item.get_uri()));
+				console.groupEnd();
+				return m.test(item.get_uri());
+			}
+			//Process function
+			if ( this.util.is_func(m) ) {
+				console.info('Processing match function');
+				console.groupEnd();
+				return ( m.apply(this, [item]) ) ? true : false;
+			}
+		}
+		//Default
+		console.warn('No match algorithm');
+		console.groupEnd();
+		return false;
+	},
+	
+	/* Processing/Output */
+	
+	/**
+	 * Render output to display item
+	 * @uses template for raw HTML
+	 * @uses item for item properties to populate template
+	 * @return string Generated item output
+	 */
+	render: function(item) {
+		console.group('Content_Type.render');
+		//Validate
+		var attr = 'render';
+		var a = this.get_attribute(attr, null);
+		var ret = '';
+		//Stop processing types with no rendering functionality
+		if ( !this.util.is_empty(a) ) {
+			//Process regex patterns
+			console.info('Rendering item');
+			//String format
+			if ( this.util.is_string(a) ) {
+				console.log('Processing string format');
+				ret = this.util.sprintf(a, item.get_uri());
+			} 
+			else if ( this.util.is_func(a) ) {
+				console.info('Processing render function');
+				ret =  a.apply(this, [item]);
+			}
+		}
+		//Default
+		console.info('Rendered Output: %o', ret);
+		console.groupEnd();
+		return ret;
 	}
 };
 
@@ -1217,7 +1465,8 @@ var Content_Item = {
 	_reciprocal: true,
 	_refs: {
 		'viewer': 'Viewer',
-		'group': 'Group'
+		'group': 'Group',
+		'type': 'Content_Type'
 	},
 	_containers: ['group'],
 	
@@ -1228,14 +1477,15 @@ var Content_Item = {
 		permalink: null,
 		title: '',
 		group: null,
-		internal: false
+		internal: false,
+		output: null
 	},
 	
 	/* References */
 	
 	group: null,
 	viewer: null,
-	content_type: null,
+	type: null,
 	
 	/* Init */
 	
@@ -1247,11 +1497,73 @@ var Content_Item = {
 	
 	/* Methods */
 	
-	/*-** Instances **-*/
+	/*-** Properties **-*/
+	
+	/**
+	 * Retrieve item URI
+	 */
+	get_uri: function() {
+		console.groupCollapsed('Item.get_uri');
+		var ret = null;
+		var e = this.get_element();
+		if ( e ) {
+			ret = $(e).attr('href');	
+		}
+		console.log('Item URI: %o', ret);
+		console.groupEnd();
+		return ret;
+	},
+	
+	/**
+	 * Retrieve item output
+	 * Output generated based on content type if not previously generated
+	 * @uses get_attribute() to retrieve cached output
+	 * @uses set_attribute() to cache generated output
+	 * @uses get_type() to retrieve item type
+	 * @uses Content_Type.render() to generate item output
+	 * @return string Generated output;
+	 */
+	get_output: function() {
+		console.groupCollapsed('Item.get_output');
+		console.info('Checking for cached output');
+		var ret = this.get_attribute('output');
+		if ( !this.util.is_string(ret) ) {
+			console.info('Rendering output');
+			console.info('Get item type');
+			//Get item type
+			var type = this.get_type();
+			console.log('Item type: %o', type);
+			//Render type-based output
+			if ( !!type ) {
+				ret = type.render(this);
+			}
+			console.info('Output Retrieved: %o', ret);
+			console.info('Caching item output');
+			//Cache output
+			this.set_output(ret);
+		}
+		console.groupEnd();
+		return ( this.util.is_empty(ret) ) ? '' : ret.toString();
+	},
+	
+	/**
+	 * Cache output for future retrieval
+	 * @uses set_attribute() to cache output
+	 */
+	set_output: function(out) {
+		console.groupCollapsed('Item.set_output: %o', out);
+		if ( this.util.is_string(out) ) {
+			this.set_attribute('output', out);
+		}
+		console.groupEnd();
+	},
+	
+	/*-** Component References **-*/
+	
+	/* Viewer */
 	
 	get_viewer: function() {
 		return this.get_component('viewer');
-		// return v;
 	},
 	
 	/**
@@ -1272,7 +1584,9 @@ var Content_Item = {
 		//Return value for confirmation
 		return this.viewer;
 	},
-
+	
+	/* Group */
+	
 	has_group: function() {
 		return ( this.util.is_set(this.get_group()) ) ? true : false;
 	},
@@ -1318,23 +1632,49 @@ var Content_Item = {
 		console.groupEnd();
 	},
 	
+	/* Content Type */
+	
+	/**
+	 * Retrieve item type
+	 * @uses get_component() to retrieve saved reference to Content_Type instance
+	 * @uses set_component() to save reference to retrieved Content_Type instance
+	 * @uses View.get_content_type() to determine item content type (if necessary)
+	 */
 	get_type: function() {
-		
+		console.groupCollapsed('Item.get_type');
+		console.info('Retrieving saved type reference');
+		var t = this.get_component('type', false, false);
+		if ( !t ) {
+			console.info('No type reference, getting type from Controller');
+			t = this.set_type(this.get_parent().get_content_type(this));
+		}
+		console.info('Type: %o', t);
+		console.groupEnd();
+		return t;
 	},
 	
+	/**
+	 * Save content type reference
+	 * @uses set_component() to save type reference
+	 * @return Content_Type|null Saved content type (NULL if invalid)
+	 */
 	set_type: function(type) {
-		
+		return this.set_component('type', type);
 	},
 	
 	/* Actions */
 	
+	/**
+	 * Display item in viewer
+	 * @uses get_viewer() to retrieve viewer instance for item
+	 * @uses Viewer.show() to display item in viewer
+	 */
 	show: function() {
-		console.groupCollapsed('Item.show');
+		console.group('Item.show');
 		//Retrieve viewer
 		var v = this.get_viewer();
 		console.info('Viewer retrieved: %o', v);
 		v.show(this);
-		// v.show(item);
 		console.groupEnd();
 	}
 };
@@ -1384,7 +1724,7 @@ var Theme = {
 	/**
 	 * Layout tags
 	 * Processes tag
-	 * @var Theme_Tag
+	 * @var Template_Tag
 	 */
 	tags: {},
 	
@@ -1425,10 +1765,15 @@ View.Theme = Component.extend(Theme);
 /**
  * Theme tag handler
  */
-var Theme_Tag = {
+var Template_Tag = {
+	/* Configuration */
+	
+	_slug: 'template_tag',
+	
 	/* Properties */
 	
-	_slug: 'theme_tag',
+	
+	/* References */
 	
 	/**
 	 * Indicates if tag is dynamic or not
@@ -1441,21 +1786,6 @@ var Theme_Tag = {
 	 * @param obj
 	 */
 	attrs: {},
-	
-	/* Init */
-	
-	/**
-	 * Constructor
-	 * @param string id Unique ID
-	 * @param obj attrs (optional) Default attributes
-	 * @param bool dynamic (optional) Whether or not tag is dynamically built
-	 */
-	_c: function(id, build, attrs, dynamic) {
-		this.set_id(id);
-		this.set_build(build);
-		this.set_attrs(attrs);
-		this.set_dynamic(dynamic);
-	},
 	
 	/* Methods */
 	
@@ -1506,7 +1836,7 @@ var Theme_Tag = {
 	}
 };
 
-View.Theme_Tag = Component.extend(Theme_Tag);
+View.Template_Tag = Component.extend(Template_Tag);
 
 /* Update References */
 
@@ -1514,6 +1844,14 @@ View.Theme_Tag = Component.extend(Theme_Tag);
 //Attach to global object
 SLB.attach('View', View);
 View = SLB.View;
+console.info('Updating references');
 View.update_refs();
+
+/* Add Content Types */
+console.info('Adding default content types');
+View.add_content_type('image', {
+	match: /^.+\.(jpg|png|gif)$/i,
+	render: '<img src="%s" />'
+});
 
 })(jQuery);
