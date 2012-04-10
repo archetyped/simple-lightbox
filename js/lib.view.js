@@ -34,6 +34,7 @@ var View = {
 	content_types: {},
 	groups: {},
 	themes: {},
+	template_tags: {},
 	
 	/**
 	 * Collection/Data type mapping
@@ -124,7 +125,8 @@ var View = {
 			'items': 			this.Content_Item,
 			'content_types': 	this.Content_Type,
 			'groups': 			this.Group,
-			'themes': 			this.Theme
+			'themes': 			this.Theme,
+			'template_tags': 	this.Template_Tag
 		};
 		
 		this.component_defaults = [
@@ -544,21 +546,18 @@ var View = {
 	/**
 	 * Add theme
 	 * @param string name Theme name
-	 * @param obj options Theme options
+	 * @param obj attr Theme options
 	 * @return obj New Theme instance
 	 */
-	add_theme: function(id, options) {
-		//Validate params
-		if ( !this.util.is_valid(id, this.util.string) )
+	add_theme: function(id, attr) {
+		//Validate
+		if ( !this.util.is_string(id) || this.util.is_empty(id) ) {
 			id = this.util.add_prefix('default');
+		}
 		//Create theme
-		var thm = new this.Theme(id, options);
-		//DEBUG: Set Parent
-		thm._set_parent(this);
+		var thm = new this.Theme(id, attr);
 		//Add to collection
 		this.themes[thm.get_id()] = thm;
-		if ( thm instanceof this.Theme )
-			console.log('Added theme: %o', thm);
 		//Return
 		return thm;
 	},
@@ -570,13 +569,15 @@ var View = {
 	 * @param obj attrs (optional) Default tag attributes/values
 	 * @param bool dynamic (optional) Whether tag is dynamically rendered (per item) or not
 	 */
-	add_template_tag: function(id, build, attrs, dynamic) {
+	add_template_tag: function(id, attrs) {
 		//Validate ID
-		if ( this.util.is_valid(id, 'string', true) ) {
+		if ( this.util.is_string(id) && !this.util.is_empty(id) ) {
 			//Create new instance
-			var tag = new this.Template_Tag(id, build, attrs, dynamic);
-			//Add to Theme prototype
-			this.Theme.prototype.tags[tag.get_id()] = tag;
+			var tag = new this.Template_Tag(id, attrs);
+			//Add to collection
+			this.template_tags[tag.get_id()] = tag;
+			//Return instance
+			return tag;
 		}
 	}
 };
@@ -589,8 +590,8 @@ var Component = {
 	
 	/**
 	 * Base name of component type
+	 * @var string
 	 */
-	
 	_slug: 'component',
 	
 	/**
@@ -664,13 +665,6 @@ var Component = {
 		//Set ID
 		this.set_id(id);
 		console.info('ID set: %o', id);
-		
-		//Update References
-		if ( !this.util.is_empty(this._refs) ) {
-			for ( var r in this._refs ) {
-				
-			}
-		}
 		
 		//Set attributes
 		console.info('Setting attributes: %o', attributes);
@@ -1185,6 +1179,17 @@ var Viewer = {
 	reset: function() {
 		this.set_item(false);
 		this.set_loading(false);
+	},
+	
+	/* Content */
+	
+	get_labels: function() {
+		return this.get_attribute('labels', {});
+	},
+	
+	get_label: function(name) {
+		var lbls = this.get_labels();
+		return ( name in lbls ) ? lbls[name] : '';
 	},
 	
 	/* Theme */
@@ -1721,12 +1726,7 @@ var Theme = {
 	 */
 	layout: '',
 	
-	/**
-	 * Layout tags
-	 * Processes tag
-	 * @var Template_Tag
-	 */
-	tags: {},
+	
 	
 	/* Methods */
 	
@@ -1772,67 +1772,64 @@ var Template_Tag = {
 	
 	/* Properties */
 	
-	
-	/* References */
-	
-	/**
-	 * Indicates if tag is dynamic or not
-	 * @param bool
-	 */
-	dynamic: false,
-	
-	/**
-	 * Default tag attributes/values
-	 * @param obj
-	 */
-	attrs: {},
+	_attr_default: {
+		supports_modifiers: false,
+		dynamic: false
+	},
 	
 	/* Methods */
 	
 	/**
-	 * Parse tag and return output
-	 * @param obj theme Theme instance
-	 * @param obj tag Parsed tag properties
+	 * Parse tag instance
+	 * @param string Tag instance
+	 * @return obj Tag instance attributes
+	 */
+	parse: function(instance) {
+		//Stop processing if instance already parsed
+		if ( this.util.is_obj(instance) ) {
+			return instance;
+		}
+		var d = {
+			tag: this.get_id(),
+			prop: ''
+		}
+		//Return default value for invalid instances
+		if ( !this.util.is_string(instance) ) {
+			return d;
+		}
+		//Parse instance options
+		var parts = instance.split('|'),
+			part;
+		var attrs = $.extend({}, d);
+		if ( parts.length > 0 ) {
+			attrs.prop = parts[0];
+			for ( var x = 1; x < parts.length; x++ ) {
+				part = parts[x].split(':', 1);
+				if ( part.length > 1 &&  !( part[0] in attrs ) ) {
+					//Add key/value pair to attributes
+					attrs[part[0]] = part[1];
+				}
+			}
+		}
+		return attrs;
+	},
+	
+	/**
+	 * Render tag output
+	 * @param Content_Item item Item currently being displayed
+	 * @param string instance Tag instance (from template)
 	 * @return string Tag output
 	 */
-	parse: function(theme, tag) {
-		return this.build(theme, tag);
-	},
-	
-	/**
-	 * Build tag output
-	 * @param obj theme Theme instance
-	 * @param obj tag Parsed tag properties
-	 * @return string Tag output
-	 */
-	build: function(theme, tag) {
-		return 'build';
-	},
-	
-	/**
-	 * Set instance build method
-	 * @param function build Build method
-	 */
-	set_build: function(build) {
-		if ( $.isFunction(build) )
-			this.build = build;
-	},
-	
-	/**
-	 * Set default attributes for tag
- 	 * @param obj attrs Default attributes
-	 */
-	set_attrs: function(attrs) {
-		if ( $.isPlainObject(attrs) )
-			this.attrs = attrs;
-	},
-	
-	/**
-	 * Set tag as dynamic or not
-	 * @param bool dynamic (Default: No)
-	 */
-	set_dynamic: function(dynamic) {
-		this.dynamic = ( this.util.is_valid(dynamic, 'boolean', true) ) ? dynamic : false;
+	render: function(item, instance) {
+		var a = this.get_attribute('render', null);
+		var out = '';
+		if ( this.util.is_func(a) && this.util.is_type(item, View.Content_Item) ) {
+			//Parse tag instance
+			var attr = this.parse(instance);
+			//Pass arguments to user-defined method
+			out = a.apply(this, [item, attr]);
+		}
+		return out;
 	}
 };
 
@@ -1847,11 +1844,34 @@ View = SLB.View;
 console.info('Updating references');
 View.update_refs();
 
-/* Add Content Types */
+/*-** Registration **-*/
+
+/* Content Types */
 console.info('Adding default content types');
 View.add_content_type('image', {
 	match: /^.+\.(jpg|png|gif)$/i,
 	render: '<img src="%s" />'
+});
+
+/* Template Tags */
+console.info('Adding template tags');
+/**
+ * Item data tag
+ */
+View.add_template_tag('item', {
+	render: function(item, attrs) {
+		var m = 'get_' + attrs.prop;
+		var o = ( this.util.is_method(item, m) ) ? this[m]() : this.get_attribute(attrs.prop); 
+	}
+});
+
+/**
+ * UI tag
+ */
+View.add_template_tag('ui', {
+	render: function(item, attrs) {
+		return item.get_viewer().get_label(attrs.prop);
+	}
 });
 
 })(jQuery);

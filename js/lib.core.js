@@ -441,6 +441,10 @@ var Base = {
 			return this.is_type(value, this.func);
 		},
 		
+		is_method: function(obj, value) {
+			return ( this.is_obj(obj) && this.is_string(value) && ( value in obj ) && this.is_func(obj[value]) ) ? true : false;
+		},
+		
 		is_num: function(value) {
 			return ( this.is_type(value, this.num) );
 		},
