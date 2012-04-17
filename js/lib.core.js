@@ -402,7 +402,7 @@ var Base = {
 			return ( typeof value != 'undefined' ) ? true : false;
 		},
 		
-		is_type: function(value, type) {
+		is_type: function(value, type, nonempty) {
 			var ret = false;
 			if ( this.is_set(value) && null != value && this.is_set(type) ) {
 				switch ( typeof type ) {
@@ -418,39 +418,44 @@ var Base = {
 				}
 			}
 			
+			//Validate empty values
+			if ( ret && ( typeof nonempty != this.bool || nonempty ) ) {
+				ret = !this.is_empty(value);
+			}
+			
 			return ret;
 		},
 		
-		is_string: function(value) {
-			return this.is_type(value, this.string);
+		is_string: function(value, nonempty) {
+			return this.is_type(value, this.string, nonempty);
 		},
 		
-		is_array: function(value) {
-			return ( this.is_type(value, this.array) || ( this.is_obj(value) && value.length ) );
+		is_array: function(value, nonempty) {
+			return ( this.is_type(value, this.array, nonempty) || ( this.is_obj(value, nonempty) && value.length ) );
 		},
 		
 		is_bool: function(value) {
-			return this.is_type(value, this.bool);
+			return this.is_type(value, this.bool, false);
 		},
 		
-		is_obj: function(value) {
-			return this.is_type(value, this.obj);
+		is_obj: function(value, nonempty) {
+			return this.is_type(value, this.obj, nonempty);
 		},
 		
 		is_func: function(value) {
-			return this.is_type(value, this.func);
+			return this.is_type(value, this.func, false);
 		},
 		
 		is_method: function(obj, value) {
 			return ( this.is_obj(obj) && this.is_string(value) && ( value in obj ) && this.is_func(obj[value]) ) ? true : false;
 		},
 		
-		is_num: function(value) {
-			return ( this.is_type(value, this.num) );
+		is_num: function(value, nonempty) {
+			return this.is_type(value, this.num, nonempty);
 		},
 		
-		is_int: function(value) {
-			return ( this.is_num(value) && Math.round(value) === value );
+		is_int: function(value, nonempty) {
+			return ( this.is_num(value, nonempty) && Math.round(value) === value );
 		},
 		
 		/**
@@ -470,7 +475,7 @@ var Base = {
 					type = typeof value;
 				}
 				//Type-based check
-				if ( this.is_type(value, type) ) {
+				if ( this.is_type(value, type, false) ) {
 					switch ( type ) {
 						case this.string:
 						case this.array:
@@ -484,37 +489,12 @@ var Base = {
 								break;
 							}
 							break;
+						case this.num:
+							ret = ( value > 0 );
+							break;
 					}
 				} else {
 					ret = true;
-				}
-			}
-			return ret;
-		},
-		
-		/**
-		 * Checks if value is valid based on type
-		 * All undefined values are immediately invalid
-		 * @var mixed value Value to check
-		 * @var string type (optional) Required data type (string, array, etc. - Default: Anything)
-		 * @var bool nonempty (optional) Whether value must not be empty (Default: Yes)
-		 * @return bool Whether value is valid (TRUE if valid, FALSE otherwise)
-		 */
-		is_valid: function(value, type, nonempty) {
-			var ret = false;
-			//Only process defined values
-			if ( this.is_set(value) ) {
-				ret = true;
-				//Check data type (only if set)
-				if ( !this.is_type(value, type) ) {
-					ret = false;
-				}
-				
-				//Check if data is empty
-				if ( !this.is_set(nonempty) )
-					nonempty = true;
-				if ( ret && nonempty ) {
-					ret = !this.is_empty(value, type);
 				}
 			}
 			return ret;
