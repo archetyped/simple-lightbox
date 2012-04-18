@@ -134,6 +134,40 @@ if ( !String.rtrim ) {
 	};
 }
 
+if ( !String.sprintf ) {
+	/**
+	 * Return formatted string
+	 */
+	String.prototype.sprintf = function() {
+		var params = [],
+			ph = '%s';
+		if (arguments.length < 1) {
+			return this;
+		}
+		format = this.toString();
+		if ( arguments.length > 1 ) {
+			params = Array.prototype.slice.call(arguments);
+		}
+		//Replace placeholders in string with parameters
+		if ( format.indexOf(ph) != -1 ) {
+			//Replace all placeholders at once if single parameter set
+			if ( params.length == 1 ) {
+				format = format.replace(ph, params[0].toString());
+			} else {
+				var idx = 0,
+					pos = 0;
+				while ( ( pos = format.indexOf(ph) ) && idx < params.length ) {
+					format = format.substr(0, pos) + params[idx].toString() + format.substr(pos + ph.length);
+					idx++;
+				}
+				//Remove any remaining placeholders
+				format = format.replace(ph, '');
+			}
+		}
+		return format;
+	}
+}
+
 /* Extendible Class */
 var c_init = false;
 var Class = function() {};
@@ -326,42 +360,6 @@ var Base = {
 			if ( once && this.has_prefix(val, sep) )
 				return val;	
 			return this.get_prefix(sep) + val;
-		},
-		
-		/**
-		 * Return formatted string
-		 */
-		sprintf: function() {
-			var format = '',
-				params = [],
-				ph = '%s';
-			console.log(arguments);
-			if (arguments.length < 1) {
-				return format;
-			}
-			format = arguments[0];
-			if ( arguments.length > 1 ) {
-				params = Array.prototype.slice.call(arguments);
-				params = params.slice(1);
-			}
-			console.log('Format: %o \nParameters: %o', format, params);
-			//Replace placeholders in string with parameters
-			if ( format.indexOf(ph) != -1 ) {
-				//Replace all placeholders at once if single parameter set
-				if ( params.length == 1 ) {
-					format = format.replace(ph, params[0].toString());
-				} else {
-					var idx = 0,
-						pos = 0;
-					while ( ( pos = format.indexOf(ph) ) && idx < params.length ) {
-						format = format.substr(0, pos - 1) + params[idx].toString() + format.substr(pos + ph.length);
-						idx++;
-					}
-					//Remove any remaining placeholders
-					format = format.replace(ph, '');
-				}
-			}
-			return format;
 		},
 		
 		/* Request */

@@ -569,13 +569,13 @@ var View = {
 	 * @param obj attrs (optional) Default tag attributes/values
 	 * @param bool dynamic (optional) Whether tag is dynamically rendered (per item) or not
 	 */
-	add_template_tag: function(id, attrs) {
+	add_template_tag_handler: function(id, attrs) {
 		//Validate ID
 		if ( this.util.is_string(id) ) {
 			//Create new instance
-			var tag = new this.Template_Tag(id, attrs);
-			//Add to collection
-			this.template_tags[tag.get_id()] = tag;
+			var tag = new this.Template_Tag_Handler(id, attrs);
+			//Add to collection in Template_Tag prototype
+			this.Template_Tag.prototype.handlers[tag.get_id()] = tag;
 			//Return instance
 			return tag;
 		}
@@ -951,8 +951,12 @@ var Component = {
 		console.groupEnd();
 	},
 	
+	/**
+	 * Retrieve all instance attributes
+	 * @return obj Attributes
+	 */
 	get_attributes: function() {
-		console.groupCollapsed('Item.get_attributes()');
+		console.groupCollapsed('Component.get_attributes');
 		//Parse attributes on first access
 		if ( this.util.is_bool(this.attributes) ) {
 			console.log('Attibutes need to be initialized');
@@ -970,13 +974,16 @@ var Component = {
 	 * @return mixed Attribute value (NULL if attribute is not set)
 	 */
 	get_attribute: function(key, def) {
-		console.groupCollapsed('Component.get_attribute(): %o', key);
+		console.groupCollapsed('Component.get_attribute: %o', key);
 		if ( !this.util.is_set(def) ) {
 			def = null;
 		}
-		var a = this.get_attributes();
 		console.groupEnd();
-		return ( key in this.get_attributes() ) ? this.attributes[key] : def;
+		return ( this.has_attribute(key) ) ? this.get_attributes()[key] : def;
+	},
+	
+	has_attribute: function(key) {
+		return ( key in this.get_attributes() );
 	},
 	
 	build_default_attributes: function() {
@@ -1001,6 +1008,11 @@ var Component = {
 		console.groupEnd();
 	},
 	
+	/**
+	 * Set component attributes
+	 * @param obj attributes Attributes to set
+	 * @param bool full (optional) Whether to fully replace or merge component's attributes with new values (Default: Merge)  
+	 */
 	set_attributes: function(attributes, full) {
 		if ( !this.util.is_bool(full) )
 			full = false;
@@ -1017,6 +1029,11 @@ var Component = {
 		}
 	},
 	
+	/**
+	 * Set value for a component attribute
+	 * @param string key Attribute to set
+	 * @param mixed val Attribute value
+	 */
 	set_attribute: function(key, val) {
 		if ( this.util.is_string(key) && this.util.is_set(val) ) {
 			this.get_attributes()[key] = val;
@@ -1451,7 +1468,7 @@ var Content_Type = {
 			//String format
 			if ( this.util.is_string(a) ) {
 				console.log('Processing string format');
-				ret = this.util.sprintf(a, item.get_uri());
+				ret = a.sprintf(item.get_uri());
 			} 
 			else if ( this.util.is_func(a) ) {
 				console.info('Processing render function');
@@ -1779,7 +1796,7 @@ var Template = {
 		 * Placeholders processed
 		 * @var string
 		 */
-		layout: null
+		layout: null,
 	},
 	
 	_attr_parent: ['template'],
@@ -1798,17 +1815,9 @@ var Template = {
 	 * @return obj Parsed layout (jQuery object)
 	 */
 	parse: function() {
-		console.group('Template.parse');
+		console.groupCollapsed('Template.parse');
 		//Get raw template
-		var l = this.get_attribute('template');
-		if ( !this.util.is_empty(l) ) {
-			//Get tags
-			this.get_tags(l);
-			//Convert tags to placeholder DOM elements
-			
-			//Save tag data to placeholders
-			
-		}
+		var l = this.parse_tags();
 		this.set_layout(l);
 		console.groupEnd();
 		return l;
@@ -1829,14 +1838,17 @@ var Template = {
 	
 	/**
 	 * Retrieve layout
-	 * @return string Layout HTML
+	 * @return jQuery Layout object
 	 */
 	get_layout: function() {
 		console.group('Template.get_layout');
-		var l = this.get_attribute('layout');
+		var a = 'layout';
+		var l = this.get_attribute(a);
 		if ( this.util.is_empty(l) ) {
-			l = this.parse();
+			this.parse();
+			l = this.get_attribute(a);
 		}
+		console.log('Layout: %o', l);
 		console.groupEnd();
 		return l;
 	},
@@ -1846,54 +1858,147 @@ var Template = {
 	 * @param string layout Parsed layout
 	 */
 	set_layout: function(layout) {
-		this.set_attribute('layout', layout);
+		console.group('Template.set_layout');
+		if ( this.util.is_string(layout) ) {
+			//Create DOM object
+			var o = $(layout);
+			//Attach tags to placeholders
+			var tags = this.get_tags();
+			var c;
+			console.info('Tags: %o', tags.length);
+			for ( var x = 0; x < tags.length; x++ ) {
+				c = $('#' + this.util.add_prefix('tag_' + x.toString()), o);
+				if ( c.length ) {
+					console.log('Adding tag instance to element: %o', tags[x]);
+					//Save tag to DOM element
+					c.data(this.util.add_prefix('tag'), tags[x]);
+					//Save DOM element to tag
+					tags[x].set_ref(c.get(0));
+				}
+			}
+		}
+		console.log('Layout: %o', o)
+		//Save attribute
+		this.set_attribute('layout', o);
+		console.log(this.get_attributes());
+		console.groupEnd();
 	},
 	
 	/*-** Tags **-*/
 	
 	/**
 	 * Extract tags from template
-	 * @param string t Template
-	 * @return obj Tag instances grouped by tag 
+	 * Tags are replaced with DOM element placeholders
+	 * Extracted tags are saved (for future use)
+	 * @param string t (optional) Template
+	 * @return string Parsed template 
 	 */
-	get_tags: function(t) {
-		console.group('Template.get_tags');
-		var re = /\{(\w.*?)\}/gim,
-			tags = {};
-		if ( this.util.is_string(t) ) {
-			var match,
-				tag;
+	parse_tags: function(t) {
+		console.group('Template.parse_tags');
+		if ( !this.util.is_string(t) ) {
+			t = this.get_attribute('template', '');
+		}
+		var tags = [];
+		if ( !this.util.is_empty(t) ) {
+			var re = /\{(\w.*?)\}/gim,
+				match,
+				tag,
+				tname,
+				con;
 			console.group('Find tags');
 			while ( match = re.exec(t) ) {
-				tag = this.parse_tag(match);
-				if ( !!tag ) {
+				tag = new View.Template_Tag(match);
+				if ( tag.has_handler() ) {
+					tname = tag.get_name();
 					//Add Tag to collection
-					if ( !( tag.tag in tags ) ) {
-						tags[tag.tag] = [];
-					}
-					tags[tag.tag].push(tag);
+					tags.push(tag);
+					//Replace tag in layout with DOM container
+					con = tag.make_container(tags.length - 1);
+					t = t.substring(0, match.index) + con + t.substring(match.index + match[0].length);
 				}
 			}
 			console.groupEnd();
 			console.info('Tags: %o', tags);
 		}
+		console.info('Save tags');
+		this.set_tags(tags);
 		console.groupEnd();
+		return t;
+	},
+
+	/**
+	 * Retrieve tags from template
+	 * Template is parsed if tags not set
+	 * @return array Template tags
+	 */
+	get_tags: function() {
+		var a = 'tags';
+		var tags = this.get_attribute(a);
+		if ( !this.util.is_array(tags) ) {
+			this.parse_tags();
+		}
+		tags = this.get_attribute(a);
 		return tags;
+	},
+		
+	/**
+	 * Save tags extracted from template
+	 * @param array tags Tags to save
+	 */
+	set_tags: function(tags) {
+		if ( !this.util.is_array(tags) ) {
+			tags = [];
+		}
+		this.set_attribute('tags', tags);
+	}
+};
+
+View.Template = Component.extend(Template);
+
+/**
+ * Template tag 
+ */
+var Template_Tag = {
+	/* Configuration */
+	_slug: 'template_tag',
+	/* Properties */
+	_attr_default: {
+		name: null,
+		prop: null,
+		match: null
+	},
+	/**
+	 * Tag Handlers
+	 * Collection of Template_Tag_Handler instances
+	 * @var obj 
+	 */
+	handlers: {},
+	/* Methods */
+	
+	/**
+	 * Constructor
+	 * @param 
+	 */
+	_c: function(tag_match) {
+		console.groupCollapsed('Template_Tag.Constructor');
+		console.info('Parse tag instance');
+		this.parse(tag_match);		
+		console.groupEnd();
 	},
 	
 	/**
-	 * Parse tag extracted from template
-	 * @param array tag Extracted tag match
+	 * Set instance attributes using tag extracted from template
+	 * @param array tag_match Extracted tag match
 	 * @see RegExp.exec() for properties
-	 * @return object Parsed tag properties
 	 */
-	parse_tag: function(tag) {
-		console.groupCollapsed('Template.parse_tag');
+	parse: function(tag_match) {
+		console.groupCollapsed('Template_Tag.parse');
 		//Return default value for invalid instances
-		if ( !this.util.is_array(tag) || tag.length < 2 || !this.util.is_string(tag[0]) ) {
-			return null;
+		if ( !this.util.is_array(tag_match) || tag_match.length < 2 || !this.util.is_string(tag_match[0]) ) {
+			console.groupEnd();
+			return false;
 		}
-		var instance = tag[1];
+		var instance = tag_match[1];
 		//Parse instance options
 		var parts = instance.split('|'),
 			part;
@@ -1901,18 +2006,17 @@ var Template = {
 			console.groupEnd();
 			return null;
 		}
-		var d = {
-			tag: null,
+		var attrs = {
+			name: null,
 			prop: null,
-			match: null
-		}
-		var attrs = $.extend({}, d);
+			match: tag_match
+		};
 		//Get tag ID
-		attrs.tag = parts[0];
+		attrs.name = parts[0];
 		//Get main property
-		var prop = attrs.tag.split('.', 2);
+		var prop = attrs.name.split('.', 2);
 		if ( prop.length == 2 ) {
-			attrs.tag = prop[0];
+			attrs.name = prop[0];
 			attrs.prop = prop[1];
 		}
 		//Get other attributes
@@ -1923,66 +2027,72 @@ var Template = {
 				attrs[part[0]] = part[1];
 			}
 		}
-		//Save match attributes
-		attrs.match = tag;
+		//Save to instance
+		this.set_attributes(attrs, true);
 		console.groupEnd();
-		return attrs;
 	},
+	
+	/**
+	 * Retrieve tag name
+	 * @return string Tag name (DEFAULT: NULL)
+	 */
+	get_name: function() {
+		return this.get_attribute('name');
+	},
+	
+	/**
+	 * Retrieve tag handler
+	 * @return Template_Tag_Handler Handler instance (NULL if handler does not exist)
+	 */
+	get_handler: function() {
+		return ( this.has_handler() ) ? this.handlers[this.get_name()] : null;
+	},
+	
+	/**
+	 * Check if handler exists for tag
+	 * @return bool TRUE if handler exists, FALSE otherwise
+	 */
+	has_handler: function() {
+		return ( this.get_name() in this.handlers );
+	},
+	
+	/**
+	 * Create DOM element container for tag
+	 * @param string Tag ID (will be prefixed)
+	 * @return string DOM element
+	 */
+	make_container: function(id) {
+		//Validate ID
+		if ( this.util.is_set(id) ) {
+			id = this.util.add_prefix('tag_' + id.toString());
+		} else {
+			id = '';
+		}
+		//Build class
+		var cls = [
+			this.util.add_prefix('tag'),
+			this.util.add_prefix('tag_' + this.get_name())
+		];
+		//Build element
+		return '<span id="%s" class="%s"></span>'.sprintf(id, cls.join(' ')); 
+	}
 };
 
-View.Template = Component.extend(Template);
+View.Template_Tag = Component.extend(Template_Tag);
 
 /**
  * Theme tag handler
  */
-var Template_Tag = {
+var Template_Tag_Handler = {
 	/* Configuration */
-	
-	_slug: 'template_tag',
-	
+	_slug: 'template_tag_handler',
 	/* Properties */
-	
 	_attr_default: {
 		supports_modifiers: false,
 		dynamic: false
 	},
 	
 	/* Methods */
-	
-	/**
-	 * Parse tag instance
-	 * @param string Tag instance
-	 * @return obj Tag instance attributes
-	 */
-	parse: function(instance) {
-		//Stop processing if instance already parsed
-		if ( this.util.is_obj(instance) ) {
-			return instance;
-		}
-		var d = {
-			tag: this.get_id(),
-			prop: ''
-		}
-		//Return default value for invalid instances
-		if ( !this.util.is_string(instance) ) {
-			return d;
-		}
-		//Parse instance options
-		var parts = instance.split('|'),
-			part;
-		var attrs = $.extend({}, d);
-		if ( parts.length > 0 ) {
-			attrs.prop = parts[0];
-			for ( var x = 1; x < parts.length; x++ ) {
-				part = parts[x].split(':', 1);
-				if ( part.length > 1 &&  !( part[0] in attrs ) ) {
-					//Add key/value pair to attributes
-					attrs[part[0]] = part[1];
-				}
-			}
-		}
-		return attrs;
-	},
 	
 	/**
 	 * Render tag output
@@ -1994,8 +2104,6 @@ var Template_Tag = {
 		var a = this.get_attribute('render', null);
 		var out = '';
 		if ( this.util.is_func(a) && this.util.is_type(item, View.Content_Item) ) {
-			//Parse tag instance
-			var attr = this.parse(instance);
 			//Pass arguments to user-defined method
 			out = a.apply(this, [item, attr]);
 		}
@@ -2003,7 +2111,7 @@ var Template_Tag = {
 	}
 };
 
-View.Template_Tag = Component.extend(Template_Tag);
+View.Template_Tag_Handler = Component.extend(Template_Tag_Handler);
 
 console.groupCollapsed('Pre Init');
 /* Update References */
@@ -2028,7 +2136,7 @@ console.info('Adding template tags');
 /**
  * Item data tag
  */
-View.add_template_tag('item', {
+View.add_template_tag_handler('item', {
 	render: function(item, attrs) {
 		var m = 'get_' + attrs.prop;
 		var o = ( this.util.is_method(item, m) ) ? this[m]() : this.get_attribute(attrs.prop); 
@@ -2038,7 +2146,7 @@ View.add_template_tag('item', {
 /**
  * UI tag
  */
-View.add_template_tag('ui', {
+View.add_template_tag_handler('ui', {
 	render: function(item, attrs) {
 		return item.get_viewer().get_label(attrs.prop);
 	}
