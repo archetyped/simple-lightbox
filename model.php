@@ -572,8 +572,7 @@ class SLB_Lightbox extends SLB_Base {
 				$r = $this->build_attributes(array_merge($attrs_all, $attrs));
 				
 				//Update link in content
-				//TODO Optimize concatentation once Aptana bug fixed (2012-03-27)
-				$link_new = '<' . 'a ' . $this->util->build_attribute_string($attr) . '>';
+				$link_new = '<a ' . $this->util->build_attribute_string($attr) . '>';
 				$content = str_replace($link, $link_new, $content);
 				unset($h, $r);
 			}

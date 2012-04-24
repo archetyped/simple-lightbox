@@ -385,6 +385,7 @@ var View = {
 	
 	/**
 	 * Display item in viewer
+	 * @param obj item Content_Item instance or link DOM object
 	 */
 	show_item: function(item) {
 		console.group('View.show_item');
@@ -622,13 +623,13 @@ var Component = {
 	 * DOM Element tied to component
 	 * @var DOM Element 
 	 */
-	_el: null,
+	_dom: null,
 	
 	/**
 	 * DOM element attribute that stores component attributes
 	 * @var string
 	 */
-	_el_attr: null,
+	_dom_attr: null,
 	
 	/**
 	 * Default attributes
@@ -679,12 +680,39 @@ var Component = {
 	
 	/* Methods */
 	
-	get_id: function() {
-		return this.id;
+	/**
+	 * Retrieve instance ID
+	 * @uses id as ID base
+	 * @uses _slug to add namespace (if necessary)
+	 * @param bool ns (optional) Whether or not to namespace ID
+	 * @return string Instance ID
+	 */
+	get_id: function(ns) {
+		var id = this.id;
+		//Namespace ID
+		if ( this.util.is_bool(ns) && ns ) {
+			id = this.util.add_prefix( this.get_ns() + '_' + id );
+		}
+		
+		return id;
 	},
 	
+	/**
+	 * Set instance ID
+	 * @param string id Unique ID
+	 */
 	set_id: function(id) {
 		this.id = id.toString();
+	},
+	
+	/**
+	 * Get namespace
+	 * @uses _slug for namespace segment
+	 * @uses Util.add_prefix() to prefix slug
+	 * @return string Component namespace
+	 */
+	get_ns: function() {
+		return this.util.add_prefix(this._slug);
 	},
 	
 	/* Components */
@@ -878,7 +906,6 @@ var Component = {
 	 *  > Component property reset (set to NULL) if invalid component supplied
 	 * @param string name Name of property to set component on object
 	 * @param string|object ref Component or Component ID (to be retrieved from controller)
-	 * @param function type Component type
 	 * @return object Component (NULL if invalid)
 	 */
 	set_component: function(name, ref) {
@@ -909,15 +936,22 @@ var Component = {
 
 	/* Attributes */
 	
+	/**
+	 * Initialize attributes
+	 * @uses set_attributes() to Reset attributes
+	 * @uses get_dom() to retrieve DOM element
+	 * @uses _dom_attr to retrieve attributes from DOM element
+	 * @param obj attributes (optional) Attributes to set
+	 */
 	parse_attributes: function(attributes) {
 		console.groupCollapsed('Item.parse_attributes');
 		//Reset attributes
 		this.set_attributes(attributes, true);
 		
-		el = this.get_element();
+		el = this.get_dom();
 		if ( !this.util.is_empty(el) ) {
 			//Get attributes from element
-			var opts = $(el).attr(this._el_attr);
+			var opts = $(el).attr(this._dom_attr);
 			if ( opts ) {
 				opts = opts.split(' ');
 				var wrap = {
@@ -953,6 +987,8 @@ var Component = {
 	
 	/**
 	 * Retrieve all instance attributes
+	 * @uses parse_attributes() to initialize attributes (if necessary)
+	 * @uses attributes
 	 * @return obj Attributes
 	 */
 	get_attributes: function() {
@@ -982,10 +1018,22 @@ var Component = {
 		return ( this.has_attribute(key) ) ? this.get_attributes()[key] : def;
 	},
 	
+	/**
+	 * Check if attribute exists
+	 * @param string key Attribute name
+	 * @return bool TRUE if exists, FALSE otherwise
+	 */
 	has_attribute: function(key) {
 		return ( key in this.get_attributes() );
 	},
 	
+	/**
+	 * Generate default attributes for component
+	 * @uses _attr_parent to determine options to retrieve from controller
+	 * @uses View.get_options() to get values from controller
+	 * @uses _attr_map to Remap controller attributes to instance attributes
+	 * @uses _attr_default to Store default attributes
+	 */
 	build_default_attributes: function() {
 		console.groupCollapsed('Component.build_default_attributes');
 		console.log('Get parent options: %o', this._attr_parent);
@@ -1031,6 +1079,7 @@ var Component = {
 	
 	/**
 	 * Set value for a component attribute
+	 * @uses get_attributes() to retrieve attributes
 	 * @param string key Attribute to set
 	 * @param mixed val Attribute value
 	 */
@@ -1041,19 +1090,36 @@ var Component = {
 	},
 	
 	/* DOM Element */
+
+	/**
+	 * Check if DOM element is set for instance
+	 * @uses _dom to check for stored value
+	 * @return bool TRUE if DOM element set, FALSE otherwise
+	 */
+	has_dom: function() {
+		return ( !this.util.is_empty(this._dom) );
+	},
 	
-	get_element: function() {
-		return $(this._el);
+	/**
+	 * Retrieve attached DOM element
+	 * @uses _dom to retrieve attached DOM element
+	 * @return obj jQuery DOM element
+	 */
+	get_dom: function() {
+		return $(this.has_dom() ) ? this._dom : null;
 	},
 	
 	/**
 	 * Set reference of instance on DOM element
+	 * @uses _reciprocal to determine if DOM element should also be attached to instance
+	 * @param obj el DOM element to attach instance to
 	 */
-	set_ref: function(el) {
+	set_dom: function(el) {
 		var key = this.util.add_prefix(this._slug);
 		$(el).data(key, this);
-		if ( this._reciprocal )
-			this._el = $(el);
+		if ( this._reciprocal ) {
+			this._dom = $(el);
+		}
 	},
 };
 
@@ -1074,18 +1140,12 @@ var Viewer = {
 		theme: 'Theme'
 	},
 	
-	_attr_parent: ['theme', 'group_loop', 'ui_animate', 'ui_overlay_opacity', 'ui_labels'],
-	
-	_attr_map: {
-		'group_loop': 'loop',
-		'ui_animate': 'animate',
-		'ui_overlay_opacity': 'overlay_opacity',
-		'ui_labels': 'labels'
-	},
+	_reciprocal: true,
 	
 	_attr_default: {
 		loop: true,
 		animate: true,
+		overlay_show: true,
 		overlay_opacity: '0.8',
 		labels: {
 			link_close: 'close',
@@ -1097,7 +1157,16 @@ var Viewer = {
 			loading: 'loading'
 		}
 	},
-
+	
+	_attr_parent: ['theme', 'group_loop', 'ui_animate', 'ui_overlay_opacity', 'ui_labels'],
+	
+	_attr_map: {
+		'group_loop': 'loop',
+		'ui_animate': 'animate',
+		'ui_overlay_opacity': 'overlay_opacity',
+		'ui_labels': 'labels'
+	},
+	
 	/* References */
 	
 	/**
@@ -1118,21 +1187,45 @@ var Viewer = {
 	
 	/* Methods */
 	
-	/* Setup */
+	/* References */
 	
+	/**
+	 * Set item reference
+	 * @param obj item Content_Item instance
+	 * @return bool TRUE if valid item set, FALSE otherwise
+	 */
 	set_item: function(item) {
 		console.groupCollapsed('Viewer.set_item');
-		if ( this.util.is_type(item, View.Content_Item) ) {
-			console.log('Item set: %o', item);
-			this.item = item;
-			console.groupEnd();
-			return true;
-		} else {
-			this.item = null;
-		}
+		var i = this.set_component('item', item);
 		console.groupEnd();
-		return false;
+		return ( !this.util.is_empty(i) );
 	},
+	
+	/**
+	 * Retrieve item instance current attached to viewer
+	 * @return Content_Item|NULL Current item instance
+	 */
+	get_item: function() {
+		return this.get_component('item');
+	},
+	
+	/**
+	 * Retrieve theme reference
+	 * @return object Theme reference
+	 */
+	get_theme: function() {
+		return this.get_component('theme');
+	},
+	
+	/**
+	 * Set viewer's theme
+	 * @param object theme Theme object
+	 */
+	set_theme: function(theme) {
+		this.set_component('theme', theme);
+	},
+	
+	/* Properties */
 	
 	/**
 	 * Sets loading mode
@@ -1169,13 +1262,8 @@ var Viewer = {
 	show: function(item) {
 		console.group('Viewer.show');
 		console.info('Set current item');
-		//Add item reference to viewer
-		var i = this.set_item(item);
-		//Load theme
-		console.info('Getting theme');
-		var t = this.get_theme();
 		//Validate request
-		if ( !i || !t ) {
+		if ( !this.set_item(item) || !this.get_theme() ) {
 			console.warn('Invalid request');
 			console.groupEnd();
 			this.exit();
@@ -1183,14 +1271,68 @@ var Viewer = {
 		//Set loading flag
 		console.info('Set loading flag');
 		this.set_loading();
+		//Display
+		this.dom_build();
+		console.groupEnd();
+	},
+	
+	get_container: function() {
+		
+	},
+	
+	/**
+	 * Load output into DOM
+	 */
+	dom_build: function() {
+		console.group('Viewer.dom_build');
+		//Load viewer into DOM
+		console.info('Setup DOM');
+		this.dom_prepare();
 		//Get theme output
 		console.info('Rendering Theme layout');
-		var l = t.render(item);
-		console.log('Theme layout: %o', l);
-		//Load into DOM
-		
-		//Display
+		this.get_theme().render(this.get_item());
+		this.get_dom().show();
 		console.groupEnd();
+	},
+	
+	/**
+	 * Build DOM element for instance
+	 */
+	dom_init: function() {
+		console.groupCollapsed('Viewer.dom_init');
+		//Check if DOM element already set
+		if ( !this.has_dom() ) {
+			console.info('DOM element needs to be created');
+			//Create element & add to DOM
+			var eid = this.get_id(true);
+			//Save element to instance
+			this.set_dom($('<div/>', {
+				'id':  eid,
+				'class': this.get_ns()
+			}).appendTo('body').hide());
+			console.log('DOM element added');
+			//Add theme layout (basic)
+			this.get_dom().append( this.get_theme().render() );
+		}
+		console.groupEnd();
+	},
+	
+	/**
+	 * Prepare DOM
+	 * Hide overlapping DOM elements, etc.
+	 */
+	dom_prepare: function() {
+		console.groupCollapsed('Viewer.dom_prepare');
+		this.dom_init();
+		console.groupEnd();
+	},
+	
+	/**
+	 * Restore DOM
+	 * Show overlapping DOM elements, etc.
+	 */
+	dom_restore: function() {
+		
 	},
 	
 	exit: function() {
@@ -1213,47 +1355,6 @@ var Viewer = {
 	get_label: function(name) {
 		var lbls = this.get_labels();
 		return ( name in lbls ) ? lbls[name] : '';
-	},
-	
-	/* Theme */
-	
-	/**
-	 * Retrieve theme reference
-	 * @return object Theme reference
-	 */
-	get_theme: function() {
-		return this.get_component('theme');
-	},
-	
-	/**
-	 * Set viewer's theme
-	 * @param object theme Theme object
-	 */
-	set_theme: function(theme) {
-		this.set_component('theme', theme);
-	},
-	
-	/**
-	 * Resize lightbox to fit content
-	 */
-	resize: function() {
-		
-	},
-	
-	/**
-	 * Prepare DOM
-	 * Hide overlapping DOM elements, etc.
-	 */
-	dom_prepare: function() {
-		
-	},
-	
-	/**
-	 * Restore DOM
-	 * Show overlapping DOM elements, etc.
-	 */
-	dom_restore: function() {
-		
 	},
 	
 	/* Interactivity */
@@ -1290,7 +1391,7 @@ var Viewer = {
 	 * Close lightbox
 	 */
 	close: function() {
-		
+		this.dom_restore();
 	}
 };
 
@@ -1500,7 +1601,7 @@ var Content_Item = {
 	},
 	_containers: ['group'],
 	
-	_el_attr: 'rel',
+	_dom_attr: 'rel',
 		
 	_attr_default: {
 		src: null,
@@ -1522,7 +1623,7 @@ var Content_Item = {
 	_c: function(el) {
 		console.log('New Content Item');
 		//Save element to instance
-		this.set_ref(el);
+		this.set_dom(el);
 	},
 	
 	/* Methods */
@@ -1535,13 +1636,17 @@ var Content_Item = {
 	get_uri: function() {
 		console.groupCollapsed('Item.get_uri');
 		var ret = null;
-		var e = this.get_element();
+		var e = this.get_dom();
 		if ( e ) {
 			ret = $(e).attr('href');	
 		}
 		console.log('Item URI: %o', ret);
 		console.groupEnd();
 		return ret;
+	},
+	
+	get_content: function() {
+		return 'Item content';
 	},
 	
 	/**
@@ -1763,12 +1868,12 @@ var Theme = {
 	
 	/**
 	 * Render Theme output
-	 * @return string Theme output
+	 * @return jQuery Theme output
 	 */
 	render: function(item) {
 		console.group('Theme.render');
 		//Retrieve layout
-		var l = this.get_template().render();
+		var l = this.get_template().render(item);
 		console.groupEnd();
 		return l;
 	},
@@ -1797,6 +1902,12 @@ var Template = {
 		 * @var string
 		 */
 		layout: null,
+		/**
+		 * Tags in template
+		 * Populated once template has been parsed
+		 * @var array
+		 */
+		tags: null
 	},
 	
 	_attr_parent: ['template'],
@@ -1825,11 +1936,41 @@ var Template = {
 	
 	/**
 	 * Render output
-	 * @return string Layout HTML
+	 * @return obj jQuery Layout HTML
 	 */
-	render: function() {
-		console.group('Template.render');
-		var l = this.get_layout();
+	render: function(item) {
+		console.groupCollapsed('Template.render');
+		var l = null;
+		//Populate layout
+		if ( this.util.is_type(item, View.Content_Item) ) {
+			console.info('Rendering Item');
+			var v = item.get_viewer();
+			v.dom_init();
+			var d = v.get_dom();
+			console.info('Viewer DOM: %o', d);
+			//Iterate through tags and populate layout
+			if ( this.has_tags() ) {
+				var sel = '.' + this.util.add_prefix('tag');
+				console.info('Populating Tags: %o', sel);
+				var tags = $(sel, d);
+				var t = this;
+				tags.each(function() {
+					console.groupCollapsed('Processing Tag');
+					var el = $(this);
+					var tag = $(this).data(t.util.add_prefix('tag'));
+					if ( t.util.is_type(tag, View.Template_Tag) ) {
+						var o = tag.render(item);
+						console.info('Tag Output: %o', o);
+						el.html(o);
+					}
+					console.groupEnd();
+				});
+				
+			}
+		} else {
+			//Get Layout (basic)
+			l = this.get_layout();
+		}
 		console.groupEnd();
 		return l;
 	},
@@ -1841,7 +1982,7 @@ var Template = {
 	 * @return jQuery Layout object
 	 */
 	get_layout: function() {
-		console.group('Template.get_layout');
+		console.groupCollapsed('Template.get_layout');
 		var a = 'layout';
 		var l = this.get_attribute(a);
 		if ( this.util.is_empty(l) ) {
@@ -1873,7 +2014,7 @@ var Template = {
 					//Save tag to DOM element
 					c.data(this.util.add_prefix('tag'), tags[x]);
 					//Save DOM element to tag
-					tags[x].set_ref(c.get(0));
+					tags[x].set_dom(c.get(0));
 				}
 			}
 		}
@@ -1940,7 +2081,7 @@ var Template = {
 		tags = this.get_attribute(a);
 		return tags;
 	},
-		
+
 	/**
 	 * Save tags extracted from template
 	 * @param array tags Tags to save
@@ -1950,6 +2091,14 @@ var Template = {
 			tags = [];
 		}
 		this.set_attribute('tags', tags);
+	},
+	
+	/**
+	 * Check if template contains tags
+	 * @return bool TRUE if tags exist, FALSE otherwise
+	 */
+	has_tags: function() {
+		return ( this.get_tags().length > 0 ) ? true : false;
 	}
 };
 
@@ -2033,11 +2182,26 @@ var Template_Tag = {
 	},
 	
 	/**
+	 * Render tag output
+	 * @param Content_Item item
+	 */
+	render: function(item) {
+		return ( this.has_handler() ) ? this.get_handler().render(item, this) : '';
+	},
+	
+	/**
 	 * Retrieve tag name
 	 * @return string Tag name (DEFAULT: NULL)
 	 */
 	get_name: function() {
 		return this.get_attribute('name');
+	},
+	
+	/**
+	 * Retrieve tag property
+	 */
+	get_prop: function() {
+		return this.get_attribute('prop');
 	},
 	
 	/**
@@ -2101,12 +2265,15 @@ var Template_Tag_Handler = {
 	 * @return string Tag output
 	 */
 	render: function(item, instance) {
+		console.group('Template_Tag_Handler.render');
 		var a = this.get_attribute('render', null);
 		var out = '';
 		if ( this.util.is_func(a) && this.util.is_type(item, View.Content_Item) ) {
+			console.info('Passing to render method');
 			//Pass arguments to user-defined method
-			out = a.apply(this, [item, attr]);
+			out = a.apply(this, [item, instance]);
 		}
+		console.groupEnd();
 		return out;
 	}
 };
@@ -2132,14 +2299,17 @@ View.add_content_type('image', {
 });
 
 /* Template Tags */
-console.info('Adding template tags');
+console.info('Adding template tag handlers');
 /**
  * Item data tag
  */
 View.add_template_tag_handler('item', {
-	render: function(item, attrs) {
-		var m = 'get_' + attrs.prop;
-		var o = ( this.util.is_method(item, m) ) ? this[m]() : this.get_attribute(attrs.prop); 
+	render: function(item, tag) {
+		console.groupCollapsed('Template_Tag_Handler (Item).render: %o', tag.get_prop());
+		var m = 'get_' + tag.get_prop();
+		var o = ( this.util.is_method(item, m) ) ? item[m]() : item.get_attribute(tag.get_prop(), '');
+		console.groupEnd();
+		return o; 
 	}
 });
 
@@ -2147,8 +2317,10 @@ View.add_template_tag_handler('item', {
  * UI tag
  */
 View.add_template_tag_handler('ui', {
-	render: function(item, attrs) {
-		return item.get_viewer().get_label(attrs.prop);
+	render: function(item, tag) {
+		console.groupCollapsed('Template_Tag_Handler (UI).render: %o', tag.get_prop());
+		console.groupEnd();
+		return item.get_viewer().get_label(tag.get_prop());
 	}
 });
 console.groupEnd();
