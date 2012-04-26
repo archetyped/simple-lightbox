@@ -691,7 +691,7 @@ var Component = {
 		var id = this.id;
 		//Namespace ID
 		if ( this.util.is_bool(ns) && ns ) {
-			id = this.util.add_prefix( this.get_ns() + '_' + id );
+			id = this.add_ns(id);
 		}
 		
 		return id;
@@ -713,6 +713,15 @@ var Component = {
 	 */
 	get_ns: function() {
 		return this.util.add_prefix(this._slug);
+	},
+	
+	/**
+	 * Add namespace to value
+	 * @param string val Value to namespace
+	 * @return string Namespaced value (Empty string if invalid value provided)
+	 */
+	add_ns: function(val) {
+		return ( this.util.is_string(val) ) ? this.get_ns() + '_' + val : '';
 	},
 	
 	/* Components */
@@ -1121,6 +1130,15 @@ var Component = {
 			this._dom = $(el);
 		}
 	},
+	
+	/* Data */
+	
+	do_callback: function(callback, data) {
+		//Validate
+		if ( this.util.is_func(callback) ) {
+			callback(data);
+		}
+	}
 };
 
 Component = SLB.Class.extend(Component);
@@ -1145,8 +1163,9 @@ var Viewer = {
 	_attr_default: {
 		loop: true,
 		animate: true,
-		overlay_show: true,
+		overlay_enabled: true,
 		overlay_opacity: '0.8',
+		container: null,
 		labels: {
 			link_close: 'close',
 			link_next: 'next &raquo;',
@@ -1276,8 +1295,26 @@ var Viewer = {
 		console.groupEnd();
 	},
 	
-	get_container: function() {
-		
+	/**
+	 * Retrieve container element
+	 * Creates default container element if not yet created
+	 * @return jQuery Container element
+	 */
+	get_dom_container: function() {
+		var sel = this.get_attribute('container');
+		//Set default container
+		if ( this.util.is_empty(sel) ) {
+			sel = '#' + this.add_ns('wrap');
+		}
+		//Add default container to DOM if not yet present
+		c = $(sel);
+		if ( !c.length ) {
+			//Prepare ID
+			id = ( sel.indexOf('#') === 0 ) ? sel.substr(1) : sel;
+			//Add element
+			c = $('<div />', {'id': id}).appendTo('body');
+		}
+		return c;
 	},
 	
 	/**
@@ -1290,8 +1327,14 @@ var Viewer = {
 		this.dom_prepare();
 		//Get theme output
 		console.info('Rendering Theme layout');
-		this.get_theme().render(this.get_item());
-		this.get_dom().show();
+		var v = this;
+		this.get_theme().render(this.get_item(), function(output) {
+			//Display overlay
+			v.overlay_show();
+			//Display viewer
+			var top = $(document).scrollTop() + Math.min($(window).height() / 15, 20);
+			v.get_dom().css('top', top + 'px').show();
+		});
 		console.groupEnd();
 	},
 	
@@ -1304,15 +1347,14 @@ var Viewer = {
 		if ( !this.has_dom() ) {
 			console.info('DOM element needs to be created');
 			//Create element & add to DOM
-			var eid = this.get_id(true);
 			//Save element to instance
 			this.set_dom($('<div/>', {
-				'id':  eid,
-				'class': this.get_ns()
-			}).appendTo('body').hide());
+				'id':  this.get_id(true),
+				'class': [this.get_ns(), this.get_theme().get_id(true)].join(' ')
+			}).appendTo(this.get_dom_container()).hide());
 			console.log('DOM element added');
 			//Add theme layout (basic)
-			this.get_dom().append( this.get_theme().render() );
+			this.dom_put( 'layout', this.get_theme().render() );
 		}
 		console.groupEnd();
 	},
@@ -1322,7 +1364,7 @@ var Viewer = {
 	 * Hide overlapping DOM elements, etc.
 	 */
 	dom_prepare: function() {
-		console.groupCollapsed('Viewer.dom_prepare');
+		console.group('Viewer.dom_prepare');
 		this.dom_init();
 		console.groupEnd();
 	},
@@ -1333,6 +1375,70 @@ var Viewer = {
 	 */
 	dom_restore: function() {
 		
+	},
+	
+	/**
+	 * Wrap output in DOM element
+	 * Wrapper element created and added to main DOM element if not yet created
+	 * @param string id ID for DOM element (Used as class name for wrapper)
+	 * @param string|jQuery content Content to add to DOM
+	 */
+	dom_put: function(id, content) {
+		console.group('Viewer.dom_put');
+		var r = '';
+		//Validate
+		if ( !this.util.is_string(id) ) {
+			console.warn('Invalid parameters\nID: %o \n%o', id, content);
+			console.groupEnd();
+			return r;
+		}
+		//Build ID
+		id = this.add_ns(id);
+		var sel = '.' + id;
+		r = $(sel);
+		//Create element (if necessary)
+		if ( !r.length ) {
+			r = $('<div/>', {
+				'class': id
+			}).appendTo(this.get_dom());
+		}
+		//Add content
+		$(r).append(content);
+		console.groupEnd();
+		return r;
+	},
+	
+	/* Overlay */
+	
+	/**
+	 * Determine if overlay is enabled for viewer
+	 * @return bool TRUE if overlay is enabled, FALSE otherwise
+	 */
+	overlay_enabled: function() {
+		var ov = this.get_attribute('overlay_enabled');
+		return ( this.util.is_bool(ov) && ov );
+	},
+	
+	/**
+	 * Retrieve overlay DOM element
+	 * @return jQuery Overlay element (NULL if no overlay set for viewer)
+	 */
+	get_overlay: function() {
+		var o = null;
+		if ( this.overlay_enabled() ) {
+			o = this.dom_put('overlay').hide();
+		}
+		return o;
+	},
+	
+	/**
+	 * Display overlay
+	 */
+	overlay_show: function() {
+		var o = this.get_overlay();
+		if ( !this.util.is_empty(o) ) {
+			o.show();
+		}
 	},
 	
 	exit: function() {
@@ -1646,7 +1752,7 @@ var Content_Item = {
 	},
 	
 	get_content: function() {
-		return 'Item content';
+		return this.get_output();
 	},
 	
 	/**
@@ -1868,14 +1974,15 @@ var Theme = {
 	
 	/**
 	 * Render Theme output
-	 * @return jQuery Theme output
+	 * Output passed to callback function
+	 * @param Content_Item item Item to render theme for
+	 * @param function callback Function to execute with rendered output
 	 */
-	render: function(item) {
-		console.group('Theme.render');
+	render: function(item, callback) {
+		console.groupCollapsed('Theme.render');
 		//Retrieve layout
-		var l = this.get_template().render(item);
+		this.get_template().render(item, callback);
 		console.groupEnd();
-		return l;
 	},
 };
 
@@ -1936,9 +2043,11 @@ var Template = {
 	
 	/**
 	 * Render output
-	 * @return obj jQuery Layout HTML
+	 * Output passed to callback function
+	 * @param Content_Item item Item to render template for
+	 * @param function callback Function to execute with rendered output
 	 */
-	render: function(item) {
+	render: function(item, callback) {
 		console.groupCollapsed('Template.render');
 		var l = null;
 		//Populate layout
@@ -1948,7 +2057,7 @@ var Template = {
 			v.dom_init();
 			var d = v.get_dom();
 			console.info('Viewer DOM: %o', d);
-			//Iterate through tags and populate layout
+			//Iterate through tags (DOM placeholders) and populate layout
 			if ( this.has_tags() ) {
 				var sel = '.' + this.util.add_prefix('tag');
 				console.info('Populating Tags: %o', sel);
@@ -1959,20 +2068,20 @@ var Template = {
 					var el = $(this);
 					var tag = $(this).data(t.util.add_prefix('tag'));
 					if ( t.util.is_type(tag, View.Template_Tag) ) {
-						var o = tag.render(item);
-						console.info('Tag Output: %o', o);
-						el.html(o);
+						tag.render(item, function(output) {
+							console.info('Tag Output: %o', output);
+							el.html(output);
+						});
 					}
 					console.groupEnd();
 				});
-				
 			}
 		} else {
 			//Get Layout (basic)
 			l = this.get_layout();
 		}
+		this.do_callback(callback, l);
 		console.groupEnd();
-		return l;
 	},
 	
 	/*-** Layout **-*/
@@ -2049,7 +2158,7 @@ var Template = {
 			console.group('Find tags');
 			while ( match = re.exec(t) ) {
 				tag = new View.Template_Tag(match);
-				if ( tag.has_handler() ) {
+				if ( tag.has_handler() ) {a
 					tname = tag.get_name();
 					//Add Tag to collection
 					tags.push(tag);
@@ -2184,9 +2293,10 @@ var Template_Tag = {
 	/**
 	 * Render tag output
 	 * @param Content_Item item
+	 * @param function callback Callback function to pass output to
 	 */
-	render: function(item) {
-		return ( this.has_handler() ) ? this.get_handler().render(item, this) : '';
+	render: function(item, callback) {
+		return ( this.has_handler() ) ? this.get_handler().render(item, this, callback) : '';
 	},
 	
 	/**
@@ -2260,21 +2370,21 @@ var Template_Tag_Handler = {
 	
 	/**
 	 * Render tag output
+	 * Rendered output passed to callback function
 	 * @param Content_Item item Item currently being displayed
-	 * @param string instance Tag instance (from template)
-	 * @return string Tag output
+	 * @param Template_Tag instance Tag instance (from template)
+	 * @param function callback Callback function to pass output to
 	 */
-	render: function(item, instance) {
+	render: function(item, instance, callback) {
 		console.group('Template_Tag_Handler.render');
 		var a = this.get_attribute('render', null);
 		var out = '';
 		if ( this.util.is_func(a) && this.util.is_type(item, View.Content_Item) ) {
 			console.info('Passing to render method');
 			//Pass arguments to user-defined method
-			out = a.apply(this, [item, instance]);
+			a.apply(this, [item, instance, callback]);
 		}
 		console.groupEnd();
-		return out;
 	}
 };
 
@@ -2295,7 +2405,8 @@ View.update_refs();
 console.info('Adding default content types');
 View.add_content_type('image', {
 	match: /^.+\.(jpg|png|gif)$/i,
-	render: '<img src="%s" />'
+	orender: '<img src="%s" />',
+	render: function() {}
 });
 
 /* Template Tags */
@@ -2304,9 +2415,10 @@ console.info('Adding template tag handlers');
  * Item data tag
  */
 View.add_template_tag_handler('item', {
-	render: function(item, tag) {
+	render: function(item, tag, callback) {
 		console.groupCollapsed('Template_Tag_Handler (Item).render: %o', tag.get_prop());
 		var m = 'get_' + tag.get_prop();
+		//TODO 2012-04-25: Figure out how to pass output to callback (some methods may require additional parameters beside the callback)
 		var o = ( this.util.is_method(item, m) ) ? item[m]() : item.get_attribute(tag.get_prop(), '');
 		console.groupEnd();
 		return o; 
@@ -2317,10 +2429,10 @@ View.add_template_tag_handler('item', {
  * UI tag
  */
 View.add_template_tag_handler('ui', {
-	render: function(item, tag) {
+	render: function(item, tag, callback) {
 		console.groupCollapsed('Template_Tag_Handler (UI).render: %o', tag.get_prop());
 		console.groupEnd();
-		return item.get_viewer().get_label(tag.get_prop());
+		this.do_callback( callback, item.get_viewer().get_label(tag.get_prop()) );
 	}
 });
 console.groupEnd();

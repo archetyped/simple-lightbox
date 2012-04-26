@@ -145,7 +145,7 @@ if ( !String.sprintf ) {
 			return this;
 		}
 		format = this.toString();
-		if ( arguments.length > 1 ) {
+		if ( arguments.length >= 1 ) {
 			params = Array.prototype.slice.call(arguments);
 		}
 		//Replace placeholders in string with parameters
@@ -453,7 +453,7 @@ var Base = {
 		},
 		
 		is_int: function(value, nonempty) {
-			return ( this.is_num(value, nonempty) && Math.round(value) === value );
+			return ( this.is_num(value, nonempty) && Math.floor(value) === value );
 		},
 		
 		/**
