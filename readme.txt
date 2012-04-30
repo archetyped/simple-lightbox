@@ -2,8 +2,8 @@
 Contributors: Archetyped
 Donate link: http://archetyped.com/tools/simple-lightbox/#donate
 Tags: lightbox, gallery, photography, images, theme, template, style
-Requires at least: 3.3.1
-Tested up to: 3.3.1
+Requires at least: 3.3.2
+Tested up to: 3.4
 Stable tag: trunk
 
 A simple, themeable, and highly customizable Lightbox for Wordpress
@@ -55,6 +55,9 @@ Post your questions and comments on [Simple Lightbox's official page](http://arc
 2. Customized UI Text
 
 == Changelog ==
+
+= 1.6.3 =
+* Optimize: Improved lightbox overlay display
 
 = 1.6.2 =
 * Update: Rebuild JS code
