@@ -359,9 +359,9 @@ var View = {
 	init_items: function() {
 		console.groupCollapsed('Items');
 		//Define handler
-		var t = this;
+		var instance = this;
 		var handler = function() {
-			t.show_item(this);
+			instance.show_item(this);
 			return false;
 		};
 		
@@ -1001,14 +1001,14 @@ var Component = {
 	 * @return obj Attributes
 	 */
 	get_attributes: function() {
-		console.groupCollapsed('Component.get_attributes');
+		// console.groupCollapsed('Component.get_attributes');
 		//Parse attributes on first access
 		if ( this.util.is_bool(this.attributes) ) {
-			console.log('Attibutes need to be initialized');
+			// console.log('Attibutes need to be initialized');
 			this.parse_attributes();
 		}
-		console.log('Attributes retrieved: %o', this.attributes);
-		console.groupEnd();
+		// console.log('Attributes retrieved: %o', this.attributes);
+		// console.groupEnd();
 		return this.attributes;
 	},
 	
@@ -1133,11 +1133,19 @@ var Component = {
 	
 	/* Data */
 	
+	/**
+	 * Execute callback function
+	 * Validates callback and passes data to it
+	 * @param function callback Callback to validate/execute
+	 * @param mixed data Data to pass to callback function
+	 * @return mixed Original data 
+	 */
 	do_callback: function(callback, data) {
 		//Validate
 		if ( this.util.is_func(callback) ) {
 			callback(data);
 		}
+		return data;
 	}
 };
 
@@ -1333,7 +1341,12 @@ var Viewer = {
 			v.overlay_show();
 			//Display viewer
 			var top = $(document).scrollTop() + Math.min($(window).height() / 15, 20);
-			v.get_dom().css('top', top + 'px').show();
+			v.get_dom().css('top', top + 'px').fadeIn();
+			//Loading completed
+			v.set_loading(false);
+			//Start timers (for slideshows, etc.)
+			
+			//Enable keybindings
 		});
 		console.groupEnd();
 	},
@@ -1354,7 +1367,10 @@ var Viewer = {
 			}).appendTo(this.get_dom_container()).hide());
 			console.log('DOM element added');
 			//Add theme layout (basic)
-			this.dom_put( 'layout', this.get_theme().render() );
+			var t = this;
+			this.get_theme().render(null, function(data) {
+				t.dom_put('layout', data);
+			});
 		}
 		console.groupEnd();
 	},
@@ -1658,34 +1674,29 @@ var Content_Type = {
 	
 	/**
 	 * Render output to display item
-	 * @uses template for raw HTML
-	 * @uses item for item properties to populate template
-	 * @return string Generated item output
+	 * Passes retrieved output to callback function
+	 * @param Content_Item item Item to render output for
+	 * @param function callback Function to execute once output rendered
 	 */
-	render: function(item) {
+	render: function(item, callback) {
 		console.groupCollapsed('Content_Type.render');
 		//Validate
-		var attr = 'render';
-		var a = this.get_attribute(attr, null);
-		var ret = '';
+		var a = this.get_attribute('render', null);
 		//Stop processing types with no rendering functionality
 		if ( !this.util.is_empty(a) ) {
-			//Process regex patterns
-			console.info('Rendering item');
 			//String format
 			if ( this.util.is_string(a) ) {
 				console.log('Processing string format');
-				ret = a.sprintf(item.get_uri());
-			} 
+				this.do_callback(callback, a.sprintf(item.get_uri()));
+			}
+			//Method
 			else if ( this.util.is_func(a) ) {
 				console.info('Processing render function');
-				ret =  a.apply(this, [item]);
+				//Pass item and callback to method
+				a.apply(this, [item, callback]);
 			}
 		}
-		//Default
-		console.info('Rendered Output: %o', ret);
 		console.groupEnd();
-		return ret;
 	}
 };
 
@@ -1751,8 +1762,8 @@ var Content_Item = {
 		return ret;
 	},
 	
-	get_content: function() {
-		return this.get_output();
+	get_content: function(callback) {
+		this.get_output(callback);
 	},
 	
 	/**
@@ -1762,13 +1773,16 @@ var Content_Item = {
 	 * @uses set_attribute() to cache generated output
 	 * @uses get_type() to retrieve item type
 	 * @uses Content_Type.render() to generate item output
-	 * @return string Generated output;
 	 */
-	get_output: function() {
+	get_output: function(callback) {
 		console.groupCollapsed('Item.get_output');
 		console.info('Checking for cached output');
+		//Check for cached output
 		var ret = this.get_attribute('output');
-		if ( !this.util.is_string(ret) ) {
+		if ( this.util.is_string(ret) ) {
+			this.do_callback(callback, ret);
+		} else {
+			//Render output from scratch (if necessary)
 			console.info('Rendering output');
 			console.info('Get item type');
 			//Get item type
@@ -1776,15 +1790,17 @@ var Content_Item = {
 			console.log('Item type: %o', type);
 			//Render type-based output
 			if ( !!type ) {
-				ret = type.render(this);
+				var instance = this;
+				type.render(this, function(output) {
+					console.info('Output Retrieved: %o', output);
+					console.info('Caching item output');
+					//Cache output
+					instance.set_output(output);
+					instance.do_callback(callback, output);
+				});
 			}
-			console.info('Output Retrieved: %o', ret);
-			console.info('Caching item output');
-			//Cache output
-			this.set_output(ret);
 		}
 		console.groupEnd();
-		return ( this.util.is_empty(ret) ) ? '' : ret.toString();
 	},
 	
 	/**
@@ -1979,7 +1995,7 @@ var Theme = {
 	 * @param function callback Function to execute with rendered output
 	 */
 	render: function(item, callback) {
-		console.groupCollapsed('Theme.render');
+		console.group('Theme.render');
 		//Retrieve layout
 		this.get_template().render(item, callback);
 		console.groupEnd();
@@ -2048,8 +2064,7 @@ var Template = {
 	 * @param function callback Function to execute with rendered output
 	 */
 	render: function(item, callback) {
-		console.groupCollapsed('Template.render');
-		var l = null;
+		console.group('Template.render');
 		//Populate layout
 		if ( this.util.is_type(item, View.Content_Item) ) {
 			console.info('Rendering Item');
@@ -2059,18 +2074,27 @@ var Template = {
 			console.info('Viewer DOM: %o', d);
 			//Iterate through tags (DOM placeholders) and populate layout
 			if ( this.has_tags() ) {
+				console.info('Tags exist');
 				var sel = '.' + this.util.add_prefix('tag');
 				console.info('Populating Tags: %o', sel);
 				var tags = $(sel, d);
-				var t = this;
+				console.info('Tag elements: %o', tags.length);
+				var instance = this;
+				var tag_count = 0;
 				tags.each(function() {
 					console.groupCollapsed('Processing Tag');
 					var el = $(this);
-					var tag = $(this).data(t.util.add_prefix('tag'));
-					if ( t.util.is_type(tag, View.Template_Tag) ) {
+					var tag = $(this).data(instance.util.add_prefix('tag'));
+					if ( instance.util.is_type(tag, View.Template_Tag) ) {
 						tag.render(item, function(output) {
 							console.info('Tag Output: %o', output);
 							el.html(output);
+							tag_count++;
+							console.log('Parsed tags: %o / %o', tag_count, tags.length);
+							//Execute callback once all tags have been rendered
+							if ( tag_count == tags.length ) {
+								instance.do_callback(callback, d);
+							}
 						});
 					}
 					console.groupEnd();
@@ -2078,9 +2102,8 @@ var Template = {
 			}
 		} else {
 			//Get Layout (basic)
-			l = this.get_layout();
+			return this.do_callback(callback, this.get_layout());
 		}
-		this.do_callback(callback, l);
 		console.groupEnd();
 	},
 	
@@ -2158,7 +2181,7 @@ var Template = {
 			console.group('Find tags');
 			while ( match = re.exec(t) ) {
 				tag = new View.Template_Tag(match);
-				if ( tag.has_handler() ) {a
+				if ( tag.has_handler() ) {
 					tname = tag.get_name();
 					//Add Tag to collection
 					tags.push(tag);
@@ -2405,8 +2428,19 @@ View.update_refs();
 console.info('Adding default content types');
 View.add_content_type('image', {
 	match: /^.+\.(jpg|png|gif)$/i,
-	orender: '<img src="%s" />',
-	render: function() {}
+	render: function(item, callback) {
+		//Create image object
+		var img = new Image();
+		var instance = this;
+		//Set load event (with callback)
+		$(img).bind('load', function() {
+			var out = $('<img />', {'src': item.get_uri()});
+			instance.do_callback(callback, out);
+		});
+		
+		//Load image
+		img.src = item.get_uri();
+	}
 });
 
 /* Template Tags */
@@ -2418,10 +2452,12 @@ View.add_template_tag_handler('item', {
 	render: function(item, tag, callback) {
 		console.groupCollapsed('Template_Tag_Handler (Item).render: %o', tag.get_prop());
 		var m = 'get_' + tag.get_prop();
-		//TODO 2012-04-25: Figure out how to pass output to callback (some methods may require additional parameters beside the callback)
-		var o = ( this.util.is_method(item, m) ) ? item[m]() : item.get_attribute(tag.get_prop(), '');
+		if ( this.util.is_method(item, m) ) {
+			item[m](callback);
+		} else {
+			this.do_callback(callback, item.get_attribute(tag.get_prop(), ''));	
+		}
 		console.groupEnd();
-		return o; 
 	}
 });
 
