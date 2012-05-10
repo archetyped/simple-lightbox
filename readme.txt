@@ -56,6 +56,9 @@ Post your questions and comments on [Simple Lightbox's official page](http://arc
 
 == Changelog ==
 
+= 1.6.3.1 =
+* Fix: Backwards compatibility restored (Backward Genius)
+
 = 1.6.3 =
 * Optimize: Improved lightbox overlay display
 

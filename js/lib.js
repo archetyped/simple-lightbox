@@ -129,9 +129,7 @@ SLB = {
 		}
 		
 		//Activation
-		if ( !$.isArray(this.options.trigger) ) {
-			this.trigger = [this.prefix];
-		}
+		this.trigger = ( $.isArray(this.options.trigger) ) ? this.options.trigger : [this.prefix];
 		
 		//Content
 		$.extend(true, this.content, {
