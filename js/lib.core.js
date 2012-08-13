@@ -497,6 +497,17 @@ var Base = {
 			}
 			return ret;
 		},
+		
+		/**
+		 * Validate specified value's data type and return default value if necessary
+		 * Data type of default value is used to determine data type
+		 * @param mixed val Value to check
+		 * @param mixed def Default value
+		 * @return mixed Valid value 
+		 */
+		validate: function(val, def) {
+			return ( this.is_type(val, def, true) ) ? val : def;
+		},
 	}
 };
 var SLB_Base = Class.extend(Base);

@@ -44,9 +44,14 @@ var View = {
 	 */
 	collections: {},
 	
+	/* Component Instances */
+	
+	component_instances: {},
+	
 	/* Options */
 	options: {
 		validate_links: false,
+		ui_animate: true,
 		ui_enabled_desc: true,
 		ui_enabled_caption: true,
 		ui_caption_src: true,
@@ -137,7 +142,7 @@ var View = {
 	},
 	
 	/* Components */
-	
+
 	component_make_default: function(type) {
 		console.groupCollapsed('View.component_make_default');
 		var ret = false;
@@ -915,9 +920,10 @@ var Component = {
 	 *  > Component property reset (set to NULL) if invalid component supplied
 	 * @param string name Name of property to set component on object
 	 * @param string|object ref Component or Component ID (to be retrieved from controller)
+	 * @param function validate (optional) Additional validation to be performed (Must return bool: TRUE (Valid)/FALSE (Invalid))
 	 * @return object Component (NULL if invalid)
 	 */
-	set_component: function(name, ref) {
+	set_component: function(name, ref, validate) {
 		console.groupCollapsed('Component.set_component: %o', name);
 		console.log('Component: %o \nObject: %o', name, ref);
 		var clear = null;
@@ -936,8 +942,16 @@ var Component = {
 			ref = this.get_parent().get_component(ctype, ref);
 		}
 		
+		ref = ( this.util.is_type(ref, ctype) ) ? ref : clear;
+
+		//Additional validation
+		if ( !this.util.is_empty(ref) && this.util.is_func(validate) && !validate.apply(this, [ref]) ) {
+			ref = clear;
+		}
+				
 		//Set (or clear) component reference
-		this[name] = ( this.util.is_type(ref, ctype) ) ? ref : clear;
+		this[name] = ref;
+		
 		console.groupEnd();
 		//Return value for confirmation
 		return this[name];
@@ -948,7 +962,7 @@ var Component = {
 	/**
 	 * Initialize attributes
 	 * @uses set_attributes() to Reset attributes
-	 * @uses get_dom() to retrieve DOM element
+	 * @uses dom_get() to retrieve DOM element
 	 * @uses _dom_attr to retrieve attributes from DOM element
 	 * @param obj attributes (optional) Attributes to set
 	 */
@@ -957,7 +971,7 @@ var Component = {
 		//Reset attributes
 		this.set_attributes(attributes, true);
 		
-		el = this.get_dom();
+		el = this.dom_get();
 		if ( !this.util.is_empty(el) ) {
 			//Get attributes from element
 			var opts = $(el).attr(this._dom_attr);
@@ -1098,37 +1112,123 @@ var Component = {
 		}
 	},
 	
-	/* DOM Element */
+	/* DOM */
 
 	/**
-	 * Check if DOM element is set for instance
-	 * @uses _dom to check for stored value
-	 * @return bool TRUE if DOM element set, FALSE otherwise
+	 * Generate selector for retrieving child element
+	 * @param string element ID of child element
+	 * @return string Element selector
 	 */
-	has_dom: function() {
-		return ( !this.util.is_empty(this._dom) );
+	dom_make_sel: function(element) {
+		return ( !this.util.is_string(element) ) ? '.' + this.add_ns(element) : '';
 	},
-	
-	/**
-	 * Retrieve attached DOM element
-	 * @uses _dom to retrieve attached DOM element
-	 * @return obj jQuery DOM element
-	 */
-	get_dom: function() {
-		return $(this.has_dom() ) ? this._dom : null;
-	},
-	
+
 	/**
 	 * Set reference of instance on DOM element
 	 * @uses _reciprocal to determine if DOM element should also be attached to instance
 	 * @param obj el DOM element to attach instance to
 	 */
-	set_dom: function(el) {
+	dom_set: function(el) {
 		var key = this.util.add_prefix(this._slug);
 		$(el).data(key, this);
 		if ( this._reciprocal ) {
 			this._dom = $(el);
 		}
+	},
+
+	/**
+	 * Check if DOM element is set for instance
+	 * @uses _dom to check for stored value
+	 * @param string element Child element to check for
+	 * @return bool TRUE if DOM element set, FALSE otherwise
+	 */
+	dom_has: function(element) {
+		var ret = !this.util.is_empty(this._dom);
+		//Check for child element
+		if ( ret && this.util.is_string(element) ) {
+			ret = !!($(this._dom).has(this.dom_make_sel(element))).length;
+		}
+		return ret;
+	},
+	
+	/**
+	 * Retrieve attached DOM element
+	 * @uses _dom to retrieve attached DOM element
+	 * @param string element Child element to retrieve
+	 * @param bool put (optional) Whether to insert element if it does not exist (Default: FALSE)
+	 * @param obj options (optional) Options for creating new object
+	 * @uses dom_put() to insert child element
+	 * @return obj jQuery DOM element
+	 */
+	dom_get: function(element, put, options) {
+		//Check for main DOM element
+		var ret = ( this.dom_has() ) ? this._dom : null;
+		if ( !this.util.is_empty(ret) && this.util.is_string(element) ) {
+			//Check for child element
+			if ( this.dom_has(element) ) {
+				ret = $(this.dom_make_sel(element), this._dom);
+			} else if ( this.util.is_bool(put) && put ) {
+				//Insert child element
+				ret = this.dom_put(element, options);
+			}
+		}
+		
+		return $(ret);
+	},
+	
+	/**
+	 * Wrap output in DOM element
+	 * Wrapper element created and added to main DOM element if not yet created
+	 * @param string element ID for DOM element (Used as class name for wrapper)
+	 * @param string|jQuery|obj content Content to add to DOM (Object contains element properties)
+	 * 	> tag 		: Element tag name
+	 * 	> content	: Element content
+	 */
+	dom_put: function(element, content) {
+		console.group('Component.dom_put: %o', element);
+		var r = null;
+		//Stop processing if main DOM element not set or element is not valid
+		if ( !this.dom_has() || !this.util.is_string(element) ) {
+			console.warn('Invalid parameters');
+			console.groupEnd();
+			return r;
+		}
+		//Setup options
+		console.log('Setup options');
+		var strip = ['tag', 'content'];
+		var options = {
+			'tag': 'div',
+			'content': '',
+			'class': this.add_ns(element)
+		}
+		console.log('Setup content');
+		//Setup content
+		if ( !this.util.is_empty(content) && !this.util.is_obj(content) && !this.util.is_type(content, jQuery) ) {
+			$.extend(options, content);
+		} else {
+			options.content = content;
+		}
+		attrs = $.extend({}, options);
+		console.log('Element Attributes');
+		console.dir(attrs);
+		for ( var x = 0; x < strip.length; x++ ) {
+			delete attrs[strip[x]];
+		}
+		console.log('Element options');
+		console.dir(options);
+		//Retrieve existing element
+		var d = this.dom_get();
+		r = $(this.dom_make_sel(element), d);
+		//Create element (if necessary)
+		if ( !r.length ) {
+			r = $('<%s />'.sprintf(options.tag), attrs).appendTo(d);
+			console.log('Adding element: %o \nDOM: %o \nElement: %o', options, d, r);
+		}
+		//Set content
+		console.log('Append content');
+		$(r).append(options.content);
+		console.groupEnd();
+		return $(r);
 	},
 	
 	/* Data */
@@ -1136,16 +1236,27 @@ var Component = {
 	/**
 	 * Execute callback function
 	 * Validates callback and passes data to it
-	 * @param function callback Callback to validate/execute
-	 * @param mixed data Data to pass to callback function
+	 * @param function|obj callback Callback to validate/execute
+	 *  > If callback is obj, next parameter is key containing actual callback
+	 * @param mixed data Data to pass to callback function (Variable number of parameters may be passed to callback)
 	 * @return mixed Original data 
 	 */
 	do_callback: function(callback, data) {
+		var i = 1;
+		//Parse request
+		if ( this.util.is_obj(callback) && this.util.is_string(arguments[i]) && ( arguments[i] in callback ) ) {
+			callback = callback[arguments[i]];
+			i++;
+		}
+		//Build callback parameters
+		data = ( arguments.length > i ) ? Array.prototype.slice.call(arguments, i) : [];
 		//Validate
 		if ( this.util.is_func(callback) ) {
-			callback(data);
+			//Execute callback
+			callback.apply(this, data);
 		}
-		return data;
+		//Return first data parameter
+		return ( this.util.is_array(data) && data.length > 0 ) ? data[0] : data;
 	}
 };
 
@@ -1175,9 +1286,9 @@ var Viewer = {
 		overlay_opacity: '0.8',
 		container: null,
 		labels: {
-			link_close: 'close',
-			link_next: 'next &raquo;',
-			link_prev: '&laquo; prev',
+			close: 'close',
+			nav_prev: '&laquo; prev',
+			nav_next: 'next &raquo;',
 			slideshow_start: 'start slideshow',
 			slideshow_stop: 'stop slideshow',
 			slideshow_status: '',
@@ -1218,12 +1329,15 @@ var Viewer = {
 	
 	/**
 	 * Set item reference
+	 * Validates item before setting
 	 * @param obj item Content_Item instance
 	 * @return bool TRUE if valid item set, FALSE otherwise
 	 */
 	set_item: function(item) {
 		console.groupCollapsed('Viewer.set_item');
-		var i = this.set_component('item', item);
+		var i = this.set_component('item', item, function(instance) {
+			return ( !this.util.is_empty(instance.get_type()) );
+		});
 		console.groupEnd();
 		return ( !this.util.is_empty(i) );
 	},
@@ -1263,6 +1377,13 @@ var Viewer = {
 			mode = true;
 		}
 		this.loading = mode;
+		//Set CSS class on DOM element
+		var m = ( mode ) ? 'addClass' : 'removeClass';
+		$(this.dom_get())[m]('loading');
+	},
+	
+	unset_loading: function() {
+		this.set_loading(false);
 	},
 	
 	/**
@@ -1308,7 +1429,7 @@ var Viewer = {
 	 * Creates default container element if not yet created
 	 * @return jQuery Container element
 	 */
-	get_dom_container: function() {
+	dom_get_container: function() {
 		var sel = this.get_attribute('container');
 		//Set default container
 		if ( this.util.is_empty(sel) ) {
@@ -1336,17 +1457,30 @@ var Viewer = {
 		//Get theme output
 		console.info('Rendering Theme layout');
 		var v = this;
-		this.get_theme().render(this.get_item(), function(output) {
-			//Display overlay
-			v.overlay_show();
-			//Display viewer
-			var top = $(document).scrollTop() + Math.min($(window).height() / 15, 20);
-			v.get_dom().css('top', top + 'px').fadeIn();
-			//Loading completed
-			v.set_loading(false);
-			//Start timers (for slideshows, etc.)
-			
-			//Enable keybindings
+		this.get_theme().render(this.get_item(), {
+			'loading': function(output) {
+				console.info('Theme Loading');
+				//Set loading flag
+				v.set_loading();
+				//Display overlay
+				v.overlay_show();
+				//Display viewer
+				var top = $(document).scrollTop() + Math.min($(window).height() / 15, 20);
+				v.dom_get('layout').css('top', top + 'px').fadeIn();
+			},
+			'complete': function(output) {
+				console.log('Completed output: %o', output);
+				//Resize viewer to fit item
+				v.get_item().get_dimensions();
+				//Display item details
+				
+				//Unset loading flag
+				//v.unset_loading();
+				console.info('Theme loaded');
+				//Start timers (for slideshows, etc.)
+				
+				//Enable keybindings
+			}
 		});
 		console.groupEnd();
 	},
@@ -1355,21 +1489,27 @@ var Viewer = {
 	 * Build DOM element for instance
 	 */
 	dom_init: function() {
-		console.groupCollapsed('Viewer.dom_init');
+		console.group('Viewer.dom_init');
 		//Check if DOM element already set
-		if ( !this.has_dom() ) {
+		if ( !this.dom_has() ) {
 			console.info('DOM element needs to be created');
 			//Create element & add to DOM
 			//Save element to instance
-			this.set_dom($('<div/>', {
+			this.dom_set($('<div/>', {
 				'id':  this.get_id(true),
-				'class': [this.get_ns(), this.get_theme().get_id(true)].join(' ')
-			}).appendTo(this.get_dom_container()).hide());
+				'class': [
+					this.get_ns(),
+					this.get_theme().get_id(true)
+				].join(' ')
+			}).appendTo(this.dom_get_container()).hide());
 			console.log('DOM element added');
 			//Add theme layout (basic)
 			var t = this;
-			this.get_theme().render(null, function(data) {
-				t.dom_put('layout', data);
+			this.get_theme().render(null, {
+				'init': function(data) {
+					console.info('Basic layout: %o', data);
+					t.dom_put('layout', data);
+				}
 			});
 		}
 		console.groupEnd();
@@ -1393,37 +1533,6 @@ var Viewer = {
 		
 	},
 	
-	/**
-	 * Wrap output in DOM element
-	 * Wrapper element created and added to main DOM element if not yet created
-	 * @param string id ID for DOM element (Used as class name for wrapper)
-	 * @param string|jQuery content Content to add to DOM
-	 */
-	dom_put: function(id, content) {
-		console.group('Viewer.dom_put');
-		var r = '';
-		//Validate
-		if ( !this.util.is_string(id) ) {
-			console.warn('Invalid parameters\nID: %o \n%o', id, content);
-			console.groupEnd();
-			return r;
-		}
-		//Build ID
-		id = this.add_ns(id);
-		var sel = '.' + id;
-		r = $(sel);
-		//Create element (if necessary)
-		if ( !r.length ) {
-			r = $('<div/>', {
-				'class': id
-			}).appendTo(this.get_dom());
-		}
-		//Add content
-		$(r).append(content);
-		console.groupEnd();
-		return r;
-	},
-	
 	/* Overlay */
 	
 	/**
@@ -1444,17 +1553,15 @@ var Viewer = {
 		if ( this.overlay_enabled() ) {
 			o = this.dom_put('overlay').hide();
 		}
-		return o;
+		return $(o);
 	},
 	
 	/**
 	 * Display overlay
 	 */
 	overlay_show: function() {
-		var o = this.get_overlay();
-		if ( !this.util.is_empty(o) ) {
-			o.show();
-		}
+		this.dom_get().show();
+		this.get_overlay().fadeIn();
 	},
 	
 	exit: function() {
@@ -1740,7 +1847,7 @@ var Content_Item = {
 	_c: function(el) {
 		console.log('New Content Item');
 		//Save element to instance
-		this.set_dom(el);
+		this.dom_set(el);
 	},
 	
 	/* Methods */
@@ -1753,7 +1860,7 @@ var Content_Item = {
 	get_uri: function() {
 		console.groupCollapsed('Item.get_uri');
 		var ret = null;
-		var e = this.get_dom();
+		var e = this.dom_get();
 		if ( e ) {
 			ret = $(e).attr('href');	
 		}
@@ -1992,12 +2099,12 @@ var Theme = {
 	 * Render Theme output
 	 * Output passed to callback function
 	 * @param Content_Item item Item to render theme for
-	 * @param function callback Function to execute with rendered output
+	 * @param obj callbacks Functions to execute with rendered output (@see Template.render for reference)
 	 */
-	render: function(item, callback) {
+	render: function(item, callbacks) {
 		console.group('Theme.render');
 		//Retrieve layout
-		this.get_template().render(item, callback);
+		this.get_template().render(item, callbacks);
 		console.groupEnd();
 	},
 };
@@ -2061,21 +2168,27 @@ var Template = {
 	 * Render output
 	 * Output passed to callback function
 	 * @param Content_Item item Item to render template for
-	 * @param function callback Function to execute with rendered output
+	 * @param obj callbacks Functions to execute with rendered output
+	 *  > loading: DOM elements created and item content about to be loaded
+	 *  > success: Item content loaded, ready for display
 	 */
-	render: function(item, callback) {
+	render: function(item, callbacks) {
 		console.group('Template.render');
 		//Populate layout
 		if ( this.util.is_type(item, View.Content_Item) ) {
 			console.info('Rendering Item');
 			var v = item.get_viewer();
 			v.dom_init();
-			var d = v.get_dom();
+			var d = v.dom_get();
 			console.info('Viewer DOM: %o', d);
 			//Iterate through tags (DOM placeholders) and populate layout
 			if ( this.has_tags() ) {
+				this.do_callback(callbacks, 'loading', d);
 				console.info('Tags exist');
-				var sel = '.' + this.util.add_prefix('tag');
+				//Create temporary tag
+				var tag_temp = new (this.get_parent().Template_Tag)();
+				var data_key = tag_temp.get_ns();
+				var sel = '.' + data_key;
 				console.info('Populating Tags: %o', sel);
 				var tags = $(sel, d);
 				console.info('Tag elements: %o', tags.length);
@@ -2084,7 +2197,7 @@ var Template = {
 				tags.each(function() {
 					console.groupCollapsed('Processing Tag');
 					var el = $(this);
-					var tag = $(this).data(instance.util.add_prefix('tag'));
+					var tag = $(this).data(data_key);
 					if ( instance.util.is_type(tag, View.Template_Tag) ) {
 						tag.render(item, function(output) {
 							console.info('Tag Output: %o', output);
@@ -2093,16 +2206,18 @@ var Template = {
 							console.log('Parsed tags: %o / %o', tag_count, tags.length);
 							//Execute callback once all tags have been rendered
 							if ( tag_count == tags.length ) {
-								instance.do_callback(callback, d);
+								instance.do_callback(callbacks, 'complete', d);
 							}
 						});
+					} else {
+						console.warn('Invalid Tag: %o', tag);
 					}
 					console.groupEnd();
 				});
 			}
 		} else {
 			//Get Layout (basic)
-			return this.do_callback(callback, this.get_layout());
+			return this.do_callback(callbacks, 'init', this.get_layout());
 		}
 		console.groupEnd();
 	},
@@ -2139,14 +2254,17 @@ var Template = {
 			var tags = this.get_tags();
 			var c;
 			console.info('Tags: %o', tags.length);
+			//Temporary tag instance
+			var tag_temp = new (this.get_parent().Template_Tag)();
+			var data_key = tag_temp.get_ns();
 			for ( var x = 0; x < tags.length; x++ ) {
-				c = $('#' + this.util.add_prefix('tag_' + x.toString()), o);
+				c = $('#' + tag_temp.add_ns(x.toString()), o);
 				if ( c.length ) {
 					console.log('Adding tag instance to element: %o', tags[x]);
 					//Save tag to DOM element
-					c.data(this.util.add_prefix('tag'), tags[x]);
+					c.data(data_key, tags[x]);
 					//Save DOM element to tag
-					tags[x].set_dom(c.get(0));
+					tags[x].dom_set(c.get(0));
 				}
 			}
 		}
@@ -2361,14 +2479,15 @@ var Template_Tag = {
 	make_container: function(id) {
 		//Validate ID
 		if ( this.util.is_set(id) ) {
-			id = this.util.add_prefix('tag_' + id.toString());
+			id = this.add_ns(id.toString());
 		} else {
 			id = '';
 		}
 		//Build class
 		var cls = [
-			this.util.add_prefix('tag'),
-			this.util.add_prefix('tag_' + this.get_name())
+			this.get_ns(),
+			this.add_ns(this.get_name()),
+			this.add_ns([this.get_name(), this.get_prop()].join('_'))
 		];
 		//Build element
 		return '<span id="%s" class="%s"></span>'.sprintf(id, cls.join(' ')); 
