@@ -1033,11 +1033,11 @@ var Component = {
 	 * @return mixed Attribute value (NULL if attribute is not set)
 	 */
 	get_attribute: function(key, def) {
-		console.groupCollapsed('Component.get_attribute: %o', key);
+		// console.groupCollapsed('Component.get_attribute: %o', key);
 		if ( !this.util.is_set(def) ) {
 			def = null;
 		}
-		console.groupEnd();
+		// console.groupEnd();
 		return ( this.has_attribute(key) ) ? this.get_attributes()[key] : def;
 	},
 	
@@ -1120,7 +1120,7 @@ var Component = {
 	 * @return string Element selector
 	 */
 	dom_make_sel: function(element) {
-		return ( !this.util.is_string(element) ) ? '.' + this.add_ns(element) : '';
+		return ( this.util.is_string(element) ) ? '.' + this.add_ns(element) : '';
 	},
 
 	/**
@@ -1470,12 +1470,19 @@ var Viewer = {
 			},
 			'complete': function(output) {
 				console.log('Completed output: %o', output);
+				var o = $(output);
 				//Resize viewer to fit item
-				v.get_item().get_dimensions();
-				//Display item details
-				
-				//Unset loading flag
-				//v.unset_loading();
+				var dim = v.get_item().get_dimensions();
+				o.find('.slb_content').animate({'width': dim.width}, 'slow').animate({'height': dim.height + 20}, 'slow', function() {
+					//Display item media
+					o.find('.slb_loading').hide();
+					o.find('.slb_template_tag_item_content').fadeIn('slow', function() {
+						//Display item details
+						o.find('.slb_details').animate({'height': 50}, 'slow');
+						//Unset loading flag
+						v.unset_loading();
+					});
+				});
 				console.info('Theme loaded');
 				//Start timers (for slideshows, etc.)
 				
@@ -1805,6 +1812,10 @@ var Content_Type = {
 		}
 		console.groupEnd();
 	}
+	
+	/* Properties */
+	
+	
 };
 
 View.Content_Type = Component.extend(Content_Type);
@@ -1830,6 +1841,7 @@ var Content_Item = {
 	_attr_default: {
 		src: null,
 		permalink: null,
+		dimensions: null,
 		title: '',
 		group: null,
 		internal: false,
@@ -1841,6 +1853,10 @@ var Content_Item = {
 	group: null,
 	viewer: null,
 	type: null,
+	
+	/* Properties */
+	
+	data: null,
 	
 	/* Init */
 	
@@ -1869,8 +1885,53 @@ var Content_Item = {
 		return ret;
 	},
 	
+	get_title: function(callback) {
+		var prop = 'title';
+		var title = this.get_attribute(prop, '');
+		//Metadata
+		
+		//Caption
+		if ( !title ) {
+			var sel = '.wp-caption-text'
+			if ( this.in_gallery('wp') ) {
+				title = this.dom_get().parent().siblings(sel).html();
+			} else {
+				title = this.dom_get().siblings(sel).html();
+			}
+		}
+		
+		//Image title
+		if ( !title ) {
+			var img = this.dom_get().find('img').first();
+			title = $(img).attr('title') || $(img).attr('alt');
+		}
+		
+		//Link title
+		if ( !title ) {
+			title = this.dom_get().attr('title');
+		}
+		
+		//Return value
+		this.set_attribute(prop, title)
+		return this.do_callback(callback, title);
+	},
+	
 	get_content: function(callback) {
 		this.get_output(callback);
+	},
+	
+	/**
+	 * Retrieve item dimensions
+	 * Wraps Content_Type.get_dimensions() for type-specific dimension retrieval
+	 * @return obj Item `width` and `height` properties (px) 
+	 */
+	get_dimensions: function() {
+		var dim = this.get_attribute('dimensions');
+		if ( !$.isPlainObject(dim) ) {
+			dim = {};
+		}
+		dim = $.extend({'width': 0, 'height': 0}, dim);
+		return dim;
 	},
 	
 	/**
@@ -1920,6 +1981,34 @@ var Content_Item = {
 			this.set_attribute('output', out);
 		}
 		console.groupEnd();
+	},
+	
+	/**
+	 * Save item data to instance
+	 * Item data is saved when rendered
+	 * @param mixed data Item data (property cleared if NULL)
+	 */
+	set_data: function(data) {
+		this.data = data;
+	},
+	
+	/**
+	 * Check if current link is part of a gallery
+	 * @param obj item
+	 * @param string gType Gallery type to check for
+	 * @return bool TRUE if link is part of a gallery (FALSE otherwise)
+	 */
+	in_gallery: function(gType) {
+		var ret = false;
+		var galls = {
+			'wp': '.gallery-icon',
+			'ng': '.ngg-gallery-thumbnail'
+		};
+		
+		if ( typeof gType == 'undefined' || !(gType in galls) ) {
+			gType = 'wp';
+		}
+		return ( this.dom_get().parent(galls[gType]).length > 0 ) ? true : false ;
 	},
 	
 	/*-** Component References **-*/
@@ -2553,7 +2642,18 @@ View.add_content_type('image', {
 		var instance = this;
 		//Set load event (with callback)
 		$(img).bind('load', function() {
+			//Save Data
+			item.set_data(this);
+			//Set attributes
+			var attrs = {
+				'dimensions': {'width': this.width, 'height': this.height},
+				'title': 'Image Title',
+			};
+			console.log('Rendered Item Attributes', attrs);
+			item.set_attributes(attrs, true);
+			//Build output
 			var out = $('<img />', {'src': item.get_uri()});
+			//Do callback
 			instance.do_callback(callback, out);
 		});
 		
@@ -2570,6 +2670,7 @@ console.info('Adding template tag handlers');
 View.add_template_tag_handler('item', {
 	render: function(item, tag, callback) {
 		console.groupCollapsed('Template_Tag_Handler (Item).render: %o', tag.get_prop());
+		console.log('Property: %o', item.get_attributes());
 		var m = 'get_' + tag.get_prop();
 		if ( this.util.is_method(item, m) ) {
 			item[m](callback);
