@@ -2318,7 +2318,7 @@ var Theme = {
 	 * @param obj callbacks Functions to execute with rendered output (@see Template.render for reference)
 	 */
 	render: function(item, callbacks) {
-		console.group('Theme.render');
+		console.groupCollapsed('Theme.render');
 		//Retrieve layout
 		this.get_template().render(item, callbacks);
 		console.groupEnd();
@@ -2403,9 +2403,8 @@ var Template = {
 				console.info('Tags exist');
 				//Create temporary tag
 				var tag_temp = this.get_tag();
-				var sel = tag_temp.get_selector();
-				console.info('Populating Tags: %o', sel);
-				var tag_nodes = $(sel, d);
+				console.info('Populating Tags: %o', tag_temp.get_selector());
+				var tag_nodes = $(tag_temp.get_selector(), d);
 				console.info('Tag elements: %o', tag_nodes.length);
 				var instance = this;
 				var tag_count = 0;
@@ -2498,8 +2497,12 @@ var Template = {
 	 * @return obj|string Sanitized layout (Same data type that was passed to method)
 	 */
 	sanitize_layout: function(l) {
+		console.group('Template.sanitize_layout');
+		console.log('Pre sanitize: %o', l);
 		//Stop processing if invalid value
 		if ( this.util.is_empty(l) ) {
+			console.warn('Layout is empty, nothing to sanitize');
+			console.groupEnd();
 			return l;
 		}
 		//Set return type
@@ -2519,10 +2522,12 @@ var Template = {
 		//Format return value
 		switch ( rtype ) {
 			case 'string' :
-				dom = dom.html();
+				dom = dom.wrap('<div />').parent().html();
+				console.info('Converting DOM tree to string: %o', dom);
 			default :
 				l = dom;
 		}
+		console.groupEnd();
 		return l;
 	},
 	
