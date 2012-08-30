@@ -168,11 +168,17 @@ if ( !String.sprintf ) {
 	}
 }
 
-/* Extendible Class */
+/**
+ * Extendible class
+ * Adapted from John Resig
+ * @link http://ejohn.org/blog/simple-javascript-inheritance/ 
+ */
 var c_init = false;
 var Class = function() {};
 
 Class.extend = function(members) {
+	var _super = this.prototype;
+	
 	//Copy instance to prototype
 	c_init = true;
 	var proto = new this();
@@ -189,11 +195,29 @@ Class.extend = function(members) {
 	
 	//Copy members
 	for ( var name in members ) {
-		val = members[name];
-		if ( $.isPlainObject(members[name]) ) {
-			val = $.extend({}, members[name]);
+		//Evaluate function members (if overwriting super class method)
+		if ( 'function' == typeof members[name] && 'function' == typeof _super[name] ) {
+			proto[name] = (function(name, fn) {
+				return function() {
+					//Cache super variable
+					var tmp = this._super;
+					//Set variable to super class method
+					this._super = _super[name];
+					//Call method
+					var ret = fn.apply(this, arguments);
+					//Restore super variable
+					this._super = tmp;
+					//Return value
+					return ret;
+				}
+			})(name, members[name]);
+		} else {
+			val = members[name];
+			if ( $.isPlainObject(members[name]) ) {
+				val = $.extend({}, members[name]);
+			}
+			proto[name] = val;
 		}
-		proto[name] = val;
 	}
 	
 	//Constructor

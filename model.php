@@ -635,6 +635,7 @@ class SLB_Lightbox extends SLB_Base {
 	 * @uses `_wp_attachment_metadata` to retrieve attachment metadata
 	 */
 	function client_footer() {
+		global $dbg;
 		echo '<!-- X -->';
 		//Stop if not enabled or if there are no media items to process
 		if ( !$this->is_enabled() || !$this->has_cached_media_items() )
@@ -782,10 +783,9 @@ class SLB_Lightbox extends SLB_Base {
 		
 		//Media attachments
 		if ( !empty($this->media_items) ) {
-			//DEBUG
-			// $obj = 'View.assets';
-			// $atch_out = $this->util->extend_client_object($obj, $this->media_items);
-			// echo $this->util->build_script_element($atch_out, $obj);
+			$obj = 'View.assets';
+			$atch_out = $this->util->extend_client_object($obj, $this->media_items);
+			echo $this->util->build_script_element($atch_out, $obj);
 		}
 		
 		echo PHP_EOL . '<!-- /SLB -->' . PHP_EOL;
