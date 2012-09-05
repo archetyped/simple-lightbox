@@ -49,6 +49,7 @@
 	min-width: 250px;
 	min-height: 250px;
 	margin: 0 auto;
+	border-radius: 10px;
 }
 
 #slb_viewer_wrap .slb_theme_slb_default .slb_content {
@@ -84,45 +85,38 @@
 }
 
 #slb_viewer_wrap .slb_template_tag_ui {
+	background: #00A5F4;
+	border-radius: 6px;
+	color: #fff;
 	cursor: pointer;
-	text-decoration: underline;
-	color: blue;
+	font-weight: bold;
+	padding: 5px;
+	text-decoration: none;
+	text-transform: uppercase;
+}
+
+.slb_template_tag_ui_slideshow_control {
+	display: none;
 }
 
 /* Navigation */
 
-#slb_viewer_wrap .slb_theme_slb_default .slb_nav .slb_navPrev,
-#slb_viewer_wrap .slb_theme_slb_default .slb_nav .slb_navNext {
+#slb_viewer_wrap .slb_theme_slb_default .slb_nav .slb_template_tag {
 	margin:0 8px 0 0;
+	display: inline-block;
 }
 
 #slb_viewer_wrap .slb_theme_slb_default .slb_nav {
 	display: block;
 	clear: left;
 	padding:0 0 10px 0;
+	margin-top: 1em;
 }
 
-#slb_viewer_wrap .slb_theme_slb_default .slb_nav_hover {
+#slb_viewer_wrap .slb_theme_slb_default .slb_close {
 	position: absolute;
-	top: 0;
-	left: 0;
-	height: 100%;
-	width: 100%;
-	z-index: 10;
-	left: 0;
-}
-	
-#slb_viewer_wrap .slb_theme_slb_default .slb_nav_hover a {
-	outline: none;
-}
-
-#slb_viewer_wrap .slb_theme_slb_default .slb_nav_hover .slb_nav {
-	min-width: 65px;
-	width: 46%;
-	height: 98%;
-	background: transparent url("../images/blank.gif") no-repeat; /* Trick IE into showing hover */
-	display: block;
-	text-indent: -9999px;
+	bottom: 13px;
+	right: 10px;
 }
 
 #slb_viewer_wrap .slb_theme_slb_default .slb_nav_hover .slb_navPrev {
@@ -148,11 +142,11 @@
 
 #slb_viewer_wrap .slb_theme_slb_default .slb_details {
 	font: 10px Verdana, Helvetica, sans-serif;
-	background-color: #fff;
 	margin: 0 auto;
 	line-height: 1.4em;
 	text-align: left;
 	overflow: hidden;
+	position: relative;
 }
 
 #slb_viewer_wrap .slb_theme_slb_default .slb_data {
@@ -161,19 +155,10 @@
 
 #slb_viewer_wrap .slb_theme_slb_default .slb_data_content {
 	width: 70%;
-	float: left;
-}
-
-	/* Loading */
-#slb_viewer_wrap .slb_theme_slb_default .slb_template_tag_ui_loading {
-	background: url('../../images/loading.gif') center center no-repeat;
-	min-width: 31px;
-	height: 31px;
-	text-indent: -2000em;
 }
 
 	/* Caption */
-#slb_viewer_wrap .slb_theme_slb_default .slb_dataCaption {
+#slb_viewer_wrap .slb_theme_slb_default .slb_data_title {
 	font-weight: bold;
 }
 
@@ -192,16 +177,19 @@
 /* States */
 
 	/* Loading */
-
-.slb_theme_slb_default .slb_loading {
+	
+#slb_viewer_wrap .slb_theme_slb_default .slb_loading {
+	background: url('../../images/loading.gif') center center no-repeat;
+	min-width: 31px;
+	height: 31px;
+	text-indent: -2000em;
 	display: none;
 }
 
-.slb_theme_slb_default.loading .slb_template_tag {
-	display: none;
-}
-
-.slb_theme_slb_default.loading .slb_loading,
-.slb_theme_slb_default.loading .slb_loading .slb_template_tag {
+#slb_viewer_wrap .slb_theme_slb_default.loading .slb_loading {
 	display: block;
+}
+
+#slb_viewer_wrap .slb_theme_slb_default.loading .slb_content {
+	visibility: hidden;
 }

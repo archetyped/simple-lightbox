@@ -372,7 +372,7 @@ var Base = {
 		},
 		
 		/**
-		 * Add Prefix to value
+		 * Add Prefix to a string
 		 * @param string val Value to add prefix to
 		 * @param string sep (optional) Separator (Default: `_`)
 		 * @param bool (optional) once If text should only be prefixed once (Default: true)
@@ -384,6 +384,33 @@ var Base = {
 			if ( once && this.has_prefix(val, sep) )
 				return val;	
 			return this.get_prefix(sep) + val;
+		},
+		
+		/**
+		 * Remove Prefix from a string
+		 * @param string val Value to add prefix to
+		 * @param string sep (optional) Separator (Default: `_`)
+		 * @param bool (optional) once If text should only be prefixed once (Default: true)
+		 */
+		remove_prefix: function(val, sep, once) {
+			//Validate parameters
+			if ( !this.is_string(val, true) ) {
+				return val;
+			}
+			//Default values
+			if ( !this.is_string(sep, true) ) {
+				sep = '_';
+			}
+			if ( !this.is_bool(once) ) {
+				once = true;
+			}
+			//Check if string is prefixed
+			if ( this.has_prefix(val, sep) ) {
+				//Remove prefix
+				var re = new RegExp('^(%s)+(.*)$'.sprintf(this.get_prefix(sep)), 'g');
+				val = val.replace(re, '$2');
+			}
+			return val;
 		},
 		
 		/* Request */
@@ -444,7 +471,6 @@ var Base = {
 			if ( ret && ( typeof nonempty != this.bool || nonempty ) ) {
 				ret = !this.is_empty(value);
 			}
-			
 			return ret;
 		},
 		
@@ -512,7 +538,7 @@ var Base = {
 							}
 							break;
 						case this.num:
-							ret = ( value > 0 );
+							ret = ( value === 0 );
 							break;
 					}
 				} else {

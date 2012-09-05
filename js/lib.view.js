@@ -16,11 +16,6 @@ var View = {
 	
 	/* Properties */
 
-	item_current: null,
-	group: null,
-	slideshow_active: true,
-	layout: false,
-	
 	/**
 	 * Media item properties
 	 * > Item key: Link URI
@@ -56,9 +51,13 @@ var View = {
 	 */
 	collections: {},
 	
-	/* Component Instances */
-	
-	component_instances: {},
+	/**
+	 * Temporary component instances
+	 * For use by controller when no component instance is available
+	 * > Key: Component slug
+	 * > Value: Component instance 
+	 */
+	component_temps: {},
 	
 	/* Options */
 	options: {
@@ -173,6 +172,16 @@ var View = {
 	},
 	
 	/**
+	 * Validates component type
+	 * @param function comp Component type to check
+	 * @return bool TRUE if param is valid component, FALSE otherwise
+	 */
+	check_component: function(comp) {
+		//Validate component type
+		return ( this.util.is_func(comp) && ('_slug' in comp.prototype ) && ( comp.prototype instanceof (this.Component) ) ) ? true : false;
+	},
+	
+	/**
 	 * Retrieve collection of components of specified type
 	 * @param function type Component type
 	 * @return object|array|null Component collection (NULL if invalid)
@@ -199,7 +208,7 @@ var View = {
 	 */
 	get_component: function(type, id) {
 		console.groupCollapsed('View.get_component');
-		console.log('Type: %o \nID: %o', type, id);
+		console.log('Type: %o \nSlug: %o \nID: %o', type, type.prototype._slug, id);
 		var ret = null;
 		//Validate parameters
 		if ( !this.util.is_func(type) ) {
@@ -207,10 +216,10 @@ var View = {
 			console.groupEnd();
 			return ret;
 		}
-		console.log('Component type is valid');
+		console.info('Component type is valid');
 
 		//Sanitize id
-		if ( !this.util.is_string(id) ) {
+		if ( !this.util.is_string(id, true) ) {
 			console.log('ID is invalid, unsetting');
 			id = null;
 		}
@@ -250,12 +259,18 @@ var View = {
 	 * @return object|null New component (NULL if invalid)
 	 */
 	add_component: function(type, id, options) {
+		console.group('View.add_component');
+		console.log('Type: %o \nID: %o \nOptions: %o', type, id, options);
 		//Validate type
 		if ( !this.util.is_func(type) ) {
+			console.warn('Invalid type');
+			console.groupEnd();
 			return false;
 		}
 		//Validate request
-		if ( ( this.util.is_empty(id) || !this.util.is_obj(options) ) && !this.component_make_default(type) ) {
+		if ( this.util.is_empty(id) && !this.component_make_default(type) ) {
+			console.warn('Invalid request');
+			console.groupEnd();
 			return false;
 		}
 		//Defaults
@@ -292,9 +307,44 @@ var View = {
 		} else {
 			ret = null;
 		}
-		
+		console.groupEnd();
 		//Return new component
 		return ret;
+	},
+	
+	/**
+	 * Create new temporary component instance
+	 * @param function type Component type
+	 * @return New temporary instance
+	 */
+	add_component_temp: function(type) {
+		var ret = null;
+		if ( this.check_component(type) ) {
+			//Create new instance
+			ret = new type('');
+			//Save to collection
+			this.component_temps[ret._slug] = ret;
+		}
+		return ret;
+	},
+	
+	/**
+	 * Retrieve temporary component instance
+	 * Creates new temp component instance for type if not previously created
+	 * @param function type Component type to retrieve temp instance for
+	 * @return obj Temporary component instance
+	 */
+	get_component_temp: function(type) {
+		return ( this.has_component_temp(type) ) ? this.component_temps[type.prototype._slug] : this.add_component_temp(type);
+	},
+	
+	/**
+	 * Check if temporary component instance exists
+	 * @param function type Component type to check for
+	 * @return bool TRUE if temp instance exists, FALSE otherwise 
+	 */
+	has_component_temp: function(type) {
+		return ( this.check_component(type) && ( type.prototype._slug in this.component_temps ) ) ? true : false;
 	},
 	
 	/* Properties */
@@ -376,43 +426,58 @@ var View = {
 	init_items: function() {
 		console.groupCollapsed('Items');
 		//Define handler
-		var instance = this;
+		var t = this;
 		var handler = function() {
-			instance.show_item(this);
+			t.show_item(this);
 			return false;
 		};
 		
 		//Get activated links
-		var sel = 'a[href][rel~="' + this.util.get_prefix() + '"]:not([rel~="' + this.util.add_prefix('off') + '"])';
-		console.log('Selector: %o', sel);
-		console.dir($(sel));
+		var sel = 'a[href][rel~="%s"]:not([rel~="%s"])'.sprintf(this.util.get_prefix(), this.util.add_prefix('off'));
+		console.log('Selector: %o \nItems: %o', sel, $(sel));
 		//Add event handler
-		$(sel).live('click', handler);
+		$(sel).on('click', handler);
 		console.groupEnd();
 	},
 	
 	/**
-	 * Retrieve items
-	 * @param string group (optional) Group to retrieve items for
-	 * @return array Items
+	 * Retrieve specific Content_Item instance
+	 * @param obj el DOM node to get item instance for
+	 * @return Content_Item Item instance for DOM node
 	 */
-	get_items: function(group) {
-		
+	get_item: function(el) {
+		console.groupCollapsed('View.get_item');
+		//Check if item instance attached to element
+		var key = this.get_component_temp(this.Content_Item).get_data_key();
+		var item = $(el).data(key);
+		if ( this.util.is_empty(item) ) {
+			console.log('Creating new content item');
+			item = this.add_item(el);		}
+		console.groupEnd();
+		return item;
+	},
+	
+	/**
+	 * Create new item instance
+	 * @param obj el DOM element representing item
+	 * @return Content_Item New item instance
+	 */
+	add_item: function(el) {
+		console.groupCollapsed('View.add_item');
+		var item = new this.Content_Item(el);
+		console.log('Item: %o \nInstance: %o', el, item);
+		console.log('Item ID: %o', item.get_attribute('id'));
+		console.groupEnd();
+		return item;
 	},
 	
 	/**
 	 * Display item in viewer
-	 * @param obj item Content_Item instance or link DOM object
+	 * @param obj el DOM element representing item
 	 */
-	show_item: function(item) {
+	show_item: function(el) {
 		console.group('View.show_item');
-		//Parse item
-		if ( ! this.util.is_type(item, this.Content_Item) ) {
-			//Create new instance
-			var item = new this.Content_Item(item);
-			item.show();
-		}
-		console.groupEnd();
+		this.get_item(el).show();		console.groupEnd();
 	},
 	
 	/**
@@ -890,6 +955,7 @@ var Component = {
 				
 		//Phase 2: Check attributes
 		console.info('Check for component in attributes');
+		console.log('Attributes: %o', this.get_attributes());
 		c = this.get_attribute(cname);
 		console.log('Attribute value: %o', c);
 		//Save object-specific component reference
@@ -1003,35 +1069,49 @@ var Component = {
 		el = this.dom_get();
 		if ( !this.util.is_empty(el) ) {
 			//Get attributes from element
+			console.info('Checking DOM element for attributes');
 			var opts = $(el).attr(this._dom_attr);
 			if ( opts ) {
 				opts = opts.split(' ');
+				console.log('DOM attributes: %o', opts);
 				var wrap = {
 					open: '[',
 					close: ']' 
 				};
+				//Reset variables
 				var attrs = {};
 				var attr = key = val = open = null;
-				var prefix = this.util.add_prefix('');
+				var prefix = this.util.get_prefix();
 				
+				console.group('Processing DOM attributes');
+				//Process options
 				for ( var x = 0; x < opts.length; x++ ) {
 					attr = opts[x];
-					//Process options
-					if ( attr.indexOf(prefix) === 0 ) {
-						//Set attributes
+					//Skip item identifier
+					if ( attr == prefix ) {
+						continue;
+					}
+					console.log('Attribute (%o): %o', x, attr);
+					if ( this.util.has_prefix(attr) ) {
+						//Strip prefix from attribute
+						attr = this.util.remove_prefix(attr);
+						console.info('Special attribute found: %o', attr);
+						//Retrieve attribute value
 						if ( attr.indexOf(wrap.close) === ( attr.length - 1 ) ) {
-							//Strip prefix
 							open = attr.indexOf(wrap.open);
-							key = attr.substring(prefix.length, open);
+							key = attr.substring(0, open);
 							val = attr.substring(open + 1, attr.length - 1);
+							console.log('Attribute: %o \nData: %o', key, val);
 							//Set attribute
 							this.set_attribute(key, val);
 							continue;
 						}
 						//Set flags
-						this.set_attribute(attr.substr(prefix.length), true);
+						this.set_attribute(attr, true);
 					}
 				}
+				console.log('DOM attributes set: %o', this.get_attributes());
+				console.groupEnd();
 			}
 		}
 		console.groupEnd();
@@ -1114,8 +1194,11 @@ var Component = {
 	 * @param bool full (optional) Whether to fully replace or merge component's attributes with new values (Default: Merge)  
 	 */
 	set_attributes: function(attributes, full) {
-		if ( !this.util.is_bool(full) )
+		console.groupCollapsed('Component.set_attributes');
+		console.log('Instance Attributes: %o \nAttributes Passed: %o \nFull Reset: %o', this.attributes, attributes, full);
+		if ( !this.util.is_bool(full) ) {
 			full = false;
+		}
 			
 		//Reset attributes
 		this.build_default_attributes();
@@ -1127,6 +1210,8 @@ var Component = {
 		if ( $.isPlainObject(attributes) && !this.util.is_empty(attributes) ) {
 			$.extend(true, this.attributes, attributes);
 		}
+		console.dir(this.attributes);
+		console.groupEnd();
 	},
 	
 	/**
@@ -1148,7 +1233,7 @@ var Component = {
 	 * @param string element Class name of child element
 	 * @return string Element selector
 	 */
-	dom_make_sel: function(element) {
+	dom_get_selector: function(element) {
 		return ( this.util.is_string(element) ) ? '.' + this.add_ns(element) : '';
 	},
 
@@ -1158,8 +1243,9 @@ var Component = {
 	 * @param obj el DOM element to attach instance to
 	 */
 	dom_set: function(el) {
-		var key = this.util.add_prefix(this._slug);
-		$(el).data(key, this);
+		//Save instance to DOM object
+		$(el).data(this.get_data_key(), this);
+		//Save DOM object to instance
 		if ( this._reciprocal ) {
 			this._dom = $(el);
 		}
@@ -1175,7 +1261,7 @@ var Component = {
 		var ret = !this.util.is_empty(this._dom);
 		//Check for child element
 		if ( ret && this.util.is_string(element) ) {
-			ret = !!($(this._dom).has(this.dom_make_sel(element))).length;
+			ret = !!($(this._dom).has(this.dom_get_selector(element))).length;
 		}
 		return ret;
 	},
@@ -1195,7 +1281,7 @@ var Component = {
 		if ( !this.util.is_empty(ret) && this.util.is_string(element) ) {
 			//Check for child element
 			if ( this.dom_has(element) ) {
-				ret = $(this.dom_make_sel(element), this._dom);
+				ret = $(this.dom_get_selector(element), this._dom);
 			} else if ( this.util.is_bool(put) && put ) {
 				//Insert child element
 				ret = this.dom_put(element, options);
@@ -1247,7 +1333,7 @@ var Component = {
 		console.dir(options);
 		//Retrieve existing element
 		var d = this.dom_get();
-		r = $(this.dom_make_sel(element), d);
+		r = $(this.dom_get_selector(element), d);
 		//Create element (if necessary)
 		if ( !r.length ) {
 			r = $('<%s />'.sprintf(options.tag), attrs).appendTo(d);
@@ -1295,9 +1381,28 @@ var Component = {
 	get_data_key: function() {
 		return this.get_ns();
 	},
+	
+	/**
+	 * Retrieve data for component stored in DOM element
+	 */
+	get_data: function() {
+		var ret = null;
+		if ( this.dom_has() ) {
+			$(this.dom_get()).data(this.get_data_key());
+		}
+	},
+	
+	/**
+	 * Set data for component in DOM element
+	 */
+	set_data: function(data) {
+		if ( this.dom_has() ) {
+			$(this.dom_get()).data(this.get_data_key(), data);
+		}
+	},
 };
 
-Component = SLB.Class.extend(Component);
+View.Component = Component = SLB.Class.extend(Component);
 
 /**
  * Content viewer
@@ -1322,6 +1427,10 @@ var Viewer = {
 		overlay_enabled: true,
 		overlay_opacity: '0.8',
 		container: null,
+		slideshow_enabled: true,
+		slideshow_active: true,
+		slideshow_timer: null,
+		slideshow_duration: 2,
 		labels: {
 			close: 'close',
 			nav_prev: '&laquo; prev',
@@ -1329,6 +1438,7 @@ var Viewer = {
 			slideshow_start: 'start slideshow',
 			slideshow_stop: 'stop slideshow',
 			slideshow_status: '',
+			slideshow_control: 'start slideshow', //Debug
 			loading: 'loading'
 		}
 	},
@@ -1358,6 +1468,7 @@ var Viewer = {
 	
 	/* Properties */
 	
+	init: false,
 	loading: false,
 	
 	/* Methods */
@@ -1413,6 +1524,8 @@ var Viewer = {
 		if ( !this.util.is_bool(mode) ) {
 			mode = true;
 		}
+		//Pause/Resume slideshow
+		this.slideshow_pause(mode);
 		this.loading = mode;
 		//Set CSS class on DOM element
 		var m = ( mode ) ? 'addClass' : 'removeClass';
@@ -1445,7 +1558,7 @@ var Viewer = {
 	 * Display content in lightbox
 	 */
 	show: function(item) {
-		console.group('Viewer.show');
+		console.groupCollapsed('Viewer.show');
 		console.info('Set current item');
 		//Validate request
 		if ( !this.set_item(item) || !this.get_theme() ) {
@@ -1496,40 +1609,38 @@ var Viewer = {
 		var v = this;
 		this.get_theme().render(this.get_item(), {
 			'loading': function(output) {
-				console.info('Theme Loading');
+				console.groupCollapsed('Viewer.dom_build.loading (Callback)');
 				//Set loading flag
 				v.set_loading();
 				//Display overlay
 				v.overlay_show();
 				//Display viewer
 				var top = $(document).scrollTop() + Math.min($(window).height() / 15, 20);
-				v.dom_get('layout').css('top', top + 'px').fadeIn();
+				v.dom_get('layout').css('top', top + 'px').show();
+				console.groupEnd();
 			},
 			'complete': function(output) {
+				console.groupCollapsed('Viewer.dom_build.complete (Callback)');
 				console.log('Completed output: %o', output);
 				var o = $(output);
 				//Resize viewer to fit item
 				var dim = v.get_item().get_dimensions();
 				var content = v.dom_get_tag('item', 'content');
-				content.css('visibility', 'hidden');
-				//content.width(50).height(50);
-				content.show();
-				content.animate({'width': dim.width}, 'slow').animate({'height': dim.height + 20}, 'slow', function() {
-					//Display item media
-					v.dom_get_tag('ui', 'loading').hide();
-					content.hide().css('visibility', 'visible').fadeIn('slow', function() {
-						//Display item details
-						o.find('.slb_details').animate({'height': 50}, 'slow');
-						//Unset loading flag
-						v.unset_loading();
-					});
-				});
+				//Display item media
+				content.width(dim.width).height(dim.height + 20).show();
+				//Unset loading flag
+				v.unset_loading();
 				console.info('Theme loaded');
 				//Bind events
 				v.events_init();
 				//Start timers (for slideshows, etc.)
+				v.slideshow_start();
+				//Set viewer as initialized
+				v.init = true;
 				
-				//Enable keybindings
+				console.groupEnd();
+				
+				//Debug
 			}
 		});
 		console.groupEnd();
@@ -1637,6 +1748,7 @@ var Viewer = {
 	reset: function() {
 		this.set_item(false);
 		this.set_loading(false);
+		this.slideshow_stop();
 	},
 	
 	/* Content */
@@ -1657,6 +1769,11 @@ var Viewer = {
 	 */
 	events_init: function() {
 		console.groupCollapsed('Viewer.events_init');
+		console.info('Init: %o', this.init);
+		if ( this.init ) {
+			console.groupEnd();
+			return false;
+		}
 		var v = this;
 
 		//Control event bubbling
@@ -1665,8 +1782,9 @@ var Viewer = {
 		});
 		
 		/* Close */
-		var close = function() {
-			v.close();
+		
+		var close = function(e) {
+			return v.close(e);
 		};
 		//Close button
 		this.dom_get_tag('ui', 'close').click(close);
@@ -1675,43 +1793,160 @@ var Viewer = {
 		//Overlay
 		this.get_overlay().click(close);
 		
+		/* Navigation */
+		
+		var nav_next = function(e) {
+			console.info('Viewer.event.nav_next');
+			console.group('Viewer.events_init.nav_next');
+			v.item_next();
+			console.groupEnd();
+		};
+		
+		var nav_prev = function(e) {
+			console.info('Viewer.event.nav_prev');
+			console.group('Viewer.events_init.nav_prev');
+			v.item_prev();
+			console.groupEnd();
+		};
+		
+		this.dom_get_tag('ui', 'nav_next').click(nav_next);
+		this.dom_get_tag('ui', 'nav_prev').click(nav_prev);
+		
+		/* Slideshow */
+		
+		if ( this.slideshow_enabled() ) {
+			var slideshow_control = function(e) {
+				console.info('Viewer.event.slideshow_control');
+				console.group('Viewer.events_init.slideshow_control');
+				v.slideshow_toggle();
+				console.groupEnd();
+			};
+			
+			this.dom_get_tag('ui', 'slideshow_control').click(slideshow_control);
+		}
+		
 		console.groupEnd();
+	},
+	
+	/**
+	 * Clear slideshow timer
+	 */
+	slideshow_clear_timer: function() {
+		clearInterval(this.get_attribute('slideshow_timer'));
+	},
+	
+	/**
+	 * Start slideshow timer
+	 * @param function callback Callback function
+	 */
+	slideshow_set_timer: function(callback) {
+		this.set_attribute('slideshow_timer', setInterval(callback, this.get_attribute('slideshow_duration') * 1000));
 	},
 	
 	/**
 	 * Start Slideshow
 	 */
 	slideshow_start: function() {
-		
+		this.set_attribute('slideshow_active', true);
+		//Clear residual timers
+		this.slideshow_clear_timer();
+		//Start timer
+		var v = this;
+		this.slideshow_set_timer(function() {
+			//Pause slideshow until next item fully loaded
+			v.slideshow_pause();
+			
+			//Show next item
+			v.item_next();
+		});
 	},
 	
 	/**
 	 * Stop Slideshow
+	 * @param bool full (optional) Full stop (TRUE) or pause (FALSE) (Default: TRUE)
 	 */
-	slideshow_stop: function() {
+	slideshow_stop: function(full) {
+		if ( !this.util.is_bool(full) ) {
+			full = true;
+		}
+		if ( full ) {
+			this.set_attribute('slideshow_active', false);
+		}
+		//Kill timers
+		this.slideshow_clear_timer();
+	},
+	
+	slideshow_toggle: function() {
+		if ( this.slideshow_active() ) {
+			this.slideshow_stop();
+		} else {
+			this.slideshow_start();
+		}
+	},
+	
+	slideshow_enabled: function() {
+		return ( this.get_attribute('slideshow_enabled') ) ? true : false; 
+	},
 		
+	/**
+	 * Checks if slideshow is currently active
+	 * @return bool TRUE if slideshow is active, FALSE otherwise
+	 */
+	slideshow_active: function() {
+		return ( this.slideshow_enabled() && this.get_attribute('slideshow_active') ) ? true : false;
+	},
+	
+	/**
+	 * Pause Slideshow
+	 * @param bool mode (optional) Pause (TRUE) or Resume (FALSE) slideshow (default: TRUE)
+	 */
+	slideshow_pause: function(mode) {
+		//Validate
+		if ( !this.util.is_bool(mode) ) {
+			mode = true;
+		}
+		//Set viewer slideshow properties
+		if ( this.slideshow_active() ) {
+			if ( !mode ) {
+				//Slideshow resumed
+				this.slideshow_start();
+			} else {
+				//Slideshow paused
+				this.slideshow_stop(false);
+			}
+		}
+	},
+	
+	slideshow_resume: function() {
+		this.slideshow_pause(false);
 	},
 	
 	/**
 	 * Next item
 	 */
 	item_next: function() {
-		
+		var i = this.get_item();
+		if ( i.has_group() ) {
+			i.get_group(true).show_next();
+		}
 	},
 	
 	/**
 	 * Previous item
 	 */
 	item_prev: function() {
-		
+		var i = this.get_item();
+		if ( i.has_group() ) {
+			i.get_group(true).show_prev();
+		}
 	},
 	
 	/**
-	 * Close lightbox
+	 * Close viewer
 	 */
-	close: function() {
+	close: function(e) {
 		console.group('Viewer.close');
-		//End processes
+		console.log('Init: %o \nItem: %o', this.init, this.get_item().dom_get());
 		
 		//Close viewer
 		this.dom_get_container().find('.slb_viewer_layout').hide();
@@ -1721,7 +1956,12 @@ var Viewer = {
 		
 		//Restore DOM
 		this.dom_restore();
+		
+		//End processes
+		this.exit();
+		
 		console.groupEnd();
+		return false;
 	}
 };
 
@@ -1732,37 +1972,188 @@ View.Viewer = Component.extend(Viewer);
  * @param obj options Init options
  */
 var Group = {
+	/* Configuration */
 	
-	/* Properties */
 	_slug: 'group',
-	
-	items: [],
-	
-	viewer: null,
-	
-	_c: function(id, attributes) {
-		console.log('New Group');
-		this.set_id(id);
-		this.set_attributes(attributes);
+	_reciprocal: true,
+	_refs: {
+		'current': 'Content_Item'
 	},
 	
-	/**
-	 * Setup group
-	 */
-	setup: function(item) {
+	_attr_default: {
 		
+	},
+	
+	/* References */
+	
+	current: null,
+	
+	/* Properties */
+	
+	/**
+	 * Selector for getting group items
+	 * @var string 
+	 */
+	selector: null,
+	
+	/**
+	 * Retrieve selector for group items
+	 * @return string Group items selector 
+	 */
+	get_selector: function() {
+		console.groupCollapsed('Group.get_selector');
+		if ( this.util.is_empty(this.selector) ) {
+			//Build selector
+			var rel = [ this.get_ns(), '[', this.get_id(), ']' ].join('');
+			//Set selector property
+			this.selector = 'a[rel~="%s"]'.sprintf(rel);
+			console.info('Selector: %o', this.selector);
+		}
+		console.groupEnd();
+		return this.selector;
 	},
 	
 	/**
 	 * Retrieve group items
 	 */
 	get_items: function() {
+		console.groupCollapsed('Group.get_items');
+		//Get DOM elements
+		var items = $(this.get_selector());
+		console.log('Items (%o): %o', items.length, items);
 		
+		console.groupEnd();
+		return items;
 	},
 	
-	get_viewer: function() {
-		return false;
-	}
+	/**
+	 * Retrieve item at specified index
+	 * If no index specified, first item is returned
+	 * @param int idx Index of item to return
+	 * @return Content_Item Item
+	 */
+	get_item: function(idx) {
+		console.group('Group.get_item: %o', idx);
+		//Validation
+		if ( !this.util.is_int(idx) ) {
+			idx = 0;
+		}
+		//Retrieve all items
+		var items = this.get_items();
+		//Return specified item
+		console.groupEnd();
+		return items.get(idx);
+	},
+	
+	/**
+	 * Retrieve (zero-based) position of specified item in group
+	 * @param Content_Item item Item to locate in group
+	 * @return int Index position of item in group (-1 if item not in group)
+	 */
+	get_pos: function(item) {
+		if ( this.util.is_empty(item) ) {
+			//Get current item
+			item = this.get_current();
+		}
+		return ( this.util.is_type(item, View.Content_Item) ) ? this.get_items().index(item.dom_get()) : -1;
+	},
+	
+	/**
+	 * Retrieve current item
+	 * @return Content_Item Current item
+	 */
+	get_current: function() {
+		//Sanitize
+		if ( !this.util.is_empty(this.current) && !this.util.is_type(this.current, this.get_parent().Content_Item) ) {
+			console.warn('Resetting current item: %o', this.current);
+			this.current = null;
+		}
+		console.log('Current: %o', this.current);
+		return this.current;
+	},
+	
+	/**
+	 * Sets current group item
+	 * @param Content_Item item Item to set as current
+	 */
+	set_current: function(item) {
+		console.groupCollapsed('Group.set_current');
+		console.log('Item: %o', item);
+		//Validate
+		if ( this.util.is_type(item, this.get_parent().Content_Item) ) {
+			//Set current item
+			console.log('Setting current item');
+			this.current = item;
+		}
+		console.groupEnd();
+	},
+		
+	get_next: function(item) {
+		console.group('Group.get_next');
+		var next = null;
+		if ( !this.util.is_type(item, this.get_parent().Content_Item) ) {
+			console.log('Retrieving current item');
+			item = this.get_current();
+		}
+		var pos = this.get_pos(item);
+		if ( pos != -1 ) {
+			pos = ( pos + 1 < this.get_size() ) ? pos + 1 : 0;
+			next = this.get_item(pos);
+		}
+		console.log('Position in Group: %o \nItem: %o', pos, next);
+		console.groupEnd();
+		return next;
+	},
+	
+	get_prev: function(item) {
+		console.group('Group.get_prev');
+		var prev = null;
+		if ( !this.util.is_type(item, this.get_parent().Content_Item) ) {
+			console.log('Retrieving current item');
+			item = this.get_current();
+		}
+		var pos = this.get_pos(item);
+		if ( pos != -1 ) {
+			if ( pos == 0 ) {
+				pos = this.get_size();
+			}
+			pos -= 1;
+			prev = this.get_item(pos);
+		}
+		console.log('Position in Group: %o \nItem: %o', pos, prev);
+		console.groupEnd();
+		return prev;
+	},
+	
+	show_next: function(item) {
+		console.groupCollapsed('Group.show_next');
+		//Retrieve item
+		var i = this.get_parent().get_item(this.get_next(item));
+		//Update current item
+		this.set_current(i);
+		//Show item
+		i.show();
+		console.groupEnd();
+	},
+	
+	show_prev: function(item) {
+		console.group('Group.show_prev');
+		//Retrieve item
+		var i = this.get_parent().get_item(this.get_prev(item));
+		//Update current item
+		this.set_current(i);
+		//Show item
+		i.show();
+		console.groupEnd();
+	},
+	
+	/**
+	 * Retrieve total number of items in group
+	 * @return int Number of items in group 
+	 */
+	get_size: function() {
+		return this.get_items().length;
+	},
 };
 
 View.Group = Component.extend(Group);
@@ -1971,19 +2362,28 @@ var Content_Item = {
 	 * @uses Component.build_default_attributes()
 	 */
 	build_default_attributes: function() {
+		console.groupCollapsed('Content_Item.build_default_attributes');
 		this._super();
 		//Add asset properties
 		var key = this.dom_get().attr('href') || null;
 		var assets = this.get_parent().assets || null;
+		console.log('Key: %o \nAssets: %o \nDefault Attributes: %o', key, assets, this._attr_default['id']);
+		//Merge asset data with default attributes
 		if ( !this.util.is_empty(key) && $.isPlainObject(assets) && ( key in assets ) && $.isPlainObject(assets[key]) ) {
-			$.extend(true, this._attr_default, assets[key]);
+			this._attr_default = $.extend({}, this._attr_default, assets[key]);
+			console.log('Default Attributes Updated: %o', this._attr_default);
 		}
+		console.groupEnd();
 	},
 	
 	/*-** Properties **-*/
 	
 	/**
 	 * Retrieve item URI
+	 * @param string mode (optional) Which URI should be retrieved
+	 * > source: Media source
+	 * > permalink: Item permalink
+	 * @return string Item URI
 	 */
 	get_uri: function(mode) {
 		console.groupCollapsed('Item.get_uri');
@@ -2173,21 +2573,21 @@ var Content_Item = {
 
 	/**
 	 * Retrieve item's group
-	 * @param obj item Item to get group from
+	 * @param bool set_current (optional) Sets item as current item in group (Default: FALSE)
 	 * @return View.Group|bool Group reference item belongs to (FALSE if no group)
 	 */
-	get_group: function() {
+	get_group: function(set_current) {
 		console.groupCollapsed('Item.get_group');
-		var g = this.get_component('group', View.Group);
-		/*
-		//Check if group already set
-		if ( !this.util.is_type(this.group, View.Group) && !this.util.is_bool(this.group) ) {
-			//If group not set, check attributes
-			var g = this.get_attribute('group');
-			console.log('Group attribute: %o', g);
-			this.set_group(g);
+		//Check if group reference already set
+		var g = this.get_component('group', false, false);
+		if ( g ) {
+			console.log('Group: %o', g);
+			if ( !!set_current ) {
+				g.set_current(this);
+			}
+		} else {
+			console.warn('No group reference: %o', g);
 		}
-		*/
 		console.groupEnd();
 		return this.group;
 	},
@@ -2222,7 +2622,7 @@ var Content_Item = {
 	 * @return Content_Type|null Content Type of item (NULL no valid type exists)
 	 */
 	get_type: function() {
-		console.groupCollapsed('Item.get_type');
+		console.group('Item.get_type');
 		console.info('Retrieving saved type reference');
 		var t = this.get_component('type', false, false);
 		if ( !t ) {
@@ -2251,7 +2651,7 @@ var Content_Item = {
 	 * @uses Viewer.show() to display item in viewer
 	 */
 	show: function() {
-		console.group('Item.show');
+		console.groupCollapsed('Item.show');
 		//Validate content type
 		if ( !this.get_type() ) {
 			return false;
@@ -2928,18 +3328,19 @@ View.add_content_type('image', {
 		var instance = this;
 		//Set load event (with callback)
 		$(img).bind('load', function() {
+			console.groupCollapsed('Content_Type.image.load (Callback)');
 			//Save Data
 			item.set_data(this);
 			//Set attributes
 			var attrs = {
 				'dimensions': {'width': this.width, 'height': this.height},
-				'title': 'Image Title',
 			};
-			item.set_attributes(attrs, true);
+			item.set_attributes(attrs);
 			//Build output
 			var out = $('<img />', {'src': item.get_uri()});
 			//Do callback
 			instance.do_callback(callback, out);
+			console.groupEnd();
 		});
 		
 		//Load image
@@ -2959,6 +3360,7 @@ View.add_template_tag_handler('item', {
 		var m = 'get_' + tag.get_prop();
 		if ( this.util.is_method(item, m) ) {
 			item[m](callback);
+			
 		} else {
 			this.do_callback(callback, item.get_attribute(tag.get_prop(), ''));	
 		}
