@@ -66,7 +66,8 @@ var View = {
 		ui_enabled_desc: true,
 		ui_enabled_caption: true,
 		ui_caption_src: true,
-		slideshow_autostart: true,
+		slideshow_enabled: true,
+		slideshow_autostart: false,
 		slideshow_duration: '6',
 	},
 	
@@ -748,6 +749,16 @@ var Component = {
 	 */
 	_attr_map: {},
 	
+	/**
+	 * Event handlers
+	 * @var object
+	 * > Key: string Event type
+	 * > Value: obj Handlers
+	 *   > Key: string Context
+	 *   > Value: array Handlers
+	 */
+	_events: {},
+	
 	/* Public */
 	
 	attributes: false,
@@ -783,7 +794,7 @@ var Component = {
 	 * Retrieve instance ID
 	 * @uses id as ID base
 	 * @uses _slug to add namespace (if necessary)
-	 * @param bool ns (optional) Whether or not to namespace ID
+	 * @param bool ns (optional) Whether or not to namespace ID (Default: FALSE)
 	 * @return string Instance ID
 	 */
 	get_id: function(ns) {
@@ -1400,6 +1411,88 @@ var Component = {
 			$(this.dom_get()).data(this.get_data_key(), data);
 		}
 	},
+	
+	/* Events */
+	
+	on: function(event, context, func, options) {
+		console.group('Component.on: %o', event);
+		/* Validate */
+		//Context
+		if ( this.util.is_func(context) && !this.util.is_func(func) ) {
+			//Shift parameters
+			options = func;
+			func = context;
+		}
+		//Request
+		if ( !this.util.is_string(event) || !this.util.is_func(func) ) {
+			console.groupEnd();
+			return false;
+		}
+		//Options
+		if ( !this.util.is_obj(options) ) {
+			options = {};
+		}
+		//Merge options with defaults
+		var options_def = {
+			overwrite: false
+		};
+		options = $.extend({}, options_def, options);
+		
+		//Context
+		var context_def = '0';
+		if ( !this.util.is_string(context) ) {
+			if ( this.util.is_num(context) ) {
+				//Convert number to string context
+				context = context.toString();
+			} else if ( this.util.is_type(context, View.Component) ) {
+				//Build context from component instance
+				context = context.get_id(true);
+				//Force unique handler
+				options.overwrite = false;
+			} else {
+				//Default context
+				context = context_def;
+			}
+		}
+		console.info('Event: %o \nContext: %o', event, context);
+		var es = this._events;
+		//Setup event
+		if ( !( event in es ) || !this.util.is_obj(es[event]) ) {
+			e = es[event] = {};
+		}
+		//Check for duplicate handler
+		if ( !options.overwrite && context != context_def && ( context in e ) ) {
+			console.groupEnd();
+			return false;
+		}
+		//Add context to event
+		if ( !( context in e ) ) {
+			e[context] = [];
+		}
+		//Add event handler
+		e[context].push(func);
+		console.groupEnd();
+	},
+		
+	trigger: function(event) {
+		console.groupCollapsed('Component.trigger: %o', event);
+		//Validate
+		if ( !this.util.is_string(event) || !( event in this._events ) ) {
+			console.groupEnd();
+			return false;
+		}
+		//Call handlers for event
+		var es = this._events;
+		var ec;
+		for ( ev in this._events[event] ) {
+			ec = this._events[event][ev];
+			for ( var x = 0; x < ec.length; x++ ) {
+				//Call handler, passing component instance
+				ec[x](this);
+			}
+		}
+		console.groupEnd();
+	},
 };
 
 View.Component = Component = SLB.Class.extend(Component);
@@ -1428,9 +1521,10 @@ var Viewer = {
 		overlay_opacity: '0.8',
 		container: null,
 		slideshow_enabled: true,
-		slideshow_active: true,
-		slideshow_timer: null,
+		slideshow_autostart: true,
 		slideshow_duration: 2,
+		slideshow_active: false,
+		slideshow_timer: null,
 		labels: {
 			close: 'close',
 			nav_prev: '&laquo; prev',
@@ -1438,12 +1532,16 @@ var Viewer = {
 			slideshow_start: 'start slideshow',
 			slideshow_stop: 'stop slideshow',
 			slideshow_status: '',
-			slideshow_control: 'start slideshow', //Debug
+			slideshow_control: 'slideshow control', //Debug
 			loading: 'loading'
 		}
 	},
 	
-	_attr_parent: ['theme', 'group_loop', 'ui_animate', 'ui_overlay_opacity', 'ui_labels'],
+	_attr_parent: [
+		'theme', 
+		'group_loop', 
+		'ui_animate', 'ui_overlay_opacity', 'ui_labels',
+		'slideshow_enabled', 'slideshow_autostart', 'slideshow_duration'],
 	
 	_attr_map: {
 		'group_loop': 'loop',
@@ -1524,9 +1622,12 @@ var Viewer = {
 		if ( !this.util.is_bool(mode) ) {
 			mode = true;
 		}
-		//Pause/Resume slideshow
-		this.slideshow_pause(mode);
 		this.loading = mode;
+		
+		//Pause/Resume slideshow
+		if ( this.slideshow_active() ) {
+			this.slideshow_pause(mode);
+		}
 		//Set CSS class on DOM element
 		var m = ( mode ) ? 'addClass' : 'removeClass';
 		$(this.dom_get())[m]('loading');
@@ -1622,7 +1723,6 @@ var Viewer = {
 			'complete': function(output) {
 				console.groupCollapsed('Viewer.dom_build.complete (Callback)');
 				console.log('Completed output: %o', output);
-				var o = $(output);
 				//Resize viewer to fit item
 				var dim = v.get_item().get_dimensions();
 				var content = v.dom_get_tag('item', 'content');
@@ -1633,8 +1733,8 @@ var Viewer = {
 				console.info('Theme loaded');
 				//Bind events
 				v.events_init();
-				//Start timers (for slideshows, etc.)
-				v.slideshow_start();
+				//Trigger event
+				v.trigger('complete');
 				//Set viewer as initialized
 				v.init = true;
 				
@@ -1775,7 +1875,7 @@ var Viewer = {
 			return false;
 		}
 		var v = this;
-
+		
 		//Control event bubbling
 		this.dom_get('layout').children().click(function(ev) {
 			ev.stopPropagation();
@@ -1787,14 +1887,14 @@ var Viewer = {
 			return v.close(e);
 		};
 		//Close button
-		this.dom_get_tag('ui', 'close').click(close);
+		//this.dom_get_tag('ui', 'close').click(close);
 		//Container
 		this.dom_get('layout').click(close);
 		//Overlay
 		this.get_overlay().click(close);
 		
 		/* Navigation */
-		
+		/*
 		var nav_next = function(e) {
 			console.info('Viewer.event.nav_next');
 			console.group('Viewer.events_init.nav_next');
@@ -1811,9 +1911,9 @@ var Viewer = {
 		
 		this.dom_get_tag('ui', 'nav_next').click(nav_next);
 		this.dom_get_tag('ui', 'nav_prev').click(nav_prev);
-		
+		*/
 		/* Slideshow */
-		
+		/*
 		if ( this.slideshow_enabled() ) {
 			var slideshow_control = function(e) {
 				console.info('Viewer.event.slideshow_control');
@@ -1824,7 +1924,7 @@ var Viewer = {
 			
 			this.dom_get_tag('ui', 'slideshow_control').click(slideshow_control);
 		}
-		
+		*/
 		console.groupEnd();
 	},
 	
@@ -1847,6 +1947,9 @@ var Viewer = {
 	 * Start Slideshow
 	 */
 	slideshow_start: function() {
+		if ( !this.slideshow_enabled() ) {
+			return false;
+		}
 		this.set_attribute('slideshow_active', true);
 		//Clear residual timers
 		this.slideshow_clear_timer();
@@ -1877,11 +1980,13 @@ var Viewer = {
 	},
 	
 	slideshow_toggle: function() {
+		var txt = '';
 		if ( this.slideshow_active() ) {
 			this.slideshow_stop();
 		} else {
 			this.slideshow_start();
 		}
+		//TODO Render ui.slideshow_control tag ( e.g. this.get_tag('ui', 'slideshow_control').render() )
 	},
 	
 	slideshow_enabled: function() {
@@ -1893,7 +1998,7 @@ var Viewer = {
 	 * @return bool TRUE if slideshow is active, FALSE otherwise
 	 */
 	slideshow_active: function() {
-		return ( this.slideshow_enabled() && this.get_attribute('slideshow_active') ) ? true : false;
+		return ( this.slideshow_enabled() && ( this.get_attribute('slideshow_active') || ( !this.init && this.get_attribute('slideshow_autostart') ) ) ) ? true : false;
 	},
 	
 	/**
@@ -2622,7 +2727,7 @@ var Content_Item = {
 	 * @return Content_Type|null Content Type of item (NULL no valid type exists)
 	 */
 	get_type: function() {
-		console.group('Item.get_type');
+		console.groupCollapsed('Item.get_type');
 		console.info('Retrieving saved type reference');
 		var t = this.get_component('type', false, false);
 		if ( !t ) {
@@ -3374,9 +3479,62 @@ View.add_template_tag_handler('item', {
 View.add_template_tag_handler('ui', {
 	render: function(item, tag, callback) {
 		console.groupCollapsed('Template_Tag_Handler (UI).render: %o', tag.get_prop());
+		var prop = tag.get_prop();
+		if ( 'slideshow_control' == prop ) {
+			prop = ( item.get_viewer().slideshow_active() ) ? 'slideshow_stop' : 'slideshow_start';
+		}
+		//Add event handlers
+		item.get_viewer().on('complete', this, function(v) {
+			console.info('Event Handler: Template_Tag_Handler(UI).complete');
+			//Register event handlers
+			if ( v.init ) {
+				return false;
+			}
+			/* Close */
+			
+			var close = function(e) {
+				return v.close(e);
+			};
+			//Close button
+			v.dom_get_tag('ui', 'close').click(close);
+			
+			/* Navigation */
+			
+			var nav_next = function(e) {
+				console.info('Viewer.event.nav_next');
+				console.groupCollapsed('Tag.UI.nav_next');
+				v.item_next();
+				console.groupEnd();
+			};
+			
+			var nav_prev = function(e) {
+				console.info('Viewer.event.nav_prev');
+				console.groupCollapsed('Tag.UI.nav_prev');
+				v.item_prev();
+				console.groupEnd();
+			};
+			
+			v.dom_get_tag('ui', 'nav_next').click(nav_next);
+			v.dom_get_tag('ui', 'nav_prev').click(nav_prev);
+			
+			/* Slideshow */
+			
+			if ( v.slideshow_enabled() ) {
+				var slideshow_control = function(e) {
+					console.info('Viewer.event.slideshow_control');
+					console.groupCollapsed('Tag.UI.slideshow_control');
+					v.slideshow_toggle();
+					var lbl = ( v.slideshow_active() ) ? 'stop' : 'start';
+					v.dom_get_tag('ui', 'slideshow_control').text(v.get_label('slideshow_' + lbl));
+					console.groupEnd();
+				};
+				
+				v.dom_get_tag('ui', 'slideshow_control').click(slideshow_control);
+			}
+		});
 		console.groupEnd();
-		this.do_callback( callback, item.get_viewer().get_label(tag.get_prop()) );
-	}
+		this.do_callback( callback, item.get_viewer().get_label(prop) );
+	},
 });
 console.groupEnd();
 })(jQuery);
