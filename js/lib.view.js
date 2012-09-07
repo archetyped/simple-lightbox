@@ -1135,14 +1135,10 @@ var Component = {
 	 * @return obj Attributes
 	 */
 	get_attributes: function() {
-		// console.groupCollapsed('Component.get_attributes');
 		//Parse attributes on first access
 		if ( this.util.is_bool(this.attributes) ) {
-			// console.log('Attibutes need to be initialized');
 			this.parse_attributes();
 		}
-		// console.log('Attributes retrieved: %o', this.attributes);
-		// console.groupEnd();
 		return this.attributes;
 	},
 	
@@ -1159,6 +1155,24 @@ var Component = {
 		}
 		// console.groupEnd();
 		return ( this.has_attribute(key) ) ? this.get_attributes()[key] : def;
+	},
+	
+	/**
+	 * Call attribute as method
+	 * @param string attr Attribute to call
+	 * @param arguments (optional) Additional arguments to pass to method
+	 */
+	call_attribute: function(attr) {
+		console.group('Component.call_attribute');
+		attr = this.get_attribute(attr, null);
+		if ( this.util.is_func(attr) ) {
+			console.info('Passing to attribute (method)');
+			//Get arguments
+			var args = Array.prototype.slice.call(arguments, 1);
+			//Pass arguments to user-defined method
+			attr.apply(this, args);
+		}
+		console.groupEnd();
 	},
 	
 	/**
@@ -1531,9 +1545,8 @@ var Viewer = {
 			nav_next: 'next &raquo;',
 			slideshow_start: 'start slideshow',
 			slideshow_stop: 'stop slideshow',
-			slideshow_status: '',
-			slideshow_control: 'slideshow control', //Debug
-			loading: 'loading'
+			group_status: 'Image %current% of %total%',
+			loading: 'loading',
 		}
 	},
 	
@@ -1675,6 +1688,13 @@ var Viewer = {
 		console.groupEnd();
 	},
 	
+	dom_get: function(element, put, options) {
+		//Init Viewer DOM
+		this.dom_init();
+		//Return DOM element
+		return this._super(element, put, options);
+	},
+	
 	/**
 	 * Retrieve container element
 	 * Creates default container element if not yet created
@@ -1702,9 +1722,6 @@ var Viewer = {
 	 */
 	dom_build: function() {
 		console.group('Viewer.dom_build');
-		//Load viewer into DOM
-		console.info('Setup DOM');
-		this.dom_prepare();
 		//Get theme output
 		console.info('Rendering Theme layout');
 		var v = this;
@@ -1737,10 +1754,7 @@ var Viewer = {
 				v.trigger('complete');
 				//Set viewer as initialized
 				v.init = true;
-				
 				console.groupEnd();
-				
-				//Debug
 			}
 		});
 		console.groupEnd();
@@ -1784,22 +1798,11 @@ var Viewer = {
 	},
 	
 	/**
-	 * Prepare DOM
-	 * Hide overlapping DOM elements, etc.
-	 */
-	dom_prepare: function() {
-		console.group('Viewer.dom_prepare');
-		this.dom_init();
-		console.groupEnd();
-	},
-	
-	/**
 	 * Restore DOM
 	 * Show overlapping DOM elements, etc.
+	 * @TODO Build functionality
 	 */
-	dom_restore: function() {
-		
-	},
+	dom_restore: function() {},
 	
 	/* Overlay */
 	
@@ -1869,12 +1872,11 @@ var Viewer = {
 	 */
 	events_init: function() {
 		console.groupCollapsed('Viewer.events_init');
-		console.info('Init: %o', this.init);
 		if ( this.init ) {
+			console.warn('Event handlers previously set');
 			console.groupEnd();
 			return false;
 		}
-		var v = this;
 		
 		//Control event bubbling
 		this.dom_get('layout').children().click(function(ev) {
@@ -1883,48 +1885,14 @@ var Viewer = {
 		
 		/* Close */
 		
+		var v = this;		
 		var close = function(e) {
 			return v.close(e);
 		};
-		//Close button
-		//this.dom_get_tag('ui', 'close').click(close);
 		//Container
 		this.dom_get('layout').click(close);
 		//Overlay
 		this.get_overlay().click(close);
-		
-		/* Navigation */
-		/*
-		var nav_next = function(e) {
-			console.info('Viewer.event.nav_next');
-			console.group('Viewer.events_init.nav_next');
-			v.item_next();
-			console.groupEnd();
-		};
-		
-		var nav_prev = function(e) {
-			console.info('Viewer.event.nav_prev');
-			console.group('Viewer.events_init.nav_prev');
-			v.item_prev();
-			console.groupEnd();
-		};
-		
-		this.dom_get_tag('ui', 'nav_next').click(nav_next);
-		this.dom_get_tag('ui', 'nav_prev').click(nav_prev);
-		*/
-		/* Slideshow */
-		/*
-		if ( this.slideshow_enabled() ) {
-			var slideshow_control = function(e) {
-				console.info('Viewer.event.slideshow_control');
-				console.group('Viewer.events_init.slideshow_control');
-				v.slideshow_toggle();
-				console.groupEnd();
-			};
-			
-			this.dom_get_tag('ui', 'slideshow_control').click(slideshow_control);
-		}
-		*/
 		console.groupEnd();
 	},
 	
@@ -1962,6 +1930,7 @@ var Viewer = {
 			//Show next item
 			v.item_next();
 		});
+		this.trigger('slideshow_start');
 	},
 	
 	/**
@@ -1977,16 +1946,19 @@ var Viewer = {
 		}
 		//Kill timers
 		this.slideshow_clear_timer();
+		this.trigger('slideshow_stop');
 	},
 	
 	slideshow_toggle: function() {
-		var txt = '';
+		if ( !this.slideshow_enabled() ) {
+			return false;
+		}
 		if ( this.slideshow_active() ) {
 			this.slideshow_stop();
 		} else {
 			this.slideshow_start();
 		}
-		//TODO Render ui.slideshow_control tag ( e.g. this.get_tag('ui', 'slideshow_control').render() )
+		this.trigger('slideshow_toggle');
 	},
 	
 	slideshow_enabled: function() {
@@ -2386,26 +2358,17 @@ var Content_Type = {
 		console.groupCollapsed('Content_Type.render');
 		//Validate
 		var a = this.get_attribute('render', null);
-		//Stop processing types with no rendering functionality
-		if ( !this.util.is_empty(a) ) {
-			//String format
-			if ( this.util.is_string(a) ) {
-				console.log('Processing string format');
-				this.do_callback(callback, a.sprintf(item.get_uri()));
-			}
-			//Method
-			else if ( this.util.is_func(a) ) {
-				console.info('Processing render function');
-				//Pass item and callback to method
-				a.apply(this, [item, callback]);
-			}
+		//String format
+		if ( this.util.is_string(a) ) {
+			console.log('Processing string format');
+			this.do_callback(callback, a.sprintf(item.get_uri()));
+		} else {
+			//Pass item and callback to method
+			console.info('Processing render function');
+			this.call_attribute('render', item, callback);
 		}
 		console.groupEnd();
 	}
-	
-	/* Properties */
-	
-	
 };
 
 View.Content_Type = Component.extend(Content_Type);
@@ -2900,7 +2863,6 @@ var Template = {
 			console.info('Rendering Item');
 			var v = item.get_viewer();
 			//Initialize Viewer in DOM
-			v.dom_init();
 			var d = v.dom_get();
 			//Iterate through tags (DOM placeholders) and populate layout
 			if ( this.has_tags() ) {
@@ -2983,9 +2945,7 @@ var Template = {
 				}
 				//Get corresponding tag instance
 				var tag = tags[idx];
-				//Save tag to DOM element
-				$(this).data(tag.get_data_key(), tag);
-				//Save DOM element to tag
+				//Attach DOM node to Tag instance
 				tag.dom_set(this);
 			});
 		}
@@ -3113,16 +3073,38 @@ var Template = {
 	
 	/**
 	 * Retrieve tags from template
+	 * Subset of tags may be retrieved based on parameter values
 	 * Template is parsed if tags not set
+	 * @param string name (optional) Tag type to retrieve instances of
+	 * @param string prop (optional) Tag property to retrieve instances of
 	 * @return array Template_Tag instances
 	 */
-	get_tags: function() {
+	get_tags: function(name, prop) {
 		var a = 'tags';
 		var tags = this.get_attribute(a);
 		if ( !this.util.is_array(tags) ) {
 			this.parse_tags();
 		}
 		tags = this.get_attribute(a);
+		//Filter tags by parameters
+		if ( tags.length && this.util.is_string(name) ) {
+			//Normalize
+			if ( !this.util.is_string(prop) ) {
+				prop = false;
+			}
+			var tags_filtered = [];
+			var tc = null;
+			for ( var x = 0; x < tags.length; x++ ) {
+				tc = tags[x];
+				if ( name == tc.get_name() ) {
+					//Check tag property
+					if ( !prop || prop == tc.get_prop() ) {
+						tags_filtered.push(tc);
+					}
+				}
+			}
+			tags = tags_filtered;
+		}
 		return tags;
 	},
 
@@ -3385,7 +3367,8 @@ var Template_Tag_Handler = {
 	/* Properties */
 	_attr_default: {
 		supports_modifiers: false,
-		dynamic: false
+		dynamic: false,
+		props: {}
 	},
 	
 	/* Methods */
@@ -3399,15 +3382,21 @@ var Template_Tag_Handler = {
 	 */
 	render: function(item, instance, callback) {
 		console.group('Template_Tag_Handler.render');
-		var a = this.get_attribute('render', null);
-		var out = '';
-		if ( this.util.is_func(a) && this.util.is_type(item, View.Content_Item) ) {
-			console.info('Passing to render method');
-			//Pass arguments to user-defined method
-			a.apply(this, [item, instance, callback]);
-		}
+		this.call_attribute('render', item, instance, callback);
 		console.groupEnd();
-	}
+	},
+	
+	handle_prop: function(prop, item, instance) {
+		//Locate property
+		var props = this.get_attribute('props');
+		var out = '';
+		if ( this.util.is_obj(props) && prop in props && this.util.is_func(props[prop]) ) {
+			out = props[prop].call(this, item, instance);
+		} else {
+			out = item.get_viewer().get_label(prop);
+		}
+		return out;
+	},
 };
 
 View.Template_Tag_Handler = Component.extend(Template_Tag_Handler);
@@ -3477,14 +3466,25 @@ View.add_template_tag_handler('item', {
  * UI tag
  */
 View.add_template_tag_handler('ui', {
-	render: function(item, tag, callback) {
-		console.groupCollapsed('Template_Tag_Handler (UI).render: %o', tag.get_prop());
-		var prop = tag.get_prop();
-		if ( 'slideshow_control' == prop ) {
-			prop = ( item.get_viewer().slideshow_active() ) ? 'slideshow_stop' : 'slideshow_start';
+	init: function(item, tag, callback) {
+		console.groupCollapsed('Template_Tag_Handler (UI).init: %o', tag.get_prop());
+		var v = item.get_viewer();
+		
+		//Run only once for viewer
+		var vid = v.get_id();
+		var cl = arguments.callee;
+		if ( !this.util.is_set(cl.viewers) ) {
+			cl.viewers = [];
 		}
+		if ( cl.viewers.indexOf(vid) != -1 ) {
+			console.warn('Events already initilized for viewer');
+			console.groupEnd();
+			return false;
+		}
+		cl.viewers.push(vid);
+		
 		//Add event handlers
-		item.get_viewer().on('complete', this, function(v) {
+		v.on('complete', this, function(v) {
 			console.info('Event Handler: Template_Tag_Handler(UI).complete');
 			//Register event handlers
 			if ( v.init ) {
@@ -3524,17 +3524,74 @@ View.add_template_tag_handler('ui', {
 					console.info('Viewer.event.slideshow_control');
 					console.groupCollapsed('Tag.UI.slideshow_control');
 					v.slideshow_toggle();
-					var lbl = ( v.slideshow_active() ) ? 'stop' : 'start';
-					v.dom_get_tag('ui', 'slideshow_control').text(v.get_label('slideshow_' + lbl));
 					console.groupEnd();
 				};
 				
 				v.dom_get_tag('ui', 'slideshow_control').click(slideshow_control);
 			}
 		});
+		
+		v.on('slideshow_toggle', this, function(v) {
+			console.group('Tag.UI.slideshow_toggle');
+			//Render slideshow control tag
+			var nodes = v.dom_get_tag('ui', 'slideshow_control');
+			console.log('Nodes: %o', nodes.length);
+			if ( nodes.length ) {
+				var tag_temp = View.get_component_temp(View.Template_Tag);
+				nodes.each(function(idx) {
+					var el = $(this);
+					//Get tag
+					var tag = $(this).data(tag_temp.get_data_key());
+					if ( v.util.is_type(tag, View.Template_Tag) ) {
+						tag.render(v.get_item(), function(output) {
+							el.html(output);
+						});
+					}
+				});
+			}
+			console.groupEnd();
+		});
 		console.groupEnd();
-		this.do_callback( callback, item.get_viewer().get_label(prop) );
 	},
+	render: function(item, tag, callback) {
+		console.groupCollapsed('Template_Tag_Handler (UI).render: %o', tag.get_prop());
+		//Initialize event handlers
+		this.call_attribute('init', item, tag, callback);
+		//Process content
+		var out = this.handle_prop(tag.get_prop(), item, tag);
+		console.groupEnd();
+		this.do_callback( callback, out );
+	},
+	props: {
+		'slideshow_control': function(item, tag) {
+			//Get slideshow status
+			prop = ( item.get_viewer().slideshow_active() ) ? 'slideshow_stop' : 'slideshow_start';
+			return item.get_viewer().get_label(prop);
+		},
+		'group_status': function(item, tag) {
+			//Get group status
+			out = item.get_viewer().get_label('group_status');
+			var key,
+				ph,
+				delim = '%',
+				handlers = {
+				current: function() {
+					return item.get_group(true).get_pos() + 1;
+				},
+				total: function() {
+					return item.get_group().get_size();
+				}
+			};
+			//Parse placeholders
+			for ( key in handlers ) {
+				ph = key.wrap(delim);
+				if ( out.indexOf(ph) != -1 ) {
+					out = out.replace(ph, handlers[key]());
+				}
+			}
+			return out;
+		}
+	}
 });
 console.groupEnd();
 })(jQuery);

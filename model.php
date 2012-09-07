@@ -205,7 +205,7 @@ class SLB_Lightbox extends SLB_Base {
 				'txt_link_prev'				=> array('default' => '&laquo; prev', 'group' => 'labels'),
 				'txt_slideshow_start'		=> array('default' => 'start slideshow', 'group' => 'labels'),
 				'txt_slideshow_stop'		=> array('default' => 'stop slideshow', 'group' => 'labels'),
-				'txt_slideshow_status'		=> array('default' => 'Image #current# of #total#', 'group' => 'labels')		
+				'txt_group_status'			=> array('default' => 'Image %current% of %total%', 'group' => 'labels')		
 			),
 			'legacy' => array (
 				'header_activation'			=> null,
@@ -276,7 +276,7 @@ class SLB_Lightbox extends SLB_Base {
 				'txt_link_prev'				=> __('Previous Image link', $p),
 				'txt_slideshow_start'		=> __('Start Slideshow link', $p),
 				'txt_slideshow_stop'		=> __('Stop Slideshow link', $p),
-				'txt_slideshow_status'		=> __('Slideshow status format', $p),
+				'txt_group_status'		=> __('Slideshow status format', $p),
 			)
 		);
 		

@@ -84,7 +84,14 @@
 	opacity: 0.8;
 }
 
-#slb_viewer_wrap .slb_template_tag_ui {
+/* UI */
+
+#slb_viewer_wrap .slb_theme_slb_default .slb_group_status {
+	display: block;
+}
+
+#slb_viewer_wrap .slb_theme_slb_default .slb_nav .slb_template_tag_ui,
+#slb_viewer_wrap .slb_theme_slb_default .slb_close {
 	background: #00A5F4;
 	border-radius: 6px;
 	color: #fff;
@@ -93,10 +100,6 @@
 	padding: 5px;
 	text-decoration: none;
 	text-transform: uppercase;
-}
-
-.slb_template_tag_ui_slideshow_control {
-	display: none;
 }
 
 /* Navigation */
@@ -119,25 +122,6 @@
 	right: 10px;
 }
 
-#slb_viewer_wrap .slb_theme_slb_default .slb_nav_hover .slb_navPrev {
-	left: 0; float: left;
-}
-
-#slb_viewer_wrap .slb_theme_slb_default .slb_nav_hover .slb_navNext {
-	right: 0; float: right;
-	margin: 0;
-}
-
-#slb_viewer_wrap .slb_theme_slb_default .slb_nav_hover .slb_navPrev:hover, 
-#slb_viewer_wrap .slb_theme_slb_default .slb_nav_hover .slb_navPrev:visited:hover {
-	background: url("../images/prevlabel.gif") left 15% no-repeat;
-}
-
-#slb_viewer_wrap .slb_theme_slb_default .slb_nav_hover .slb_navNext:hover,
-#slb_viewer_wrap .slb_theme_slb_default .slb_nav_hover .slb_navNext:visited:hover {
-	background: url("../images/nextlabel.gif") right 15% no-repeat;
-}
-
 /* Content */
 
 #slb_viewer_wrap .slb_theme_slb_default .slb_details {
@@ -157,21 +141,9 @@
 	width: 70%;
 }
 
-	/* Caption */
+	/* Title */
 #slb_viewer_wrap .slb_theme_slb_default .slb_data_title {
 	font-weight: bold;
-}
-
-	/* Description */
-#slb_viewer_wrap .slb_theme_slb_default .slb_data_desc .slb_dataDescription {
-	display: block;
-	padding: .5em 0;
-}
-
-	/* Group Number */
-#slb_viewer_wrap .slb_theme_slb_default .slb_dataNumber {
-	display: block;
-	clear: left;
 }
 
 /* States */
