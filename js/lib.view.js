@@ -40,7 +40,6 @@ var View = {
 	items: [],
 	content_types: {},
 	groups: {},
-	themes: {},
 	template_tags: {},
 	
 	/**
@@ -118,17 +117,11 @@ var View = {
 		console.groupCollapsed('Init');
 		//Set options
 		$.extend(true, this.options, options);
-		console.groupCollapsed('Options');
+		console.group('Options');
 		console.dir(this.options);
 		console.groupEnd();
 		
 		/* Set defaults */
-		
-		//Theme
-		this.init_theme();
-		
-		//Viewer
-		this.init_viewers();
 		
 		//Items
 		this.init_items();
@@ -148,7 +141,6 @@ var View = {
 		
 		this.component_defaults = [
 			this.Viewer,
-			this.Theme
 		];
 	
 	},
@@ -220,7 +212,7 @@ var View = {
 		console.info('Component type is valid');
 
 		//Sanitize id
-		if ( !this.util.is_string(id, true) ) {
+		if ( !this.util.is_string(id) ) {
 			console.log('ID is invalid, unsetting');
 			id = null;
 		}
@@ -360,6 +352,9 @@ var View = {
 		console.info('Options to get: %o', opts);
 		var ret = {};
 		//Validate
+		if ( this.util.is_string(opts) ) {
+			opts = [opts];
+		}
 		if ( !this.util.is_array(opts) ) {
 			console.warn('No options specified');
 			console.groupEnd();
@@ -378,18 +373,28 @@ var View = {
 		return ret;
 	},
 	
-	/* Viewers */
-	
-	init_viewers: function() {
-		console.groupCollapsed('View.init_viewers');
-		//Reset viewers
-		this.viewers = {};
-		//Add default viewer
-		
-		this.add_viewer(this.util.add_prefix('default'));
-		console.groupEnd();
+	/**
+	 * Retrieve option
+	 * @uses View.options
+	 * @param string opt Option to retrieve
+	 * @param mixed def (optional) Default value if option does not exist (Default: NULL)
+	 * @return mixed Option value
+	 */
+	get_option: function(opt, def) {
+		var ret = this.get_options(opt);
+		if ( this.util.is_empty(ret) ) {
+			ret = ( this.util.is_set(def) ) ? def : null;
+		}
+		return ret;
 	},
 	
+	/* Viewers */
+	
+	/**
+	 * Add viewer instance to collection
+	 * @param string v Viewer ID
+	 * @param obj options Viewer options
+	 */
 	add_viewer: function(v, options) {
 		//Validate
 		if ( !this.util.is_string(v) ) {
@@ -404,18 +409,39 @@ var View = {
 		this.viewers[v.get_id()] = v;
 	},
 	
+	/**
+	 * Retrieve all viewer instances
+	 * @return obj Viewer instances
+	 */
 	get_viewers: function() {
 		return this.viewers;
 	},
 	
+	/**
+	 * Check if viewer exists
+	 * @param string v Viewer ID
+	 * @return bool TRUE if viewer exists, FALSE otherwise
+	 */
 	has_viewer: function(v) {
 		return ( this.util.is_string(v) && v in this.get_viewers() ) ? true : false;
 	},
 	
+	/**
+	 * Retrieve Viewer instance
+	 * Default viewer retrieved if specified viewer does not exist
+	 * > Default viewer created if necessary
+	 * @param string v Viewer ID to retrieve
+	 * @return Viewer Viewer instance
+	 */
 	get_viewer: function(v) {
 		//Retrieve default viewer if specified viewer not set
-		if ( !this.has_viewer(v) )
+		if ( !this.has_viewer(v) ) {
 			v = this.util.add_prefix('default');
+			//Create default viewer if necessary
+			if ( !this.has_viewer(v) ) {
+				this.add_viewer(v);
+			}
+		}
 		return this.get_viewers()[v];
 	},
 	
@@ -437,7 +463,7 @@ var View = {
 		var sel = 'a[href][rel~="%s"]:not([rel~="%s"])'.sprintf(this.util.get_prefix(), this.util.add_prefix('off'));
 		console.log('Selector: %o \nItems: %o', sel, $(sel));
 		//Add event handler
-		$(sel).on('click', handler);
+		$(sel).click(handler);
 		console.groupEnd();
 	},
 	
@@ -634,33 +660,37 @@ var View = {
 	/* Theme */
 	
 	/**
-	 * Initialize default theme
+	 * Initialize themes
 	 */
-	init_theme: function() {
-		console.groupCollapsed('View.init_theme');
-		//Initialize default theme
-		this.add_theme(this.util.add_prefix('default'));
-		console.dir(this.themes);
-		console.groupEnd();
+	init_themes: function() {
+		//Populate theme models
+		var models = this.get_parent().get_option('themes');
+		if ( !this.util.is_obj(models) ) {
+			models = {};
+		}
+		var id;
+		for ( id in models ) {
+			this.add_theme(id, models[id]);
+		}
 	},
 	
 	/**
 	 * Add theme
 	 * @param string name Theme name
 	 * @param obj attr Theme options
-	 * @return obj New Theme instance
+	 * @return void
 	 */
 	add_theme: function(id, attr) {
 		//Validate
 		if ( !this.util.is_string(id) ) {
-			id = this.util.add_prefix('default');
+			return false;
 		}
 		//Create theme
-		var thm = new this.Theme(id, attr);
-		//Add to collection
-		this.themes[thm.get_id()] = thm;
-		//Return
-		return thm;
+		var model = $.extend({'layout': ''}, attr, {
+			'parsed': false,
+		});
+		//Add to Theme prototype
+		this.Theme.prototype._models[id] = model;
 	},
 	
 	/**
@@ -1035,6 +1065,7 @@ var Component = {
 		var clear = null;
 		//Make sure component property exists
 		if ( !this.has_reference(name) ) {
+			console.groupEnd();
 			return clear;
 		}
 		//Normalize reference
@@ -1149,11 +1180,9 @@ var Component = {
 	 * @return mixed Attribute value (NULL if attribute is not set)
 	 */
 	get_attribute: function(key, def) {
-		// console.groupCollapsed('Component.get_attribute: %o', key);
 		if ( !this.util.is_set(def) ) {
 			def = null;
 		}
-		// console.groupEnd();
 		return ( this.has_attribute(key) ) ? this.get_attributes()[key] : def;
 	},
 	
@@ -1614,7 +1643,13 @@ var Viewer = {
 	 * @return object Theme reference
 	 */
 	get_theme: function() {
-		return this.get_component('theme');
+		//Get saved theme
+		var ret = this.get_component('theme', false, false);
+		if ( this.util.is_empty(ret) ) {
+			//Theme needs to be initialized
+			ret = this.set_component('theme', new View.Theme());
+		}
+		return ret;
 	},
 	
 	/**
@@ -2742,11 +2777,12 @@ var Theme = {
 	/* Configuration */
 	
 	_slug: 'theme',
-	_reciprocal: true,
 	_refs: {
 		'viewer': 'Viewer',
 		'template': 'Template'
 	},
+	_models: null,
+	
 	_containers: ['viewer'],
 	
 	_attr_default: {
@@ -2761,6 +2797,71 @@ var Theme = {
 	/* Methods */
 	
 	/**
+	 * Custom constructor
+	 * @uses Component._c()
+	 */
+	_c: function(id, attributes) {
+		console.groupCollapsed('Theme.Constructor');
+		//Pass parameters to parent constructor
+		this._super(id, attributes);
+
+		//Set theme model
+		this.set_model(id);
+
+		console.groupEnd();
+	},
+	
+	/* Model */
+	
+	/**
+	 * Retrieve theme models
+	 * @return obj Theme models
+	 */
+	get_models: function() {
+		//Check prototype for theme models
+		if ( !this.util.is_obj(this.prototype._models) ) {
+			//Initialize theme models
+			this.get_parent().init_themes();
+		}
+		//Retrieve matching theme model
+		return this.prototype._models;
+	},
+	
+	/**
+	 * Retrieve specified theme model
+	 * @param string id (optional) Theme model to retrieve
+	 * > Default model retrieved if ID is invalid/not set
+	 * @return obj Specified theme model
+	 */
+	get_model: function(id) {
+		var ret = null;
+		if ( !this.util.is_set(id) && this.has_attribute('model') ) {
+			ret = this.get_attribute('model');
+		} else {
+			//Retrieve matching theme model
+			var models = this.get_models();
+			if ( !this.util.is_string(id) ) {
+				var id = this.add_prefix('default');
+			}
+			//Select first theme model if specified model is invalid
+			if ( ! ( id in models ) ) {
+				id = models.keys[0];
+			}
+			ret = models[id];
+		}
+		return ret;
+	},
+	
+	/**
+	 * Set model for current theme instance
+	 */
+	set_model: function(id) {
+		this.set_attribute('model', this.get_model(id));
+	},
+	
+	/* Template */
+	
+	/**
 	 * Retrieve template instance
 	 * @return Template instance
 	 */
@@ -2769,15 +2870,14 @@ var Theme = {
 		var ret = this.get_component('template', false, false);
 		//Template needs to be initialized
 		if ( this.util.is_empty(ret) ) {
-			var attr = {},
-				t = this.get_attribute('template');
-			if ( this.util.is_string(t) ) {
-				attr['template'] =  t;
-			}
+			//Pass model to Template instance
+			var attr = { model: this.get_model() };
 			ret = this.set_component('template', new View.Template(attr));
 		}
 		return ret;
 	},
+	
+	/* Output */
 	
 	/**
 	 * Render Theme output
@@ -2821,10 +2921,14 @@ var Template = {
 		 * Populated once template has been parsed
 		 * @var array
 		 */
-		tags: null
+		tags: null,
+		/**
+		 * Model to use for properties
+		 * Usually reference to an object in other component
+		 * @var obj
+		 */
+		model: null
 	},
-	
-	_attr_parent: ['template'],
 	
 	/* Methods */
 	
@@ -2837,7 +2941,7 @@ var Template = {
 	/**
 	 * Parse layout from raw template
 	 * Saves parsed layout for future requests
-	 * @return obj Parsed layout (jQuery object)
+	 * @return string Parsed layout
 	 */
 	parse: function() {
 		console.groupCollapsed('Template.parse');
@@ -2909,19 +3013,25 @@ var Template = {
 	
 	/**
 	 * Retrieve layout
-	 * @return jQuery Layout object
+	 * @return string Parsed template (HTML)
 	 */
 	get_layout: function() {
 		console.groupCollapsed('Template.get_layout');
 		var a = 'layout';
-		var l = this.get_attribute(a);
-		if ( this.util.is_empty(l) ) {
-			this.parse();
-			l = this.get_attribute(a);
+		var o = '';
+		if ( this.has_attribute('model') ) {
+			o = this.get_attribute('model');
+			o = o[a];
+		} else {
+			o = this.get_attribute(a);
 		}
-		console.log('Layout: %o', l);
+		if ( this.util.is_empty(o) ) {
+			this.parse();
+			o = this.get_attribute(a);
+		}
+		console.log('Layout: %o', o);
 		console.groupEnd();
-		return l;
+		return o;
 	},
 	
 	/**
@@ -2952,7 +3062,6 @@ var Template = {
 		console.log('Layout: %o', o);
 		//Save attribute
 		this.set_attribute('layout', o);
-		console.log(this.get_attributes());
 		console.groupEnd();
 	},
 	
@@ -3002,10 +3111,10 @@ var Template = {
 	 * Extract tags from template
 	 * Tags are replaced with DOM element placeholders
 	 * Extracted tags are saved (for future use)
-	 * @param string t (optional) Template
-	 * @return string Parsed template 
+	 * @return string Parsed template
+	 * @TODO Integrate model 
 	 */
-	parse_tags: function(t) {
+	parse_tags: function() {
 		console.group('Template.parse_tags');
 		if ( !this.util.is_string(t) ) {
 			t = this.get_attribute('template', '');

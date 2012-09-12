@@ -609,18 +609,18 @@ class SLB_Lightbox extends SLB_Base {
 		$js_code = array();
 		//Get options
 		$options = wp_parse_args($this->options->build_client_output(), array (
-			'identifier'		=> array($this->get_prefix()),
-			'prefix'			=> $this->get_prefix()
+			'identifier'		=> array($this->get_prefix())
 		));
-		//Backwards compatibility
-		if ( $this->options->get_bool('enabled_compat') )
+		//Legacy support
+		if ( $this->options->get_bool('enabled_compat') ) {
 			$options['identifier'][] = $this->attr_legacy;
+		}
 			
 		//Load UI Strings
 		if ( ($labels = $this->build_labels()) && !empty($labels) )
 			$options['ui_labels'] = $labels;
-		//Load Layout
-		$options['template'] = $this->get_theme_layout();
+		//Load Theme(s)
+		$options['themes'] = array($this->add_prefix('default') => $this->get_theme());
 
 		//Build client output
 		//DEBUG
@@ -980,11 +980,6 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	function get_theme_layout($name = '', $filter = true) {
 		$l = $this->get_theme_data($name, 'layout');
-		//Filter
-		if ( !$this->options->get_bool('enabled_caption') )
-			$l = str_replace($this->get_theme_placeholder('dataCaption'), '', $l);
-		if ( !$this->options->get_bool('enabled_desc') )
-			$l = str_replace($this->get_theme_placeholder('dataDescription'), '', $l);
 		return $l;
 	}
 	
