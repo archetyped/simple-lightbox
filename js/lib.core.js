@@ -544,8 +544,9 @@ var Base = {
 					switch ( type ) {
 						case this.string:
 						case this.array:
-							if ( value.length == 0 )
+							if ( value.length == 0 ) {
 								ret = true;
+							}
 							break;
 						case this.object:
 							ret = true;
