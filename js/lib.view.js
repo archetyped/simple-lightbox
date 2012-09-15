@@ -117,7 +117,7 @@ var View = {
 		console.groupCollapsed('Init');
 		//Set options
 		$.extend(true, this.options, options);
-		console.group('Options');
+		console.groupCollapsed('Options');
 		console.dir(this.options);
 		console.groupEnd();
 		
@@ -470,7 +470,7 @@ var View = {
 		};
 		
 		//Get activated links
-		var sel = 'a[href][rel~="%s"]:not([rel~="%s"])'.sprintf(this.util.get_prefix(), this.util.add_prefix('off'));
+		var sel = 'a[href][%s="%s"]'.sprintf(this.util.get_attribute('active'), 1);
 		console.log('Selector: %o \nItems: %o', sel, $(sel));
 		//Add event handler
 		$(sel).click(handler);
@@ -710,22 +710,40 @@ var View = {
 	 * @param obj attrs (optional) Default tag attributes/values
 	 * @return Template_Tag_Handler Tag Handler instance
 	 */
-	add_template_tag_handler: function(id, attrs) {
+	add_template_tag_handler: function(id, attrs, add) {
 		//Validate
-		var valid = true;
+		if ( !this.util.is_bool(add) ) {
+			add = true;
+		}
 		if ( !this.util.is_string(id) ) {
-			id = '';
-			valid = false
+			add = false;
 		}
 		//Create new instance
 		handler = new this.Template_Tag_Handler(id, attrs);
-		if ( valid ) {
+		if ( add ) {
 			//Add to collection in Template_Tag prototype
-			this.Template_Tag.prototype.handlers[handler.get_id()] = handler;
+			this.get_template_tag_handlers()[handler.get_id()] = handler;
 		}
 		//Return instance
 		return handler;
-	}
+	},
+	
+	/**
+	 * Retrieve Template Tag Handler collection
+	 * @return obj Template_Tag_Handler objects
+	 */
+	get_template_tag_handlers: function() {
+		return this.Template_Tag.prototype.handlers;
+	},
+	
+	/**
+	 * Retrieve template tag handler
+	 * @param string id ID of tag handler to retrieve
+	 * @return Template_Tag_Handler Tag Handler instance (new instance for invalid ID)
+	 */
+	get_template_tag_handler: function(id) {
+		return ( this.util.is_string(id) && ( id in this.get_template_tag_handlers() ) ) ? this.get_template_tag_handlers()[id] : this.add_template_tag_handler(id, {}, false);
+	},
 };
 
 /* Components */
@@ -843,6 +861,10 @@ var Component = {
 	 * @return string Instance ID
 	 */
 	get_id: function(ns) {
+		//Validate
+		if ( !this.check_id() ) {
+			this.id = '';
+		}
 		var id = this.id;
 		//Namespace ID
 		if ( this.util.is_bool(ns) && ns ) {
@@ -857,7 +879,28 @@ var Component = {
 	 * @param string id Unique ID
 	 */
 	set_id: function(id) {
-		this.id = ( this.util.is_string(id, false) ) ? id : '';
+		this.id = ( this.check_id(id) ) ? id : '';
+	},
+	
+	/**
+	 * Validate ID value
+	 * @param string id (optional) ID value (Default: Component ID)
+	 * @param bool nonempty (optional) TRUE if it should also check for empty strings, FALSE otherwise (Default: FALSE)
+	 * @return bool TRUE if ID is valid, FALSE otherwise
+	 */
+	check_id: function(id, nonempty) {
+		//Validate
+		if ( arguments.length == 1 && this.util.is_bool(arguments[0]) ) {
+			nonempty = arguments[0];
+			id = null;
+		}
+		if ( !this.util.is_set(id) ) {
+			id = this.id;
+		}
+		if ( !this.util.is_bool(nonempty) ) {
+			nonempty = false;
+		}
+		return ( this.util.is_string(id, nonempty) ) ? true : false;
 	},
 	
 	/**
@@ -1129,47 +1172,22 @@ var Component = {
 		if ( !this.util.is_empty(el) ) {
 			//Get attributes from element
 			console.info('Checking DOM element for attributes');
-			var opts = $(el).attr(this._dom_attr);
-			if ( opts ) {
-				opts = opts.split(' ');
-				console.log('DOM attributes: %o', opts);
-				var wrap = {
-					open: '[',
-					close: ']' 
-				};
-				//Reset variables
-				var attrs = {};
-				var attr = key = val = open = null;
-				var prefix = this.util.get_prefix();
-				
-				console.group('Processing DOM attributes');
-				//Process options
+			var opts = $(el).get(0).attributes;
+			if ( this.util.is_obj(opts) ) {
+				console.group('Processing DOM Attributes: %o', opts);
+				var opt, key;
+				var attr_prefix = this.util.get_attribute();
 				for ( var x = 0; x < opts.length; x++ ) {
-					attr = opts[x];
-					//Skip item identifier
-					if ( attr == prefix ) {
+					opt = opts[x];
+					if ( opt.name.indexOf( attr_prefix ) == -1 ) {
 						continue;
 					}
-					console.log('Attribute (%o): %o', x, attr);
-					if ( this.util.has_prefix(attr) ) {
-						//Strip prefix from attribute
-						attr = this.util.remove_prefix(attr);
-						console.info('Special attribute found: %o', attr);
-						//Retrieve attribute value
-						if ( attr.indexOf(wrap.close) === ( attr.length - 1 ) ) {
-							open = attr.indexOf(wrap.open);
-							key = attr.substring(0, open);
-							val = attr.substring(open + 1, attr.length - 1);
-							console.log('Attribute: %o \nData: %o', key, val);
-							//Set attribute
-							this.set_attribute(key, val);
-							continue;
-						}
-						//Set flags
-						this.set_attribute(attr, true);
-					}
+					//Process internal attributes
+					//Strip prefix
+					key = opt.name.substr(attr_prefix.length);
+					console.log('Attribute: %o \nValue: %o', key, opt.value);
+					this.set_attribute(key, opt.value);
 				}
-				console.log('DOM attributes set: %o', this.get_attributes());
 				console.groupEnd();
 			}
 		}
@@ -2144,9 +2162,7 @@ var Group = {
 		console.groupCollapsed('Group.get_selector');
 		if ( this.util.is_empty(this.selector) ) {
 			//Build selector
-			var rel = [ this.get_ns(), '[', this.get_id(), ']' ].join('');
-			//Set selector property
-			this.selector = 'a[rel~="%s"]'.sprintf(rel);
+			this.selector = 'a[%s="%s"]'.sprintf(this.util.get_attribute(this._slug), this.get_id());
 			console.info('Selector: %o', this.selector);
 		}
 		console.groupEnd();
@@ -2783,7 +2799,7 @@ var Content_Item = {
 	 * @TODO Debug execution (hanging)
 	 */
 	show: function() {
-		console.group('Item.show');
+		console.groupCollapsed('Item.show');
 		//Validate content type
 		if ( !this.get_type() ) {
 			return false;
@@ -2887,10 +2903,12 @@ var Theme = {
 	 */
 	set_model: function(id) {
 		this.set_attribute('model', this.get_model(id));
-		//Set ID using model attributes
-		var m = this.get_model();
-		if ( 'name' in m ) {
-			this.set_id(m.name);
+		//Set ID using model attributes (if necessary)
+		if ( !this.check_id(true) ) {
+			var m = this.get_model();
+			if ( 'name' in m ) {
+				this.set_id(m.name);
+			}
 		}
 	},
 	
@@ -3240,7 +3258,7 @@ var Template = {
 		
 		console.groupCollapsed('Find tags');
 		//Tag regex
-		var re = /\{(\w.*?)\}/gim;
+		var re = /\{{2}\s*(\w.*?)\s*\}{2}/gim;
 		//Tag match results
 		var match;
 		//Iterate through template and find tags
@@ -3734,7 +3752,7 @@ View.add_template_tag_handler('item', {
 /**
  * UI tag
  */
-var th_ui = View.add_template_tag_handler('ui', {
+View.add_template_tag_handler('ui', {
 	init: function(item, tag, callback) {
 		console.groupCollapsed('Template_Tag_Handler (UI).init: %o', tag.get_prop());
 		var v = item.get_viewer();

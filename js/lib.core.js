@@ -430,6 +430,22 @@ var Base = {
 			return val;
 		},
 		
+		/*
+		 * Get attribute name
+		 * @param string val Attribute's base name
+		 */
+		get_attribute: function(val) {
+			var sep = '-';
+			var top = 'data';
+			if ( !this.is_string(val, false) ) {
+				val = '';
+			}
+			if ( val.indexOf(top + sep + this.get_prefix()) == -1 ) {
+				val = [top, this.add_prefix(val, sep, true)].join(sep);
+			}
+			return val;
+		},
+		
 		/* Request */
 		
 		/**

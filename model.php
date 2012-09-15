@@ -460,122 +460,123 @@ class SLB_Lightbox extends SLB_Base {
 	 * @return string Content with processed links 
 	 */
 	function process_links($content, $group = null) {
-		//Validate content before processing
-		if ( !is_string($content) || empty($content) )
+		global $dbg;
+		//Validate
+		if ( !is_string($content) || empty($content) ) {
 			return $content;
+		}
+		//Extract links
 		$links = $this->get_links($content, true);
+		//Do not process content without links
+		if ( empty($links) ) {
+			return $content;
+		}
 		//Process links
-		if ( count($links) > 0 ) {
-			global $wpdb;
-			global $post;
-			$types = $this->get_media_types();
-			$img_types = array('jpg', 'jpeg', 'gif', 'png');
-			$protocol = array('http://', 'https://');
-			$domain = str_replace($protocol, '', strtolower(get_bloginfo('url')));
+		$protocol = array('http://', 'https://');
+		$domain = str_replace($protocol, '', strtolower(get_bloginfo('url')));
+		$types = $this->get_media_types();
+		
+		//Format Group
+		if ( $this->options->get_bool('group_links') ) {
+			if ( is_scalar($group) ) {
+				$group_base = trim(strval($group));
+			} else {
+				$group_base = '';
+			}
+		} else {
+			$group_base = null;
+		}
+		
+		//Iterate through links & add lightbox if necessary
+		foreach ( $links as $link ) {
+			//Init vars
+			$pid = 0;
+			$link_new = $link;
+			$internal = false;
 			
-			//Format Group
-			$group_base = ( is_scalar($group) ) ? trim(strval($group)) : '';
-			if ( !$this->options->get_bool('group_links') ) {
-				$group_base = null;
+			//Parse link attributes
+			$attrs = $this->util->parse_attribute_string($link_new, array('rel' => '', 'href' => ''));
+			$attrs_legacy = explode(' ', $attrs['rel']);
+			$h =& $attrs['href'];
+			
+			//Stop processing invalid, disabled
+			if ( empty($h) 
+				|| 0 === strpos($h, '#')
+				|| $this->has_attribute($attrs, 'active', false) 
+				|| in_array($this->add_prefix('off'), $attrs_legacy)
+				) {
+				continue;
 			}
 			
-			//Iterate through links & add lightbox if necessary
-			foreach ( $links as $link ) {
-				//Init vars
-				$pid = 0;
-				$link_new = $link;
-				$internal = false;
+			//Check if item links to internal media (attachment)
+			$hdom = str_replace($protocol, '', strtolower($h));
+			if ( strpos($hdom, $domain) === 0 ) {
+				//Save URL for further processing
+				$internal = true;
+			}
+			
+			//Determine link type
+			$type = false;
+			
+			//Check if link has already been processed
+			if ( $internal && $this->media_item_cached($h) ) {
+				$i = $this->get_cached_media_item($h);
+				$type = $i['type'];
+			}
+			
+			elseif ( $this->util->has_file_extension($h, array('jpg', 'jpeg', 'gif', 'png')) ) {
+				//Direct Image file
+				$type = $types->img;
+			}
+			
+			elseif ( $internal && is_local_attachment($h) && ( $pid = url_to_postid($h) ) && wp_attachment_is_image($pid) ) {
+				//Attachment URI
+				$type = $types->att;
+			}
+			
+			//Stop processing if link type not valid
+			if ( !$type || ( $type == $types->att && !$this->options->get_bool('activate_attachments') ) ) {
+				continue;
+			}
+			
+			//Set group (if necessary)
+			if ( null !== $group_base ) {
 				$group = $group_base;
-				
-				//Parse link attributes
-				$attr = $this->util->parse_attribute_string($link_new, array('rel' => '', 'href' => ''));
-				$h =& $attr['href'];
-				$r =& $attr['rel'];
-				$attrs_all = $this->get_attributes($r, false);
-				$attrs = $this->get_attributes($attrs_all);
-				
-				//Stop processing invalid, disabled, or legacy links
-				if ( empty($h) 
-					|| 0 === strpos($h, '#') 
-					|| $this->has_attribute($attrs, $this->make_attribute_disabled())
-					|| $this->has_attribute($attrs_all, $this->attr_legacy, false) 
-					)
-					continue;
-				
-				//Check if item links to internal media (attachment)
-				$hdom = str_replace($protocol, '', strtolower($h));
-				if ( strpos($hdom, $domain) === 0 ) {
-					//Save URL for further processing
-					$internal = true;
+				$g_name = 'group';
+				//Get preset group attribute
+				$g = ( $this->has_attribute($attrs, $g_name) ) ? $this->get_attribute($attrs, $g_name) : ''; 
+				if ( is_string($g) && ($g = trim($g)) && !empty($g) ) {
+					$group = $g;
+				}
+				//Group links by post?
+				if ( !$this->widget_processing && $this->options->get_bool('group_post') ) {
+					global $post;
+					$group = ( !empty($group) ) ? implode('_', array($post->ID, $group)) : $post->ID;
+				}
+				//Default group
+				if ( empty($group) ) {
+					$group = $this->get_prefix();
 				}
 				
-				//Determine link type
-				$type = false;
-				
-				//Check if link has already been processed
-				if ( $internal && $this->media_item_cached($h) ) {
-					$i = $this->get_cached_media_item($h);
-					$type = $i['type'];
-				}
-				
-				elseif ( $this->util->has_file_extension($h, $img_types) ) {
-					//Direct Image file
-					$type = $types->img;
-				}
-				
-				elseif ( $internal && is_local_attachment($h) && ( $pid = url_to_postid($h) ) && wp_attachment_is_image($pid) ) {
-					//Attachment URI
-					$type = $types->att;
-				}
-				
-				//Stop processing if link type not valid
-				if ( !$type || ( $type == $types->att && !$this->options->get_bool('activate_attachments') ) )
-					continue;
-				
-				//Set group (if necessary)
-				if ( $this->options->get_bool('group_links') ) {
-					//Normalize group
-					if ( !is_string($group) )
-						$group = '';
-					//Get preset group attribute
-					$g_name = $this->make_attribute_name('group');
-					$g = ( $this->has_attribute($attrs, $g_name) ) ? $this->get_attribute($attrs, $g_name) : $this->get_attribute($attrs, $this->attr); 
-					
-					if ( is_string($g) && ($g = trim($g)) && strlen($g) )
-						$group = $g;
-					//Group links by post?
-					if ( !$this->widget_processing && $this->options->get_bool('group_post') ) {
-						$group = ( strlen($group) ) ? '_' . $group : '';
-						$group = $post->ID . $group;
-					}
-					
-					if ( empty($group) ) {
-						$group = $this->get_prefix();
-					}
-					
-					//Set group attribute
-					$attrs = $this->set_attribute($attrs, $g_name, $group);
-				}
-				
-				//Activate link
-				$attrs = $this->set_attribute($attrs, $this->attr);
-				
-				//Process internal links
-				if ( $internal ) {
-					//Mark as internal
-					$attrs = $this->set_attribute($attrs, 'internal');
-					//Add to media items array
-					$this->cache_media_item($h, $type, $pid);
-				}
-				
-				//Convert rel attribute to string
-				$r = $this->build_attributes(array_merge($attrs_all, $attrs));
-				
-				//Update link in content
-				$link_new = '<a ' . $this->util->build_attribute_string($attr) . '>';
-				$content = str_replace($link, $link_new, $content);
-				unset($h, $r);
+				//Set group attribute
+				$attrs = $this->set_attribute($attrs, $g_name, $group);
 			}
+			
+			//Activate link
+			$attrs = $this->set_attribute($attrs, 'active');
+			
+			//Process internal links
+			if ( $internal ) {
+				//Mark as internal
+				$attrs = $this->set_attribute($attrs, 'internal', $pid);
+				//Add to media items array
+				$this->cache_media_item($h, $type, $pid);
+			}
+			
+			//Update link in content
+			$link_new = '<a ' . $this->util->build_attribute_string($attrs) . '>';
+			$content = str_replace($link, $link_new, $content);
+			unset($h);
 		}
 		return $content;
 	}
@@ -612,6 +613,7 @@ class SLB_Lightbox extends SLB_Base {
 			'identifier'		=> array($this->get_prefix())
 		));
 		//Legacy support
+		//@TODO Remove this check
 		if ( $this->options->get_bool('enabled_compat') ) {
 			$options['identifier'][] = $this->attr_legacy;
 		}
@@ -1236,62 +1238,30 @@ class SLB_Lightbox extends SLB_Base {
 	}
 	
 	/*-** Helpers **-*/
-	
-	/**
-	 * Generates link attributes from array
-	 * @param array $attrs Link Attributes
-	 * @return string Attribute string
-	 */
-	function build_attributes($attrs) {
-		$a = array();
-		//Validate attributes
-		$attrs = $this->get_attributes($attrs, false);
-		//Iterate through attributes and build output array
-		foreach ( $attrs as $key => $val ) {
-			//Standard attributes
-			if ( is_bool($val) && $val ) {
-				$a[] = $key;
-			}
-			//Attributes with values
-			elseif ( is_string($val) ) {
-				$a[] = $key . '[' . $val . ']';
-			}
-		}
-		return implode(' ', $a);
-	}
 
 	/**
 	 * Build attribute name
 	 * Makes sure name is only prefixed once
-	 * @return string Formatted attribute name 
+	 * @param string $name (optional) Attribute base name
+	 * @return string Formatted attribute name
 	 */
 	function make_attribute_name($name = '') {
-		$sep = '_';
-		$name = trim($name);
+		//Validate
+		if ( !is_string($name) ) {
+			$name = '';
+		} else {
+			$name = trim($name);
+		}
+		//Setup
+		$sep = '-';
+		$top = 'data';
 		//Generate valid name
-		if ( $name != $this->attr ) {
-			//Use default name
-			if ( empty($name) )
-				$name = $this->attr;
-			//Add prefix if not yet set
-			elseif ( strpos($name, $this->attr . $sep) !== 0 )
-				$name = $this->attr . $sep . $name;
+		if ( strpos($name, $top . $sep . $this->get_prefix()) !== 0 ) {
+			$name = $top . $sep . $this->add_prefix($name, $sep);
 		}
 		return $name;
 	}
 
-	/**
-	 * Create attribute to disable lightbox for current link
-	 * @return string Disabled lightbox attribute
-	 */
-	function make_attribute_disabled() {
-		static $ret = null;
-		if ( is_null($ret) ) {
-			$ret = $this->make_attribute_name('off');
-		}
-		return $ret;
-	}
-	
 	/**
 	 * Set attribute to array
 	 * Attribute is added to array if it does not exist
@@ -1300,15 +1270,18 @@ class SLB_Lightbox extends SLB_Base {
 	 * @param string (optional) $value Attribute value
 	 * @return array Updated attribute array
 	 */
-	function set_attribute($attrs, $name, $value = null) {
-		//Validate attribute array
+	function set_attribute($attrs, $name, $value = true) {
+		//Validate
 		$attrs = $this->get_attributes($attrs, false);
-		//Build attribute name
-		$name = $this->make_attribute_name($name);
-		//Set attribute
-		$attrs[$name] = true;
-		if ( !empty($value) && is_string($value) )
-			$attrs[$name] = $value;
+		if ( !is_string($name) || empty($name) ) {
+			return $attrs;
+		}
+		if ( !is_scalar($value) ) {
+			$value = true;
+		}
+		//Add attribute
+		$attrs = array_merge($attrs, array( $this->make_attribute_name($name) => strval($value) ));
+		
 		return $attrs;
 	}
 	
@@ -1319,42 +1292,20 @@ class SLB_Lightbox extends SLB_Base {
 	 * @return array Attributes as associative array
 	 */
 	function get_attributes($attr_string, $internal = true) {
-		$ret = array();
-		//Protect bracketed values prior to parsing attributes string
-	 	if ( is_string($attr_string) ) {
-	 		$attr_string = trim($attr_string);
-	 		$attr_vals = array();
-			$attr_keys = array();
-			$offset = 0;
-	 		while ( ($bo = strpos($attr_string,'[', $offset)) && $bo !== false
-	 			&& ($bc = strpos($attr_string,']', $bo)) && $bc !== false
-				) {
-	 			//Push all preceding attributes into array
-	 			$attr_temp = explode(' ', substr($attr_string, $offset, $bo));
-				//Get attribute name
-				$name = array_pop($attr_temp);
-				$attr_keys = array_merge($attr_keys, $attr_temp);
-				//Add to values array
-				$attr_vals[$name] = substr($attr_string, $bo+1, $bc-$bo-1);
-				//Update offset
-				$offset = $bc+1;
-	 		}
-			//Parse remaining attributes
-			$attr_keys = array_merge($attr_keys, array_filter(explode(' ', substr($attr_string, $offset))));
-			//Set default values for all keys
-			$attr_keys = array_fill_keys($attr_keys, TRUE);
-			//Merge attributes with values
-			$ret = array_merge($attr_keys, $attr_vals);
-	 	} elseif ( is_array($attr_string) )
-			$ret = $attr_string;
-		
-		//Filter non-internal attributes if necessary
-		if ( $internal && is_array($ret) ) {
-			foreach ( array_keys($ret) as $attr ) {
-				if ( $attr == $this->attr)
-					continue;
-				if ( strpos($attr, $this->attr . '_') !== 0 )
-					unset($ret[$attr]);
+		if ( is_string($attr_string) ) {
+			$attr_string = $this->util->parse_attribute_string($attr_string);
+		}
+		$ret = ( is_array($attr_string) ) ? $attr_string : array();
+		//Filter out external attributes
+		if ( !empty($ret) && is_bool($internal) && $internal ) {
+			$ret_f = array();
+			foreach ( $ret as $key => $val ) {
+				if ( strpos($key, $this->make_attribute_name()) == 0 ) {
+					$ret_f[$key] = $val;
+				}
+			}
+			if ( !empty($ret_f) ) {
+				$ret = $ret_f;
 			}
 		}
 		
@@ -1370,10 +1321,11 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	function get_attribute($attrs, $attr, $internal = true) {
 		$ret = false;
+		//Validate
 		$attrs = $this->get_attributes($attrs, $internal);
-		//Validate attribute name for internal attributes
-		if ( $internal )
+		if ( $internal ) {
 			$attr = $this->make_attribute_name($attr);
+		}
 		if ( isset($attrs[$attr]) ) {
 			$ret = $attrs[$attr];
 		}
@@ -1382,13 +1334,24 @@ class SLB_Lightbox extends SLB_Base {
 	
 	/**
 	 * Checks if attribute exists
+	 * If supplied, the attribute's value is also validated
 	 * @param string|array $attrs Attributes to retrieve attribute value from
 	 * @param string $attr Attribute name to retrieve
-	 * @param bool (optional) $internal Whether only internal attributes should be evaluated (Default: TRUE)
-	 * @return bool Whether or not attribute exists
+	 * @param mixed $value (optional) Attribute value to check for
+	 * @param bool $internal (optional) Whether to check only internal attributes (Default: TRUE)
+	 * @return bool Whether or not attribute (with matching value if specified) exists
 	 */
-	function has_attribute($attrs, $attr, $internal = true) {
-		return ( $this->get_attribute($attrs, $attr, $internal) !== false ) ? true : false;
+	function has_attribute($attrs, $attr, $value = null, $internal = true) {
+		$a = $this->get_attribute($attrs, $attr, $internal);
+		$ret = false;
+		if ( $a !== false ) {
+			$ret = true;
+			//Check value
+			if ( null != $value && is_scalar($value) ) {
+				$ret = ( $a == strval($value) ) ? true : false;
+			}
+		}
+		return $ret;
 	}
 	
 	/**
