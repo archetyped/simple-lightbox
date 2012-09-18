@@ -102,6 +102,15 @@
 	text-transform: uppercase;
 }
 
+#slb_viewer_wrap .slb_theme_slb_default.item_single .slb_details {
+	padding-bottom: 3em;
+}
+
+#slb_viewer_wrap .slb_theme_slb_default.item_single .slb_group_status,
+#slb_viewer_wrap .slb_theme_slb_default.item_single .slb_nav {
+	display: none;
+}
+
 /* Navigation */
 
 #slb_viewer_wrap .slb_theme_slb_default .slb_nav .slb_template_tag {

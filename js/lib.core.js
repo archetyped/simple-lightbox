@@ -366,41 +366,42 @@ var Base = {
 		 * @return string Separator text
 		 */
 		get_sep: function(sep) {
-			if ( typeof sep == 'undefined' || sep == null )
-				sep = '';
-			
-			return ( $.type(sep) == 'string' ) ? sep : '_';
+			return ( this.is_string(sep, false) ) ? sep : '_';
 		},
 		
 		/**
 		 * Retrieve prefix
-		 * @param string (optional) sep Separator text
-		 * @return string Prefix (with separator if specified)
+		 * @return string Prefix
 		 */
-		get_prefix: function(sep) {
-			return ( this.get_parent().prefix && this.get_parent().prefix.length ) ? this.get_parent().prefix + this.get_sep(sep) : '';
+		get_prefix: function() {
+			return ( this.is_string(this.get_parent().prefix) ) ? this.get_parent().prefix : '';
 		},
 		
 		/**
 		 * Check if string is prefixed
 		 */
 		has_prefix: function(val, sep) {
-			return ( $.type(val) == 'string' && val.length && val.indexOf(this.get_prefix(sep)) === 0 );
+			return ( this.is_string(val) && val.indexOf(this.get_prefix() + this.get_sep(sep)) === 0 );
 		},
 		
 		/**
 		 * Add Prefix to a string
 		 * @param string val Value to add prefix to
 		 * @param string sep (optional) Separator (Default: `_`)
-		 * @param bool (optional) once If text should only be prefixed once (Default: true)
+		 * @param bool (optional) once If text should only be prefixed once (Default: TRUE)
 		 */
 		add_prefix: function(val, sep, once) {
-			if ( typeof sep == 'undefined' )
-				sep = '_';
-			once = ( typeof once == 'undefined' ) ? true : !!once;
-			if ( once && this.has_prefix(val, sep) )
-				return val;	
-			return this.get_prefix(sep) + val;
+			//Validate
+			if ( !this.is_string(val) ) {
+				//Return prefix if value to add prefix to is empty
+				return this.get_prefix();
+			}
+			sep = this.get_sep(sep);
+			if ( !this.is_bool(once) ) {
+				once = true;
+			}
+			
+			return ( once && this.has_prefix(val, sep) ) ? val : [this.get_prefix(), val].join(sep);
 		},
 		
 		/**
@@ -415,17 +416,17 @@ var Base = {
 				return val;
 			}
 			//Default values
-			if ( !this.is_string(sep, true) ) {
-				sep = '_';
-			}
+			sep = this.get_sep(sep);
 			if ( !this.is_bool(once) ) {
 				once = true;
 			}
 			//Check if string is prefixed
 			if ( this.has_prefix(val, sep) ) {
 				//Remove prefix
-				var re = new RegExp('^(%s)+(.*)$'.sprintf(this.get_prefix(sep)), 'g');
-				val = val.replace(re, '$2');
+				var prfx = this.get_prefix() + sep;
+				do {
+					val = val.substr(prfx.length);
+				} while ( !once && this.has_prefix(val, sep) );
 			}
 			return val;
 		},
@@ -435,13 +436,17 @@ var Base = {
 		 * @param string val Attribute's base name
 		 */
 		get_attribute: function(val) {
+			//Setup
 			var sep = '-';
 			var top = 'data';
+			//Validate
+			var pre = [top, this.get_prefix()].join(sep);
 			if ( !this.is_string(val, false) ) {
-				val = '';
+				return pre; 
 			}
-			if ( val.indexOf(top + sep + this.get_prefix()) == -1 ) {
-				val = [top, this.add_prefix(val, sep, true)].join(sep);
+			//Process
+			if ( val.indexOf(pre + sep) == -1 ) {
+				val = [pre, val].join(sep);
 			}
 			return val;
 		},

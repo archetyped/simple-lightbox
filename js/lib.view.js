@@ -705,6 +705,20 @@ var View = {
 	},
 	
 	/**
+	 * Retrieve theme models
+	 * @return obj Theme models
+	 */
+	get_theme_models: function() {
+		//Check prototype for theme models
+		if ( !this.util.is_obj(this.Theme.prototype._models) ) {
+			//Initialize theme models
+			this.init_themes();
+		}
+		//Retrieve matching theme model
+		return this.Theme.prototype._models;
+	},
+	
+	/**
 	 * Add Theme Tag Handler to Theme prototype
 	 * @param string id Unique ID
 	 * @param obj attrs (optional) Default tag attributes/values
@@ -1144,8 +1158,8 @@ var Component = {
 		//Additional validation
 		if ( !this.util.is_empty(ref) && this.util.is_func(validate) && !validate.apply(this, [ref]) ) {
 			ref = clear;
-		}
 				
+		}
 		//Set (or clear) component reference
 		this[name] = ref;
 		
@@ -1324,6 +1338,10 @@ var Component = {
 	 */
 	dom_get_selector: function(element) {
 		return ( this.util.is_string(element) ) ? '.' + this.add_ns(element) : '';
+	},
+	
+	dom_get_attribute: function() {
+		return this.util.get_attribute(this._slug);
 	},
 
 	/**
@@ -1825,6 +1843,17 @@ var Viewer = {
 				//Unset loading flag
 				v.unset_loading();
 				console.info('Theme loaded');
+				//Set classes
+				var d = v.dom_get();
+				var classes = ['item_single', 'item_multi'];
+				var ms = ['addClass', 'removeClass']; 
+				if ( !v.get_item().get_group().is_single() ) {
+					ms.reverse();
+				}
+				var m;
+				for ( var x = 0; x < ms.length; x++ ) {
+					d[ms[x]](classes[x]);
+				}
 				//Bind events
 				v.events_init();
 				//Trigger event
@@ -1919,16 +1948,25 @@ var Viewer = {
 		this.get_overlay().fadeIn();
 	},
 	
+	/**
+	 * Hide overlay
+	 */
 	overlay_hide: function() {
 		this.get_overlay().fadeOut();
 	},
 	
+	/**
+	 * Exit Viewer
+	 */
 	exit: function() {
 		console.groupCollapsed('Viewer.exit');
 		this.reset();
 		console.groupEnd();
 	},
 	
+	/**
+	 * Reset viewer
+	 */
 	reset: function() {
 		this.set_item(false);
 		this.set_loading(false);
@@ -1960,21 +1998,42 @@ var Viewer = {
 		}
 		
 		//Control event bubbling
-		this.dom_get('layout').children().click(function(ev) {
+		var l = this.dom_get('layout');
+		l.children().click(function(ev) {
 			ev.stopPropagation();
 		});
 		
 		/* Close */
 		
-		var v = this;		
+		var v = this;
 		var close = function(e) {
 			return v.close(e);
 		};
 		//Container
-		this.dom_get('layout').click(close);
+		l.click(close);
 		//Overlay
 		this.get_overlay().click(close);
+		
+		//Fire event
+		this.trigger('events_init');
 		console.groupEnd();
+	},
+		
+	/**
+	 * Check if slideshow functionality is enabled
+	 * @return bool TRUE if slideshow is enabled, FALSE otherwise
+	 */
+	slideshow_enabled: function() {
+		var o = this.get_attribute('slideshow_enabled');
+		return ( this.util.is_bool(o) && o && this.get_item() && !this.get_item().get_group().is_single() ) ? true : false; 
+	},
+		
+	/**
+	 * Checks if slideshow is currently active
+	 * @return bool TRUE if slideshow is active, FALSE otherwise
+	 */
+	slideshow_active: function() {
+		return ( this.slideshow_enabled() && ( this.get_attribute('slideshow_active') || ( !this.init && this.get_attribute('slideshow_autostart') ) ) ) ? true : false;
 	},
 	
 	/**
@@ -2031,7 +2090,10 @@ var Viewer = {
 	},
 	
 	slideshow_toggle: function() {
+		console.groupCollapsed('Viewer.slideshow_toggle');
 		if ( !this.slideshow_enabled() ) {
+			console.warn('Slideshow not enabled');
+			console.groupEnd();
 			return false;
 		}
 		if ( this.slideshow_active() ) {
@@ -2040,18 +2102,7 @@ var Viewer = {
 			this.slideshow_start();
 		}
 		this.trigger('slideshow_toggle');
-	},
-	
-	slideshow_enabled: function() {
-		return ( this.get_attribute('slideshow_enabled') ) ? true : false; 
-	},
-		
-	/**
-	 * Checks if slideshow is currently active
-	 * @return bool TRUE if slideshow is active, FALSE otherwise
-	 */
-	slideshow_active: function() {
-		return ( this.slideshow_enabled() && ( this.get_attribute('slideshow_active') || ( !this.init && this.get_attribute('slideshow_autostart') ) ) ) ? true : false;
+		console.groupEnd();
 	},
 	
 	/**
@@ -2073,8 +2124,12 @@ var Viewer = {
 				this.slideshow_stop(false);
 			}
 		}
+		this.trigger('slideshow_pause');
 	},
 	
+	/**
+	 * Resume slideshow
+	 */
 	slideshow_resume: function() {
 		this.slideshow_pause(false);
 	},
@@ -2083,20 +2138,24 @@ var Viewer = {
 	 * Next item
 	 */
 	item_next: function() {
-		var i = this.get_item();
-		if ( i.has_group() ) {
-			i.get_group(true).show_next();
-		}
+		var g = this.get_item().get_group(true);
+		var v = this;
+		g.on('item_next', function(g) {
+			v.trigger('item_next');
+		});
+		g.show_next();
 	},
 	
 	/**
 	 * Previous item
 	 */
 	item_prev: function() {
-		var i = this.get_item();
-		if ( i.has_group() ) {
-			i.get_group(true).show_prev();
-		}
+		var g = this.get_item().get_group(true);
+		var v = this;
+		g.on('item_prev', function(g) {
+			v.trigger('item_prev');
+		});
+		g.show_prev();
 	},
 	
 	/**
@@ -2118,6 +2177,7 @@ var Viewer = {
 		//End processes
 		this.exit();
 		
+		this.trigger('close');
 		console.groupEnd();
 		return false;
 	}
@@ -2162,7 +2222,7 @@ var Group = {
 		console.groupCollapsed('Group.get_selector');
 		if ( this.util.is_empty(this.selector) ) {
 			//Build selector
-			this.selector = 'a[%s="%s"]'.sprintf(this.util.get_attribute(this._slug), this.get_id());
+			this.selector = 'a[%s="%s"]'.sprintf(this.dom_get_attribute(), this.get_id());
 			console.info('Selector: %o', this.selector);
 		}
 		console.groupEnd();
@@ -2174,10 +2234,8 @@ var Group = {
 	 */
 	get_items: function() {
 		console.groupCollapsed('Group.get_items');
-		//Get DOM elements
-		var items = $(this.get_selector());
+		var items = ( !this.util.is_empty(this.get_id()) ) ? $(this.get_selector()) : this.get_current().dom_get();
 		console.log('Items (%o): %o', items.length, items);
-		
 		console.groupEnd();
 		return items;
 	},
@@ -2196,6 +2254,11 @@ var Group = {
 		}
 		//Retrieve all items
 		var items = this.get_items();
+		//Validate index
+		var max = this.get_size() - 1;
+		if ( idx > max ) {
+			idx = max;
+		}
 		//Return specified item
 		console.groupEnd();
 		return items.get(idx);
@@ -2220,7 +2283,7 @@ var Group = {
 	 */
 	get_current: function() {
 		//Sanitize
-		if ( !this.util.is_empty(this.current) && !this.util.is_type(this.current, this.get_parent().Content_Item) ) {
+		if ( !this.util.is_empty(this.current) && !this.util.is_type(this.current, View.Content_Item) ) {
 			console.warn('Resetting current item: %o', this.current);
 			this.current = null;
 		}
@@ -2236,7 +2299,7 @@ var Group = {
 		console.groupCollapsed('Group.set_current');
 		console.log('Item: %o', item);
 		//Validate
-		if ( this.util.is_type(item, this.get_parent().Content_Item) ) {
+		if ( this.util.is_type(item, View.Content_Item) ) {
 			//Set current item
 			console.log('Setting current item');
 			this.current = item;
@@ -2246,11 +2309,17 @@ var Group = {
 		
 	get_next: function(item) {
 		console.group('Group.get_next');
-		var next = null;
-		if ( !this.util.is_type(item, this.get_parent().Content_Item) ) {
+		//Validate
+		if ( !this.util.is_type(item, View.Content_Item) ) {
 			console.log('Retrieving current item');
 			item = this.get_current();
 		}
+		if ( this.get_size() == 1 ) {
+			console.warn('Single item in group');
+			console.groupEnd();
+			return item;
+		}
+		var next = null;
 		var pos = this.get_pos(item);
 		if ( pos != -1 ) {
 			pos = ( pos + 1 < this.get_size() ) ? pos + 1 : 0;
@@ -2263,11 +2332,17 @@ var Group = {
 	
 	get_prev: function(item) {
 		console.group('Group.get_prev');
-		var prev = null;
-		if ( !this.util.is_type(item, this.get_parent().Content_Item) ) {
+		//Validate
+		if ( !this.util.is_type(item, View.Content_Item) ) {
 			console.log('Retrieving current item');
 			item = this.get_current();
 		}
+		if ( this.get_size() == 1 ) {
+			console.warn('Single item in group');
+			console.groupEnd();
+			return item;
+		}
+		var prev = null;
 		var pos = this.get_pos(item);
 		if ( pos != -1 ) {
 			if ( pos == 0 ) {
@@ -2283,23 +2358,27 @@ var Group = {
 	
 	show_next: function(item) {
 		console.groupCollapsed('Group.show_next');
-		//Retrieve item
-		var i = this.get_parent().get_item(this.get_next(item));
-		//Update current item
-		this.set_current(i);
-		//Show item
-		i.show();
+		if ( this.get_size() > 1 ) {
+			//Retrieve item
+			var i = this.get_parent().get_item(this.get_next(item));
+			//Update current item
+			this.set_current(i);
+			//Show item
+			i.show();
+		}
 		console.groupEnd();
 	},
 	
 	show_prev: function(item) {
 		console.group('Group.show_prev');
-		//Retrieve item
-		var i = this.get_parent().get_item(this.get_prev(item));
-		//Update current item
-		this.set_current(i);
-		//Show item
-		i.show();
+		if ( this.get_size() > 1 ) {
+			//Retrieve item
+			var i = this.get_parent().get_item(this.get_prev(item));
+			//Update current item
+			this.set_current(i);
+			//Show item
+			i.show();
+		}
 		console.groupEnd();
 	},
 	
@@ -2310,6 +2389,10 @@ var Group = {
 	get_size: function() {
 		return this.get_items().length;
 	},
+	
+	is_single: function() {
+		return ( this.get_size() == 1 );
+	}
 };
 
 View.Group = Component.extend(Group);
@@ -2713,10 +2796,6 @@ var Content_Item = {
 	},
 	
 	/* Group */
-	
-	has_group: function() {
-		return ( this.util.is_set(this.get_group()) ) ? true : false;
-	},
 
 	/**
 	 * Retrieve item's group
@@ -2725,15 +2804,19 @@ var Content_Item = {
 	 */
 	get_group: function(set_current) {
 		console.groupCollapsed('Item.get_group');
+		var prop = 'group';
 		//Check if group reference already set
-		var g = this.get_component('group', false, false);
+		var g = this.get_component(prop, false, false);
 		if ( g ) {
 			console.log('Group: %o', g);
-			if ( !!set_current ) {
-				g.set_current(this);
-			}
 		} else {
 			console.warn('No group reference: %o', g);
+			//Set empty group if no group exists
+			g = this.set_component(prop, new View.Group());
+			set_current = true;
+		}
+		if ( this.util.is_bool(set_current) && set_current ) {
+			g.set_current(this);
 		}
 		console.groupEnd();
 		return this.group;
@@ -2862,13 +2945,7 @@ var Theme = {
 	 * @return obj Theme models
 	 */
 	get_models: function() {
-		//Check prototype for theme models
-		if ( !this.util.is_obj(View.Theme.prototype._models) ) {
-			//Initialize theme models
-			this.get_parent().init_themes();
-		}
-		//Retrieve matching theme model
-		return View.Theme.prototype._models;
+		return this.get_parent().get_theme_models();
 	},
 	
 	/**
@@ -3002,7 +3079,9 @@ var Template = {
 	get_model: function() {
 		var m = this.get_attribute('model', null, false);
 		if ( !this.util.is_obj(m) ) {
+			//Set default value
 			m = {};
+			this.set_attribute('model', m, false);
 		}
 		return m;
 	},
@@ -3026,6 +3105,7 @@ var Template = {
 	 * @see Component.get_attribute()
 	 * @param string key Attribute to retrieve
 	 * @param mixed def (optional) Default value (Default: NULL)
+	 * @param bool check_model (optional) Whether to check model or not (Default: TRUE)
 	 * @return mixed Attribute value
 	 */
 	get_attribute: function(key, def, check_model) {
@@ -3047,7 +3127,16 @@ var Template = {
 		return ret;
 	},
 	
-	set_attribute: function(key, val) {
+	/**
+	 * Set attribute value
+	 * Gives priority to model values
+	 * @see Component.set_attribute()
+	 * @param string key Attribute to set
+	 * @param mixed val Value to set for attribute
+	 * @param bool check_model (optional) Whether to check model or not (Default: TRUE)
+	 * @return mixed Attribute value
+	 */
+	set_attribute: function(key, val, check_model) {
 		console.groupCollapsed('Template.set_attribute');
 		console.log('Key: %o \nValue: %o', key, val);
 		//Validate
@@ -3056,8 +3145,11 @@ var Template = {
 			console.groupEnd();
 			return false;
 		}
+		if ( !this.util.is_bool(check_model) ) {
+			check_model = true;
+		}
 		//Determine where to set attribute
-		if ( this.in_model(key) ) {
+		if ( check_model && this.in_model(key) ) {
 			console.info('Setting model attribute: %o', this.get_model());
 			//Set attribute in model
 			this.get_model()[key] = val;
@@ -3286,7 +3378,7 @@ var Template = {
 	},
 	
 	get_tag_attribute: function() {
-		return ['data', View.get_component_temp(View.Template_Tag).get_ns()].join('-');
+		return this.get_parent().get_component_temp(View.Template_Tag).dom_get_attribute();
 	},
 	
 	/**
@@ -3345,7 +3437,7 @@ var Template = {
 					el.addClass(tag.get_classes(' '));
 				}
 				//Clear data attribute
-				el.attr(attr, '');
+				el.removeAttr(attr);
 			});
 			//Save tags
 			this.set_attribute(a, tags);
@@ -3771,12 +3863,10 @@ View.add_template_tag_handler('ui', {
 		cl.viewers.push(vid);
 		
 		//Add event handlers
-		v.on('complete', this, function(v) {
+		v.on('events_init', this, function(v) {
 			console.info('Event Handler: Template_Tag_Handler(UI).complete');
 			//Register event handlers
-			if ( v.init ) {
-				return false;
-			}
+
 			/* Close */
 			
 			var close = function(e) {
@@ -3806,16 +3896,14 @@ View.add_template_tag_handler('ui', {
 			
 			/* Slideshow */
 			
-			if ( v.slideshow_enabled() ) {
-				var slideshow_control = function(e) {
-					console.info('Viewer.event.slideshow_control');
-					console.groupCollapsed('Tag.UI.slideshow_control');
-					v.slideshow_toggle();
-					console.groupEnd();
-				};
-				
-				v.dom_get_tag('ui', 'slideshow_control').click(slideshow_control);
-			}
+			var slideshow_control = function(e) {
+				console.info('Viewer.event.slideshow_control');
+				console.groupCollapsed('Tag.UI.slideshow_control');
+				v.slideshow_toggle();
+				console.groupEnd();
+			};
+			
+			v.dom_get_tag('ui', 'slideshow_control').click(slideshow_control);
 		});
 		
 		v.on('slideshow_toggle', this, function(v) {
@@ -3856,7 +3944,11 @@ View.add_template_tag_handler('ui', {
 			return item.get_viewer().get_label(prop);
 		},
 		'group_status': function(item, tag) {
-			//Get group status
+			//Handle single items
+			if ( item.get_group().is_single() ) {
+				return '';
+			}
+			//Handle groups with multiple items
 			out = item.get_viewer().get_label('group_status');
 			var key,
 				ph,
