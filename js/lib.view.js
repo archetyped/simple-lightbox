@@ -1198,7 +1198,7 @@ var Component = {
 					}
 					//Process internal attributes
 					//Strip prefix
-					key = opt.name.substr(attr_prefix.length);
+					key = opt.name.substr(attr_prefix.length + 1);
 					console.log('Attribute: %o \nValue: %o', key, opt.value);
 					this.set_attribute(key, opt.value);
 				}
@@ -1383,6 +1383,7 @@ var Component = {
 	 * @return obj jQuery DOM element
 	 */
 	dom_get: function(element, put, options) {
+		console.group('Component.dom_get: %o', this._slug);
 		//Init Component DOM
 		this.dom_init();
 		//Check for main DOM element
@@ -1396,6 +1397,7 @@ var Component = {
 				ret = this.dom_put(element, options);
 			}
 		}
+		console.groupEnd();
 		
 		return $(ret);
 	},
@@ -1518,22 +1520,34 @@ var Component = {
 	
 	/* Events */
 	
-	on: function(event, context, func, options) {
-		console.group('Component.on: %o', event);
+	/**
+	 * Register event handler for custom event
+	 * @param string event Custom event to register handler for
+	 * @param function func Event handler
+	 * @param obj options (optional) Configuration options for registering event handler
+	 * > overwrite	(bool)	Whether or not to overwrite existing handler in same context
+	 * @param string|Component context (optional) Specific context for event handler, allows handlers to only be registered once
+	 * @return obj Component instance (allows chaining) 
+	 */
+	on: function(event, func, options, context) {
+		console.groupCollapsed('Component.on: %o', this._slug + '.' + event);
 		/* Validate */
-		//Context
-		if ( this.util.is_func(context) && !this.util.is_func(func) ) {
-			//Shift parameters
-			options = func;
-			func = context;
-		}
 		//Request
 		if ( !this.util.is_string(event) || !this.util.is_func(func) ) {
+			console.warn('Invalid event handler');
 			console.groupEnd();
-			return false;
+			return this;
 		}
 		//Options
-		if ( !this.util.is_obj(options) ) {
+		//Check if options omitted
+		if ( this.util.is_string(options) || this.util.is_type(options, View.Component) ) {
+			//Set context from options parameter
+			console.info('Setting context');
+			context = arguments[2];
+			options = null;
+		}
+		if ( !this.util.is_obj(options, false) ) {
+			//Reset options
 			options = {};
 		}
 		//Merge options with defaults
@@ -1545,6 +1559,7 @@ var Component = {
 		//Context
 		var context_def = '0';
 		if ( !this.util.is_string(context) ) {
+			console.info('Normalizing context: %o', context);
 			if ( this.util.is_num(context) ) {
 				//Convert number to string context
 				context = context.toString();
@@ -1553,21 +1568,24 @@ var Component = {
 				context = context.get_id(true);
 				//Force unique handler
 				options.overwrite = false;
-			} else {
-				//Default context
-				context = context_def;
 			}
+		}
+		if ( !this.util.is_string(context) ) {
+			//Default context
+			context = context_def;
 		}
 		console.info('Event: %o \nContext: %o', event, context);
 		var es = this._events;
 		//Setup event
-		if ( !( event in es ) || !this.util.is_obj(es[event]) ) {
-			e = es[event] = {};
+		if ( !( event in es ) || !this.util.is_obj(es[event], false) ) {
+			es[event] = {};
 		}
+		var e = es[event];
 		//Check for duplicate handler
-		if ( !options.overwrite && context != context_def && ( context in e ) ) {
+		if ( !options.overwrite && ( context != context_def ) && ( context in e ) ) {
+			console.warn('Handler already registered');
 			console.groupEnd();
-			return false;
+			return this;
 		}
 		//Add context to event
 		if ( !( context in e ) ) {
@@ -1576,23 +1594,44 @@ var Component = {
 		//Add event handler
 		e[context].push(func);
 		console.groupEnd();
+		return this;
 	},
-		
-	trigger: function(event) {
-		console.groupCollapsed('Component.trigger: %o', event);
+	
+	/**
+	 * Trigger custom event
+	 * Event handlers are passed several parameters
+	 * > component	(obj)	Reference to current component instance
+	 * > ev			(obj)	Event object
+	 * 	> name	(string)	Event name
+	 * 	> data	(mixed)		Data to pass to handlers (if supplied)
+	 * @param string event Custom event to trigger
+	 * @param mixed data (optional) Data to pass to event handlers
+	 */
+	trigger: function(event, data) {
+		console.groupCollapsed('Component.trigger: %o', this._slug + '.' + event);
 		//Validate
 		if ( !this.util.is_string(event) || !( event in this._events ) ) {
+			console.warn('Invalid event');
 			console.groupEnd();
 			return false;
+		}
+		//Create event object
+		var ev = { 'name': event, 'data': null };
+		//Add data to event object
+		if ( this.util.is_set(data) ) {
+			ev.data = data;
 		}
 		//Call handlers for event
 		var es = this._events;
 		var ec;
-		for ( ev in this._events[event] ) {
-			ec = this._events[event][ev];
+		//Iterate through context buckets for event
+		for ( context in es[event] ) {
+			ec = es[event][context];
+			console.info('Bucket: %o (%o)', context, ec.length);
+			//Iterate though handlers in current context bucket
 			for ( var x = 0; x < ec.length; x++ ) {
-				//Call handler, passing component instance
-				ec[x](this);
+				//Call handler, passing component instance & event object
+				ec[x](this, ev);
 			}
 		}
 		console.groupEnd();
@@ -1731,7 +1770,7 @@ var Viewer = {
 	 * @param bool mode (optional) Set (TRUE) or unset (FALSE) loading mode (Default: TRUE)
 	 */
 	set_loading: function(mode) {
-		console.group('Viewer.set_loading: %o', mode);
+		console.groupCollapsed('Viewer.set_loading: %o', mode);
 		if ( !this.util.is_bool(mode) ) {
 			mode = true;
 		}
@@ -1816,12 +1855,15 @@ var Viewer = {
 	 * Load output into DOM
 	 */
 	dom_build: function() {
-		console.group('Viewer.dom_build');
+		console.groupCollapsed('Viewer.dom_build');
 		//Get theme output
 		console.info('Rendering Theme layout');
 		var v = this;
-		this.get_theme().render(this.get_item(), {
-			'loading': function(output) {
+		var th = this.get_theme();
+		//Theme event handlers
+		th
+			//Loading
+			.on('render-loading', function(theme, ev) {
 				console.groupCollapsed('Viewer.dom_build.loading (Callback)');
 				//Set loading flag
 				v.set_loading();
@@ -1831,10 +1873,11 @@ var Viewer = {
 				var top = $(document).scrollTop() + Math.min($(window).height() / 15, 20);
 				v.dom_get('layout').css('top', top + 'px').show();
 				console.groupEnd();
-			},
-			'complete': function(output) {
+			}, this)
+			//Complete
+			.on('render-complete', function(theme, ev) {
 				console.groupCollapsed('Viewer.dom_build.complete (Callback)');
-				console.log('Completed output: %o', output);
+				console.log('Completed output: %o', ev.data);
 				//Resize viewer to fit item
 				var dim = v.get_item().get_dimensions();
 				var content = v.dom_get_tag('item', 'content');
@@ -1857,12 +1900,13 @@ var Viewer = {
 				//Bind events
 				v.events_init();
 				//Trigger event
-				v.trigger('complete');
+				v.trigger('build-complete');
 				//Set viewer as initialized
 				v.init = true;
 				console.groupEnd();
-			}
-		});
+			}, this)
+			//Render
+			.render(this.get_item());
 		console.groupEnd();
 	},
 	
@@ -1893,16 +1937,16 @@ var Viewer = {
 			console.log('Theme ID: %o', this.get_theme().get_id(true));
 			console.log('DOM element added');
 			//Add theme layout (basic)
-			var t = this;
+			var v = this;
 			console.info('Rendering basic theme layout');
-			this.get_theme().render(null, {
-				'init': function(data) {
-					console.groupCollapsed('Viewer.dom_init.init (callback)');
-					console.info('Basic layout: %o', data);
-					t.dom_put('layout', data);
-					console.groupEnd();
-				}
-			});
+			var thm = this.get_theme();
+			thm.on('render-init', function(theme, ev) {
+				console.groupCollapsed('Viewer.dom_init.init (callback)');
+				console.info('Basic layout: %o', ev.data);
+				//Add rendered theme layout to viewer DOM
+				v.dom_put('layout', ev.data);
+				console.groupEnd();
+			}, this).render();
 		}
 		console.groupEnd();
 	},
@@ -2879,10 +2923,9 @@ var Content_Item = {
 	 * Display item in viewer
 	 * @uses get_viewer() to retrieve viewer instance for item
 	 * @uses Viewer.show() to display item in viewer
-	 * @TODO Debug execution (hanging)
 	 */
 	show: function() {
-		console.groupCollapsed('Item.show');
+		console.group('Item.show');
 		//Validate content type
 		if ( !this.get_type() ) {
 			return false;
@@ -3015,12 +3058,27 @@ var Theme = {
 	 * Render Theme output
 	 * Output passed to callback function
 	 * @param Content_Item item Item to render theme for
-	 * @param obj callbacks Functions to execute with rendered output (@see Template.render for reference)
 	 */
-	render: function(item, callbacks) {
+	render: function(item) {
 		console.group('Theme.render');
-		//Retrieve layout
-		this.get_template().render(item, callbacks);		console.groupEnd();
+		var thm = this;
+		var tpl = this.get_template();
+		//Register events
+		var events = [
+			'render-init',
+			'render-loading',
+			'render-complete'
+		];
+		var handler = function(e) {
+			return function(tp, ev) {
+				thm.trigger(e, ev.data);
+			}
+		};
+		for ( var x = 0; x < events.length; x++ ) {
+			tpl.on(events[x], handler(events[x]), this); 
+		}
+		//Render template
+		tpl.render(item);		console.groupEnd();
 	},
 };
 
@@ -3166,22 +3224,18 @@ var Template = {
 	 * Render output
 	 * Output passed to callback function
 	 * @param Content_Item item Item to render template for
-	 * @param obj callbacks Functions to execute with rendered output
 	 *  > loading: DOM elements created and item content about to be loaded
 	 *  > success: Item content loaded, ready for display
 	 */
-	render: function(item, callbacks) {
+	render: function(item) {
 		console.group('Template.render');
 		//Populate layout
 		if ( this.util.is_type(item, View.Content_Item) ) {
 			console.info('Rendering Item');
-			var v = item.get_viewer();
-			//Initialize Viewer in DOM
-			var d = v.dom_get();
-			//Iterate through tags (DOM placeholders) and populate layout
+			//Iterate through tags and populate layout
 			if ( this.has_tags() ) {
-				this.do_callback(callbacks, 'loading', d);
-				var instance = this;
+				this.trigger('render-loading');
+				var tpl = this;
 				var tags = this.get_tags(),
 					tag,
 					tag_count = 0;
@@ -3200,7 +3254,7 @@ var Template = {
 						console.log('Parsed tags: %o / %o', tag_count, tags.length);
 						//Execute callback once all tags have been rendered
 						if ( tag_count == tags.length ) {
-							instance.do_callback(callbacks, 'complete', d);
+							tpl.trigger('render-complete');
 						}
 						console.groupEnd();
 					});
@@ -3208,9 +3262,9 @@ var Template = {
 				}
 			}
 		} else {
+			console.info('Building basic layout');
 			//Get Layout (basic)
-			console.groupEnd();
-			return this.do_callback(callbacks, 'init', this.dom_get());
+			this.trigger('render-init', this.dom_get());
 		}
 		console.groupEnd();
 	},
@@ -3863,7 +3917,7 @@ View.add_template_tag_handler('ui', {
 		cl.viewers.push(vid);
 		
 		//Add event handlers
-		v.on('events_init', this, function(v) {
+		v.on('events_init', function(v) {
 			console.info('Event Handler: Template_Tag_Handler(UI).complete');
 			//Register event handlers
 
@@ -3904,9 +3958,9 @@ View.add_template_tag_handler('ui', {
 			};
 			
 			v.dom_get_tag('ui', 'slideshow_control').click(slideshow_control);
-		});
+		}, this);
 		
-		v.on('slideshow_toggle', this, function(v) {
+		v.on('slideshow_toggle', function(v) {
 			console.group('Tag.UI.slideshow_toggle');
 			//Render slideshow control tag
 			var nodes = v.dom_get_tag('ui', 'slideshow_control');
@@ -3925,7 +3979,7 @@ View.add_template_tag_handler('ui', {
 				});
 			}
 			console.groupEnd();
-		});
+		}, this);
 		console.groupEnd();
 	},
 	render: function(item, tag, callback) {
