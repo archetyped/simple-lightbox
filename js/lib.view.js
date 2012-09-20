@@ -1565,14 +1565,11 @@ var Component = {
 				context = context.toString();
 			} else if ( this.util.is_type(context, View.Component) ) {
 				//Build context from component instance
-				context = context.get_id(true);
+				var id = context.get_id(true);
+				context = ( this.util.is_string(id) ) ? id : context_def;
 				//Force unique handler
 				options.overwrite = false;
 			}
-		}
-		if ( !this.util.is_string(context) ) {
-			//Default context
-			context = context_def;
 		}
 		console.info('Event: %o \nContext: %o', event, context);
 		var es = this._events;
@@ -1616,7 +1613,7 @@ var Component = {
 			return false;
 		}
 		//Create event object
-		var ev = { 'name': event, 'data': null };
+		var ev = { 'type': event, 'data': null };
 		//Add data to event object
 		if ( this.util.is_set(data) ) {
 			ev.data = data;
@@ -3238,28 +3235,26 @@ var Template = {
 				var tpl = this;
 				var tags = this.get_tags(),
 					tag,
-					tag_count = 0;
+					tag_promises = [];
 				console.info('Tags exist: %o', tags);
 				//Render Tag output
 				for ( var x = 0; x < tags.length; x++ ) {
 					tag = tags[x];
 					console.log('Tag DOM: %o', tag.dom_get().get(0));
 					console.groupCollapsed('Processing Tag: %o', [tag.get_name(), tag.get_prop()].join('.'));
-					tag.render(item, function(output) {
-						console.log('Tag rendered: %o', [this.get_name(), this.get_prop()].join('.'));
+					tag_promises.push(tag.render(item).done(function(r) {
+						console.log('Tag rendered: %o', [r.tag.get_name(), r.tag.get_prop()].join('.'));
 						console.group('Tag Processing Callback');
-						console.info('Tag Output: %o', output);
-						this.dom_get().html(output);
-						tag_count++;
-						console.log('Parsed tags: %o / %o', tag_count, tags.length);
-						//Execute callback once all tags have been rendered
-						if ( tag_count == tags.length ) {
-							tpl.trigger('render-complete');
-						}
+						console.info('Tag Output: %o', r.output);
+						r.tag.dom_get().html(r.output);
 						console.groupEnd();
-					});
+					}));
 					console.groupEnd();
 				}
+				//Fire event when all tags rendered
+				$.when.apply($, tag_promises).done(function() {
+					tpl.trigger('render-complete');
+				});
 			}
 		} else {
 			console.info('Building basic layout');
@@ -3672,10 +3667,16 @@ var Template_Tag = {
 	/**
 	 * Render tag output
 	 * @param Content_Item item
-	 * @param function callback Callback function to pass output to
+	 * @return obj jQuery.Promise object that is resolved when tag is rendered
+	 * Parameters passed to callbacks
+	 * > tag 	obj		Current tag instance
+	 * > output	string	Tag output
 	 */
-	render: function(item, callback) {
-		return ( this.has_handler() ) ? this.get_handler().render(item, this, callback.bind(this)) : '';
+	render: function(item) {
+		var tag = this;
+		return tag.get_handler().render(item, tag).pipe(function(output) {
+			return {'tag': tag, 'output': output};
+		});
 	},
 	
 	/**
@@ -3695,10 +3696,10 @@ var Template_Tag = {
 	
 	/**
 	 * Retrieve tag handler
-	 * @return Template_Tag_Handler Handler instance (NULL if handler does not exist)
+	 * @return Template_Tag_Handler Handler instance (Empty instance if handler does not exist)
 	 */
 	get_handler: function() {
-		return ( this.has_handler() ) ? this.handlers[this.get_name()] : null;
+		return ( this.has_handler() ) ? this.handlers[this.get_name()] : new View.Template_Tag_Handler('');
 	},
 	
 	/**
@@ -3792,14 +3793,18 @@ var Template_Tag_Handler = {
 	
 	/**
 	 * Render tag output
-	 * Rendered output passed to callback function
 	 * @param Content_Item item Item currently being displayed
-	 * @param Template_Tag instance Tag instance (from template)
-	 * @param function callback Callback function to pass output to
+	 * @param Template_Tag Tag instance (from template)
+	 * @return obj jQuery.Promise linked to rendering process
 	 */
-	render: function(item, instance, callback) {
+	render: function(item, instance) {
 		console.group('Template_Tag_Handler.render');
-		this.call_attribute('render', item, instance, callback);
+		var hdl = this;
+		return $.Deferred(function(dfr) {
+			hdl.call_attribute('render', item, instance, function(output) {
+				dfr.resolve(output);
+			});
+		}).promise();
 		console.groupEnd();
 	},
 	
