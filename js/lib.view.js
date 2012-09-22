@@ -233,12 +233,11 @@ var View = {
 		//Default: Create default component
 		if ( this.util.is_empty(ret) ) {
 			console.warn('Component does not exist\nID: %o \nType: %o \nReturn: %o', id, type.prototype._slug, ret);
-			if ( !this.util.is_empty(id) || this.component_make_default(type) ) {
+			if ( this.util.is_string(id) || this.component_make_default(type) ) {
 				console.log('Creating new component instance');
 				ret = this.add_component(type, id);
 			}
 		}
-
 		console.groupEnd();
 		//Return component
 		return ret;
@@ -330,6 +329,7 @@ var View = {
 	 * @return obj Temporary component instance
 	 */
 	get_component_temp: function(type) {
+		console.info('Get default component: %o', type.prototype._slug);
 		return ( this.has_component_temp(type) ) ? this.component_temps[type.prototype._slug] : this.add_component_temp(type);
 	},
 	
@@ -484,8 +484,10 @@ var View = {
 	 */
 	get_item: function(el) {
 		console.groupCollapsed('View.get_item');
+		console.log('Element: %o', el);
 		//Check if item instance attached to element
 		var key = this.get_component_temp(this.Content_Item).get_data_key();
+		console.log('Data Key: %o', key);
 		var item = $(el).data(key);
 		if ( this.util.is_empty(item) ) {
 			console.log('Creating new content item');
@@ -541,14 +543,11 @@ var View = {
 		for ( var p = 0; p < pri.length; p++ ) {
 			console.log('Priority: %o', pri[p]);
 			g = types[pri[p]];
+			console.log('Items in group: %o', g.length);
+			console.dir(g);
 			for ( var x = 0; x < g.length; x++ ) {
 				console.groupCollapsed('Checking Type: %o', g[x]);
 				type = g[x];
-				//Init type if necessary
-				if ( this.util.is_array(type, false) ) {
-					console.log('Initializing type');
-					type = g[x] = new this.Content_Type(type[0], type[1]);
-				}
 				console.log('Checking Type Match: %o', type);
 				if ( type.match(item) ) {
 					console.info('Matching type found: %o', type.get_id());
@@ -589,7 +588,7 @@ var View = {
 		if ( !(priority in types) ) {
 			types[priority] = [];
 		}
-		types[priority].push([id, attributes]);
+		types[priority].push(new this.Content_Type(id, attributes));
 		console.log('Types: %o \nCollection: %o', types, this.get_components(this.Content_Type));
 		console.groupEnd();
 	},
@@ -801,18 +800,18 @@ var Component = {
 	 * @var DOM Element 
 	 */
 	_dom: null,
-	
-	/**
-	 * DOM element attribute that stores component attributes
-	 * @var string
-	 */
-	_dom_attr: null,
-	
+
 	/**
 	 * Default attributes
 	 * @var object
 	 */
 	_attr_default: {},
+	
+	/**
+	 * Attributes passed to constructor
+	 * @var obj
+	 */
+	_attr_init: null,
 	
 	/**
 	 * Attributes to retrieve from parent (controller)
@@ -854,9 +853,9 @@ var Component = {
 		this.set_id(id);
 		console.info('ID set: %o', id);
 		
-		//Set attributes
+		//Save init attributes
 		console.info('Setting attributes: %o', attributes);
-		this.set_attributes(attributes);
+		this._attr_init = attributes;
 		console.groupEnd();
 	},
 	
@@ -1031,11 +1030,12 @@ var Component = {
 	 * 	 > Check parent object (controller)
 	 * @uses _containers to check potential container components for references
 	 * @param string cname Component name
+	 * @param bool check_attr (optional) Whether or not to check instance attributes for component (Default: TRUE)
 	 * @param bool get_default (optional) Whether or not to retrieve default object from controller if none exists in current instance (Default: TRUE)
 	 * @param bool recursive (optional) Whether or not to check containers for specified component reference (Default: TRUE) 
 	 * @return object|null Component reference (NULL if no component found)
 	 */
-	get_component: function(cname, get_default, recursive) {
+	get_component: function(cname, check_attr, get_default, recursive) {
 		console.groupCollapsed('Component.get_component(): %o', cname);
 		console.log('Property: %o \nGet Default: %o \nRecursive: %o', cname, get_default, recursive);
 		var c = null;
@@ -1047,6 +1047,9 @@ var Component = {
 		}
 		
 		//Normalize parameters
+		if ( !this.util.is_bool(check_attr) ) {
+			check_attr = true;
+		}
 		if ( !this.util.is_bool(get_default) ) {
 			get_default = true;
 		}
@@ -1055,7 +1058,7 @@ var Component = {
 		}
 		var ctype = this._refs[cname];
 		
-		console.log('Validated Parameters\nProperty: %o \nType: %o \nGet Default: %o \nRecursive: %o', cname, ctype._slug, get_default, recursive);
+		console.log('Validated Parameters\nProperty: %o \nType: %o \nGet Default: %o \nRecursive: %o', cname, ctype.prototype._slug, get_default, recursive);
 
 		//Phase 1: Check if component reference previously set
 		console.info('Check for property');
@@ -1069,14 +1072,16 @@ var Component = {
 		c = this[cname] = null;
 				
 		//Phase 2: Check attributes
-		console.info('Check for component in attributes');
-		console.log('Attributes: %o', this.get_attributes());
-		c = this.get_attribute(cname);
-		console.log('Attribute value: %o', c);
-		//Save object-specific component reference
-		if ( !this.util.is_empty(c) ) {
-			console.log('Saving component');
-			c = this.set_component(cname, c);
+		if ( check_attr ) {
+			console.info('Check for component in attributes');
+			console.log('Attributes: %o', this.get_attributes());
+			c = this.get_attribute(cname);
+			console.log('Attribute value: %o', c);
+			//Save object-specific component reference
+			if ( !this.util.is_empty(c) ) {
+				console.log('Saving component');
+				c = this.set_component(cname, c);
+			}
 		}
 
 		//Phase 3: Check Container(s)
@@ -1095,7 +1100,7 @@ var Component = {
 					continue;
 				}
 				//Retrieve container
-				con = this.get_component(con, false);
+				con = this.get_component(con, true, false);
 				console.log('Container: %o', con);
 				if ( this.util.is_empty(con) ) {
 					console.warn('Container could not be found, skipping');
@@ -1153,12 +1158,13 @@ var Component = {
 			ref = this.get_parent().get_component(ctype, ref);
 		}
 		
-		ref = ( this.util.is_type(ref, ctype) ) ? ref : clear;
+		if ( !this.util.is_type(ref, ctype) ) {
+			ref = clear;
+		}
 
 		//Additional validation
-		if ( !this.util.is_empty(ref) && this.util.is_func(validate) && !validate.apply(this, [ref]) ) {
+		if ( !this.util.is_empty(ref) && this.util.is_func(validate) && !validate.call(this, ref) ) {
 			ref = clear;
-				
 		}
 		//Set (or clear) component reference
 		this[name] = ref;
@@ -1171,41 +1177,97 @@ var Component = {
 	/* Attributes */
 	
 	/**
-	 * Initialize attributes
-	 * @uses set_attributes() to Reset attributes
-	 * @uses dom_get() to retrieve DOM element
-	 * @uses _dom_attr to retrieve attributes from DOM element
-	 * @param obj attributes (optional) Attributes to set
+	 * Initializes attributes
 	 */
-	parse_attributes: function(attributes) {
-		console.groupCollapsed('Item.parse_attributes');
-		//Reset attributes
-		this.set_attributes(attributes, true);
-		
-		el = this.dom_get();
-		if ( !this.util.is_empty(el) ) {
-			//Get attributes from element
+	init_attributes: function(force) {
+		if ( !this.util.is_bool(force) ) {
+			force = false;
+		}
+		if ( force || !this.util.is_obj(this.attributes) ) {
+			console.groupCollapsed('Component.init_attributes');
+			console.info('Initializing attributes');
+			this.attributes = {};
+			//Build attribute groups
+			var attrs = [{}];
+			attrs.push(this.init_default_attributes());
+			if ( this.dom_has() ) {
+				attrs.push(this.get_dom_attributes());
+			}
+			if ( this.util.is_obj(this._attr_init) ) {
+				attrs.push(this._attr_init);
+			}
+			console.log('Attribute objects: %o', attrs);
+			//Merge attributes
+			this.attributes = $.extend.apply(null, attrs);
+			console.groupEnd()
+		}
+	},
+	
+	/**
+	 * Generate default attributes for component
+	 * @uses _attr_parent to determine options to retrieve from controller
+	 * @uses View.get_options() to get values from controller
+	 * @uses _attr_map to Remap controller attributes to instance attributes
+	 * @uses _attr_default to Store default attributes
+	 */
+	init_default_attributes: function() {
+		console.groupCollapsed('Component.init_default_attributes');
+		console.log('Default attributes: %o', this._attr_default);
+		console.log('Get parent options: %o', this._attr_parent);
+		//Get parent options
+		var opts = this.get_parent().get_options(this._attr_parent);
+		console.log('Parent Options: %o \nEmpty: %o', opts, this.util.is_empty(opts));
+		if ( this.util.is_obj(opts) ) {
+			console.log('Remap options: %o \nMap: %o', opts, this._attr_map);
+			//Remap
+			for ( var opt in this._attr_map ) {
+				if ( opt in opts ) {
+					//Move value to new property
+					opts[this._attr_map[opt]] = opts[opt];
+					//Delete old property
+					delete opts[opt];
+				}
+			}
+			console.info('Options remapped: %o', opts);
+			//Merge with default attributes
+			$.extend(true, this._attr_default, opts);
+			console.log('Options merged with defaults: %o', this._attr_default);
+		}
+		console.groupEnd();
+		return this._attr_default;
+	},
+	
+	/**
+	 * Retrieve DOM attributes
+	 */
+	get_dom_attributes: function() {
+		console.groupCollapsed('Component.get_dom_attributes');
+		var attrs = {};
+		var el = this.dom_get();
+		if ( el.length ) {
 			console.info('Checking DOM element for attributes');
+			//Get attributes from element
 			var opts = $(el).get(0).attributes;
 			if ( this.util.is_obj(opts) ) {
 				console.group('Processing DOM Attributes: %o', opts);
-				var opt, key;
 				var attr_prefix = this.util.get_attribute();
-				for ( var x = 0; x < opts.length; x++ ) {
-					opt = opts[x];
+				$.each(opts, function(idx, opt) {
 					if ( opt.name.indexOf( attr_prefix ) == -1 ) {
-						continue;
+						return true;
 					}
-					//Process internal attributes
+					console.log('Index: %o \nOption: %o', idx, opt.name);
+					//Process custom attributes
 					//Strip prefix
-					key = opt.name.substr(attr_prefix.length + 1);
+					var key = opt.name.substr(attr_prefix.length + 1);
 					console.log('Attribute: %o \nValue: %o', key, opt.value);
-					this.set_attribute(key, opt.value);
-				}
+					attrs[key] = opt.value;
+				});
 				console.groupEnd();
 			}
 		}
+		console.log('DOM Attribute: %o', attrs);
 		console.groupEnd();
+		return attrs;
 	},
 	
 	/**
@@ -1215,10 +1277,9 @@ var Component = {
 	 * @return obj Attributes
 	 */
 	get_attributes: function() {
-		//Parse attributes on first access
-		if ( this.util.is_bool(this.attributes) ) {
-			this.parse_attributes();
-		}
+		//Initilize attributes
+		this.init_attributes();
+		//Return attributes
 		return this.attributes;
 	},
 	
@@ -1248,7 +1309,8 @@ var Component = {
 			//Get arguments
 			var args = Array.prototype.slice.call(arguments, 1);
 			//Pass arguments to user-defined method
-			attr.apply(this, args);
+			console.groupEnd();
+			return attr.apply(this, args);
 		}
 		console.groupEnd();
 	},
@@ -1263,35 +1325,6 @@ var Component = {
 	},
 	
 	/**
-	 * Generate default attributes for component
-	 * @uses _attr_parent to determine options to retrieve from controller
-	 * @uses View.get_options() to get values from controller
-	 * @uses _attr_map to Remap controller attributes to instance attributes
-	 * @uses _attr_default to Store default attributes
-	 */
-	build_default_attributes: function() {
-		console.groupCollapsed('Component.build_default_attributes');
-		console.log('Get parent options: %o', this._attr_parent);
-		//Get parent options
-		var opts = this.get_parent().get_options(this._attr_parent);
-		console.log('Remap options: %o \nMap: %o', opts, this._attr_map);
-		//Remap
-		for ( var opt in this._attr_map ) {
-			if ( opt in opts ) {
-				//Move value to new property
-				opts[this._attr_map[opt]] = opts[opt];
-				//Delete old property
-				delete opts[opt];
-			}
-		}
-		console.info('Options remapped: %o', opts);
-		//Merge with default attributes
-		$.extend(true, this._attr_default, opts);
-		console.log('Options merged with defaults: %o', this._attr_default);
-		console.groupEnd();
-	},
-	
-	/**
 	 * Set component attributes
 	 * @param obj attributes Attributes to set
 	 * @param bool full (optional) Whether to fully replace or merge component's attributes with new values (Default: Merge)  
@@ -1303,17 +1336,14 @@ var Component = {
 			full = false;
 		}
 
-		//Reset attributes
-		this.build_default_attributes();
-		if ( full || this.util.is_empty(this.attributes) ) {
-			this.attributes = $.extend({}, this._attr_default);
-		}
+		//Initialize attributes
+		this.init_attributes(full);
 		
 		//Merge new/existing attributes
-		if ( $.isPlainObject(attributes) && !this.util.is_empty(attributes) ) {
+		if ( this.util.is_obj(attributes) ) {
 			$.extend(this.attributes, attributes);
 		}
-		console.dir(this.attributes);
+		
 		console.groupEnd();
 	},
 	
@@ -1350,12 +1380,15 @@ var Component = {
 	 * @param string|obj (jQuery) el DOM element to attach instance to
 	 */
 	dom_set: function(el) {
+		console.groupCollapsed('Component.dom_set');
+		console.log('Element: %o', el);
 		//Save instance to DOM object
 		$(el).data(this.get_data_key(), this);
 		//Save DOM object to instance
 		if ( this._reciprocal ) {
 			this._dom = $(el);
 		}
+		console.groupEnd();
 	},
 
 	/**
@@ -1466,32 +1499,6 @@ var Component = {
 	/* Data */
 	
 	/**
-	 * Execute callback function
-	 * Validates callback and passes data to it
-	 * @param function|obj callback Callback to validate/execute
-	 *  > If callback is obj, next parameter is key containing actual callback
-	 * @param mixed data Data to pass to callback function (Variable number of parameters may be passed to callback)
-	 * @return mixed Original data 
-	 */
-	do_callback: function(callback, data) {
-		var i = 1;
-		//Parse request
-		if ( this.util.is_obj(callback) && this.util.is_string(arguments[i]) && ( arguments[i] in callback ) ) {
-			callback = callback[arguments[i]];
-			i++;
-		}
-		//Build callback parameters
-		data = ( arguments.length > i ) ? Array.prototype.slice.call(arguments, i) : [];
-		//Validate
-		if ( this.util.is_func(callback) ) {
-			//Execute callback
-			callback.apply(this, data);
-		}
-		//Return first data parameter
-		return ( this.util.is_array(data) && data.length > 0 ) ? data[0] : data;
-	},
-	
-	/**
 	 * Retrieve key used to store data in DOM element
 	 * @return string Data key 
 	 */
@@ -1531,6 +1538,25 @@ var Component = {
 	 */
 	on: function(event, func, options, context) {
 		console.groupCollapsed('Component.on: %o', this._slug + '.' + event);
+		console.log('Event: %o \nFunc: %o \nOptions: %o \nContext: %o', event, func, options, context);
+		//Add event handlers via array
+		if ( this.util.is_array(event) ) {
+			var t = this;
+			$.each(event, function(idx, val) {
+				t.on(val, func, options, context);
+			});
+			console.groupEnd();
+			return this;
+		}
+		//Add event handlers via map object
+		if ( this.util.is_obj(event) ) {
+			for ( var key in event ) {
+				this.on(key, event[key], func, options);
+			}
+			console.groupEnd();
+			return this;
+		}
+		
 		/* Validate */
 		//Request
 		if ( !this.util.is_string(event) || !this.util.is_func(func) ) {
@@ -1571,10 +1597,14 @@ var Component = {
 				options.overwrite = false;
 			}
 		}
+		if ( !this.util.is_string(context) ) {
+			context = context_def;
+		}
 		console.info('Event: %o \nContext: %o', event, context);
 		var es = this._events;
 		//Setup event
 		if ( !( event in es ) || !this.util.is_obj(es[event], false) ) {
+			console.info('Initializing event: %o', event);
 			es[event] = {};
 		}
 		var e = es[event];
@@ -1606,6 +1636,14 @@ var Component = {
 	 */
 	trigger: function(event, data) {
 		console.groupCollapsed('Component.trigger: %o', this._slug + '.' + event);
+		if ( this.util.is_array(event) ) {
+			var t = this;
+			$.each(event, function(idx, val) {
+				t.trigger(val, data);
+			});
+			console.groupEnd();
+			return true;
+		}
 		//Validate
 		if ( !this.util.is_string(event) || !( event in this._events ) ) {
 			console.warn('Invalid event');
@@ -1720,8 +1758,8 @@ var Viewer = {
 	 */
 	set_item: function(item) {
 		console.groupCollapsed('Viewer.set_item');
-		var i = this.set_component('item', item, function(instance) {
-			return ( !this.util.is_empty(instance.get_type()) );
+		var i = this.set_component('item', item, function(item) {
+			return ( item.has_type() );
 		});
 		console.groupEnd();
 		return ( !this.util.is_empty(i) );
@@ -1742,7 +1780,7 @@ var Viewer = {
 	get_theme: function() {
 		console.groupCollapsed('Viewer.get_theme');
 		//Get saved theme
-		var ret = this.get_component('theme', false, false);
+		var ret = this.get_component('theme', true, false, false);
 		if ( this.util.is_empty(ret) ) {
 			//Theme needs to be initialized
 			ret = this.set_component('theme', new View.Theme());
@@ -1810,7 +1848,7 @@ var Viewer = {
 	 * Display content in lightbox
 	 */
 	show: function(item) {
-		console.group('Viewer.show');
+		console.groupCollapsed('Viewer.show');
 		console.info('Set current item');
 		//Validate request
 		if ( !this.set_item(item) || !this.get_theme() ) {
@@ -1852,66 +1890,61 @@ var Viewer = {
 	 * Load output into DOM
 	 */
 	dom_build: function() {
-		console.groupCollapsed('Viewer.dom_build');
+		console.group('Viewer.dom_build');
 		//Get theme output
 		console.info('Rendering Theme layout');
 		var v = this;
 		var th = this.get_theme();
 		//Theme event handlers
 		th
-			//Loading
-			.on('render-loading', function(theme, ev) {
-				console.groupCollapsed('Viewer.dom_build.loading (Callback)');
-				//Set loading flag
-				v.set_loading();
-				//Display overlay
-				v.overlay_show();
-				//Display viewer
-				var top = $(document).scrollTop() + Math.min($(window).height() / 15, 20);
-				v.dom_get('layout').css('top', top + 'px').show();
-				console.groupEnd();
-			}, this)
-			//Complete
-			.on('render-complete', function(theme, ev) {
-				console.groupCollapsed('Viewer.dom_build.complete (Callback)');
-				console.log('Completed output: %o', ev.data);
-				//Resize viewer to fit item
-				var dim = v.get_item().get_dimensions();
-				var content = v.dom_get_tag('item', 'content');
-				//Display item media
-				content.width(dim.width).height(dim.height + 20).show();
-				//Unset loading flag
-				v.unset_loading();
-				console.info('Theme loaded');
-				//Set classes
-				var d = v.dom_get();
-				var classes = ['item_single', 'item_multi'];
-				var ms = ['addClass', 'removeClass']; 
-				if ( !v.get_item().get_group().is_single() ) {
-					ms.reverse();
+			.on({
+				//Loading
+				'render-loading': function(theme, ev) {
+					console.group('Viewer.dom_build.loading (Callback)');
+					//Set loading flag
+					v.set_loading();
+					//Display overlay
+					v.overlay_show();
+					//Display viewer
+					var top = $(document).scrollTop() + Math.min($(window).height() / 15, 20);
+					v.dom_get('layout').css('top', top + 'px').show();
+					console.groupEnd();
+				},
+				//Complete
+				'render-complete': function(theme, ev) {
+					console.groupCollapsed('Viewer.dom_build.complete (Callback)');
+					console.log('Completed output: %o', ev.data);
+					//Resize viewer to fit item
+					var dim = v.get_item().get_dimensions();
+					var content = v.get_theme().dom_get_tag('item', 'content');
+					//Display item media
+					content.width(dim.width).height(dim.height + 20).show();
+					//Unset loading flag
+					v.unset_loading();
+					console.info('Theme loaded');
+					//Set classes
+					var d = v.dom_get();
+					var classes = ['item_single', 'item_multi'];
+					var ms = ['addClass', 'removeClass']; 
+					if ( !v.get_item().get_group().is_single() ) {
+						ms.reverse();
+					}
+					var m;
+					for ( var x = 0; x < ms.length; x++ ) {
+						d[ms[x]](classes[x]);
+					}
+					//Bind events
+					v.events_init();
+					//Trigger event
+					v.trigger('build-complete');
+					//Set viewer as initialized
+					v.init = true;
+					console.groupEnd();
 				}
-				var m;
-				for ( var x = 0; x < ms.length; x++ ) {
-					d[ms[x]](classes[x]);
-				}
-				//Bind events
-				v.events_init();
-				//Trigger event
-				v.trigger('build-complete');
-				//Set viewer as initialized
-				v.init = true;
-				console.groupEnd();
 			}, this)
 			//Render
 			.render(this.get_item());
 		console.groupEnd();
-	},
-	
-	/**
-	 * Retrieve DOM element tag 
-	 */
-	dom_get_tag: function(tag, prop) {
-		return $(this.get_theme().get_template().dom_get_tag(this, tag, prop));
 	},
 	
 	/**
@@ -1963,7 +1996,7 @@ var Viewer = {
 	 */
 	overlay_enabled: function() {
 		var ov = this.get_attribute('overlay_enabled');
-		return ( this.util.is_bool(ov) && ov );
+		return ( this.util.is_bool(ov) ) ?  ov : false;
 	},
 	
 	/**
@@ -1971,13 +2004,20 @@ var Viewer = {
 	 * @return jQuery Overlay element (NULL if no overlay set for viewer)
 	 */
 	get_overlay: function() {
+		console.group('Viewer.get_overlay');
 		var o = null;
 		var el = 'overlay';
+		console.log('Enabled: %o', this.overlay_enabled());
 		if ( this.dom_has(el) ) {
+			console.info('Overlay exists');
 			o = this.dom_get(el);
 		} else if ( this.overlay_enabled() ) {
+			console.info('Creating overlay');
 			o = this.dom_put(el).hide();
+		} else {
+			console.warn('Problem with overlay');
 		}
+		console.groupEnd();
 		return $(o);
 	},
 	
@@ -1985,6 +2025,7 @@ var Viewer = {
 	 * Display overlay
 	 */
 	overlay_show: function() {
+		console.info('Show overlay');
 		this.dom_get().show();
 		this.get_overlay().fadeIn();
 	},
@@ -2056,7 +2097,7 @@ var Viewer = {
 		this.get_overlay().click(close);
 		
 		//Fire event
-		this.trigger('events_init');
+		this.trigger('events-init');
 		console.groupEnd();
 	},
 		
@@ -2111,7 +2152,7 @@ var Viewer = {
 			//Show next item
 			v.item_next();
 		});
-		this.trigger('slideshow_start');
+		this.trigger('slideshow-start');
 	},
 	
 	/**
@@ -2127,7 +2168,7 @@ var Viewer = {
 		}
 		//Kill timers
 		this.slideshow_clear_timer();
-		this.trigger('slideshow_stop');
+		this.trigger('slideshow-stop');
 	},
 	
 	slideshow_toggle: function() {
@@ -2142,7 +2183,7 @@ var Viewer = {
 		} else {
 			this.slideshow_start();
 		}
-		this.trigger('slideshow_toggle');
+		this.trigger('slideshow-toggle');
 		console.groupEnd();
 	},
 	
@@ -2165,7 +2206,7 @@ var Viewer = {
 				this.slideshow_stop(false);
 			}
 		}
-		this.trigger('slideshow_pause');
+		this.trigger('slideshow-pause');
 	},
 	
 	/**
@@ -2181,8 +2222,8 @@ var Viewer = {
 	item_next: function() {
 		var g = this.get_item().get_group(true);
 		var v = this;
-		g.on('item_next', function(g) {
-			v.trigger('item_next');
+		g.on('item-next', function(g) {
+			v.trigger(['item-next', 'item-change']);
 		});
 		g.show_next();
 	},
@@ -2193,8 +2234,8 @@ var Viewer = {
 	item_prev: function() {
 		var g = this.get_item().get_group(true);
 		var v = this;
-		g.on('item_prev', function(g) {
-			v.trigger('item_prev');
+		g.on('item-prev', function(g) {
+			v.trigger(['item-prev','item-change']);
 		});
 		g.show_prev();
 	},
@@ -2203,7 +2244,7 @@ var Viewer = {
 	 * Close viewer
 	 */
 	close: function(e) {
-		console.group('Viewer.close');
+		console.groupCollapsed('Viewer.close');
 		console.log('Init: %o \nItem: %o', this.init, this.get_item().dom_get());
 		
 		//Close viewer
@@ -2237,10 +2278,6 @@ var Group = {
 	_reciprocal: true,
 	_refs: {
 		'current': 'Content_Item'
-	},
-	
-	_attr_default: {
-		
 	},
 	
 	/* References */
@@ -2372,7 +2409,7 @@ var Group = {
 	},
 	
 	get_prev: function(item) {
-		console.group('Group.get_prev');
+		console.groupCollapsed('Group.get_prev');
 		//Validate
 		if ( !this.util.is_type(item, View.Content_Item) ) {
 			console.log('Retrieving current item');
@@ -2448,7 +2485,7 @@ var Content_Type = {
 	
 	_slug: 'content_type',
 	_refs: {
-		'item': 'Content_Item'
+		'item': 'Content_Item',
 	},
 	
 	/* References */
@@ -2483,7 +2520,7 @@ var Content_Type = {
 	 * @return mixed Content_Item if valid item set, NULL otherwise
 	 */
 	get_item: function() {
-		return this.get_component('item', false);
+		return this.get_component('item', true, false);
 	},
 	
 	/**
@@ -2553,24 +2590,29 @@ var Content_Type = {
 	
 	/**
 	 * Render output to display item
-	 * Passes retrieved output to callback function
 	 * @param Content_Item item Item to render output for
-	 * @param function callback Function to execute once output rendered
+	 * @return obj jQuery.Promise that is resolved when item is rendered
 	 */
-	render: function(item, callback) {
+	render: function(item) {
 		console.groupCollapsed('Content_Type.render');
+		var dfr = $.Deferred();
 		//Validate
-		var a = this.get_attribute('render', null);
-		//String format
-		if ( this.util.is_string(a) ) {
-			console.log('Processing string format');
-			this.do_callback(callback, a.sprintf(item.get_uri()));
+		var ret = this.call_attribute('render', item);
+		if ( this.util.is_promise(ret) ) {
+			ret.done(function(output) {
+				dfr.resolve(output);
+			});
 		} else {
-			//Pass item and callback to method
-			console.info('Processing render function');
-			this.call_attribute('render', item, callback);
+			//String format
+			if ( this.util.is_string(ret) ) {
+				console.log('Processing string format');
+				ret = ret.sprintf(item.get_uri());
+			}
+			//Resolve deferred immediately
+			dfr.resolve(ret);
 		}
 		console.groupEnd();
+		return dfr.promise();
 	}
 };
 
@@ -2592,8 +2634,6 @@ var Content_Item = {
 	},
 	_containers: ['group'],
 	
-	_dom_attr: 'rel',
-		
 	_attr_default: {
 		source: null,
 		permalink: null,
@@ -2620,6 +2660,8 @@ var Content_Item = {
 		console.info('New Content Item');
 		//Save element to instance
 		this.dom_set(el);
+		//Default initialization
+		this._super();
 	},
 	
 	/* Methods */
@@ -2630,24 +2672,90 @@ var Content_Item = {
 	 * Build default attributes
 	 * Populates attributes with asset properties (attachments)
 	 * Overrides super class method
-	 * @uses Component.build_default_attributes()
+	 * @uses Component.init_default_attributes()
 	 */
-	build_default_attributes: function() {
-		console.groupCollapsed('Content_Item.build_default_attributes');
+	init_default_attributes: function() {
+		console.groupCollapsed('Content_Item.init_default_attributes');
 		this._super();
 		//Add asset properties
 		var key = this.dom_get().attr('href') || null;
 		var assets = this.get_parent().assets || null;
-		console.log('Key: %o \nAssets: %o \nDefault Attributes: %o', key, assets, this._attr_default['id']);
+		console.log('Key: %o \nAssets: %o', key, assets);
 		//Merge asset data with default attributes
-		if ( !this.util.is_empty(key) && $.isPlainObject(assets) && ( key in assets ) && $.isPlainObject(assets[key]) ) {
-			this._attr_default = $.extend({}, this._attr_default, assets[key]);
+		if ( this.util.is_string(key) ) {
+			var attrs = [{}, this._attr_default, {'permalink': key}];
+			if ( this.util.is_obj(assets) && ( key in assets ) && this.util.is_obj(assets[key]) ) {
+				attrs.push(assets[key]);
+			}
+			this._attr_default = $.extend.apply(this, attrs);
 			console.log('Default Attributes Updated: %o', this._attr_default);
+		}
+		console.groupEnd();
+		return this._attr_default;
+	},
+	
+	/*-** Properties **-*/
+	
+	/**
+	 * Retrieve item output
+	 * Output generated based on content type if not previously generated
+	 * @uses get_attribute() to retrieve cached output
+	 * @uses set_attribute() to cache generated output
+	 * @uses get_type() to retrieve item type
+	 * @uses Content_Type.render() to generate item output
+	 * @return obj jQuery.Promise that is resolved when output is retrieved
+	 */
+	get_output: function() {
+		console.groupCollapsed('Item.get_output');
+		console.info('Checking for cached output');
+		var dfr = $.Deferred();
+		//Check for cached output
+		var ret = this.get_attribute('output');
+		if ( this.util.is_string(ret) ) {
+			dfr.resolve(ret);
+		} else if ( this.has_type() ) {
+			//Render output from scratch (if necessary)
+			console.info('Rendering output');
+			console.info('Get item type');
+			//Get item type
+			var type = this.get_type();
+			console.log('Item type: %o', type);
+			//Render type-based output
+			var item = this;
+			type.render(this).done(function(output) {
+				console.info('Output Retrieved: %o', output);
+				console.info('Caching item output');
+				//Cache output
+				item.set_output(output);
+				dfr.resolve(output);
+			});
+		} else {
+			dfr.resolve('');
+		}
+		console.groupEnd();
+		return dfr.promise();
+	},
+	
+	/**
+	 * Cache output for future retrieval
+	 * @uses set_attribute() to cache output
+	 */
+	set_output: function(out) {
+		console.groupCollapsed('Item.set_output: %o', out);
+		if ( this.util.is_string(out, false) ) {
+			this.set_attribute('output', out);
 		}
 		console.groupEnd();
 	},
 	
-	/*-** Properties **-*/
+	/**
+	 * Retrieve item output
+	 * Alias for `get_output()`
+	 * @return jQuery.Promise Deferred that is resolved when content is retrieved 
+	 */
+	get_content: function() {
+		return this.get_output();
+	},
 	
 	/**
 	 * Retrieve item URI
@@ -2658,33 +2766,34 @@ var Content_Item = {
 	 */
 	get_uri: function(mode) {
 		console.groupCollapsed('Item.get_uri');
+		//Validate
 		if ( ['source', 'permalink'].indexOf(mode) == -1 ) {
 			mode = 'source';
 		}
 		console.log('Mode: %o', mode);
-		var ret = null;
-		//Source URI
-		if ( 'source' == mode ) {
-			ret = this.get_attribute('source');
+		//Retrieve URI
+		var ret = this.get_attribute(mode);
+		if ( !this.util.is_string(ret) ) {
+			ret = ( 'source' == mode ) ? this.get_attribute('permalink') : '';
 		}
-		
-		//Permalink URI
-		if ( !ret ) {
-			ret = this.dom_get().attr('href');
-		}
-		
 		console.log('Item URI: %o', ret);
 		console.groupEnd();
 		return ret;
 	},
 	
-	get_title: function(callback) {
+	get_title: function() {
 		var prop = 'title';
-		var title = '';
-		//Metadata
+		//Check saved attributes
+		var title = this.get_attribute(prop, '');
+		if ( this.util.is_string(title) ) {
+			return title;
+		}
+		
+		//Generate title from item metadata
+		var dom = this.dom_has();
 		
 		//Caption
-		if ( !title ) {
+		if ( dom ) {
 			var sel = '.wp-caption-text'
 			if ( this.in_gallery('wp') ) {
 				title = this.dom_get().parent().siblings(sel).html();
@@ -2698,24 +2807,23 @@ var Content_Item = {
 			title = this.get_attribute(prop);
 		}
 		
-		//Image title
-		if ( !title ) {
-			var img = this.dom_get().find('img').first();
-			title = $(img).attr('title') || $(img).attr('alt');
-		}
-		
-		//Link title
-		if ( !title ) {
-			title = this.dom_get().attr(prop);
+		//DOM attributes
+		if ( dom ) {
+			//Image title
+			if ( !title ) {
+				var img = this.dom_get().find('img').first();
+				title = $(img).attr('title') || $(img).attr('alt');
+			}
+			
+			//DOM element title
+			if ( !title ) {
+				title = this.dom_get().attr(prop);
+			}
 		}
 		
 		//Return value
-		this.set_attribute(prop, title)
-		return this.do_callback(callback, title);
-	},
-	
-	get_content: function(callback) {
-		this.get_output(callback);
+		this.set_attribute(prop, title);
+		return title;
 	},
 	
 	/**
@@ -2730,55 +2838,6 @@ var Content_Item = {
 		}
 		dim = $.extend({'width': 0, 'height': 0}, dim);
 		return dim;
-	},
-	
-	/**
-	 * Retrieve item output
-	 * Output generated based on content type if not previously generated
-	 * @uses get_attribute() to retrieve cached output
-	 * @uses set_attribute() to cache generated output
-	 * @uses get_type() to retrieve item type
-	 * @uses Content_Type.render() to generate item output
-	 */
-	get_output: function(callback) {
-		console.groupCollapsed('Item.get_output');
-		console.info('Checking for cached output');
-		//Check for cached output
-		var ret = this.get_attribute('output');
-		if ( this.util.is_string(ret) ) {
-			this.do_callback(callback, ret);
-		} else {
-			//Render output from scratch (if necessary)
-			console.info('Rendering output');
-			console.info('Get item type');
-			//Get item type
-			var type = this.get_type();
-			console.log('Item type: %o', type);
-			//Render type-based output
-			if ( !!type ) {
-				var instance = this;
-				type.render(this, function(output) {
-					console.info('Output Retrieved: %o', output);
-					console.info('Caching item output');
-					//Cache output
-					instance.set_output(output);
-					instance.do_callback(callback, output);
-				});
-			}
-		}
-		console.groupEnd();
-	},
-	
-	/**
-	 * Cache output for future retrieval
-	 * @uses set_attribute() to cache output
-	 */
-	set_output: function(out) {
-		console.groupCollapsed('Item.set_output: %o', out);
-		if ( this.util.is_string(out, false) ) {
-			this.set_attribute('output', out);
-		}
-		console.groupEnd();
 	},
 	
 	/**
@@ -2847,7 +2906,7 @@ var Content_Item = {
 		console.groupCollapsed('Item.get_group');
 		var prop = 'group';
 		//Check if group reference already set
-		var g = this.get_component(prop, false, false);
+		var g = this.get_component(prop, true, false, false);
 		if ( g ) {
 			console.log('Group: %o', g);
 		} else {
@@ -2888,14 +2947,13 @@ var Content_Item = {
 	/**
 	 * Retrieve item type
 	 * @uses get_component() to retrieve saved reference to Content_Type instance
-	 * @uses set_component() to save reference to retrieved Content_Type instance
 	 * @uses View.get_content_type() to determine item content type (if necessary)
 	 * @return Content_Type|null Content Type of item (NULL no valid type exists)
 	 */
 	get_type: function() {
 		console.groupCollapsed('Item.get_type');
 		console.info('Retrieving saved type reference');
-		var t = this.get_component('type', false, false);
+		var t = this.get_component('type', false, false, false);
 		if ( !t ) {
 			console.info('No type reference, getting type from Controller');
 			t = this.set_type(this.get_parent().get_content_type(this));
@@ -2914,6 +2972,17 @@ var Content_Item = {
 		return this.set_component('type', type);
 	},
 	
+	/**
+	 * Check if content type exists for item
+	 * @return bool TRUE if content type exists, FALSE otherwise
+	 */
+	has_type: function() {
+		console.groupCollapsed('Item.has_type');
+		var ret = !this.util.is_empty(this.get_type());
+		console.groupEnd();
+		return ret;
+	},
+	
 	/* Actions */
 	
 	/**
@@ -2924,7 +2993,7 @@ var Content_Item = {
 	show: function() {
 		console.group('Item.show');
 		//Validate content type
-		if ( !this.get_type() ) {
+		if ( !this.has_type() ) {
 			return false;
 		}
 		//Retrieve viewer
@@ -3038,7 +3107,7 @@ var Theme = {
 	get_template: function() {
 		console.groupCollapsed('Theme.get_template');
 		//Get saved template
-		var ret = this.get_component('template', false, false);
+		var ret = this.get_component('template', true, false, false);
 		//Template needs to be initialized
 		if ( this.util.is_empty(ret) ) {
 			//Pass model to Template instance
@@ -3049,11 +3118,31 @@ var Theme = {
 		return ret;
 	},
 	
+	/**
+	 * Retrieve tags from template
+	 * All tags will be retrieved by default
+	 * Specific tag/property instances can be retrieved as well
+	 * @see Template.get_tags()
+	 * @param string name (optional) Name of tags to retrieve
+	 * @param string prop (optional) Specific tag property to retrieve
+	 * @return array Tags in template
+	 */
+	get_tags: function(name, prop) {
+		return this.get_template().get_tags(name, prop);
+	},
+	
+	/**
+	 * Retrieve tag DOM elements
+	 * @see Template.dom_get_tag()
+	 */
+	dom_get_tag: function(tag, prop) {
+		return $(this.get_template().dom_get_tag(tag, prop));
+	},
+	
 	/* Output */
 	
 	/**
 	 * Render Theme output
-	 * Output passed to callback function
 	 * @param Content_Item item Item to render theme for
 	 */
 	render: function(item) {
@@ -3219,7 +3308,6 @@ var Template = {
 	
 	/**
 	 * Render output
-	 * Output passed to callback function
 	 * @param Content_Item item Item to render template for
 	 *  > loading: DOM elements created and item content about to be loaded
 	 *  > success: Item content loaded, ready for display
@@ -3234,12 +3322,11 @@ var Template = {
 				this.trigger('render-loading');
 				var tpl = this;
 				var tags = this.get_tags(),
-					tag,
 					tag_promises = [];
 				console.info('Tags exist: %o', tags);
 				//Render Tag output
-				for ( var x = 0; x < tags.length; x++ ) {
-					tag = tags[x];
+				console.groupCollapsed('Processing Tags');
+				$.each(tags, function(idx, tag) {
 					console.log('Tag DOM: %o', tag.dom_get().get(0));
 					console.groupCollapsed('Processing Tag: %o', [tag.get_name(), tag.get_prop()].join('.'));
 					tag_promises.push(tag.render(item).done(function(r) {
@@ -3250,7 +3337,8 @@ var Template = {
 						console.groupEnd();
 					}));
 					console.groupEnd();
-				}
+				});
+				console.groupEnd();
 				//Fire event when all tags rendered
 				$.when.apply($, tag_promises).done(function() {
 					tpl.trigger('render-complete');
@@ -3517,17 +3605,6 @@ var Template = {
 		console.groupEnd();
 		return ( this.util.is_array(tags) ) ? tags : [];
 	},
-
-	/**
-	 * Save tags extracted from template
-	 * @param array tags Tags to save
-	 */
-	set_tags: function(tags) {
-		if ( !this.util.is_array(tags) ) {
-			tags = [];
-		}
-		this.set_attribute('tags', tags);
-	},
 	
 	/**
 	 * Check if template contains tags
@@ -3554,35 +3631,27 @@ var Template = {
 	
 	/**
 	 * Retrieve DOM element(s) for specified tag
-	 * @param obj component Component instance to find tag in
 	 * @param string tag Name of tag to retrieve
 	 * @param string prop (optional) Specific tag property to retrieve
 	 * @return array DOM elements for tag
 	 */
-	dom_get_tag: function(component, tag, prop) {
+	dom_get_tag: function(tag, prop) {
 		console.groupCollapsed('Template.dom_get_tag()');
-		if ( !this.util.is_type(component, Component) )
-			return null;
-		//Build selector
-		var sel = null;
-		var delim = '_';
-		if ( this.util.is_type(tag, this.get_parent().Template_Tag) ) {
-			//ID selector
-			sel = '#' + tag.get_id(true);
-		} else if ( this.util.is_string(tag) ) {
-			//Create temporary tag instance
-			var tag_temp = new View.Template_Tag();
-			//Class selector
-			sel = [tag_temp.get_ns(), tag];
-			if ( this.util.is_string(prop) ) {
-				sel.push(prop);
+		var ret = $();
+		var tags = this.get_tags(tag, prop);
+		if ( tags.length ) {
+			//Build selector
+			var level = null;
+			if ( this.util.is_string(tag) ) {
+				level = ( this.util.is_string(prop) ) ? 'full' : 'tag';
 			}
-			sel = '.' + sel.join(delim);
+			var sel = '.' + tags[0].get_class(level);
+			console.log('Selector')
+			ret = this.dom_get().find(sel);
 		}
-		console.info('Selector: %o', sel);
+		console.log('Tag elements: %o', ret);
 		console.groupEnd();
-		//Return DOM elements
-		return $(sel, component.dom_get());
+		return ret;
 	},
 };
 
@@ -3799,13 +3868,21 @@ var Template_Tag_Handler = {
 	 */
 	render: function(item, instance) {
 		console.group('Template_Tag_Handler.render');
-		var hdl = this;
-		return $.Deferred(function(dfr) {
-			hdl.call_attribute('render', item, instance, function(output) {
+		var dfr = $.Deferred();
+		//Pass to attribute method
+		var ret = this.call_attribute('render', item, instance);
+		//Check for promise
+		if ( this.util.is_promise(ret) ) {
+			ret.done(function(output) {
 				dfr.resolve(output);
 			});
-		}).promise();
+		} else {
+			//Resolve non-promises immediately
+			dfr.resolve(ret);
+		}
+		//Return promise
 		console.groupEnd();
+		return dfr.promise();
 	},
 	
 	add_prop: function(prop, func) {
@@ -3855,11 +3932,12 @@ View.update_refs();
 console.info('Adding default content types');
 View.add_content_type('image', {
 	match: /^.+\.(jpg|png|gif)$/i,
-	render: function(item, callback) {
+	render: function(item) {
+		var dfr = $.Deferred();
 		//Create image object
 		var img = new Image();
-		var instance = this;
-		//Set load event (with callback)
+		var type = this;
+		//Set load event
 		$(img).bind('load', function() {
 			console.groupCollapsed('Content_Type.image.load (Callback)');
 			//Save Data
@@ -3871,13 +3949,14 @@ View.add_content_type('image', {
 			item.set_attributes(attrs);
 			//Build output
 			var out = $('<img />', {'src': item.get_uri()});
-			//Do callback
-			instance.do_callback(callback, out);
+			//Resolve deferred
+			dfr.resolve(out);
 			console.groupEnd();
 		});
-		
 		//Load image
 		img.src = item.get_uri();
+		//Return promise
+		return dfr.promise();
 	}
 });
 
@@ -3887,16 +3966,21 @@ console.info('Adding template tag handlers');
  * Item data tag
  */
 View.add_template_tag_handler('item', {
-	render: function(item, tag, callback) {
+	render: function(item, tag) {
 		console.groupCollapsed('Template_Tag_Handler (Item).render: %o', tag.get_prop());
 		console.log('Property: %o', item.get_attributes());
+		var dfr = $.Deferred();
 		var m = 'get_' + tag.get_prop();
-		if ( this.util.is_method(item, m) ) {
-			item[m](callback);
+		var ret = ( this.util.is_method(item, m) ) ? item[m]() : item.get_attribute(tag.get_prop(), '');
+		if ( this.util.is_promise(ret) ) {
+			ret.done(function(output) {
+				dfr.resolve(output);
+			});
 		} else {
-			this.do_callback(callback, item.get_attribute(tag.get_prop(), ''));	
+			dfr.resolve(ret);
 		}
 		console.groupEnd();
+		return dfr.promise();
 	}
 });
 
@@ -3904,7 +3988,7 @@ View.add_template_tag_handler('item', {
  * UI tag
  */
 View.add_template_tag_handler('ui', {
-	init: function(item, tag, callback) {
+	init: function(item, tag) {
 		console.groupCollapsed('Template_Tag_Handler (UI).init: %o', tag.get_prop());
 		var v = item.get_viewer();
 		
@@ -3922,7 +4006,7 @@ View.add_template_tag_handler('ui', {
 		cl.viewers.push(vid);
 		
 		//Add event handlers
-		v.on('events_init', function(v) {
+		v.on('events-init', function(v) {
 			console.info('Event Handler: Template_Tag_Handler(UI).complete');
 			//Register event handlers
 
@@ -3932,7 +4016,7 @@ View.add_template_tag_handler('ui', {
 				return v.close(e);
 			};
 			//Close button
-			v.dom_get_tag('ui', 'close').click(close);
+			v.get_theme().dom_get_tag('ui', 'close').click(close);
 			
 			/* Navigation */
 			
@@ -3950,8 +4034,8 @@ View.add_template_tag_handler('ui', {
 				console.groupEnd();
 			};
 			
-			v.dom_get_tag('ui', 'nav_next').click(nav_next);
-			v.dom_get_tag('ui', 'nav_prev').click(nav_prev);
+			v.get_theme().dom_get_tag('ui', 'nav_next').click(nav_next);
+			v.get_theme().dom_get_tag('ui', 'nav_prev').click(nav_prev);
 			
 			/* Slideshow */
 			
@@ -3962,39 +4046,40 @@ View.add_template_tag_handler('ui', {
 				console.groupEnd();
 			};
 			
-			v.dom_get_tag('ui', 'slideshow_control').click(slideshow_control);
+			v.get_theme().dom_get_tag('ui', 'slideshow_control').click(slideshow_control);
 		}, this);
 		
-		v.on('slideshow_toggle', function(v) {
-			console.group('Tag.UI.slideshow_toggle');
-			//Render slideshow control tag
-			var nodes = v.dom_get_tag('ui', 'slideshow_control');
-			console.log('Nodes: %o', nodes.length);
-			if ( nodes.length ) {
-				var tag_temp = View.get_component_temp(View.Template_Tag);
-				nodes.each(function(idx) {
-					var el = $(this);
-					//Get tag
-					var tag = $(this).data(tag_temp.get_data_key());
-					if ( v.util.is_type(tag, View.Template_Tag) ) {
-						tag.render(v.get_item(), function(output) {
-							el.html(output);
-						});
-					}
-				});
+		v.on('slideshow-toggle', function(v) {
+			console.group('Tag.UI.slideshow-toggle');
+			//Update slideshow control tag
+			var tags = v.get_theme().get_tags('ui', 'slideshow_control');
+			if ( tags.length ) {
+				for ( var x = 0; x < tags.length; x++ ) {
+					tags[x].render(v.get_item()).done(function(r) {
+						r.tag.dom_get().html(r.output);
+					});
+				}
 			}
 			console.groupEnd();
 		}, this);
 		console.groupEnd();
 	},
-	render: function(item, tag, callback) {
+	render: function(item, tag) {
 		console.groupCollapsed('Template_Tag_Handler (UI).render: %o', tag.get_prop());
 		//Initialize event handlers
-		this.call_attribute('init', item, tag, callback);
+		this.call_attribute('init', item, tag);
 		//Process content
-		var out = this.handle_prop(tag.get_prop(), item, tag);
+		var dfr = $.Deferred();
+		var ret = this.handle_prop(tag.get_prop(), item, tag);
+		if ( this.util.is_promise(ret) ) {
+			ret.done(function(output) {
+				dfr.resolve(output);
+			});
+		} else {
+			dfr.resolve(ret);
+		}
 		console.groupEnd();
-		this.do_callback( callback, out );
+		return dfr.promise();
 	},
 	props: {
 		'slideshow_control': function(item, tag) {

@@ -532,8 +532,25 @@ var Base = {
 			return this.is_type(value, this.func, false);
 		},
 		
+		/**
+		 * Checks if an object has a method
+		 * @param obj Object to check
+		 * @param string|array Names of methods to check for
+		 * @return bool TRUE if method(s) exist, FALSE otherwise
+		 */
 		is_method: function(obj, value) {
-			return ( this.is_obj(obj) && this.is_string(value) && ( value in obj ) && this.is_func(obj[value]) ) ? true : false;
+			var ret = false;
+			if ( this.is_string(value) ) {
+				value = [value];
+			}
+			if ( this.is_obj(obj) && this.is_array(value) ) {
+				var t = this;
+				$.each(value, function(idx, val) {
+					ret = ( t.is_string(val) && ( val in obj ) && t.is_func(obj[val]) );
+					return ret;
+				});
+			}
+			return ret;
 		},
 		
 		is_num: function(value, nonempty) {
@@ -569,12 +586,9 @@ var Base = {
 								ret = true;
 							}
 							break;
-						case this.object:
-							ret = true;
-							for ( var p in value ) {
-								ret = false;
-								break;
-							}
+						case this.obj:
+							//Only evaluate literal objects
+							ret = ( $.isPlainObject(value) && !Object.keys(value).length );
 							break;
 						case this.num:
 							ret = ( value === 0 );
@@ -585,6 +599,22 @@ var Base = {
 				}
 			}
 			return ret;
+		},
+		
+		/**
+		 * Check if object is a jQuery.Promise instance
+		 * Will also match (but not guarantee) jQuery.Deferred instances
+		 * @return bool TRUE if object is Promise/Deferred, FALSE otherwise
+		 */
+		is_promise: function(obj) {
+			return ( this.is_obj(obj) && this.is_method(obj, ['then', 'done', 'always', 'fail', 'pipe']) )
+		},
+		
+		/**
+		 * Check if object is a jQuery.Deferred instance
+		 */
+		is_deferred: function(obj) {
+			return ( this.is_promise(obj) && this.is_method(obj, ['resolve', 'reject', 'promise']));
 		},
 		
 		/**
