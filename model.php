@@ -906,14 +906,14 @@ class SLB_Lightbox extends SLB_Base {
 		unset($themes[$this->theme_default]);
 		
 		//Sort themes by title
-		uasort($themes, create_function('$a,$b', 'return strcmp($a[\'title\'], $b[\'title\']);'));
+		uasort($themes, create_function('$a,$b', 'return strcmp($a[\'name\'], $b[\'name\']);'));
 		
 		//Insert default theme at top of array
 		$themes = array($this->theme_default => $theme_default) + $themes;
 		
 		//Build options
-		foreach ( $themes as $name => $props ) {
-			$themes[$name] = $props['title'];
+		foreach ( $themes as $id => $props ) {
+			$themes[$id] = $props['name'];
 		}
 		return $themes;
 	}
@@ -998,41 +998,42 @@ class SLB_Lightbox extends SLB_Base {
 	
 	/**
 	 * Register lightbox theme
-	 * @param string $name Unique theme name
-	 * @param string $title Display name for theme
-	 * @param string $stylesheet_url URL to stylesheet
-	 * @param string $layout Layout HTML
+	 * @param array $props Theme properties
+	 * > id					string Unique ID
+	 * > name				string Pretty name
+	 * > template_data		string Raw template
+	 * > template_uri		string Path to file containing template
+	 * > stylesheet_uri		string Path to CSS file
+	 * > client_attributes	string Path to JS attributes for theme
 	 * @uses $themes to store the registered theme
 	 */
-	function register_theme($name, $title, $stylesheet_url, $layout) {
+	function register_theme($props = array()) {
+		//Validate
 		if ( !is_array($this->themes) ) {
 			$this->themes = array();
 		}
-		
-		//Validate parameters
-		$name = trim(strval($name));
-		$title = trim(strval($title));
-		$stylesheet_url = trim(strval($stylesheet_url));
-		$layout = $this->format_theme_layout($layout);
-		
-		$defaults = array(
-			'name'				=> '',
-			'title'				=> '',
-			'stylesheet_url' 	=> '',
-			'layout'			=> ''
-		);
-		
-		//Add theme to array
-		$this->themes[$name] = wp_parse_args(compact(array_keys($defaults)), $defaults); 
-	}
-	
-	/**
-	 * Build theme placeholder
-	 * @param string $name Placeholder name
-	 * @return string Placeholder
-	 */
-	function get_theme_placeholder($name) {
-		return '{' . $name . '}';
+		if ( !is_array($props) ) {
+			$props = array();	
+		}
+		foreach ( $props as $prop => $val ) {
+			if ( !is_string($val) ) {
+				unset($props[$prop]);
+			}	
+		}
+		//Add theme to collection
+		if ( !empty($props['id']) ) {
+			$defaults = array (
+				'id'				=> '',
+				'name'				=> '',
+				'template_uri'		=> '',
+				'template_data'		=> '',
+				'stylesheet_uri'	=> '',
+				'client_attributes'	=> '',
+			);
+			$props = array_merge($defaults, $props);
+			//Add theme to array
+			$this->themes[$props['id']] = $props;
+		}
 	}
 	
 	/**
@@ -1056,13 +1057,29 @@ class SLB_Lightbox extends SLB_Base {
 	 * @uses register_theme() to register the theme(s)
 	 */
 	function init_default_themes() {
+		$path_base = 'themes/default/';
+		$props = array (
+			'id'				=> $this->theme_default,
+			'name'				=> 'Default',
+			'template_uri'		=> $path_base . 'layout.html',
+			'stylesheet_uri'	=> $path_base . 'style.css',
+			'client_attributes'	=> $path_base . 'client.js',
+		);
+		/*
+		 * @TODO Remove legacy properties
 		$name = $this->theme_default;
 		$title = 'Default';
 		$stylesheet_url = $this->util->get_file_url('themes/default/style.css');
 		$layout = file_get_contents($this->util->normalize_path($this->util->get_path_base(), 'themes', 'default', 'layout.html'));
-		$this->register_theme($name, $title, $stylesheet_url, $layout);
+		*/
+		$this->register_theme($props);
 		//Testing: Additional themes
-		$this->register_theme('black', 'Black', $this->util->get_file_url('themes/black/style.css'), $layout);
+		$props_black = array_merge($props, array (
+			'id' 			=> $this->add_prefix('black'),
+			'name'			=> 'Black',
+			'stylsheet_uri'	=> 'themes/black/style.css'
+		)); 
+		$this->register_theme($props_black);
 	}
 	
 	/*-** Grouping **-*/

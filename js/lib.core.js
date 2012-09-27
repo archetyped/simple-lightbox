@@ -331,12 +331,12 @@ var Base = {
 		
 		/* Constants */
 		
-		string: 'string',
-		bool: 'boolean',
-		array: 'array',
-		obj: 'object',
-		func: 'function',
-		num: 'number',
+		string:	'string',
+		bool:	'boolean',
+		array:	'array',
+		obj:	'object',
+		func:	'function',
+		num:	'number',
 		
 		/* Methods */
 		
@@ -492,12 +492,12 @@ var Base = {
 		is_type: function(value, type, nonempty) {
 			var ret = false;
 			if ( this.is_set(value) && null != value && this.is_set(type) ) {
-				switch ( typeof type ) {
+				switch ( $.type(type) ) {
 					case this.func:
 						ret = ( value instanceof type ) ? true : false;
 						break;
 					case this.string:
-						ret = ( typeof value == type ) ? true : false;
+						ret = ( $.type(value) == type ) ? true : false;
 						break;
 					default:
 						ret = false;
@@ -517,7 +517,7 @@ var Base = {
 		},
 		
 		is_array: function(value, nonempty) {
-			return ( this.is_type(value, this.array, nonempty) || ( this.is_obj(value, nonempty) && value.length ) );
+			return ( this.is_type(value, this.array, nonempty) );
 		},
 		
 		is_bool: function(value) {
@@ -554,11 +554,15 @@ var Base = {
 		},
 		
 		is_num: function(value, nonempty) {
-			return this.is_type(value, this.num, nonempty);
+			return ( this.is_type(value, this.num, nonempty) && !isNaN(value) );
 		},
 		
 		is_int: function(value, nonempty) {
 			return ( this.is_num(value, nonempty) && Math.floor(value) === value );
+		},
+		
+		is_scalar: function(value, nonempty) {
+			return ( this.is_num(value, nonempty) || this.is_string(value, nonempty) || this.is_bool(value, nonempty) );
 		},
 		
 		/**
@@ -575,7 +579,7 @@ var Base = {
 			} else {
 				//Validate type
 				if ( !this.is_set(type) ) {
-					type = typeof value;
+					type = $.type(value);
 				}
 				//Type-based check
 				if ( this.is_type(value, type, false) ) {

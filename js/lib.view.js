@@ -1287,13 +1287,51 @@ var Component = {
 	 * Retrieve value of specified attribute for value
 	 * @param string key Attribute to retrieve
 	 * @param mixed def (optional) Default value if attribute is not set
+	 * @param bool enforce_type (optional) Whether data type should match default value (Default: TRUE)
+	 * > If possible, attribute value will be converted to match default data type
+	 * > If attribute value cannot match default data type, default value will be used
 	 * @return mixed Attribute value (NULL if attribute is not set)
 	 */
-	get_attribute: function(key, def) {
+	get_attribute: function(key, def, enforce_type) {
+		//Validate
 		if ( !this.util.is_set(def) ) {
 			def = null;
 		}
-		return ( this.has_attribute(key) ) ? this.get_attributes()[key] : def;
+		if ( !this.util.is_string(key) ) {
+			return def;
+		}
+		if ( !this.util.is_bool(enforce_type) ) {
+			enforce_type = true;
+		}
+		//Get attribute value
+		var ret = ( this.has_attribute(key) ) ? this.get_attributes()[key] : def;
+		//Validate type
+		if ( enforce_type && ret !== def && null !== def && !this.util.is_type(ret, $.type(def), false) ) {
+			//Convert type
+			//Scalar default
+			if ( this.util.is_scalar(def, false) ) {
+				//Non-scalar attribute
+				if ( !this.util.is_scalar(ret, false) ) {
+					ret = def;
+				} else if ( this.util.is_string(def, false) ) {
+					ret = ret.toString();
+				} else if ( this.util.is_num(def, false) && !this.util.is_num(ret, false) ) {
+					ret = ( this.util.is_int(def, false) ) ? parseInt(ret) : parseFloat(ret);
+					if ( !this.util.is_num(ret, false) ) {
+						ret = def;
+					}
+				} else if ( this.util.is_bool(def, false) ) {
+					ret = ( this.util.is_string(ret) || ( this.util.is_num(ret) ) );
+				} else {
+					ret = def;
+				}
+			}
+			//Non-scalar default
+			else {
+				ret = def;
+			}
+		}
+		return ret;
 	},
 	
 	/**
@@ -1303,16 +1341,13 @@ var Component = {
 	 */
 	call_attribute: function(attr) {
 		console.group('Component.call_attribute');
-		attr = this.get_attribute(attr, null);
-		if ( this.util.is_func(attr) ) {
-			console.info('Passing to attribute (method)');
-			//Get arguments
-			var args = Array.prototype.slice.call(arguments, 1);
-			//Pass arguments to user-defined method
-			console.groupEnd();
-			return attr.apply(this, args);
-		}
+		attr = this.get_attribute(attr, function() {});
+		console.info('Passing to attribute (method)');
+		//Get arguments
+		var args = Array.prototype.slice.call(arguments, 1);
+		//Pass arguments to user-defined method
 		console.groupEnd();
+		return attr.apply(this, args);
 	},
 	
 	/**
@@ -1783,7 +1818,7 @@ var Viewer = {
 		var ret = this.get_component('theme', true, false, false);
 		if ( this.util.is_empty(ret) ) {
 			//Theme needs to be initialized
-			ret = this.set_component('theme', new View.Theme());
+			ret = this.set_component('theme', new View.Theme(this));
 		}
 		console.log('Theme: %o', ret);
 		console.groupEnd();
@@ -2555,7 +2590,7 @@ var Content_Type = {
 		console.groupCollapsed('Content_Type.match');
 		//Validate
 		var attr = 'match';
-		var m = this.get_attribute(attr, null);
+		var m = this.get_attribute(attr);
 		//Stop processing types with no matching algorithm
 		if ( !this.util.is_empty(m) ) {
 			//Process regex patterns
@@ -2577,7 +2612,7 @@ var Content_Type = {
 			if ( this.util.is_func(m) ) {
 				console.info('Processing match function');
 				console.groupEnd();
-				return ( m.apply(this, [item]) ) ? true : false;
+				return ( m.call(this, item) ) ? true : false;
 			}
 		}
 		//Default
@@ -2784,7 +2819,7 @@ var Content_Item = {
 	get_title: function() {
 		var prop = 'title';
 		//Check saved attributes
-		var title = this.get_attribute(prop, '');
+		var title = this.get_attribute(prop);
 		if ( this.util.is_string(title) ) {
 			return title;
 		}
@@ -2832,12 +2867,8 @@ var Content_Item = {
 	 * @return obj Item `width` and `height` properties (px) 
 	 */
 	get_dimensions: function() {
-		var dim = this.get_attribute('dimensions');
-		if ( !$.isPlainObject(dim) ) {
-			dim = {};
-		}
-		dim = $.extend({'width': 0, 'height': 0}, dim);
-		return dim;
+		var dim = this.get_attribute('dimensions', {});
+		return $.extend({'width': 0, 'height': 0}, dim);
 	},
 	
 	/**
@@ -2889,7 +2920,7 @@ var Content_Item = {
 		}
 		
 		//Set or clear viewer property
-		this.viewer = ( this.util.is_type(v, View.Viewer) ) ? v : false;
+		this.viewer = ( this.util.is_type(v, View.Viewer) ) ? v : null;
 		
 		//Return value for confirmation
 		return this.viewer;
@@ -3035,16 +3066,91 @@ var Theme = {
 	
 	/**
 	 * Custom constructor
-	 * @uses Component._c()
+	 * @see Component._c()
 	 */
-	_c: function(id, attributes) {
+	_c: function(id, attributes, viewer) {
 		console.groupCollapsed('Theme.Constructor');
+		//Validate
+		if ( arguments.length == 1 && this.util.is_type(arguments[0], View.Viewer) ) {
+			viewer = arguments[0];
+			id = null;
+		}
 		//Pass parameters to parent constructor
 		this._super(id, attributes);
+		
+		//Set viewer instance
+		this.set_viewer(viewer);
+		
 		//Set theme model
 		this.set_model(id);
-
+		
 		console.groupEnd();
+	},
+	
+	/* Viewer */
+	
+	get_viewer: function() {
+		return this.get_component('viewer');
+	},
+	
+	/**
+	 * Sets theme's viewer property
+	 * @uses View.get_viewer() to retrieve global viewer
+	 * @uses this.viewer to save item's viewer
+	 * @param string|View.Viewer v Viewer to set for item
+	 *  > Theme's viewer is reset if invalid viewer provided
+	 */
+	set_viewer: function(v) {
+		if ( this.util.is_string(v) && this.get_parent().has_viewer(v) ) {
+			v = this.get_parent().get_viewer(v);
+		}
+		
+		//Set or clear viewer property
+		this.viewer = ( this.util.is_type(v, View.Viewer) ) ? v : null;
+		
+		//Return value for confirmation
+		return this.viewer;
+	},
+	
+	/* Template */
+	
+	/**
+	 * Retrieve template instance
+	 * @return Template instance
+	 */
+	get_template: function() {
+		console.groupCollapsed('Theme.get_template');
+		//Get saved template
+		var ret = this.get_component('template', true, false, false);
+		//Template needs to be initialized
+		if ( this.util.is_empty(ret) ) {
+			//Pass model to Template instance
+			var attr = { 'model': this.get_model() };
+			ret = this.set_component('template', new View.Template(attr));
+		}
+		console.groupEnd();
+		return ret;
+	},
+	
+	/**
+	 * Retrieve tags from template
+	 * All tags will be retrieved by default
+	 * Specific tag/property instances can be retrieved as well
+	 * @see Template.get_tags()
+	 * @param string name (optional) Name of tags to retrieve
+	 * @param string prop (optional) Specific tag property to retrieve
+	 * @return array Tags in template
+	 */
+	get_tags: function(name, prop) {
+		return this.get_template().get_tags(name, prop);
+	},
+	
+	/**
+	 * Retrieve tag DOM elements
+	 * @see Template.dom_get_tag()
+	 */
+	dom_get_tag: function(tag, prop) {
+		return $(this.get_template().dom_get_tag(tag, prop));
 	},
 	
 	/* Model */
@@ -3096,47 +3202,6 @@ var Theme = {
 				this.set_id(m.name);
 			}
 		}
-	},
-	
-	/* Template */
-	
-	/**
-	 * Retrieve template instance
-	 * @return Template instance
-	 */
-	get_template: function() {
-		console.groupCollapsed('Theme.get_template');
-		//Get saved template
-		var ret = this.get_component('template', true, false, false);
-		//Template needs to be initialized
-		if ( this.util.is_empty(ret) ) {
-			//Pass model to Template instance
-			var attr = { 'model': this.get_model() };
-			ret = this.set_component('template', new View.Template(attr));
-		}
-		console.groupEnd();
-		return ret;
-	},
-	
-	/**
-	 * Retrieve tags from template
-	 * All tags will be retrieved by default
-	 * Specific tag/property instances can be retrieved as well
-	 * @see Template.get_tags()
-	 * @param string name (optional) Name of tags to retrieve
-	 * @param string prop (optional) Specific tag property to retrieve
-	 * @return array Tags in template
-	 */
-	get_tags: function(name, prop) {
-		return this.get_template().get_tags(name, prop);
-	},
-	
-	/**
-	 * Retrieve tag DOM elements
-	 * @see Template.dom_get_tag()
-	 */
-	dom_get_tag: function(tag, prop) {
-		return $(this.get_template().dom_get_tag(tag, prop));
 	},
 	
 	/* Output */
@@ -3250,13 +3315,14 @@ var Template = {
 	 * @param string key Attribute to retrieve
 	 * @param mixed def (optional) Default value (Default: NULL)
 	 * @param bool check_model (optional) Whether to check model or not (Default: TRUE)
+	 * @param bool enforce_type (optional) Whether return value data type should match default value data type (Default: TRUE)
 	 * @return mixed Attribute value
 	 */
-	get_attribute: function(key, def, check_model) {
+	get_attribute: function(key, def, check_model, enforce_type) {
 		//Validate
 		if ( !this.util.is_string(key) ) {
 			//Invalid requests sent straight to super method
-			return this._super(key, def);
+			return this._super(key, def, enforce_type);
 		}
 		if ( !this.util.is_bool(check_model) ) {
 			check_model = true;
@@ -3266,7 +3332,7 @@ var Template = {
 		if ( check_model && this.in_model(key) ) {
 			ret = this.get_model()[key];
 		} else {
-			ret = this._super(key, def);
+			ret = this._super(key, def, enforce_type);
 		}
 		return ret;
 	},
@@ -3382,7 +3448,7 @@ var Template = {
 	parse_layout: function() {
 		//Check for previously-parsed layout
 		var a = 'layout_parsed';
-		var ret = this.get_attribute(a, null);
+		var ret = this.get_attribute(a);
 		//Return cached layout immediately
 		if ( this.util.is_string(ret) ) {
 			return ret;
@@ -3583,7 +3649,7 @@ var Template = {
 		}
 		tags = this.get_attribute(a, []);
 		//Filter tags by parameters
-		if ( this.util.is_array(tags) && this.util.is_string(name) ) {
+		if ( !this.util.is_empty(tags) && this.util.is_string(name) ) {
 			//Normalize
 			if ( !this.util.is_string(prop) ) {
 				prop = false;
@@ -3603,7 +3669,7 @@ var Template = {
 		}
 		console.log('Return value: %o', tags);
 		console.groupEnd();
-		return ( this.util.is_array(tags) ) ? tags : [];
+		return ( this.util.is_array(tags, false) ) ? tags : [];
 	},
 	
 	/**
