@@ -466,11 +466,25 @@ class SLB_Utilities {
 	 * @param mixed Parameters to pass to method (will be JSON-encoded)
 	 * @return string Method call
 	 */
-	function call_client_method($method, $params = null) {
-		if ( !$method )
+	function call_client_method($method, $params = null, $encode = true) {
+		if ( !is_string($method) || empty($method) ) {
 			return '';
-		$params = ( !is_null($params) ) ? json_encode($params) : '';
-		return $this->get_client_object($method) . '(' . $params. ');';
+		}
+		if ( !is_bool($encode) ) {
+			$encode = true;
+		}
+		//Build parameters
+		if ( !is_null($params) ) {
+			if ( $encode ) {
+				$params = json_encode($params);	
+			} elseif ( is_array($params) ) {
+				$params = implode(',', $params); 
+			}
+		}
+		if ( !is_string($params) ) {
+			$params = '';	
+		}
+		return sprintf('%s(%s);', $this->get_client_object($method), $params);
 	}
 	
 	/*-** WP **-*/
@@ -1493,8 +1507,12 @@ class SLB_Utilities {
 	
 	function build_script_element($content = '', $id = '', $wrap_jquery = true, $wait_doc_ready = false) {
 		//Stop processing invalid content
-		if ( empty($content) || !is_string($content) )
-			return ''; 
+		if ( is_array($content) && !empty($content) ) {
+			$content = implode(PHP_EOL, $content);	
+		}
+		if ( empty($content) || !is_string($content) ) {
+			return '';
+		}
 		$attributes = array('type' => 'text/javascript');
 		$start = array('/* <![CDATA[ */');
 		$end = array('/* ]]> */');

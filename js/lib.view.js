@@ -114,7 +114,7 @@ var View = {
 	 * Initialization
 	 */
 	init: function(options) {
-		console.groupCollapsed('Init');
+		console.groupCollapsed('View.init');
 		//Set options
 		$.extend(true, this.options, options);
 		console.groupCollapsed('Options');
@@ -657,16 +657,10 @@ var View = {
 	 * Initialize themes
 	 */
 	init_themes: function() {
-		console.group('View.init_themes');
-		//Populate theme models
-		var models = this.get_option('themes');
-		console.log('Models: %o', models);
-		if ( !this.util.is_obj(models) ) {
-			models = {};
-		}
-		var id;
-		for ( id in models ) {
-			this.add_theme(id, models[id]);
+		console.groupCollapsed('View.init_themes');
+		//Validate models property
+		if ( !this.util.is_obj(this.Theme.prototype._models, false) ) {
+			this.Theme.prototype._models = {};
 		}
 		console.groupEnd();
 	},
@@ -675,6 +669,7 @@ var View = {
 	 * Add theme
 	 * @param string name Theme name
 	 * @param obj attr Theme options
+	 * > Multiple attribute parameters are merged
 	 * @return void
 	 */
 	add_theme: function(id, attr) {
@@ -685,21 +680,29 @@ var View = {
 			console.groupEnd();
 			return false;
 		}
-		//Remap layout attribute
-		if ( 'layout' in attr ) {
-			attr['layout_raw'] = attr.layout;
-			delete attr.layout;
+		
+		//Build attributes
+		var attrs = [{'layout_raw': '', 'layout_parsed': ''}];
+		if ( arguments.length >= 2 ) {
+			var args = Array.prototype.slice.call(arguments, 1);
+			var t = this;
+			$.each(args, function(idx, arg) {
+				if ( t.util.is_obj(arg, false) ) {
+					attrs.push(arg);
+				}
+			});
 		}
+		
 		//Create theme model
-		var model = $.extend({'layout_raw': '', 'layout_parsed': ''}, attr);
+		var model = $.extend.apply(null, attrs);
 		
-		//Validate models property
-		if ( !this.util.is_obj(this.Theme.prototype._models, false) ) {
-			this.Theme.prototype._models = {};
+		//Initialize models object
+		if ( this.util.is_obj(model, false) ) {
+			this.init_themes();
+			
+			//Add theme model
+			this.Theme.prototype._models[id] = model;
 		}
-		
-		//Add to Theme prototype
-		this.Theme.prototype._models[id] = model;
 		console.groupEnd();
 	},
 	
@@ -732,7 +735,7 @@ var View = {
 			add = false;
 		}
 		//Create new instance
-		handler = new this.Template_Tag_Handler(id, attrs);
+		var handler = new this.Template_Tag_Handler(id, attrs);
 		if ( add ) {
 			//Add to collection in Template_Tag prototype
 			this.get_template_tag_handlers()[handler.get_id()] = handler;
@@ -1451,7 +1454,7 @@ var Component = {
 	 * @return obj jQuery DOM element
 	 */
 	dom_get: function(element, put, options) {
-		console.group('Component.dom_get: %o', this._slug);
+		console.groupCollapsed('Component.dom_get: %o', this._slug);
 		//Init Component DOM
 		this.dom_init();
 		//Check for main DOM element
@@ -1996,7 +1999,7 @@ var Viewer = {
 				'id':  this.get_id(true),
 				'class': [
 					this.get_ns(),
-					this.get_theme().get_id(true)
+					this.get_theme().get_classes(' '),
 				].join(' ')
 			}).appendTo(this.dom_get_container()).hide());
 			console.log('Theme ID: %o', this.get_theme().get_id(true));
@@ -3177,12 +3180,11 @@ var Theme = {
 			//Retrieve matching theme model
 			var models = this.get_models();
 			if ( !this.util.is_string(id) ) {
-				var id = this.util.add_prefix('default');
+				var id = this.get_parent().get_option('theme_default');
 			}
-			console.log('Models: %o', models);
 			//Select first theme model if specified model is invalid
-			if ( ! ( id in models ) ) {
-				id = Object.keys(models.keys)[0];
+			if ( !this.util.is_string(id) || !( id in models ) ) {
+				id = Object.keys(models)[0];
 			}
 			ret = models[id];
 		}
@@ -3198,10 +3200,37 @@ var Theme = {
 		//Set ID using model attributes (if necessary)
 		if ( !this.check_id(true) ) {
 			var m = this.get_model();
-			if ( 'name' in m ) {
-				this.set_id(m.name);
+			if ( 'id' in m ) {
+				this.set_id(m.id);
 			}
 		}
+	},
+	
+	/* Properties */
+	
+	/**
+	 * Generate class names for DOM node
+	 * @param string rtype (optional) Return data type
+	 *  > Default: array
+	 *  > If string supplied: Joined classes delimited by parameter
+	 * @uses get_class() to generate class names
+	 * @uses Array.join() to convert class names array to string
+	 * @return array Class names
+	 */
+	get_classes: function(rtype) {
+		//Build array of class names
+		var cls = [ this.get_id(true) ];
+		//Include theme parent's class name
+		var m = this.get_model();
+		if ( 'parent' in m && this.util.is_string(m.parent) ) {
+			cls.push(this.add_ns(m.parent));
+		}
+		//Convert class names array to string
+		if ( this.util.is_string(rtype) ) {
+			cls = cls.join(rtype);
+		}
+		//Return class names
+		return cls;
 	},
 	
 	/* Output */

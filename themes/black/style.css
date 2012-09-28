@@ -1,43 +1,26 @@
-@import url('lightbox.css');
+@import url('../default/style.css');
 
 /* General */
 
-#slb_lightbox {
+#slb_viewer_wrap .slb_theme_slb_black {
 	color:#fff;
 }
 
-#slb_lightbox a, 
-#slb_lightbox a:hover {
-	color:#fff;
-}
-
-#slb_container {
+#slb_viewer_wrap .slb_theme_slb_black .slb_container {
 	background-color: #000;
+	box-shadow: 0 0 10px #fff;
 }
 
-#slb_slbLoading {
-	background-image: url("../images/loading_black.gif");
+/* Loading */
+
+#slb_viewer_wrap .slb_theme_slb_black .slb_loading {
+	background: url('../../images/loading_black.gif') center center no-repeat;
 }
 
-/* Navigation */
+/* UI */
 
-#slb_nav_hover .slb_navPrev:hover,
-#slb_nav_hover .slb_navPrev:visited:hover {
-	background-image: url("../images/prevlabel_black.gif");
+#slb_viewer_wrap .slb_theme_slb_default .slb_nav .slb_template_tag_ui,
+#slb_viewer_wrap .slb_theme_slb_default .slb_close {
+	background: #ccc;
+	color: #333;
 }
-
-#slb_nav_hover .slb_navNext:hover,
-#slb_nav_hover .slb_navNext:visited:hover {
-	background-image: url("../images/nextlabel_black.gif");
-}
-
-#slb_close .slb_slbClose {
-	background-image: url("../images/closelabel_black.gif");
-}
-
-/* Content */
-
-#slb_details {
-	background-color: #000;
-}
-	

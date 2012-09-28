@@ -3,6 +3,7 @@
 require_once 'includes/class.base.php';
 require_once 'includes/class.admin.php';
 require_once 'includes/class.options.php';
+require_once 'includes/class.themes.php';
 
 /**
  * Lightbox functionality class
@@ -40,10 +41,10 @@ class SLB_Lightbox extends SLB_Base {
 	);
 	
 	/**
-	 * Themes
-	 * @var array
+	 * Themes collection
+	 * @var SLB_Themes
 	 */
-	var $themes = array();
+	var $themes = null;
 	
 	var $theme_default = 'default';
 	
@@ -119,11 +120,13 @@ class SLB_Lightbox extends SLB_Base {
 	
 	function __construct() {
 		parent::__construct();
-
-		//Init objects
-		$this->admin =& new SLB_Admin($this);
+		//Init properties
 		$this->attr = $this->get_prefix();
-		$this->fields =& new SLB_Fields();
+		
+		//Init objects
+		$this->admin = new SLB_Admin($this);
+		$this->fields = new SLB_Fields();
+		$this->themes = new SLB_Themes();
 		
 		//Init instance
 		$this->init();
@@ -309,10 +312,6 @@ class SLB_Lightbox extends SLB_Base {
 		//Gallery wrapping
 		add_filter('the_content', $this->m('gallery_wrap'), 1);
 		add_filter('the_content', $this->m('gallery_unwrap'), $priority + 1);
-		
-		
-		/* Themes */
-		$this->util->add_action('init_themes', $this->m('init_default_themes'));
 		
 		/* Widgets */
 		add_filter('sidebars_widgets', $this->m('sidebars_widgets'));
@@ -602,8 +601,9 @@ class SLB_Lightbox extends SLB_Base {
 	 * @return void
 	 */
 	function client_init() {
-		if ( ! $this->is_enabled() )
+		if ( ! $this->is_enabled() ) {
 			return;
+		}
 		echo PHP_EOL . '<!-- SLB -->' . PHP_EOL;
 		$options = array();
 		$out = array();
@@ -621,11 +621,10 @@ class SLB_Lightbox extends SLB_Base {
 		//Load UI Strings
 		if ( ($labels = $this->build_labels()) && !empty($labels) )
 			$options['ui_labels'] = $labels;
-		//Load Theme(s)
-		$options['themes'] = array($this->add_prefix('default') => $this->get_theme());
+		//Set default theme
+		$options['theme_default'] = $this->get_theme()->get_id();
 
 		//Build client output
-		//DEBUG
 		echo $this->util->build_script_element($this->util->call_client_method('View.init', $options), 'init', true, true);
 		echo '<!-- /SLB -->' . PHP_EOL;
 	}
@@ -635,161 +634,196 @@ class SLB_Lightbox extends SLB_Base {
 	 * > Media attachment URLs
 	 * @uses `_wp_attached_file` to match attachment ID to URI
 	 * @uses `_wp_attachment_metadata` to retrieve attachment metadata
+	 * @TODO Refactor theme functionality
 	 */
 	function client_footer() {
 		global $dbg;
 		echo '<!-- X -->';
-		//Stop if not enabled or if there are no media items to process
-		if ( !$this->is_enabled() || !$this->has_cached_media_items() )
+		//Stop if not enabled
+		if ( !$this->is_enabled() ) {
 			return;
+		}
 		echo '<!-- SLB -->' . PHP_EOL;
 		
-		global $wpdb;
+		$client_out = array();
 		
-		$this->media_items = array();
-		$props = array('id', 'type', 'desc', 'title', 'source');
-		$props = (object) array_combine($props, $props);
-
-		//Separate media into buckets by type
-		$m_bucket = array();
-		$type = $id = null;
+		/* Load components */
+		//Theme
+		$thm = $this->get_theme();
+		$thm_data = array();
+		$tpl = $thm->get_template();
+		$prt = ( $thm->get_parent() instanceof SLB_Theme ) ? $thm->get_parent()->get_id() : '';
 		
-		$m_items =& $this->get_cached_media_items();
-		foreach ( $m_items as $uri => $p ) {
-			$type = $p[$props->type];
-			if ( empty($type) )
-				continue;
-			if ( !isset($m_bucket[$type]) )
-				$m_bucket[$type] = array();
-			//Add to bucket for type (by reference)
-			$m_bucket[$type][$uri] =& $m_items[$uri];
+		if ( !empty($tpl) && is_string($tpl) ) {
+			$thm_data[] = json_encode(array(
+				'id'			=> $thm->get_id(),
+				'name'			=> $thm->get_name(),
+				'parent'		=> $prt,
+				'layout_raw'	=> $tpl)
+			);
+		}
+		//Client attributes
+		$c_attr = $thm->get_client_attrs();
+		if ( !empty($c_attr) ) {
+			$thm_data[] = $c_attr;
+		}
+		if ( !empty($thm_data) ) {
+			array_unshift($thm_data, "'" . $thm->get_id() . "'");
+			$client_out[] = $this->util->call_client_method('View.add_theme', $thm_data, false);
 		}
 		
-		//Process links by type
-		$t = $this->get_media_types();
-
-		//Direct image links
-		if ( isset($m_bucket[$t->img]) ) {
-			$b =& $m_bucket[$t->img];
-			$uris_base = array();
-			$uri_prefix = wp_upload_dir();
-			$uri_prefix = $this->util->normalize_path($uri_prefix['baseurl'], true);
-			foreach ( array_keys($b) as $uri ) {
-				$uris_base[str_replace($uri_prefix, '', $uri)] = $uri;
+		/* Load cached media */
+		if ( $this->has_cached_media_items() ) {
+			global $wpdb;
+			
+			$this->media_items = array();
+			$props = array('id', 'type', 'desc', 'title', 'source');
+			$props = (object) array_combine($props, $props);
+	
+			//Separate media into buckets by type
+			$m_bucket = array();
+			$type = $id = null;
+			
+			$m_items =& $this->get_cached_media_items();
+			foreach ( $m_items as $uri => $p ) {
+				$type = $p[$props->type];
+				if ( empty($type) ) {
+					continue;
+				}
+				if ( !isset($m_bucket[$type]) ) {
+					$m_bucket[$type] = array();
+				}
+				//Add to bucket for type (by reference)
+				$m_bucket[$type][$uri] =& $m_items[$uri];
+			}
+			
+			//Process links by type
+			$t = $this->get_media_types();
+	
+			//Direct image links
+			if ( isset($m_bucket[$t->img]) ) {
+				$b =& $m_bucket[$t->img];
+				$uris_base = array();
+				$uri_prefix = wp_upload_dir();
+				$uri_prefix = $this->util->normalize_path($uri_prefix['baseurl'], true);
+				foreach ( array_keys($b) as $uri ) {
+					$uris_base[str_replace($uri_prefix, '', $uri)] = $uri;
+				}
+				
+				//Retrieve attachment IDs
+				$uris_flat = "('" . implode("','", array_keys($uris_base)) . "')";
+				$q = $wpdb->prepare("SELECT post_id, meta_value FROM $wpdb->postmeta WHERE `meta_key` = %s AND LOWER(`meta_value`) IN $uris_flat LIMIT %d", '_wp_attached_file', count($b));
+				$pids_temp = $wpdb->get_results($q);
+				//Match IDs with URIs
+				if ( $pids_temp ) {
+					foreach ( $pids_temp as $pd ) {
+						$f = $pd->meta_value;
+						if ( is_numeric($pd->post_id) && isset($uris_base[$f]) ) {
+							$b[$uris_base[$f]][$props->id] = absint($pd->post_id);
+						}
+					}
+				}
+				//Destroy worker vars
+				unset($b, $uri, $uris_base, $uris_flat, $q, $pids_temp, $pd);
+			}
+			
+			//Image attachments
+			if ( isset($m_bucket[$t->att]) ) {
+				$b =& $m_bucket[$t->att];
+				
+				//Attachment source URI
+				foreach ( $b as $uri => $p ) {
+					$s = wp_get_attachment_url($p[$props->id]);
+					if ( !!$s )
+						$b[$uri][$props->source] = $s;
+				}
+				//Destroy worker vars
+				unset($b, $uri, $p);
 			}
 			
 			//Retrieve attachment IDs
-			$uris_flat = "('" . implode("','", array_keys($uris_base)) . "')";
-			$q = $wpdb->prepare("SELECT post_id, meta_value FROM $wpdb->postmeta WHERE `meta_key` = %s AND LOWER(`meta_value`) IN $uris_flat LIMIT %d", '_wp_attached_file', count($b));
-			$pids_temp = $wpdb->get_results($q);
-			//Match IDs with URIs
-			if ( $pids_temp ) {
-				foreach ( $pids_temp as $pd ) {
-					$f = $pd->meta_value;
-					if ( is_numeric($pd->post_id) && isset($uris_base[$f]) ) {
-						$b[$uris_base[$f]][$props->id] = absint($pd->post_id);
+			$ids = array();
+			foreach ( $m_items as $uri => $p ) {
+				//Add post ID to query
+				if ( isset($p[$props->id]) ) {
+					$id = $p[$props->id];
+					//Create array for ID (support multiple URIs per ID)
+					if ( !isset($ids[$id]) ) {
+						$ids[$id] = array();
 					}
+					//Add URI to ID
+					$ids[$id][] = $uri;
 				}
-			}
-			//Destroy worker vars
-			unset($b, $uri, $uris_base, $uris_flat, $q, $pids_temp, $pd);
-		}
-		
-		//Image attachments
-		if ( isset($m_bucket[$t->att]) ) {
-			$b =& $m_bucket[$t->att];
-			
-			//Attachment source URI
-			foreach ( $b as $uri => $p ) {
-				$s = wp_get_attachment_url($p[$props->id]);
-				if ( !!$s )
-					$b[$uri][$props->source] = $s;
-			}
-			//Destroy worker vars
-			unset($b, $uri, $p);
-		}
-		
-		//Retrieve attachment IDs
-		$ids = array();
-		foreach ( $m_items as $uri => $p ) {
-			//Add post ID to query
-			if ( isset($p[$props->id]) ) {
-				$id = $p[$props->id];
-				//Create array for ID (support multiple URIs per ID)
-				if ( !isset($ids[$id]) ) {
-					$ids[$id] = array();
-				}
-				//Add URI to ID
-				$ids[$id][] = $uri;
-			}
-		}
-		
-		//Retrieve attachment properties
-		if ( !empty($ids) ) {
-			$ids_flat = array_keys($ids);
-			$atts = get_posts(array('post_type' => 'attachment', 'include' => $ids_flat));
-			$ids_flat = "('" . implode("','", $ids_flat) . "')";
-			$atts_meta = $wpdb->get_results($wpdb->prepare("SELECT `post_id`,`meta_value` FROM $wpdb->postmeta WHERE `post_id` IN $ids_flat AND `meta_key` = %s LIMIT %d", '_wp_attachment_metadata', count($ids)));
-			//Rebuild metadata array
-			if ( $atts_meta ) {
-				$meta = array();
-				foreach ( $atts_meta as $att_meta ) {
-					$meta[$att_meta->post_id] = $att_meta->meta_value;
-				}
-				$atts_meta = $meta;
-				unset($meta);
-			} else {
-				$atts_meta = array();
 			}
 			
-			//Process attachments
-			if ( $atts ) {
-				foreach ( $atts as $att ) {
-					if ( !isset($ids[$att->ID]) )
-						continue;
-					//Add attachment
-					//Set properties
-					$m = array(
-						$props->title	=> $att->post_title,
-						$props->desc	=> $att->post_content,
-					);
-					//Add metadata
-					if ( isset($atts_meta[$att->ID]) && ($a = unserialize($atts_meta[$att->ID])) && is_array($a) ) {
-						//Move original size into `sizes` array
-						foreach ( array('file', 'width', 'height') as $d ) {
-							if ( !isset($a[$d]) )
-								continue;
-							$a['sizes']['original'][$d] = $a[$d];
-							unset($a[$d]);
-						}
-
-						//Strip extraneous metadata
-						foreach ( array('hwstring_small') as $d ) {
-							if ( isset($a[$d]) )
+			//Retrieve attachment properties
+			if ( !empty($ids) ) {
+				$ids_flat = array_keys($ids);
+				$atts = get_posts(array('post_type' => 'attachment', 'include' => $ids_flat));
+				$ids_flat = "('" . implode("','", $ids_flat) . "')";
+				$atts_meta = $wpdb->get_results($wpdb->prepare("SELECT `post_id`,`meta_value` FROM $wpdb->postmeta WHERE `post_id` IN $ids_flat AND `meta_key` = %s LIMIT %d", '_wp_attachment_metadata', count($ids)));
+				//Rebuild metadata array
+				if ( $atts_meta ) {
+					$meta = array();
+					foreach ( $atts_meta as $att_meta ) {
+						$meta[$att_meta->post_id] = $att_meta->meta_value;
+					}
+					$atts_meta = $meta;
+					unset($meta);
+				} else {
+					$atts_meta = array();
+				}
+				
+				//Process attachments
+				if ( $atts ) {
+					foreach ( $atts as $att ) {
+						if ( !isset($ids[$att->ID]) )
+							continue;
+						//Add attachment
+						//Set properties
+						$m = array(
+							$props->title	=> $att->post_title,
+							$props->desc	=> $att->post_content,
+						);
+						//Add metadata
+						if ( isset($atts_meta[$att->ID]) && ($a = unserialize($atts_meta[$att->ID])) && is_array($a) ) {
+							//Move original size into `sizes` array
+							foreach ( array('file', 'width', 'height') as $d ) {
+								if ( !isset($a[$d]) )
+									continue;
+								$a['sizes']['original'][$d] = $a[$d];
 								unset($a[$d]);
+							}
+	
+							//Strip extraneous metadata
+							foreach ( array('hwstring_small') as $d ) {
+								if ( isset($a[$d]) )
+									unset($a[$d]);
+							}
+	
+							$m = array_merge($a, $m);
+							unset($a, $d);
 						}
-
-						$m = array_merge($a, $m);
-						unset($a, $d);
-					}
-					
-					//Save to object
-					foreach ( $ids[$att->ID] as $uri ) {
-						if ( isset($m_items[$uri]) )
-							$m = array_merge($m_items[$uri], $m);
-						$this->media_items[$uri] = $m;
+						
+						//Save to object
+						foreach ( $ids[$att->ID] as $uri ) {
+							if ( isset($m_items[$uri]) )
+								$m = array_merge($m_items[$uri], $m);
+							$this->media_items[$uri] = $m;
+						}
 					}
 				}
 			}
+			
+			//Media attachments
+			if ( !empty($this->media_items) ) {
+				$obj = 'View.assets';
+				$client_out[] = $this->util->extend_client_object($obj, $this->media_items);
+			}
 		}
-		
-		//Media attachments
-		if ( !empty($this->media_items) ) {
-			$obj = 'View.assets';
-			$atch_out = $this->util->extend_client_object($obj, $this->media_items);
-			echo $this->util->build_script_element($atch_out, $obj);
+		if ( !empty($client_out) ) {
+			echo $this->util->build_script_element($client_out, 'footer');	
 		}
-		
 		echo PHP_EOL . '<!-- /SLB -->' . PHP_EOL;
 	}
 
@@ -894,194 +928,55 @@ class SLB_Lightbox extends SLB_Base {
 	/**
 	 * Retrieve themes for use in option field
 	 * @uses self::theme_default
-	 * @uses self::get_themes()
 	 * @return array Theme options
 	 */
 	function get_theme_options() {
 		//Get themes
-		$themes = $this->get_themes();
-		
+		$themes = $this->themes->get_items();
 		//Pop out default theme
 		$theme_default = $themes[$this->theme_default];
 		unset($themes[$this->theme_default]);
 		
 		//Sort themes by title
-		uasort($themes, create_function('$a,$b', 'return strcmp($a[\'name\'], $b[\'name\']);'));
+		uasort($themes, create_function('$a,$b', 'return strcmp($a->get_name(), $b->get_name());'));
 		
 		//Insert default theme at top of array
 		$themes = array($this->theme_default => $theme_default) + $themes;
 		
 		//Build options
-		foreach ( $themes as $id => $props ) {
-			$themes[$id] = $props['name'];
+		foreach ( $themes as $theme ) {
+			$themes[$theme->get_id()] = $theme->get_name();
 		}
 		return $themes;
 	}
 	
 	/**
-	 * Retrieve themes
-	 * @uses Util::do_action() Calls internal 'init_themes' hook to allow plugins to register themes
-	 * @uses $themes to return registered themes
-	 * @return array Retrieved themes
-	 */
-	function get_themes() {
-		static $fetched = false;
-		if ( !$fetched ) {
-			$this->themes = array();
-			$this->util->do_action('init_themes');
-			$fetched = true;
-		}
-		return $this->themes;
-	}
-	
-	/**
 	 * Retrieve theme
-	 * @param string $name Name of theme to retrieve
-	 * @uses theme_exists() to check for existence of theme
-	 * @return array Theme data
+	 * @param string $id ID of theme to retrieve
+	 * @return SLB_Theme Theme instance
+	 * @TODO Refactor
 	 */
-	function get_theme($name = '') {
-		$name = strval($name);
+	function get_theme($id = '') {
 		//Default: Get current theme if no theme specified
-		if ( empty($name) ) {
-			$name = $this->options->get_value('theme');
+		if ( !$this->themes->has_item($id) ) {
+			$id = $this->options->get_value('theme');
+			if ( !$this->themes->has_item($id) ) {
+				$id = $this->theme_default;
+			}
 		}
-		if ( !$this->theme_exists($name) )
-			$name = $this->theme_default;
-		return $this->themes[$name];
+		return $this->themes->get_item($id);
 	}
-	
+
 	/**
-	 * Retrieve specific of theme data
-	 * @uses get_theme() to retrieve theme data
+	 * Retrieve theme stylesheet URI
 	 * @param string $name Theme name
-	 * @param string $field Theme field to retrieve
-	 * @return mixed Field data
-	 */
-	function get_theme_data($name = '', $field) {
-		$theme = $this->get_theme($name);
-		return ( isset($theme[$field]) ) ? $theme[$field] : '';
-	}
-	
-	/**
-	 * Retrieve theme stylesheet URL
-	 * @param string $name Theme name
-	 * @uses get_theme_data() to retrieve theme data
-	 * @return string Stylesheet URL
+	 * @return string Stylesheet URI
+	 * @TODO Refactor
 	 */
 	function get_theme_style($name = '') {
-		return $this->get_theme_data($name, 'stylesheet_url');
+		return $this->get_theme()->get_stylesheet();
 	}
-	
-	/**
-	 * Retrieve theme layout
-	 * @uses get_theme_data() to retrieve theme data
-	 * @param string $name Theme name
-	 * @param bool $filter (optional) Filter layout based on user preferences 
-	 * @return string Theme layout HTML
-	 */
-	function get_theme_layout($name = '', $filter = true) {
-		$l = $this->get_theme_data($name, 'layout');
-		return $l;
-	}
-	
-	/**
-	 * Check whether a theme exists
-	 * @param string $name Theme to look for
-	 * @uses get_themes() to intialize themes if not already performed
-	 * @return bool TRUE if theme exists, FALSE otherwise
-	 */
-	function theme_exists($name) {
-		$this->get_themes();
-		return ( isset($this->themes[trim(strval($name))]) );
-	}
-	
-	/**
-	 * Register lightbox theme
-	 * @param array $props Theme properties
-	 * > id					string Unique ID
-	 * > name				string Pretty name
-	 * > template_data		string Raw template
-	 * > template_uri		string Path to file containing template
-	 * > stylesheet_uri		string Path to CSS file
-	 * > client_attributes	string Path to JS attributes for theme
-	 * @uses $themes to store the registered theme
-	 */
-	function register_theme($props = array()) {
-		//Validate
-		if ( !is_array($this->themes) ) {
-			$this->themes = array();
-		}
-		if ( !is_array($props) ) {
-			$props = array();	
-		}
-		foreach ( $props as $prop => $val ) {
-			if ( !is_string($val) ) {
-				unset($props[$prop]);
-			}	
-		}
-		//Add theme to collection
-		if ( !empty($props['id']) ) {
-			$defaults = array (
-				'id'				=> '',
-				'name'				=> '',
-				'template_uri'		=> '',
-				'template_data'		=> '',
-				'stylesheet_uri'	=> '',
-				'client_attributes'	=> '',
-			);
-			$props = array_merge($defaults, $props);
-			//Add theme to array
-			$this->themes[$props['id']] = $props;
-		}
-	}
-	
-	/**
-	 * Formats layout for usage in JS
-	 * @param string $layout Layout to format
-	 * @return string Formatted layout
-	 */
-	function format_theme_layout($layout = '') {
-		//Remove line breaks
-		$layout = str_replace(array("\r\n", "\n", "\r", "\t"), '', $layout);
-		
-		//Escape quotes
-		$layout = str_replace("'", "\'", $layout);
-		
-		//Return
-		return "'" . $layout . "'";
-	}
-	
-	/**
-	 * Add default themes
-	 * @uses register_theme() to register the theme(s)
-	 */
-	function init_default_themes() {
-		$path_base = 'themes/default/';
-		$props = array (
-			'id'				=> $this->theme_default,
-			'name'				=> 'Default',
-			'template_uri'		=> $path_base . 'layout.html',
-			'stylesheet_uri'	=> $path_base . 'style.css',
-			'client_attributes'	=> $path_base . 'client.js',
-		);
-		/*
-		 * @TODO Remove legacy properties
-		$name = $this->theme_default;
-		$title = 'Default';
-		$stylesheet_url = $this->util->get_file_url('themes/default/style.css');
-		$layout = file_get_contents($this->util->normalize_path($this->util->get_path_base(), 'themes', 'default', 'layout.html'));
-		*/
-		$this->register_theme($props);
-		//Testing: Additional themes
-		$props_black = array_merge($props, array (
-			'id' 			=> $this->add_prefix('black'),
-			'name'			=> 'Black',
-			'stylsheet_uri'	=> 'themes/black/style.css'
-		)); 
-		$this->register_theme($props_black);
-	}
-	
+
 	/*-** Grouping **-*/
 	
 	/**

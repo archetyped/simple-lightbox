@@ -144,7 +144,7 @@ if ( !String.sprintf ) {
 		if (arguments.length < 1) {
 			return this;
 		}
-		format = this.toString();
+		var format = this.toString();
 		if ( arguments.length >= 1 ) {
 			params = Array.prototype.slice.call(arguments);
 		}
@@ -572,7 +572,7 @@ var Base = {
 		 * @return bool TRUE if value is empty, FALSE if not empty
 		 */
 		is_empty: function(value, type) {
-			ret = false;
+			var ret = false;
 			//Initial check for empty value
 			if ( !this.is_set(value) || null === value || false === value ) {
 				ret = true;
