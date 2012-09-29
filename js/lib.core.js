@@ -12,6 +12,11 @@
 //Object
 
 if (!Object.keys) {
+  /**
+   * Retrieve object's keys
+   * Usage: Object.keys(object_variable);
+   * @return array Object's keys
+   */
   Object.keys = (function () {
     var hasOwnProperty = Object.prototype.hasOwnProperty,
         hasDontEnumBug = !({toString: null}).propertyIsEnumerable('toString'),
@@ -72,14 +77,18 @@ if ( !Array.compare ) {
 if ( !Array.intersect ) {
 	/**
 	 * Find common elements of 2 arrays
-	 * @param array arr1 First array to compare
-	 * @param array arr2 Second array to compare
+	 * @param array arr Array to compare with this array
 	 * @return array Elements common to both arrays
 	 */
 	Array.prototype.intersect = function(arr) {
 		var ret = [];
-		if ( !$.isArray(arr) || !arr.length || !this.length )
+		if ( this == arr ) {
+			console.info('Equal arrays');
+			return arr;
+		}
+		if ( !$.isArray(arr) || !arr.length || !this.length ) {
 			return ret;
+		}
 		//Compare elements in arrays
 		var a1;
 		var a2;
@@ -543,10 +552,10 @@ var Base = {
 			if ( this.is_string(value) ) {
 				value = [value];
 			}
-			if ( this.is_obj(obj) && this.is_array(value) ) {
+			if ( this.in_obj(obj, value) ) {
 				var t = this;
 				$.each(value, function(idx, val) {
-					ret = ( t.is_string(val) && ( val in obj ) && t.is_func(obj[val]) );
+					ret = ( t.is_func(obj[val]) ) ? true : false;
 					return ret;
 				});
 			}
@@ -630,6 +639,27 @@ var Base = {
 		 */
 		validate: function(val, def) {
 			return ( this.is_type(val, def, true) ) ? val : def;
+		},
+		
+		/**
+		 * Checks if key(s) exist in an object
+		 * @param object obj Object to check
+		 * @param string|array key Key(s) to check for in object
+		 * @return bool TRUE if key(s) exist in object, FALSE otherwise
+		 */
+		in_obj: function(obj, key) {
+			var ret = false;
+			if ( this.is_string(key) ) {
+				key = [key];
+			}
+			if ( this.is_obj(obj) && this.is_array(key) ) {
+				var t = this;
+				$.each(key, function(idx, val) {
+					ret = ( t.is_string(val) && ( val in obj ) ) ? true : false;
+					return ret;
+				});
+			}
+			return ret;
 		},
 	}
 };

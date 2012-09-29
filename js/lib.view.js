@@ -673,7 +673,7 @@ var View = {
 	 * @return void
 	 */
 	add_theme: function(id, attr) {
-		console.group('View.add_theme');
+		console.groupCollapsed('View.add_theme');
 		console.log('ID: %o \nAttributes: %o', id, attr);
 		//Validate
 		if ( !this.util.is_string(id) ) {
@@ -1857,6 +1857,10 @@ var Viewer = {
 		var m = ( mode ) ? 'addClass' : 'removeClass';
 		console.info('Loading method: %o', m);
 		$(this.dom_get())[m]('loading');
+		//Loading animation
+		if ( mode ) {
+			this.get_theme().animate('load');
+		}
 		console.groupEnd();
 	},
 	
@@ -1898,10 +1902,86 @@ var Viewer = {
 		console.info('Set loading flag');
 		this.set_loading();
 		//Display
-		this.dom_build();
+		this.render();
 		console.groupEnd();
 	},
-
+	
+	/**
+	 * Check if viewer is currently open
+	 * Checks if node is actually visible in DOM 
+	 * @return bool TRUE if viewer is open, FALSE otherwise 
+	 */
+	is_open: function() {
+		return ( this.dom_get().css('display') == 'none' ) ? false : true;
+	},
+	
+	/**
+	 * Load output into DOM
+	 */
+	render: function() {
+		console.group('Viewer.render');
+		//Get theme output
+		console.info('Rendering Theme layout');
+		var v = this;
+		var th = this.get_theme();
+		var dfr = $.Deferred();
+		//Theme event handlers
+		th
+			.on({
+				//Loading
+				'render-loading': function(theme, ev) {
+					console.group('Viewer.render.loading (Callback)');
+					if ( v.is_open() ) {
+						v.set_loading();
+						dfr.resolve();
+					} else {
+						th.animate('open').done(function() {
+							//Fallback open
+							v.get_overlay().show();
+							v.dom_get().show();
+							//Set loading flag
+							v.set_loading();
+							dfr.resolve();
+						});
+					}
+					console.groupEnd();
+				},
+				//Complete
+				'render-complete': function(theme, ev) {
+					dfr.done(function() {
+						console.groupCollapsed('Viewer.render.complete (Callback)');
+						console.log('Completed output: %o', ev.data);
+						console.info('Theme loaded');
+						//Set classes
+						var d = v.dom_get();
+						var classes = ['item_single', 'item_multi'];
+						var ms = ['addClass', 'removeClass']; 
+						if ( !v.get_item().get_group().is_single() ) {
+							ms.reverse();
+						}
+						$.each(ms, function(idx, val) {
+							d[val](classes[idx]);
+						});
+						//Bind events
+						v.events_init();
+						//Animate
+						th.animate('complete').done(function() {
+							//Unset loading flag
+							v.unset_loading();
+						});
+						//Trigger event
+						v.trigger('render-complete');
+						//Set viewer as initialized
+						v.init = true;
+						console.groupEnd();
+					});
+				}
+			}, this)
+			//Render
+			.render(this.get_item());
+		console.groupEnd();
+	},
+	
 	/**
 	 * Retrieve container element
 	 * Creates default container element if not yet created
@@ -1922,67 +2002,6 @@ var Viewer = {
 			c = $('<div />', {'id': id}).appendTo('body');
 		}
 		return c;
-	},
-	
-	/**
-	 * Load output into DOM
-	 */
-	dom_build: function() {
-		console.group('Viewer.dom_build');
-		//Get theme output
-		console.info('Rendering Theme layout');
-		var v = this;
-		var th = this.get_theme();
-		//Theme event handlers
-		th
-			.on({
-				//Loading
-				'render-loading': function(theme, ev) {
-					console.group('Viewer.dom_build.loading (Callback)');
-					//Set loading flag
-					v.set_loading();
-					//Display overlay
-					v.overlay_show();
-					//Display viewer
-					var top = $(document).scrollTop() + Math.min($(window).height() / 15, 20);
-					v.dom_get('layout').css('top', top + 'px').show();
-					console.groupEnd();
-				},
-				//Complete
-				'render-complete': function(theme, ev) {
-					console.groupCollapsed('Viewer.dom_build.complete (Callback)');
-					console.log('Completed output: %o', ev.data);
-					//Resize viewer to fit item
-					var dim = v.get_item().get_dimensions();
-					var content = v.get_theme().dom_get_tag('item', 'content');
-					//Display item media
-					content.width(dim.width).height(dim.height + 20).show();
-					//Unset loading flag
-					v.unset_loading();
-					console.info('Theme loaded');
-					//Set classes
-					var d = v.dom_get();
-					var classes = ['item_single', 'item_multi'];
-					var ms = ['addClass', 'removeClass']; 
-					if ( !v.get_item().get_group().is_single() ) {
-						ms.reverse();
-					}
-					var m;
-					for ( var x = 0; x < ms.length; x++ ) {
-						d[ms[x]](classes[x]);
-					}
-					//Bind events
-					v.events_init();
-					//Trigger event
-					v.trigger('build-complete');
-					//Set viewer as initialized
-					v.init = true;
-					console.groupEnd();
-				}
-			}, this)
-			//Render
-			.render(this.get_item());
-		console.groupEnd();
 	},
 	
 	/**
@@ -2026,6 +2045,13 @@ var Viewer = {
 	 */
 	dom_restore: function() {},
 	
+	/* Layout */
+	
+	get_layout: function() {
+		var el = 'layout';
+		return ( this.dom_has(el) ) ? this.dom_get(el) : this.dom_put(el).hide();
+	},
+	
 	/* Overlay */
 	
 	/**
@@ -2042,7 +2068,7 @@ var Viewer = {
 	 * @return jQuery Overlay element (NULL if no overlay set for viewer)
 	 */
 	get_overlay: function() {
-		console.group('Viewer.get_overlay');
+		console.groupCollapsed('Viewer.get_overlay');
 		var o = null;
 		var el = 'overlay';
 		console.log('Enabled: %o', this.overlay_enabled());
@@ -2058,23 +2084,7 @@ var Viewer = {
 		console.groupEnd();
 		return $(o);
 	},
-	
-	/**
-	 * Display overlay
-	 */
-	overlay_show: function() {
-		console.info('Show overlay');
-		this.dom_get().show();
-		this.get_overlay().fadeIn();
-	},
-	
-	/**
-	 * Hide overlay
-	 */
-	overlay_hide: function() {
-		this.get_overlay().fadeOut();
-	},
-	
+
 	/**
 	 * Exit Viewer
 	 */
@@ -2118,7 +2128,7 @@ var Viewer = {
 		}
 		
 		//Control event bubbling
-		var l = this.dom_get('layout');
+		var l = this.get_layout();
 		l.children().click(function(ev) {
 			ev.stopPropagation();
 		});
@@ -2283,21 +2293,19 @@ var Viewer = {
 	 */
 	close: function(e) {
 		console.groupCollapsed('Viewer.close');
-		console.log('Init: %o \nItem: %o', this.init, this.get_item().dom_get());
-		
-		//Close viewer
-		this.dom_get_container().find('.slb_viewer_layout').hide();
-		
-		//Hide overlay
-		this.overlay_hide();
-		
-		//Restore DOM
-		this.dom_restore();
-		
-		//End processes
-		this.exit();
-		
-		this.trigger('close');
+		var v = this;
+		this.get_theme().animate('close').done(function() {
+			//Fallback viewer hide
+			v.dom_get().hide();
+			
+			//Restore DOM
+			v.dom_restore();
+			
+			//End processes
+			v.exit();
+			
+			v.trigger('close');
+		});
 		console.groupEnd();
 		return false;
 	}
@@ -2918,15 +2926,7 @@ var Content_Item = {
 	 *  > Item's viewer is reset if invalid viewer provided
 	 */
 	set_viewer: function(v) {
-		if ( this.util.is_string(v) && this.get_parent().has_viewer(v) ) {
-			v = this.get_parent().get_viewer(v);
-		}
-		
-		//Set or clear viewer property
-		this.viewer = ( this.util.is_type(v, View.Viewer) ) ? v : null;
-		
-		//Return value for confirmation
-		return this.viewer;
+		return this.set_component('viewer', v);
 	},
 	
 	/* Group */
@@ -3093,7 +3093,7 @@ var Theme = {
 	/* Viewer */
 	
 	get_viewer: function() {
-		return this.get_component('viewer');
+		return this.get_component('viewer', false, true, false);
 	},
 	
 	/**
@@ -3104,15 +3104,7 @@ var Theme = {
 	 *  > Theme's viewer is reset if invalid viewer provided
 	 */
 	set_viewer: function(v) {
-		if ( this.util.is_string(v) && this.get_parent().has_viewer(v) ) {
-			v = this.get_parent().get_viewer(v);
-		}
-		
-		//Set or clear viewer property
-		this.viewer = ( this.util.is_type(v, View.Viewer) ) ? v : null;
-		
-		//Return value for confirmation
-		return this.viewer;
+		return this.set_component('viewer', v);
 	},
 	
 	/* Template */
@@ -3206,6 +3198,23 @@ var Theme = {
 		}
 	},
 	
+	/**
+	 * Check if instance has model
+	 * @return bool TRUE if model is set, FALSE otherwise
+	 */
+	has_model: function() {
+		return ( this.util.is_empty( this.get_model() ) ) ? false : true;
+	},
+	
+	/**
+	 * Check if specified attribute exists in model
+	 * @param string key Attribute to check for
+	 * @return bool TRUE if attribute exists, FALSE otherwise
+	 */
+	in_model: function(key) {
+		return ( this.util.in_obj(this.get_model(), key) ) ? true : false;
+	},
+	
 	/* Properties */
 	
 	/**
@@ -3241,6 +3250,16 @@ var Theme = {
 	 */
 	render: function(item) {
 		console.group('Theme.render');
+		/*
+		if ( !this.util.is_type(item, View.Content_Item) ) {
+			item = this.get_viewer().get_item();
+		}
+		if ( !item ) {
+			console.warn('Invalid item');
+			console.groupEnd();
+			return false;
+		}
+		*/
 		var thm = this;
 		var tpl = this.get_template();
 		//Register events
@@ -3259,6 +3278,31 @@ var Theme = {
 		}
 		//Render template
 		tpl.render(item);		console.groupEnd();
+	},
+	
+	animate: function(event) {
+		console.groupCollapsed('Theme.animate: %o', event);
+		var dfr = null;
+		if ( this.get_viewer().get_attribute('animate', true) && this.util.is_string(event) ) {
+			//Get animation settings
+			var anims = ( this.in_model('animate') ) ? this.get_model()['animate'] : null;
+			if ( this.util.is_method(anims, event) ) {
+				//Pass control to animation event
+				var ret = anims[event].call(this);
+				//Check for promise usage
+				if ( this.util.is_promise(ret) ) {
+					dfr = ret.pipe(function(r) {
+						return r;
+					});
+				}
+			}
+		}
+		if ( !this.util.is_promise(dfr) ) {
+			dfr = $.Deferred();
+			dfr.resolve();
+		}
+		console.groupEnd();
+		return dfr.promise();
 	},
 };
 
@@ -3324,6 +3368,10 @@ var Template = {
 		return m;
 	},
 	
+	/**
+	 * Check if instance has model
+	 * @return bool TRUE if model is set, FALSE otherwise
+	 */
 	has_model: function() {
 		return ( this.util.is_empty( this.get_model() ) ) ? false : true;
 	},
@@ -3334,7 +3382,7 @@ var Template = {
 	 * @return bool TRUE if attribute exists, FALSE otherwise
 	 */
 	in_model: function(key) {
-		return ( key in this.get_model() ) ? true : false;
+		return ( this.util.in_obj(this.get_model(), key) ) ? true : false;
 	},
 	
 	/**
