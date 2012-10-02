@@ -682,7 +682,7 @@ var View = {
 		}
 		
 		//Build attributes
-		var attrs = [{'layout_raw': '', 'layout_parsed': ''}];
+		var attrs = [{ 'layout_raw': '', 'layout_parsed': '', 'animate': {} }];
 		if ( arguments.length >= 2 ) {
 			var args = Array.prototype.slice.call(arguments, 1);
 			var t = this;
@@ -1511,7 +1511,7 @@ var Component = {
 		} else {
 			options.content = content;
 		}
-		attrs = $.extend({}, options);
+		var attrs = $.extend({}, options);
 		console.log('Element Attributes');
 		console.dir(attrs);
 		for ( var x = 0; x < strip.length; x++ ) {
@@ -1841,9 +1841,11 @@ var Viewer = {
 	/**
 	 * Sets loading mode
 	 * @param bool mode (optional) Set (TRUE) or unset (FALSE) loading mode (Default: TRUE)
+	 * @return jQuery.Promise Promise that resolves when loading mode is set
 	 */
 	set_loading: function(mode) {
 		console.groupCollapsed('Viewer.set_loading: %o', mode);
+		var dfr = $.Deferred();
 		if ( !this.util.is_bool(mode) ) {
 			mode = true;
 		}
@@ -1853,19 +1855,32 @@ var Viewer = {
 		if ( this.slideshow_active() ) {
 			this.slideshow_pause(mode);
 		}
-		//Set CSS class on DOM element
-		var m = ( mode ) ? 'addClass' : 'removeClass';
-		console.info('Loading method: %o', m);
-		$(this.dom_get())[m]('loading');
-		//Loading animation
+		this.dom_get(); //TODO Remove manual DOM initialization
+		var v = this;
+		var final = function() {
+			dfr.resolve();
+			//Set CSS class on DOM element
+			var m = ( mode ) ? 'addClass' : 'removeClass';
+			console.info('Loading method: %o', m);
+			$(v.dom_get())[m]('loading');
+		};
 		if ( mode ) {
-			this.get_theme().animate('load');
+			//Loading animation
+			this.get_theme().animate('load').done(final);
+		} else {
+			final();
 		}
 		console.groupEnd();
+		return dfr.promise();
 	},
 	
+	/**
+	 * Unset loading mode
+	 * @see set_loading()
+	 * @return jQuery.Promise Promise that resovles when loading mode is set
+	 */
 	unset_loading: function() {
-		this.set_loading(false);
+		return this.set_loading(false);
 	},
 	
 	/**
@@ -1930,18 +1945,24 @@ var Viewer = {
 			.on({
 				//Loading
 				'render-loading': function(theme, ev) {
+					dfr = $.Deferred();
 					console.group('Viewer.render.loading (Callback)');
 					if ( v.is_open() ) {
-						v.set_loading();
-						dfr.resolve();
+						console.info('Viewer open');
+						th.animate('unload').done(function() {
+							v.set_loading().done(function() {
+								dfr.resolve();
+							});
+						});
 					} else {
 						th.animate('open').done(function() {
 							//Fallback open
 							v.get_overlay().show();
 							v.dom_get().show();
 							//Set loading flag
-							v.set_loading();
-							dfr.resolve();
+							v.set_loading().done(function() {
+								dfr.resolve();
+							});
 						});
 					}
 					console.groupEnd();
@@ -1967,8 +1988,7 @@ var Viewer = {
 						//Animate
 						th.animate('complete').done(function() {
 							//Unset loading flag
-							v.unset_loading();
-						});
+							v.unset_loading();						});
 						//Trigger event
 						v.trigger('render-complete');
 						//Set viewer as initialized
@@ -2294,17 +2314,20 @@ var Viewer = {
 	close: function(e) {
 		console.groupCollapsed('Viewer.close');
 		var v = this;
-		this.get_theme().animate('close').done(function() {
-			//Fallback viewer hide
-			v.dom_get().hide();
-			
-			//Restore DOM
-			v.dom_restore();
-			
-			//End processes
-			v.exit();
-			
-			v.trigger('close');
+		var t = this.get_theme();
+		this.unset_loading().done(function() {
+			t.animate('close').done(function() {
+				//Fallback viewer hide
+				v.dom_get().hide();
+				
+				//Restore DOM
+				v.dom_restore();
+				
+				//End processes
+				v.exit();
+				
+				v.trigger('close');
+			});
 		});
 		console.groupEnd();
 		return false;
@@ -3041,6 +3064,109 @@ var Content_Item = {
 View.Content_Item = Component.extend(Content_Item);
 
 /**
+ * Modeled Component
+ */
+var Modeled_Component = {
+	
+	_slug: 'modeled_component',	
+	/* Methods */
+	
+	/* Attributes */
+	
+	/**
+	 * Retrieve attribute
+	 * Gives priority to model values
+	 * @see Component.get_attribute()
+	 * @param string key Attribute to retrieve
+	 * @param mixed def (optional) Default value (Default: NULL)
+	 * @param bool check_model (optional) Whether to check model or not (Default: TRUE)
+	 * @param bool enforce_type (optional) Whether return value data type should match default value data type (Default: TRUE)
+	 * @return mixed Attribute value
+	 */
+	get_attribute: function(key, def, check_model, enforce_type) {
+		//Validate
+		if ( !this.util.is_string(key) ) {
+			//Invalid requests sent straight to super method
+			return this._super(key, def, enforce_type);
+		}
+		if ( !this.util.is_bool(check_model) ) {
+			check_model = true;
+		}
+		//Check if model is set
+		var ret = null;
+		if ( check_model && this.in_model(key) ) {
+			ret = this.get_model()[key];
+		} else {
+			ret = this._super(key, def, enforce_type);
+		}
+		return ret;
+	},	/**
+	 * Set attribute value
+	 * Gives priority to model values
+	 * @see Component.set_attribute()
+	 * @param string key Attribute to set
+	 * @param mixed val Value to set for attribute
+	 * @param bool check_model (optional) Whether to check model or not (Default: TRUE)
+	 * @return mixed Attribute value
+	 */
+	set_attribute: function(key, val, check_model) {
+		console.groupCollapsed('Modeled_Component.set_attribute');
+		console.log('Key: %o \nValue: %o', key, val);
+		//Validate
+		if ( !this.util.is_string(key) || !this.util.is_set(val) ) {
+			console.warn('Invalid request');
+			console.groupEnd();
+			return false;
+		}
+		if ( !this.util.is_bool(check_model) ) {
+			check_model = true;
+		}
+		//Determine where to set attribute
+		if ( check_model && this.in_model(key) ) {
+			console.info('Setting model attribute: %o', this.get_model());
+			//Set attribute in model
+			this.get_model()[key] = val;
+		} else {
+			//Standard attributes
+			this._super(key, val);
+		}
+		console.groupEnd();
+	},
+	
+	/* Model */
+	
+	/**
+	 * Retrieve Template model
+	 * @return obj Model (Default: Empty object)
+	 */
+	get_model: function() {
+		var m = this.get_attribute('model', null, false);
+		if ( !this.util.is_obj(m) ) {
+			//Set default value
+			m = {};
+			this.set_attribute('model', m, false);
+		}
+		return m;
+	},	/**
+	 * Check if instance has model
+	 * @return bool TRUE if model is set, FALSE otherwise
+	 */
+	has_model: function() {
+		return ( this.util.is_empty( this.get_model() ) ) ? false : true;
+	},
+	
+	/**
+	 * Check if specified attribute exists in model
+	 * @param string key Attribute to check for
+	 * @return bool TRUE if attribute exists, FALSE otherwise
+	 */
+	in_model: function(key) {
+		return ( this.util.in_obj(this.get_model(), key) ) ? true : false;
+	},};
+
+Modeled_Component = Component.extend(Modeled_Component);
+
+/**
  * Theme
  */
 var Theme = {
@@ -3057,7 +3183,8 @@ var Theme = {
 	_containers: ['viewer'],
 	
 	_attr_default: {
-		template: null
+		template: null,
+		model: null
 	},
 	
 	/* References */
@@ -3155,7 +3282,7 @@ var Theme = {
 	 * @return obj Theme models
 	 */
 	get_models: function() {
-		return this.get_parent().get_theme_models();
+		return this._models;
 	},
 	
 	/**
@@ -3166,8 +3293,9 @@ var Theme = {
 	 */
 	get_model: function(id) {
 		var ret = null;
-		if ( !this.util.is_set(id) && this.has_attribute('model') ) {
-			ret = this.get_attribute('model');
+		var m = this.get_attribute('model', null, false, false);
+		if ( !this.util.is_set(id) && this.util.is_obj( this.get_attribute('model', null, false, false) ) ) {
+			ret = this._super();
 		} else {
 			//Retrieve matching theme model
 			var models = this.get_models();
@@ -3196,23 +3324,6 @@ var Theme = {
 				this.set_id(m.id);
 			}
 		}
-	},
-	
-	/**
-	 * Check if instance has model
-	 * @return bool TRUE if model is set, FALSE otherwise
-	 */
-	has_model: function() {
-		return ( this.util.is_empty( this.get_model() ) ) ? false : true;
-	},
-	
-	/**
-	 * Check if specified attribute exists in model
-	 * @param string key Attribute to check for
-	 * @return bool TRUE if attribute exists, FALSE otherwise
-	 */
-	in_model: function(key) {
-		return ( this.util.in_obj(this.get_model(), key) ) ? true : false;
 	},
 	
 	/* Properties */
@@ -3283,18 +3394,13 @@ var Theme = {
 	animate: function(event) {
 		console.groupCollapsed('Theme.animate: %o', event);
 		var dfr = null;
-		if ( this.get_viewer().get_attribute('animate', true) && this.util.is_string(event) ) {
+		var v = this.get_viewer();
+		if ( v.get_attribute('animate', true) && this.util.is_string(event) ) {
 			//Get animation settings
 			var anims = ( this.in_model('animate') ) ? this.get_model()['animate'] : null;
 			if ( this.util.is_method(anims, event) ) {
 				//Pass control to animation event
-				var ret = anims[event].call(this);
-				//Check for promise usage
-				if ( this.util.is_promise(ret) ) {
-					dfr = ret.pipe(function(r) {
-						return r;
-					});
-				}
+				dfr = anims[event].call(this, v, $.Deferred());
 			}
 		}
 		if ( !this.util.is_promise(dfr) ) {
@@ -3306,7 +3412,7 @@ var Theme = {
 	},
 };
 
-View.Theme = Component.extend(Theme);
+View.Theme = Modeled_Component.extend(Theme);
 
 /**
  * Template handler
@@ -3353,99 +3459,6 @@ var Template = {
 	},
 	
 	/* Properties */
-	
-	/**
-	 * Retrieve Template model
-	 * @return obj Model (Default: Empty object)
-	 */
-	get_model: function() {
-		var m = this.get_attribute('model', null, false);
-		if ( !this.util.is_obj(m) ) {
-			//Set default value
-			m = {};
-			this.set_attribute('model', m, false);
-		}
-		return m;
-	},
-	
-	/**
-	 * Check if instance has model
-	 * @return bool TRUE if model is set, FALSE otherwise
-	 */
-	has_model: function() {
-		return ( this.util.is_empty( this.get_model() ) ) ? false : true;
-	},
-	
-	/**
-	 * Check if specified attribute exists in model
-	 * @param string key Attribute to check for
-	 * @return bool TRUE if attribute exists, FALSE otherwise
-	 */
-	in_model: function(key) {
-		return ( this.util.in_obj(this.get_model(), key) ) ? true : false;
-	},
-	
-	/**
-	 * Retrieve attribute
-	 * Gives priority to model values
-	 * @see Component.get_attribute()
-	 * @param string key Attribute to retrieve
-	 * @param mixed def (optional) Default value (Default: NULL)
-	 * @param bool check_model (optional) Whether to check model or not (Default: TRUE)
-	 * @param bool enforce_type (optional) Whether return value data type should match default value data type (Default: TRUE)
-	 * @return mixed Attribute value
-	 */
-	get_attribute: function(key, def, check_model, enforce_type) {
-		//Validate
-		if ( !this.util.is_string(key) ) {
-			//Invalid requests sent straight to super method
-			return this._super(key, def, enforce_type);
-		}
-		if ( !this.util.is_bool(check_model) ) {
-			check_model = true;
-		}
-		//Check if model is set
-		var ret = null;
-		if ( check_model && this.in_model(key) ) {
-			ret = this.get_model()[key];
-		} else {
-			ret = this._super(key, def, enforce_type);
-		}
-		return ret;
-	},
-	
-	/**
-	 * Set attribute value
-	 * Gives priority to model values
-	 * @see Component.set_attribute()
-	 * @param string key Attribute to set
-	 * @param mixed val Value to set for attribute
-	 * @param bool check_model (optional) Whether to check model or not (Default: TRUE)
-	 * @return mixed Attribute value
-	 */
-	set_attribute: function(key, val, check_model) {
-		console.groupCollapsed('Template.set_attribute');
-		console.log('Key: %o \nValue: %o', key, val);
-		//Validate
-		if ( !this.util.is_string(key) || !this.util.is_set(val) ) {
-			console.warn('Invalid request');
-			console.groupEnd();
-			return false;
-		}
-		if ( !this.util.is_bool(check_model) ) {
-			check_model = true;
-		}
-		//Determine where to set attribute
-		if ( check_model && this.in_model(key) ) {
-			console.info('Setting model attribute: %o', this.get_model());
-			//Set attribute in model
-			this.get_model()[key] = val;
-		} else {
-			//Standard attributes
-			this._super(key, val);
-		}
-		console.groupEnd();
-	},
 	
 	/* Output */
 	
@@ -3798,7 +3811,7 @@ var Template = {
 	},
 };
 
-View.Template = Component.extend(Template);
+View.Template = Modeled_Component.extend(Template);
 
 /**
  * Template tag 
