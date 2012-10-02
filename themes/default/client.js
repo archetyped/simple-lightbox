@@ -39,11 +39,9 @@
 			var l = v.get_layout();
 			var det = l.find('.slb_details').slideUp();
 			var cont = l.find('.slb_content .slb_template_tag').fadeOut();
-			/*
 			$.when(det.promise(), cont.promise()).done(function() {
 				dfr.resolve();
 			});
-			*/
 			console.groupEnd();
 			return dfr.promise();
 		},

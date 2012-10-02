@@ -1671,22 +1671,32 @@ var Component = {
 	 * 	> data	(mixed)		Data to pass to handlers (if supplied)
 	 * @param string event Custom event to trigger
 	 * @param mixed data (optional) Data to pass to event handlers
+	 * @return jQuery.Promise Promise that is resolved once event handlers are resolved
 	 */
 	trigger: function(event, data) {
 		console.groupCollapsed('Component.trigger: %o', this._slug + '.' + event);
+		var dfr = $.Deferred();
+		var dfrs = [];
+		//Handle array of events
 		if ( this.util.is_array(event) ) {
 			var t = this;
 			$.each(event, function(idx, val) {
-				t.trigger(val, data);
+				//Collect promises from triggered events
+				dfrs.push( t.trigger(val, data) );
+			});
+			//Resolve trigger when all events have been resolved
+			$.when.apply(t, dfrs).done(function() {
+				dfr.resolve();
 			});
 			console.groupEnd();
-			return true;
+			return dfr.promise();
 		}
 		//Validate
 		if ( !this.util.is_string(event) || !( event in this._events ) ) {
 			console.warn('Invalid event');
+			dfr.resolve();
 			console.groupEnd();
-			return false;
+			return dfr.promise();
 		}
 		//Create event object
 		var ev = { 'type': event, 'data': null };
@@ -1703,11 +1713,16 @@ var Component = {
 			console.info('Bucket: %o (%o)', context, ec.length);
 			//Iterate though handlers in current context bucket
 			for ( var x = 0; x < ec.length; x++ ) {
-				//Call handler, passing component instance & event object
-				ec[x](this, ev);
+				//Collect promises from event handlers
+				dfrs.push( ec[x](this, ev) );
 			}
 		}
+		//Resolve trigger when all handlers have been resolved
+		$.when.apply(this, dfrs).done(function() {
+			dfr.resolve();
+		});
 		console.groupEnd();
+		return dfr.promise();
 	},
 };
 
@@ -1855,20 +1870,17 @@ var Viewer = {
 		if ( this.slideshow_active() ) {
 			this.slideshow_pause(mode);
 		}
-		this.dom_get(); //TODO Remove manual DOM initialization
-		var v = this;
-		var final = function() {
-			dfr.resolve();
-			//Set CSS class on DOM element
-			var m = ( mode ) ? 'addClass' : 'removeClass';
-			console.info('Loading method: %o', m);
-			$(v.dom_get())[m]('loading');
-		};
+		//Set CSS class on DOM element
+		var m = ( mode ) ? 'addClass' : 'removeClass';
+		console.info('Loading method: %o', m);
+		$(this.dom_get())[m]('loading');
 		if ( mode ) {
 			//Loading animation
-			this.get_theme().animate('load').done(final);
+			this.get_theme().animate('load').done(function() {
+				dfr.resolve();
+			});
 		} else {
-			final();
+			dfr.resolve();
 		}
 		console.groupEnd();
 		return dfr.promise();
@@ -1914,8 +1926,8 @@ var Viewer = {
 			this.exit();
 		}
 		//Set loading flag
-		console.info('Set loading flag');
-		this.set_loading();
+		// console.info('Set loading flag');
+		// this.set_loading();
 		//Display
 		this.render();
 		console.groupEnd();
@@ -1939,13 +1951,12 @@ var Viewer = {
 		console.info('Rendering Theme layout');
 		var v = this;
 		var th = this.get_theme();
-		var dfr = $.Deferred();
 		//Theme event handlers
 		th
 			.on({
 				//Loading
 				'render-loading': function(theme, ev) {
-					dfr = $.Deferred();
+					var dfr = $.Deferred();
 					console.group('Viewer.render.loading (Callback)');
 					if ( v.is_open() ) {
 						console.info('Viewer open');
@@ -1966,35 +1977,34 @@ var Viewer = {
 						});
 					}
 					console.groupEnd();
+					return dfr.promise();
 				},
 				//Complete
 				'render-complete': function(theme, ev) {
-					dfr.done(function() {
-						console.groupCollapsed('Viewer.render.complete (Callback)');
-						console.log('Completed output: %o', ev.data);
-						console.info('Theme loaded');
-						//Set classes
-						var d = v.dom_get();
-						var classes = ['item_single', 'item_multi'];
-						var ms = ['addClass', 'removeClass']; 
-						if ( !v.get_item().get_group().is_single() ) {
-							ms.reverse();
-						}
-						$.each(ms, function(idx, val) {
-							d[val](classes[idx]);
-						});
-						//Bind events
-						v.events_init();
-						//Animate
-						th.animate('complete').done(function() {
-							//Unset loading flag
-							v.unset_loading();						});
-						//Trigger event
-						v.trigger('render-complete');
-						//Set viewer as initialized
-						v.init = true;
-						console.groupEnd();
+					console.groupCollapsed('Viewer.render.complete (Callback)');
+					console.log('Completed output: %o', ev.data);
+					console.info('Theme loaded');
+					//Set classes
+					var d = v.dom_get();
+					var classes = ['item_single', 'item_multi'];
+					var ms = ['addClass', 'removeClass']; 
+					if ( !v.get_item().get_group().is_single() ) {
+						ms.reverse();
+					}
+					$.each(ms, function(idx, val) {
+						d[val](classes[idx]);
 					});
+					//Bind events
+					v.events_init();
+					//Animate
+					th.animate('complete').done(function() {
+						//Unset loading flag
+						v.unset_loading();					});
+					//Trigger event
+					v.trigger('render-complete');
+					//Set viewer as initialized
+					v.init = true;
+					console.groupEnd();
 				}
 			}, this)
 			//Render
@@ -3381,7 +3391,7 @@ var Theme = {
 		];
 		var handler = function(e) {
 			return function(tp, ev) {
-				thm.trigger(e, ev.data);
+				return thm.trigger(e, ev.data);
 			}
 		};
 		for ( var x = 0; x < events.length; x++ ) {
@@ -3475,29 +3485,32 @@ var Template = {
 			console.info('Rendering Item');
 			//Iterate through tags and populate layout
 			if ( this.has_tags() ) {
-				this.trigger('render-loading');
+				var loading_promise = this.trigger('render-loading');
+				console.info('Loading is promise: %o', this.util.is_promise(loading_promise));
 				var tpl = this;
 				var tags = this.get_tags(),
 					tag_promises = [];
 				console.info('Tags exist: %o', tags);
 				//Render Tag output
-				console.groupCollapsed('Processing Tags');
-				$.each(tags, function(idx, tag) {
-					console.log('Tag DOM: %o', tag.dom_get().get(0));
-					console.groupCollapsed('Processing Tag: %o', [tag.get_name(), tag.get_prop()].join('.'));
-					tag_promises.push(tag.render(item).done(function(r) {
-						console.log('Tag rendered: %o', [r.tag.get_name(), r.tag.get_prop()].join('.'));
-						console.group('Tag Processing Callback');
-						console.info('Tag Output: %o', r.output);
-						r.tag.dom_get().html(r.output);
+				loading_promise.done(function() {
+					console.groupCollapsed('Processing Tags');
+					$.each(tags, function(idx, tag) {
+						console.log('Tag DOM: %o', tag.dom_get().get(0));
+						console.groupCollapsed('Processing Tag: %o', [tag.get_name(), tag.get_prop()].join('.'));
+						tag_promises.push(tag.render(item).done(function(r) {
+							console.log('Tag rendered: %o', [r.tag.get_name(), r.tag.get_prop()].join('.'));
+							console.group('Tag Processing Callback');
+							console.info('Tag Output: %o', r.output);
+							r.tag.dom_get().html(r.output);
+							console.groupEnd();
+						}));
 						console.groupEnd();
-					}));
+					});
 					console.groupEnd();
-				});
-				console.groupEnd();
-				//Fire event when all tags rendered
-				$.when.apply($, tag_promises).done(function() {
-					tpl.trigger('render-complete');
+					//Fire event when all tags rendered
+					$.when.apply($, tag_promises).done(function() {
+						tpl.trigger('render-complete');
+					});
 				});
 			}
 		} else {
