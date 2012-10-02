@@ -57,7 +57,7 @@
 }
 
 #slb_viewer_wrap .slb_theme_slb_default .slb_loading {
-	background: url('../../images/loading.gif') center center no-repeat;
+	background: url('images/loading.gif') center center no-repeat;
 	position: absolute;
 	left: 0%;
 	top: 0;

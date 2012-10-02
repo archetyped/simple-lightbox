@@ -2325,7 +2325,7 @@ var Viewer = {
 		console.groupCollapsed('Viewer.close');
 		var v = this;
 		var t = this.get_theme();
-		this.unset_loading().done(function() {
+		t.animate('unload').done(function() {
 			t.animate('close').done(function() {
 				//Fallback viewer hide
 				v.dom_get().hide();
