@@ -46,11 +46,6 @@ class SLB_Theme extends SLB_Base {
 	private $_client_attributes_uri = '';
 	
 	/**
-	 * @var string Client attributes data
-	 */
-	private $_client_attributes_data = '';
-	
-	/**
 	 * @var string Class mode
 	 * @see SLB_Base::$mode
 	 */
@@ -68,13 +63,13 @@ class SLB_Theme extends SLB_Base {
 			$props = array();
 		}
 		$defaults = array (
-			'id'				=> '',
-			'name'				=> '',
-			'parent'			=> null,
-			'template_uri'		=> '',
-			'template_data'		=> '',
-			'stylesheet_uri'	=> '',
-			'client_attributes'	=> '',
+			'id'					=> '',
+			'name'					=> '',
+			'parent'				=> null,
+			'template_uri'			=> '',
+			'template_data'			=> '',
+			'stylesheet_uri'		=> '',
+			'client_attributes_uri'	=> '',
 		);
 		
 		$props = array_merge($defaults, $props);
@@ -87,7 +82,7 @@ class SLB_Theme extends SLB_Base {
 			 ->set_template($template_data)
 			 ->set_template_uri($template_uri)
 			 ->set_stylesheet($stylesheet_uri)
-			 ->set_client_attrs($client_attributes);
+			 ->set_client_attributes($client_attributes_uri);
 	}
 	
 	/*-** Getters/Setters **-*/
@@ -256,25 +251,8 @@ class SLB_Theme extends SLB_Base {
 		return $this;
 	}
 	
-	/**
-	 * Get client attributes
-	 * @return string Client attributes
-	 */
-	public function get_client_attrs() {
-		$data = null;
-		if ( empty($this->_client_attributes_data) && !empty($this->_client_attributes_uri) && ( $file = $this->util->normalize_path($this->util->get_path_base(), $this->_client_attributes_uri) ) && file_exists($file) ) {
-			//Retrieve file contents
-			$data = file_get_contents($file);
-			//Format
-			$data = trim($data, " ;,\n\r\t\0\x0B");
-			//Validate first/last characters
-			if ( !empty($data) && substr($data, 0, 1) == '{' && substr($data, -1) == '}' ) {
-				//Save contents
-				$this->_client_attributes_data = $data;
-			}
-		}
-		//Return
-		return $this->_client_attributes_data;
+	public function get_client_attributes() {
+		return $this->util->get_file_url($this->_client_attributes_uri);
 	}
 	
 	/**
@@ -282,14 +260,9 @@ class SLB_Theme extends SLB_Base {
 	 * @param string $uri URI to file containing client attributes
 	 * @return SLB_Theme Current theme instance
 	 */
-	public function set_client_attrs($uri) {
+	public function set_client_attributes($uri) {
 		if ( is_string($uri) ) {
-			$uri = trim($uri);
-			//Clear cached data when URI changed
-			if ( $uri != $this->_client_attributes_uri ) {
-				$this->_client_attributes_data = '';
-			}
-			$this->_client_attributes_uri = $uri;
+			$this->_client_attributes_uri = trim($uri);
 		}
 		return $this;
 	}
@@ -343,11 +316,11 @@ class SLB_Themes extends SLB_Base {
 	function init_defaults() {
 		$path_base = 'themes/default/';
 		$props = array (
-			'id'				=> $this->id_default,
-			'name'				=> 'Default',
-			'template_uri'		=> $path_base . 'layout.html',
-			'stylesheet_uri'	=> $path_base . 'style.css',
-			'client_attributes'	=> $path_base . 'client.js',
+			'id'					=> $this->id_default,
+			'name'					=> 'Default',
+			'template_uri'			=> $path_base . 'layout.html',
+			'stylesheet_uri'		=> $path_base . 'style.css',
+			'client_attributes_uri'	=> $path_base . 'client.js',
 		);
 		$this->add_item($props);
 

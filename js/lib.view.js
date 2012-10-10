@@ -34,6 +34,12 @@ var View = {
 	 */
 	component_defaults: [],
 	
+	/**
+	 * Collection of jQuery.Deferred instances added during loading routine
+	 * @var array
+	 */
+	loading: [],
+	
 	/* Component Collections */
 	
 	viewers: {},
@@ -114,19 +120,22 @@ var View = {
 	 * Initialization
 	 */
 	init: function(options) {
-		console.groupCollapsed('View.init');
-		//Set options
-		$.extend(true, this.options, options);
-		console.groupCollapsed('Options');
-		console.dir(this.options);
-		console.groupEnd();
-		
-		/* Set defaults */
-		
-		//Items
-		this.init_items();
-		console.info('Init complete');
-		console.groupEnd();
+		var t = this;
+		$.when.apply($, this.loading).always(function(){
+			console.groupCollapsed('View.init');
+			//Set options
+			$.extend(true, t.options, options);
+			console.groupCollapsed('Options');
+			console.dir(t.options);
+			console.groupEnd();
+			
+			/* Set defaults */
+			
+			//Items
+			t.init_items();
+			console.info('Init complete');
+			console.groupEnd();
+		});
 	},
 	
 	init_components: function() {
@@ -670,7 +679,7 @@ var View = {
 	 * @param string name Theme name
 	 * @param obj attr Theme options
 	 * > Multiple attribute parameters are merged
-	 * @return void
+	 * @return jQuery.Promise Resolved when theme has been added
 	 */
 	add_theme: function(id, attr) {
 		console.groupCollapsed('View.add_theme');
@@ -680,30 +689,75 @@ var View = {
 			console.groupEnd();
 			return false;
 		}
+		var dfr = $.Deferred();
+		this.loading.push(dfr);
 		
 		//Build attributes
-		var attrs = [{ 'layout_raw': '', 'layout_parsed': '', 'animate': {} }];
+		var attrs = [{ 'layout_raw': '', 'layout_parsed': '', 'layout_margins': null, 'animate': {} }];
+		var dfrs = [];
 		if ( arguments.length >= 2 ) {
 			var args = Array.prototype.slice.call(arguments, 1);
 			var t = this;
+			var add_attrs = function(data) {
+				if ( t.util.is_obj(data) ) {
+					console.log('Adding attributes');
+					console.dir(data);
+					attrs.push(data)
+				}
+			};
 			$.each(args, function(idx, arg) {
-				if ( t.util.is_obj(arg, false) ) {
-					attrs.push(arg);
+				if ( t.util.is_string(arg) ) {
+					console.log('Processing string: %o', arg);
+					//Fetch data via URI
+					dfrs.push($.get(arg).always(function(data) {
+						console.groupCollapsed('View.add_theme() (Get URI data): %o', arg);
+						console.log('Data retrieved (%o)', $.type(data));
+						if ( t.util.is_obj(data) && data.responseText ) {
+							data = data.responseText;
+						}
+						if ( t.util.is_string(data) ) {
+							data = data.trim();
+							//Check for object
+							if ( '{' == data.charAt(0) && '}' == data.charAt(data.length - 1) ) {
+								console.info('Wrapping object in array (for parsing)');
+								data = '[' + data + ']';
+							}
+							console.info('Attempting conversion');
+							try {
+								data = eval(data);
+								if ( t.util.is_array(data) && data.length && t.util.is_obj(data[0]) ) {
+									data = data[0];
+								}
+								console.log('Data (%o): %o', $.type(data), data);
+							} catch (e) {
+								console.warn('Error: %o', e);
+								data = null;
+							}
+						}
+						add_attrs(data);
+						console.groupEnd();
+					}));
+				} else {
+					add_attrs(arg);
 				}
 			});
 		}
 		
-		//Create theme model
-		var model = $.extend.apply(null, attrs);
-		
-		//Initialize models object
-		if ( this.util.is_obj(model, false) ) {
-			this.init_themes();
+		$.when.apply($, dfrs).always(function() {
+			//Create theme model
+			var model = $.extend.apply(null, attrs);
 			
-			//Add theme model
-			this.Theme.prototype._models[id] = model;
-		}
+			//Initialize models object
+			if ( t.util.is_obj(model, false) ) {
+				t.init_themes();
+				
+				//Add theme model
+				t.Theme.prototype._models[id] = model;
+			}
+			dfr.resolve();
+		});
 		console.groupEnd();
+		return dfr.promise();
 	},
 	
 	/**
@@ -1342,15 +1396,18 @@ var Component = {
 	 * @param string attr Attribute to call
 	 * @param arguments (optional) Additional arguments to pass to method
 	 */
-	call_attribute: function(attr) {
+	call_attribute: function(attr, args) {
 		console.group('Component.call_attribute');
 		attr = this.get_attribute(attr, function() {});
-		console.info('Passing to attribute (method)');
-		//Get arguments
-		var args = Array.prototype.slice.call(arguments, 1);
-		//Pass arguments to user-defined method
+		if ( this.util.is_func(attr) ) {
+			console.info('Passing to attribute (method)');
+			//Get arguments
+			var args = Array.prototype.slice.call(arguments, 1);
+			//Pass arguments to user-defined method
+			attr = attr.apply(this, args);
+		}
 		console.groupEnd();
-		return attr.apply(this, args);
+		return attr;
 	},
 	
 	/**
@@ -1748,6 +1805,7 @@ var Viewer = {
 	_attr_default: {
 		loop: true,
 		animate: true,
+		autofit: true,
 		overlay_enabled: true,
 		overlay_opacity: '0.8',
 		container: null,
@@ -1770,7 +1828,7 @@ var Viewer = {
 	_attr_parent: [
 		'theme', 
 		'group_loop', 
-		'ui_animate', 'ui_overlay_opacity', 'ui_labels',
+		'ui_autofit', 'ui_animate', 'ui_overlay_opacity', 'ui_labels',
 		'slideshow_enabled', 'slideshow_autostart', 'slideshow_duration'],
 	
 	_attr_map: {
@@ -3361,6 +3419,29 @@ var Theme = {
 		}
 		//Return class names
 		return cls;
+	},
+	
+	get_item_dimensions: function() {
+		console.group('Theme.get_item_dimensions()');
+		var v = this.get_viewer();
+		var dims = v.get_item().get_dimensions();
+		if ( v.get_attribute('autofit', false) ) {
+			//Get theme margins
+			var margins = this.call_attribute('layout_margins');
+			if ( this.util.is_obj(margins) ) {
+				//Normalize margins
+				margins = $.extend({'width': 0, 'height': 0}, margins);
+				console.info('Margins: %o', margins);
+				//Adjust dimensions (if necessary)
+				var dims_win =  {'width': $(window).width(), 'height': $(window).height};
+				//Width
+				
+				//Height
+				
+			}
+		}
+		console.groupEnd();
+		return dims;
 	},
 	
 	/* Output */

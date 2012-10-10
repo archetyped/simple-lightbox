@@ -1,5 +1,15 @@
-{
+(function($) {
+return {
+	/**
+	 * Animation handlers
+	 */
 	'animate': {
+		/**
+		 * Open event
+		 * @param View.Viewer Viewer instance
+		 * @param jQuery.Deferred Deferred instance to be resolved when animation is complete
+		 * @return jQuery.Promise Resolved when animation is complete
+		 */
 		'open': function(v, dfr) {
 			console.groupCollapsed('Theme.animate.open()');
 			var d = v.dom_get(),
@@ -15,6 +25,12 @@
 			console.groupEnd();
 			return dfr.promise();
 		},
+		/**
+		 * Close event
+		 * @param View.Viewer Viewer instance
+		 * @param jQuery.Deferred Deferred instance to be resolved when animation is complete
+		 * @return jQuery.Promise Resolved when animation is complete
+		 */
 		'close': function(v, dfr) {
 			console.groupCollapsed('Theme.animate.close()');
 			var l = v.get_layout();
@@ -30,12 +46,24 @@
 			console.groupEnd();
 			return dfr.promise();
 		},
+		/**
+		 * Item loading event
+		 * @param View.Viewer Viewer instance
+		 * @param jQuery.Deferred Deferred instance to be resolved when animation is complete
+		 * @return jQuery.Promise Resolved when animation is complete
+		 */
 		'load': function(v, dfr) {
 			console.groupCollapsed('Theme.animate.load()');
 			v.get_layout().find('.slb_loading').show();
 			console.groupEnd();
 			return v.get_layout().fadeIn().promise();
 		},
+		/**
+		 * Item unloaded event
+		 * @param View.Viewer Viewer instance
+		 * @param jQuery.Deferred Deferred instance to be resolved when animation is complete
+		 * @return jQuery.Promise Resolved when animation is complete
+		 */
 		'unload': function(v, dfr) {
 			console.groupCollapsed('Theme.animate.unload()');
 			console.info('Resolved: %o', dfr.isResolved());
@@ -48,10 +76,16 @@
 			console.groupEnd();
 			return dfr.promise();
 		},
+		/**
+		 * Item loading completed event
+		 * @param View.Viewer Viewer instance
+		 * @param jQuery.Deferred Deferred instance to be resolved when animation is complete
+		 * @return jQuery.Promise Resolved when animation is complete
+		 */
 		'complete': function(v, dfr) {
 			console.groupCollapsed('Theme.animate.complete()');
 			//Resize viewer to fit item
-			var dims = v.get_item().get_dimensions();
+			var dims = this.get_item_dimensions();
 			var l = v.get_layout();
 			l.find('.slb_details .slb_template_tag').show();
 			var pos = {top: ( $(document).scrollTop() + $(window).height() / 2 ) - ( dims.height / 2 ) };
@@ -78,5 +112,13 @@
 			console.groupEnd();
 			return dfr.promise();
 		},
-	} 
-}
+	},
+	/**
+	 * Theme-specific layout offset 
+	 */
+	'layout_margins': {
+		'width': 150,
+		'height': 150
+	}
+};
+})(jQuery);

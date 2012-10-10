@@ -194,6 +194,7 @@ class SLB_Lightbox extends SLB_Base {
 				'group_gallery'				=> array('default' => false, 'group' => 'grouping'),
 				'group_widget'				=> array('default' => false, 'group' => 'grouping'),
 				'theme'						=> array('default' => $this->theme_default, 'group' => 'ui', 'parent' => 'option_select', 'options' => $this->m('get_theme_options')),
+				'ui_autofit'				=> array('default' => true, 'group' => 'ui', 'in_client' => true),
 				'ui_animate'				=> array('default' => true, 'group' => 'ui', 'in_client' => true),
 				'slideshow_autostart'		=> array('default' => true, 'group' => 'ui', 'in_client' => true),
 				'slideshow_duration'		=> array('default' => '6', 'attr' => array('size' => 3, 'maxlength' => 3), 'group' => 'ui', 'in_client' => true),
@@ -265,6 +266,7 @@ class SLB_Lightbox extends SLB_Base {
 				'group_gallery'				=> __('Group gallery links separately', $p),
 				'group_widget'				=> __('Group widget links separately', $p),
 				'theme'						=> __('Theme', $p),
+				'ui_autofit'				=> __('Automatically fit lightbox in browser', $p),
 				'ui_animate'				=> __('Animate lightbox resizing', $p),
 				'slideshow_autostart'		=> __('Automatically Start Slideshow', $p),
 				'slideshow_duration'		=> __('Slide Duration (Seconds)', $p),
@@ -663,12 +665,12 @@ class SLB_Lightbox extends SLB_Base {
 			);
 		}
 		//Client attributes
-		$c_attr = $thm->get_client_attrs();
+		$c_attr = $thm->get_client_attributes();
 		if ( !empty($c_attr) ) {
-			$thm_data[] = $c_attr;
+			$thm_data[] = sprintf("'%s'", $c_attr);
 		}
 		if ( !empty($thm_data) ) {
-			array_unshift($thm_data, "'" . $thm->get_id() . "'");
+			array_unshift($thm_data, sprintf("'%s'", $thm->get_id()));
 			$client_out[] = $this->util->call_client_method('View.add_theme', $thm_data, false);
 		}
 		
