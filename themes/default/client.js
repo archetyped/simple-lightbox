@@ -83,16 +83,15 @@ return {
 		 * @return jQuery.Promise Resolved when animation is complete
 		 */
 		'complete': function(v, dfr) {
-			console.groupCollapsed('Theme.animate.complete()');
+			console.group('Theme.animate.complete()');
 			//Resize viewer to fit item
 			var dims = this.get_item_dimensions();
 			var l = v.get_layout();
 			l.find('.slb_details .slb_template_tag').show();
-			var pos = {top: ( $(document).scrollTop() + $(window).height() / 2 ) - ( dims.height / 2 ) };
+			var pos = { 'top': $(document).scrollTop() + ( $(window).height() / 2 ) - ( this.get_dimensions().height / 2 ) };
+			console.info('Pos (Top): %o \nScrollTop: %o \nWindow Height: %o \nLayout Height: %o', pos.top, $(document).scrollTop(), $(window).height(), this.get_dimensions().height);
+			pos.top = pos.top || 0;
 			var det = l.find('.slb_details');
-			if ( pos.top > det.height() ) {
-				pos.top -= det.height();
-			}
 			//Resize container
 			pos = l.animate(pos).promise();
 			dims = l.find('.slb_content').animate(dims).promise();
@@ -101,7 +100,7 @@ return {
 					//Display content
 					l.find('.slb_content .slb_template_tag').fadeIn(function() {
 						//Display UI
-						l.find('.slb_details').hide().promise().done(function() {
+						det.hide().promise().done(function() {
 							det.slideDown(function() {
 								dfr.resolve();
 							});
@@ -114,11 +113,14 @@ return {
 		},
 	},
 	/**
-	 * Theme-specific layout offset 
+	 * Theme-specific margins 
 	 */
-	'layout_margins': {
-		'width': 150,
-		'height': 150
+	'margin': function() {
+		var dims = {'width': 0, 'height': 0};
+		var d = this.get_viewer().get_layout().find('.slb_details');
+		d.find('.slb_template_tag').show();
+		dims.height = d.height();
+		return dims;
 	}
 };
 })(jQuery);

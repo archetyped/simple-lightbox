@@ -524,7 +524,7 @@ var View = {
 	 * @param obj el DOM element representing item
 	 */
 	show_item: function(el) {
-		console.group('View.show_item');
+		console.groupCollapsed('View.show_item');
 		this.get_item(el).show();
 		console.groupEnd();
 	},
@@ -693,7 +693,7 @@ var View = {
 		this.loading.push(dfr);
 		
 		//Build attributes
-		var attrs = [{ 'layout_raw': '', 'layout_parsed': '', 'layout_margins': null, 'animate': {} }];
+		var attrs = [{ 'layout_raw': '', 'layout_parsed': '', 'margin': null, 'animate': {} }];
 		var dfrs = [];
 		if ( arguments.length >= 2 ) {
 			var args = Array.prototype.slice.call(arguments, 1);
@@ -1422,7 +1422,8 @@ var Component = {
 	/**
 	 * Set component attributes
 	 * @param obj attributes Attributes to set
-	 * @param bool full (optional) Whether to fully replace or merge component's attributes with new values (Default: Merge)  
+	 * @param bool full (optional) Whether to fully replace or merge component's attributes with new values (Default: Merge)
+	 * @TODO Check for issues with workflow  
 	 */
 	set_attributes: function(attributes, full) {
 		console.groupCollapsed('Component.set_attributes');
@@ -1637,8 +1638,9 @@ var Component = {
 		//Add event handlers via array
 		if ( this.util.is_array(event) ) {
 			var t = this;
+			var args = Array.slice.call(arguments, 1);
 			$.each(event, function(idx, val) {
-				t.on(val, func, options, context);
+				t.on.apply(t, [val].concat(args));
 			});
 			console.groupEnd();
 			return this;
@@ -1731,7 +1733,7 @@ var Component = {
 	 * @return jQuery.Promise Promise that is resolved once event handlers are resolved
 	 */
 	trigger: function(event, data) {
-		console.groupCollapsed('Component.trigger: %o', this._slug + '.' + event);
+		console.group('Component.trigger: %o', this._slug + '.' + event);
 		var dfr = $.Deferred();
 		var dfrs = [];
 		//Handle array of events
@@ -1765,7 +1767,7 @@ var Component = {
 		var es = this._events;
 		var ec;
 		//Iterate through context buckets for event
-		for ( context in es[event] ) {
+		for ( var context in es[event] ) {
 			ec = es[event][context];
 			console.info('Bucket: %o (%o)', context, ec.length);
 			//Iterate though handlers in current context bucket
@@ -2039,7 +2041,7 @@ var Viewer = {
 				},
 				//Complete
 				'render-complete': function(theme, ev) {
-					console.groupCollapsed('Viewer.render.complete (Callback)');
+					console.group('Viewer.render.complete (Callback)');
 					console.log('Completed output: %o', ev.data);
 					console.info('Theme loaded');
 					//Set classes
@@ -2082,10 +2084,10 @@ var Viewer = {
 			sel = '#' + this.add_ns('wrap');
 		}
 		//Add default container to DOM if not yet present
-		c = $(sel);
+		var c = $(sel);
 		if ( !c.length ) {
 			//Prepare ID
-			id = ( sel.indexOf('#') === 0 ) ? sel.substr(1) : sel;
+			var id = ( sel.indexOf('#') === 0 ) ? sel.substr(1) : sel;
 			//Add element
 			c = $('<div />', {'id': id}).appendTo('body');
 		}
@@ -2965,12 +2967,16 @@ var Content_Item = {
 	
 	/**
 	 * Retrieve item dimensions
-	 * Wraps Content_Type.get_dimensions() for type-specific dimension retrieval
 	 * @return obj Item `width` and `height` properties (px) 
 	 */
 	get_dimensions: function() {
-		var dim = this.get_attribute('dimensions', {});
-		return $.extend({'width': 0, 'height': 0}, dim);
+		//console.group('Content_Item.get_dimensions');
+		//var dim = this.get_attribute('dimensions', {});
+		//console.info('Dimensions: %o', dim);
+		//dim = $.extend({'width': 0, 'height': 0}, dim);
+		//console.info('Normalized Dimensions: %o', dim);
+		//console.groupEnd();
+		return $.extend({'width': 0, 'height': 0}, this.get_attribute('dimensions'), {});
 	},
 	
 	/**
@@ -3421,26 +3427,77 @@ var Theme = {
 		return cls;
 	},
 	
+	/**
+	 * Retrieve theme margins
+	 * @return obj Theme margins with `width` & `height` properties
+	 */
+	get_margin: function() {
+		console.groupCollapsed('Theme.get_margin');
+		var margin = null; 
+		var attr = 'margin_cache';
+		var id = this.get_viewer().get_item().get_uri('permalink');
+		var cache = this.get_attribute(attr, {}, false);
+		if ( this.util.in_obj(cache, id) ) {
+			console.info('Retrieving cached margin: %o \n%o', id, cache[id]);
+			margin = cache[id];
+		}
+		if ( !this.util.is_obj(margin) ) {
+			console.info('Generating margins');
+			//Get theme margins
+			margin = this.call_attribute('margin');
+			if ( !this.util.is_obj(margin) ) {
+				margin = {};
+			}
+			//Normalize margins
+			margin = $.extend({'width': 0, 'height': 0}, margin);
+			//Cache margin
+			cache[id] = margin;
+			this.set_attribute(attr, cache);
+			console.log('Margin cached: %o \n%o', id, margin);
+		}
+		console.groupEnd();
+		return margin;
+	},
+	
 	get_item_dimensions: function() {
 		console.group('Theme.get_item_dimensions()');
 		var v = this.get_viewer();
 		var dims = v.get_item().get_dimensions();
+		console.info('Original dimensions: %o', dims);
 		if ( v.get_attribute('autofit', false) ) {
-			//Get theme margins
-			var margins = this.call_attribute('layout_margins');
-			if ( this.util.is_obj(margins) ) {
-				//Normalize margins
-				margins = $.extend({'width': 0, 'height': 0}, margins);
-				console.info('Margins: %o', margins);
-				//Adjust dimensions (if necessary)
-				var dims_win =  {'width': $(window).width(), 'height': $(window).height};
-				//Width
-				
-				//Height
-				
+			console.log('Processing resize');
+			//Get maximum dimensions
+			var margin = this.get_margin();
+			var max =  {'width': $(window).width(), 'height': $(window).height() };
+			if ( max.width > margin.width ) {
+				max.width -= margin.width;
+			}
+			if ( max.height > margin.height ) {
+				max.height -= margin.height;
+			}
+			//Get resize factor
+			var factor = Math.min(max.width / dims.width, max.height / dims.height);
+			console.info('Margin: %o \nMax: %o \nFactor: %o', margin, max, factor);
+			//Resize dimensions
+			if ( factor < 1 ) {
+				console.log('Resizing');
+				$.each(dims, function(key, val) {
+					dims[key] = Math.round(dims[key] * factor);
+				});
+				console.info('Resized: %o', dims);
 			}
 		}
+		console.info('Final dimensions: %o', dims);
 		console.groupEnd();
+		return $.extend({}, dims);
+	},
+	
+	get_dimensions: function() {
+		var dims = this.get_item_dimensions();
+		var margin = this.get_margin();
+		$.each(dims, function(key, val) {
+			dims[key] += margin[key];
+		});
 		return dims;
 	},
 	
@@ -3483,7 +3540,7 @@ var Theme = {
 	},
 	
 	animate: function(event) {
-		console.groupCollapsed('Theme.animate: %o', event);
+		console.group('Theme.animate: %o', event);
 		var dfr = null;
 		var v = this.get_viewer();
 		if ( v.get_attribute('animate', true) && this.util.is_string(event) ) {
@@ -4188,21 +4245,29 @@ View.add_content_type('image', {
 		var img = new Image();
 		var type = this;
 		//Set load event
-		$(img).bind('load', function() {
-			console.groupCollapsed('Content_Type.image.load (Callback)');
+		var handler = function(e) {
+			console.group('Content_Type.image.load (Callback)');
 			//Save Data
 			item.set_data(this);
 			//Set attributes
-			var attrs = {
-				'dimensions': {'width': this.width, 'height': this.height},
-			};
-			item.set_attributes(attrs);
+			var dim = {'width': this.width, 'height': this.height};
+			console.info('Setting dimensions', dim);
+			item.set_attribute('dimensions', dim);
 			//Build output
 			var out = $('<img />', {'src': item.get_uri()});
 			//Resolve deferred
 			dfr.resolve(out);
 			console.groupEnd();
-		});
+		};
+		
+		//Attach event handler
+		if ( img.addEventListener ) {
+			img.addEventListener('load', handler, false);
+		} else if ( img.attachEvent ) {
+			img.attachEvent('onload', handler);
+		} else {
+			handler(img);
+		}
 		//Load image
 		img.src = item.get_uri();
 		//Return promise
@@ -4334,7 +4399,7 @@ View.add_template_tag_handler('ui', {
 	props: {
 		'slideshow_control': function(item, tag) {
 			//Get slideshow status
-			prop = ( item.get_viewer().slideshow_active() ) ? 'slideshow_stop' : 'slideshow_start';
+			var prop = ( item.get_viewer().slideshow_active() ) ? 'slideshow_stop' : 'slideshow_start';
 			return item.get_viewer().get_label(prop);
 		},
 		'group_status': function(item, tag) {
@@ -4343,7 +4408,7 @@ View.add_template_tag_handler('ui', {
 				return '';
 			}
 			//Handle groups with multiple items
-			out = item.get_viewer().get_label('group_status');
+			var out = item.get_viewer().get_label('group_status');
 			var key,
 				ph,
 				delim = '%',
