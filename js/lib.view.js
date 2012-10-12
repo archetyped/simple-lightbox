@@ -1397,7 +1397,7 @@ var Component = {
 	 * @param arguments (optional) Additional arguments to pass to method
 	 */
 	call_attribute: function(attr, args) {
-		console.group('Component.call_attribute');
+		console.groupCollapsed('Component.call_attribute');
 		attr = this.get_attribute(attr, function() {});
 		if ( this.util.is_func(attr) ) {
 			console.info('Passing to attribute (method)');
@@ -1835,6 +1835,7 @@ var Viewer = {
 	
 	_attr_map: {
 		'group_loop': 'loop',
+		'ui_autofit': 'autofit',
 		'ui_animate': 'animate',
 		'ui_overlay_opacity': 'overlay_opacity',
 		'ui_labels': 'labels'
@@ -1857,6 +1858,7 @@ var Viewer = {
 	/* Properties */
 	
 	init: false,
+	open: false,
 	loading: false,
 	
 	/* Methods */
@@ -1936,7 +1938,7 @@ var Viewer = {
 		$(this.dom_get())[m]('loading');
 		if ( mode ) {
 			//Loading animation
-			this.get_theme().animate('load').done(function() {
+			this.get_theme().animate('load').always(function() {
 				dfr.resolve();
 			});
 		} else {
@@ -2010,31 +2012,45 @@ var Viewer = {
 		//Get theme output
 		console.info('Rendering Theme layout');
 		var v = this;
-		var th = this.get_theme();
+		var thm = this.get_theme();
 		//Theme event handlers
-		th
+		thm
 			.on({
 				//Loading
 				'render-loading': function(theme, ev) {
 					var dfr = $.Deferred();
+					var set_pos = function() {
+						//Set position
+						v.dom_get().css('top', $(window).scrollTop());
+					};
+					var always = function() {
+						//Set loading flag
+						v.set_loading().always(function() {
+							dfr.resolve();
+						});
+					};
 					console.group('Viewer.render.loading (Callback)');
 					if ( v.is_open() ) {
 						console.info('Viewer open');
-						th.animate('unload').done(function() {
-							v.set_loading().done(function() {
-								dfr.resolve();
-							});
-						});
+						thm.animate('unload')
+							.fail(function() {
+								set_pos();
+								thm.dom_get_tag('item', 'content').attr('style', '');
+							})
+							.always(always);
 					} else {
-						th.animate('open').done(function() {
-							//Fallback open
-							v.get_overlay().show();
-							v.dom_get().show();
-							//Set loading flag
-							v.set_loading().done(function() {
-								dfr.resolve();
+						thm.animate('open')
+							.always(function() {
+								always();
+								v.events_open();
+								v.open = true;
+							})
+							.fail(function() {
+								 set_pos();
+								//Fallback open
+								v.get_overlay().show();
+								v.dom_get().show();
 							});
-						});
 					}
 					console.groupEnd();
 					return dfr.promise();
@@ -2055,11 +2071,19 @@ var Viewer = {
 						d[val](classes[idx]);
 					});
 					//Bind events
-					v.events_init();
+					v.events_complete();
 					//Animate
-					th.animate('complete').done(function() {
-						//Unset loading flag
-						v.unset_loading();					});
+					thm.animate('complete')
+						.fail(function() {
+							//Autofit content
+							if ( v.get_attribute('autofit', true) ) {
+								var dims = $.extend({'display': 'inline-block'}, thm.get_item_dimensions());
+								var tag = thm.dom_get_tag('item', 'content').css(dims);
+							}
+						})
+						.always(function() {
+							//Unset loading flag
+							v.unset_loading();						});
 					//Trigger event
 					v.trigger('render-complete');
 					//Set viewer as initialized
@@ -2191,6 +2215,7 @@ var Viewer = {
 		this.set_item(false);
 		this.set_loading(false);
 		this.slideshow_stop();
+		this.keys_disable();
 	},
 	
 	/* Content */
@@ -2207,11 +2232,14 @@ var Viewer = {
 	/* Interactivity */
 	
 	/**
-	 * Initialize event handlers for UI elements
+	 * Initialize event handlers upon opening lightbox
 	 */
-	events_init: function() {
-		console.groupCollapsed('Viewer.events_init');
-		if ( this.init ) {
+	events_open: function() {
+		console.groupCollapsed('Viewer.events_open');
+		this.get_overlay().click(close);
+		//Keyboard bindings
+		this.keys_enable();
+		if ( this.open ) {
 			console.warn('Event handlers previously set');
 			console.groupEnd();
 			return false;
@@ -2224,18 +2252,67 @@ var Viewer = {
 		});
 		
 		/* Close */
-		
 		var v = this;
-		var close = function(e) {
-			return v.close(e);
-		};
-		//Container
+		var close = function() {
+			v.close();
+		}
+		//Layout
 		l.click(close);
 		//Overlay
-		this.get_overlay().click(close);
-		
 		//Fire event
-		this.trigger('events-init');
+		this.trigger('events-open');
+		console.groupEnd();
+	},
+	
+	/**
+	 * Initialize event handlers upon completing lightbox rendering
+	 */
+	events_complete: function() {
+		console.groupCollapsed('Viewer.events_complete');
+		if ( this.init ) {
+			console.warn('Event handlers previously set');
+			console.groupEnd();
+			return false;
+		}
+		//Fire event
+		this.trigger('events-complete');
+		console.groupEnd();
+	},
+	
+	keys_enable: function(mode) {
+		if ( !this.util.is_bool(mode) ) {
+			mode = true;
+		}
+		var e = ['keydown', this.util.get_prefix()].join('.');
+		var v = this;
+		var h = function(ev) {
+			return v.keys_control(ev);
+		}
+		if ( mode ) {
+			$(document).on(e, h);
+		} else {
+			$(document).off(e);
+		}
+	},
+	
+	keys_disable: function() {
+		this.keys_enable(false);
+	},
+	
+	keys_control: function(ev) {
+		console.group('Viewer.keys_control');
+		console.log('Code: %o', ev.which);
+		var handlers = {
+			27: this.close,
+			37: this.item_prev,
+			39: this.item_next
+		};
+		if ( ev.which in handlers ) {
+			console.info('Handler found: %o', handlers[ev.which]);
+			handlers[ev.which].call(this);
+			console.groupEnd();
+			return false;
+		}
 		console.groupEnd();
 	},
 		
@@ -2384,21 +2461,25 @@ var Viewer = {
 	close: function(e) {
 		console.groupCollapsed('Viewer.close');
 		var v = this;
-		var t = this.get_theme();
-		t.animate('unload').done(function() {
-			t.animate('close').done(function() {
-				//Fallback viewer hide
-				v.dom_get().hide();
-				
-				//Restore DOM
-				v.dom_restore();
-				
-				//End processes
-				v.exit();
-				
-				v.trigger('close');
+		var thm = this.get_theme();
+		thm.animate('unload')
+			.always(function() {
+				thm.animate('close').always(function() {
+					//Fallback viewer hide
+					v.dom_get().hide();
+					
+					//Restore DOM
+					v.dom_restore();
+					
+					//End processes
+					v.exit();
+					
+					v.trigger('close');
+				});
+			})
+			.fail(function() {
+				thm.dom_get_tag('item', 'content').attr('style', '');
 			});
-		});
 		console.groupEnd();
 		return false;
 	}
@@ -3435,26 +3516,99 @@ var Theme = {
 		console.groupCollapsed('Theme.get_margin');
 		var margin = null; 
 		var attr = 'margin_cache';
-		var id = this.get_viewer().get_item().get_uri('permalink');
 		var cache = this.get_attribute(attr, {}, false);
-		if ( this.util.in_obj(cache, id) ) {
-			console.info('Retrieving cached margin: %o \n%o', id, cache[id]);
-			margin = cache[id];
+		var status = '_status';
+		var item = this.get_viewer().get_item();
+		var w = $(window);
+		//Check cache freshness
+		if ( !( status in cache ) || !this.util.is_obj(cache[status]) || cache[status].width != w.width() || cache[status].height != w.height() ) {
+				console.warn('Resetting cache');
+				cache = {};
 		}
+		if ( this.util.is_empty(cache) ) {
+			//Set status
+			cache[status] = {
+				'width': w.width(),
+				'height': w.height(),
+				'index': []
+			};
+		}
+		//Retrieve cached margin
+		var pos = cache[status].index.indexOf(item);
+		if ( pos != -1 && pos in cache ) {
+			console.info('Retrieving cached margin: %o \n%o', pos, cache[pos]);
+			margin = cache[pos];
+		}
+		//Generate margin
 		if ( !this.util.is_obj(margin) ) {
 			console.info('Generating margins');
 			//Get theme margins
 			margin = this.call_attribute('margin');
 			if ( !this.util.is_obj(margin) ) {
-				margin = {};
+				//Retrieve fallback margin
+				margin = this.get_margin_default();
+				console.warn('Fallback margin: %o', margin);
 			}
 			//Normalize margins
 			margin = $.extend({'width': 0, 'height': 0}, margin);
 			//Cache margin
-			cache[id] = margin;
+			pos = cache[status].index.push(item) - 1;
+			cache[pos] = margin;
 			this.set_attribute(attr, cache);
-			console.log('Margin cached: %o \n%o', id, margin);
+			console.log('Margin cached: %o', margin);
 		}
+		console.groupEnd();
+		return margin;
+	},
+	
+	get_margin_default: function() {
+		console.groupCollapsed('Theme.get_margin_default');
+		var margin = { 'width': 0, 'height': 0 };
+		var v = this.get_viewer();
+		var vn = v.dom_get();
+		//Clone viewer
+		var vc = vn
+			.clone()
+			.attr('id', '')
+			.css({'visibility': 'hidden', 'position': 'absolute', 'top': ''})
+			.removeClass('loading')
+			.appendTo(vn.parent());
+		console.log('Cloned viewer', vc);
+		//Get margin from layout node
+		var l = vc.find(v.dom_get_selector('layout'));
+		console.info('Layout (%o): %o \nHeight: %o \nWidth: %o', v.dom_get_selector('layout'), l, l.height(), l.width());
+		if ( l.length ) {
+			//Clear inline styles
+			l.find('*').css({
+				'width': '',
+				'height': '',
+				'display': ''
+			});
+			//Resize content nodes
+			console.group('Resizing content tag');
+			var tags = this.get_tags('item', 'content');
+			if ( tags.length ) {
+				var offset = v.get_item().get_dimensions();
+				//Set content dimensions
+				tags = $(l.find(tags[0].get_selector('full')).get(0)).css({'width': offset.width, 'height': offset.height});
+				$.each(offset, function(key, val) {
+					margin[key] = -1 * val;
+				});
+			}
+			
+			//Set margin
+			margin.width += l.width();
+			margin.height += l.height();
+			//Normalize
+			$.each(margin, function(key, val) {
+				if ( val < 0 ) {
+					margin[key] = 0;
+				}
+			});
+			console.groupEnd();
+		}
+		console.info('Layout\nWidth: %o \nHeight: %o \nCalculated margins: %o', l.width(), l.height(), margin);
+		vc.empty().remove();
 		console.groupEnd();
 		return margin;
 	},
@@ -3463,7 +3617,7 @@ var Theme = {
 		console.group('Theme.get_item_dimensions()');
 		var v = this.get_viewer();
 		var dims = v.get_item().get_dimensions();
-		console.info('Original dimensions: %o', dims);
+		console.info('Original dimensions: %o \nAutofit: %o', dims, v.get_attribute('autofit'));
 		if ( v.get_attribute('autofit', false) ) {
 			console.log('Processing resize');
 			//Get maximum dimensions
@@ -3553,7 +3707,7 @@ var Theme = {
 		}
 		if ( !this.util.is_promise(dfr) ) {
 			dfr = $.Deferred();
-			dfr.resolve();
+			dfr.reject();
 		}
 		console.groupEnd();
 		return dfr.promise();
@@ -4321,7 +4475,7 @@ View.add_template_tag_handler('ui', {
 		cl.viewers.push(vid);
 		
 		//Add event handlers
-		v.on('events-init', function(v) {
+		v.on('events-complete', function(v) {
 			console.info('Event Handler: Template_Tag_Handler(UI).complete');
 			//Register event handlers
 
