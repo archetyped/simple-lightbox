@@ -260,7 +260,7 @@ var View = {
 	 * @return object|null New component (NULL if invalid)
 	 */
 	add_component: function(type, id, options) {
-		console.group('View.add_component');
+		console.groupCollapsed('View.add_component');
 		console.log('Type: %o \nID: %o \nOptions: %o', type, id, options);
 		//Validate type
 		if ( !this.util.is_func(type) ) {
@@ -1733,7 +1733,7 @@ var Component = {
 	 * @return jQuery.Promise Promise that is resolved once event handlers are resolved
 	 */
 	trigger: function(event, data) {
-		console.group('Component.trigger: %o', this._slug + '.' + event);
+		console.groupCollapsed('Component.trigger: %o', this._slug + '.' + event);
 		var dfr = $.Deferred();
 		var dfrs = [];
 		//Handle array of events
@@ -1857,6 +1857,7 @@ var Viewer = {
 	
 	/* Properties */
 	
+	active: false,
 	init: false,
 	open: false,
 	loading: false,
@@ -1916,7 +1917,31 @@ var Viewer = {
 	/* Properties */
 	
 	/**
-	 * Sets loading mode
+	 * Set Viewer active status
+	 * @param bool mode (optional) Activate or deactivate status (Default: TRUE)
+	 * @return bool Active status
+	 */
+	set_active: function(mode) {
+		if ( !this.util.is_bool(mode) ) {
+			mode = true;
+		}
+		return this.active = mode;
+	},
+	
+	/**
+	 * Check Viewer active status
+	 * @return bool Active status
+	 */
+	is_active: function() {
+		//Validate
+		if ( !this.util.is_bool(this.active) ) {
+			this.active = false;
+		}
+		return this.active;
+	},
+	
+	/**
+	 * Set loading mode
 	 * @param bool mode (optional) Set (TRUE) or unset (FALSE) loading mode (Default: TRUE)
 	 * @return jQuery.Promise Promise that resolves when loading mode is set
 	 */
@@ -1985,11 +2010,11 @@ var Viewer = {
 		if ( !this.set_item(item) || !this.get_theme() ) {
 			console.warn('Invalid request');
 			console.groupEnd();
-			this.exit();
+			this.close();
+			return false;
 		}
-		//Set loading flag
-		// console.info('Set loading flag');
-		// this.set_loading();
+		//Activate
+		this.set_active();
 		//Display
 		this.render();
 		console.groupEnd();
@@ -2018,7 +2043,14 @@ var Viewer = {
 			.on({
 				//Loading
 				'render-loading': function(theme, ev) {
+					console.groupCollapsed('Viewer.render.loading (Callback)');
 					var dfr = $.Deferred();
+					if ( !v.is_active() ) {
+						console.warn('Viewer not active');
+						dfr.reject();
+						console.groupEnd();
+						return dfr.promise();
+					}
 					var set_pos = function() {
 						//Set position
 						v.dom_get().css('top', $(window).scrollTop());
@@ -2029,7 +2061,6 @@ var Viewer = {
 							dfr.resolve();
 						});
 					};
-					console.group('Viewer.render.loading (Callback)');
 					if ( v.is_open() ) {
 						console.info('Viewer open');
 						thm.animate('unload')
@@ -2057,9 +2088,14 @@ var Viewer = {
 				},
 				//Complete
 				'render-complete': function(theme, ev) {
-					console.group('Viewer.render.complete (Callback)');
+					console.groupCollapsed('Viewer.render.complete (Callback)');
 					console.log('Completed output: %o', ev.data);
 					console.info('Theme loaded');
+					//Stop if viewer not active
+					if ( !v.is_active() ) {
+						console.groupEnd();
+						return false;
+					}
 					//Set classes
 					var d = v.dom_get();
 					var classes = ['item_single', 'item_multi'];
@@ -2122,7 +2158,7 @@ var Viewer = {
 	 * Custom Viewer DOM initialization
 	 */
 	dom_init: function() {
-		console.group('Viewer.dom_init');
+		console.groupCollapsed('Viewer.dom_init');
 		//Check if DOM element already set
 		if ( !this.dom_has() ) {
 			console.info('DOM element needs to be created');
@@ -2200,18 +2236,15 @@ var Viewer = {
 	},
 
 	/**
-	 * Exit Viewer
-	 */
-	exit: function() {
-		console.groupCollapsed('Viewer.exit');
-		this.reset();
-		console.groupEnd();
-	},
-	
-	/**
 	 * Reset viewer
 	 */
 	reset: function() {
+		//Hide viewer
+		this.dom_get().hide();
+		//Restore DOM
+		this.dom_restore();
+		//Reset properties
+		this.set_active(false);
 		this.set_item(false);
 		this.set_loading(false);
 		this.slideshow_stop();
@@ -2236,7 +2269,6 @@ var Viewer = {
 	 */
 	events_open: function() {
 		console.groupCollapsed('Viewer.events_open');
-		this.get_overlay().click(close);
 		//Keyboard bindings
 		this.keys_enable();
 		if ( this.open ) {
@@ -2259,6 +2291,7 @@ var Viewer = {
 		//Layout
 		l.click(close);
 		//Overlay
+		this.get_overlay().click(close);
 		//Fire event
 		this.trigger('events-open');
 		console.groupEnd();
@@ -2300,7 +2333,7 @@ var Viewer = {
 	},
 	
 	keys_control: function(ev) {
-		console.group('Viewer.keys_control');
+		console.groupCollapsed('Viewer.keys_control');
 		console.log('Code: %o', ev.which);
 		var handlers = {
 			27: this.close,
@@ -2460,20 +2493,15 @@ var Viewer = {
 	 */
 	close: function(e) {
 		console.groupCollapsed('Viewer.close');
+		//Deactivate
+		this.set_active(false);
 		var v = this;
 		var thm = this.get_theme();
 		thm.animate('unload')
 			.always(function() {
-				thm.animate('close').always(function() {
-					//Fallback viewer hide
-					v.dom_get().hide();
-					
-					//Restore DOM
-					v.dom_restore();
-					
+				thm.animate('close', true).always(function() {
 					//End processes
-					v.exit();
-					
+					v.reset();
 					v.trigger('close');
 				});
 			})
@@ -2545,7 +2573,7 @@ var Group = {
 	 * @return Content_Item Item
 	 */
 	get_item: function(idx) {
-		console.group('Group.get_item: %o', idx);
+		console.groupCollapsed('Group.get_item: %o', idx);
 		//Validation
 		if ( !this.util.is_int(idx) ) {
 			idx = 0;
@@ -2606,7 +2634,7 @@ var Group = {
 	},
 		
 	get_next: function(item) {
-		console.group('Group.get_next');
+		console.groupCollapsed('Group.get_next');
 		//Validate
 		if ( !this.util.is_type(item, View.Content_Item) ) {
 			console.log('Retrieving current item');
@@ -2668,7 +2696,7 @@ var Group = {
 	},
 	
 	show_prev: function(item) {
-		console.group('Group.show_prev');
+		console.groupCollapsed('Group.show_prev');
 		if ( this.get_size() > 1 ) {
 			//Retrieve item
 			var i = this.get_parent().get_item(this.get_prev(item));
@@ -3051,12 +3079,6 @@ var Content_Item = {
 	 * @return obj Item `width` and `height` properties (px) 
 	 */
 	get_dimensions: function() {
-		//console.group('Content_Item.get_dimensions');
-		//var dim = this.get_attribute('dimensions', {});
-		//console.info('Dimensions: %o', dim);
-		//dim = $.extend({'width': 0, 'height': 0}, dim);
-		//console.info('Normalized Dimensions: %o', dim);
-		//console.groupEnd();
 		return $.extend({'width': 0, 'height': 0}, this.get_attribute('dimensions'), {});
 	},
 	
@@ -3614,7 +3636,7 @@ var Theme = {
 	},
 	
 	get_item_dimensions: function() {
-		console.group('Theme.get_item_dimensions()');
+		console.groupCollapsed('Theme.get_item_dimensions()');
 		var v = this.get_viewer();
 		var dims = v.get_item().get_dimensions();
 		console.info('Original dimensions: %o \nAutofit: %o', dims, v.get_attribute('autofit'));
@@ -3693,11 +3715,21 @@ var Theme = {
 		tpl.render(item);		console.groupEnd();
 	},
 	
-	animate: function(event) {
+	animate: function(event, clear_queue) {
 		console.group('Theme.animate: %o', event);
 		var dfr = null;
 		var v = this.get_viewer();
 		if ( v.get_attribute('animate', true) && this.util.is_string(event) ) {
+			//Stop queued animations
+			if ( !!clear_queue ) {
+				var l = v.get_layout();
+				l.find('*').each(function() {
+					var el = $(this);
+					while ( el.queue().length ) {
+						el.stop(false, true);
+					}
+				});
+			}
 			//Get animation settings
 			var anims = ( this.in_model('animate') ) ? this.get_model()['animate'] : null;
 			if ( this.util.is_method(anims, event) ) {
