@@ -1850,6 +1850,12 @@ var Viewer = {
 	item: null,
 	
 	/**
+	 * Queued item to be loaded once viewer is available
+	 * @var object Content_Item
+	 */
+	item_queued: null,
+	
+	/**
 	 * Theme used by viewer
 	 * @var object Theme
 	 */
@@ -1857,6 +1863,10 @@ var Viewer = {
 	
 	/* Properties */
 	
+	_status: {},
+
+	item_working: null,
+		
 	active: false,
 	init: false,
 	open: false,
@@ -1916,6 +1926,28 @@ var Viewer = {
 	
 	/* Properties */
 	
+	get_status: function(id, raw) {
+		var ret = false;
+		if ( this.util.is_obj(this._status, id) ) {
+			ret = ( this.util.is_bool(raw) && raw ) ? this._status[id] : !!this._status[id];
+		}
+		return ret;
+	},
+	
+	set_status: function(id, val) {
+		//Validate
+		if ( this.util.is_string(id) ) {
+			if ( !this.util.is_set(val) ) {
+				val = true;
+			}
+			//Set status
+			this._status[id] = val;
+		} else if ( !this.util.is_set(val) ) {
+			val = false;
+		}
+		return val;
+	},
+	
 	/**
 	 * Set Viewer active status
 	 * @param bool mode (optional) Activate or deactivate status (Default: TRUE)
@@ -1925,7 +1957,7 @@ var Viewer = {
 		if ( !this.util.is_bool(mode) ) {
 			mode = true;
 		}
-		return this.active = mode;
+		return this.set_status('active', mode);
 	},
 	
 	/**
@@ -1933,11 +1965,7 @@ var Viewer = {
 	 * @return bool Active status
 	 */
 	is_active: function() {
-		//Validate
-		if ( !this.util.is_bool(this.active) ) {
-			this.active = false;
-		}
-		return this.active;
+		return this.get_status('active');
 	},
 	
 	/**
@@ -2005,18 +2033,39 @@ var Viewer = {
 	 */
 	show: function(item) {
 		console.groupCollapsed('Viewer.show');
-		console.info('Set current item');
-		//Validate request
-		if ( !this.set_item(item) || !this.get_theme() ) {
-			console.warn('Invalid request');
-			console.groupEnd();
-			this.close();
-			return false;
+		console.info('Queue item: %o', item);
+		this.item_queued = item;
+		var id_added = 'show_deferred';
+		var id_working = 'item_working';
+		//Create initial deferred instance (resolved immediately)
+		if ( !this.util.is_promise(this.get_status(id_working, true)) ) {
+			this.set_status(id_working, $.Deferred()).resolve();
 		}
-		//Activate
-		this.set_active();
-		//Display
-		this.render();
+		//Check if deferred callback already set
+		if ( !this.get_status(id_added) ) {
+			console.info('Setting deferred callback');
+			//Set flag to avoid duplicate callbacks
+			this.set_status(id_added);
+			//Set deferred callback
+			var v = this;
+			this.get_status(id_working, true).always(function() {
+				//Reset deferred
+				v.set_status(id_working, $.Deferred());
+				//Reset callback flag
+				v.set_status(id_added, false);
+				//Validate request
+				if ( !v.set_item(v.item_queued) || !v.get_theme() ) {
+					console.warn('Invalid request');
+					console.groupEnd();
+					v.close();
+					return false;
+				}
+				//Activate
+				v.set_active();
+				//Display
+				v.render();
+			});
+		}
 		console.groupEnd();
 	},
 	
@@ -2038,6 +2087,7 @@ var Viewer = {
 		console.info('Rendering Theme layout');
 		var v = this;
 		var thm = this.get_theme();
+		var item = this.get_item();
 		//Theme event handlers
 		thm
 			.on({
@@ -2128,7 +2178,7 @@ var Viewer = {
 				}
 			}, this)
 			//Render
-			.render(this.get_item());
+			.render(item);
 		console.groupEnd();
 	},
 	
@@ -2234,7 +2284,11 @@ var Viewer = {
 		console.groupEnd();
 		return $(o);
 	},
-
+	
+	unload: function() {
+		
+	},
+	
 	/**
 	 * Reset viewer
 	 */
@@ -2249,6 +2303,8 @@ var Viewer = {
 		this.set_loading(false);
 		this.slideshow_stop();
 		this.keys_disable();
+		//Clear for next item
+		this.get_status('item_working', true).resolve();
 	},
 	
 	/* Content */
@@ -3153,7 +3209,7 @@ var Content_Item = {
 			g.set_current(this);
 		}
 		console.groupEnd();
-		return this.group;
+		return g;
 	},
 	
 	/**
@@ -3424,7 +3480,7 @@ var Theme = {
 		//Template needs to be initialized
 		if ( this.util.is_empty(ret) ) {
 			//Pass model to Template instance
-			var attr = { 'model': this.get_model() };
+			var attr = { 'theme': this, 'model': this.get_model() };
 			ret = this.set_component('template', new View.Template(attr));
 		}
 		console.groupEnd();
@@ -3758,6 +3814,11 @@ var Template = {
 	_slug: 'template',
 	_reciprocal: true,
 	
+	_refs: {
+		'theme': 'Theme'
+	},
+	_containers: ['theme'],
+	
 	_attr_default: {
 		/**
 		 * Raw layout template
@@ -3784,6 +3845,10 @@ var Template = {
 		model: null
 	},
 	
+	/* References */
+	
+	theme: null,
+	
 	/* Methods */
 	
 	_c: function(attributes) {
@@ -3792,7 +3857,12 @@ var Template = {
 		console.groupEnd();
 	},
 	
-	/* Properties */
+	get_theme: function() {
+		console.groupCollapsed('Template.get_theme');
+		var ret = this.get_component('theme', true, false, false);
+		console.groupEnd();
+		return ret;
+	},
 	
 	/* Output */
 	
@@ -3804,11 +3874,16 @@ var Template = {
 	 */
 	render: function(item) {
 		console.group('Template.render');
+		var v = this.get_theme().get_viewer();
+		if ( !v.is_active() ) {
+			return false;
+		}
+		console.log('Item is valid: %o', this.util.is_type(item, View.Content_Item));
 		//Populate layout
 		if ( this.util.is_type(item, View.Content_Item) ) {
 			console.info('Rendering Item');
 			//Iterate through tags and populate layout
-			if ( this.has_tags() ) {
+			if ( v.is_active() && this.has_tags() ) {
 				var loading_promise = this.trigger('render-loading');
 				console.info('Loading is promise: %o', this.util.is_promise(loading_promise));
 				var tpl = this;
@@ -3817,11 +3892,20 @@ var Template = {
 				console.info('Tags exist: %o', tags);
 				//Render Tag output
 				loading_promise.done(function() {
+					if ( !v.is_active() ) {
+						return false;
+					}
 					console.groupCollapsed('Processing Tags');
 					$.each(tags, function(idx, tag) {
+						if ( !v.is_active() ) {
+							return false;
+						}
 						console.log('Tag DOM: %o', tag.dom_get().get(0));
 						console.groupCollapsed('Processing Tag: %o', [tag.get_name(), tag.get_prop()].join('.'));
 						tag_promises.push(tag.render(item).done(function(r) {
+							if ( !v.is_active() ) {
+								return false;
+							}
 							console.log('Tag rendered: %o', [r.tag.get_name(), r.tag.get_prop()].join('.'));
 							console.group('Tag Processing Callback');
 							console.info('Tag Output: %o', r.output);
@@ -3832,6 +3916,9 @@ var Template = {
 					});
 					console.groupEnd();
 					//Fire event when all tags rendered
+					if ( !v.is_active() ) {
+						return false;
+					}
 					$.when.apply($, tag_promises).done(function() {
 						tpl.trigger('render-complete');
 					});

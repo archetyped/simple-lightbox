@@ -15,6 +15,9 @@ return {
 			var d = v.dom_get(),
 				l = v.get_layout().hide(),
 				o = v.get_overlay().hide();
+			//Clean UI
+			d.find('.slb_content').width(0).height(0).find('.slb_template_tag').hide();
+			d.find('.slb_details').hide();
 			//Show viewer DOM
 			d.show(function() {
 				var pos = { top: ( $(document).scrollTop() + $(window).height() / 2 ) - ( l.height() / 2 ) };
