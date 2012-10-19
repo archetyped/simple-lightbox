@@ -307,7 +307,7 @@ class SLB_Lightbox extends SLB_Base {
 		
 		//Init lightbox
 		$priority = 99;
-		add_action('wp_head', $this->m('client_init'), 11);
+		add_action('wp_footer', $this->m('client_init'), 11);
 		add_action('wp_footer', $this->m('client_footer'), $priority);
 		//Link activation
 		add_filter('the_content', $this->m('activate_links'), $priority);
@@ -621,8 +621,9 @@ class SLB_Lightbox extends SLB_Base {
 		}
 			
 		//Load UI Strings
-		if ( ($labels = $this->build_labels()) && !empty($labels) )
+		if ( ($labels = $this->build_labels()) && !empty($labels) ) {
 			$options['ui_labels'] = $labels;
+		}
 		//Set default theme
 		$options['theme_default'] = $this->get_theme()->get_id();
 

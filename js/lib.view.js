@@ -888,9 +888,7 @@ var Component = {
 	 * Event handlers
 	 * @var object
 	 * > Key: string Event type
-	 * > Value: obj Handlers
-	 *   > Key: string Context
-	 *   > Value: array Handlers
+	 * > Value: array Handlers
 	 */
 	_events: {},
 	
@@ -1663,103 +1661,69 @@ var Component = {
 	
 	/**
 	 * Register event handler for custom event
-	 * @param string|array event Custom event to register handler for
-	 * @param function func Event handler
-	 * @param obj options (optional) Configuration options for registering event handler
-	 * > overwrite	(bool)	Whether or not to overwrite existing handler in same context
-	 * @param string|Component context (optional) Specific context for event handler, allows handlers to only be registered once
+	 * Structure
+	 * > Events (obj)
+	 *   > Event-Name (array)
+	 *     > Handlers (functions)
+	 * @param mixed event Custom event to register handler for
+	 * > string: Standard event handler
+	 * > array: Multiple events to register single handler on
+	 * > object: Map of events/handlers
+	 * @param function fn Event handler
+	 * @param obj options Handler registration options
+	 * > clear (bool)	Clear existing event handlers before setting current handler (Default: FALSE)
 	 * @return obj Component instance (allows chaining) 
 	 */
-	on: function(event, func, options, context) {
+	on: function(event, fn, options) {
 		console.groupCollapsed('Component.on: %o', this._slug + '.' + event);
-		console.log('Event: %o \nFunc: %o \nOptions: %o \nContext: %o', event, func, options, context);
-		//Add event handlers via array (multiple events, single callback)
-		if ( this.util.is_array(event) ) {
-			console.info('Event array');
+		console.log('Event: %o \nFunc: %o \nOptions: %o', event, fn, options);
+		//Handle request types
+		if ( !this.util.is_string(event) || !this.util.is_func(fn) ) { 
 			var t = this;
 			var args = Array.prototype.slice.call(arguments, 1);
-			console.log('Common Arguments: %o', args);
-			$.each(event, function(idx, val) {
-				console.group('Registering event: %o', val);
-				console.log('Arguments: %o \nMerged: %o', args, [val].concat(args));
-				t.on.apply(t, [val].concat(args));
-				console.groupEnd();
-			});
-			console.groupEnd();
-			return this;
-		}
-		//Add event handlers via map object (multiple events w/independent callback, etc.)
-		if ( this.util.is_obj(event) ) {
-			for ( var key in event ) {
-				this.on(key, event[key], func, options);
+			if ( this.util.is_array(event) ) {
+				//Events array
+				console.info('Event array');
+				console.log('Common Arguments: %o', args);
+				$.each(event, function(idx, val) {
+					console.group('Registering event: %o', val);
+					console.log('Arguments: %o \nMerged: %o', args, [val].concat(args));
+					t.on.apply(t, [val].concat(args));
+					console.groupEnd();
+				});
+			} else if ( this.util.is_obj(event) ) {
+				//Events map
+				$.each(event, function(ev, hdl) {
+					t.on.apply(t, [ev, hdl].concat(args));
+				});
 			}
 			console.groupEnd();
 			return this;
 		}
-		
-		/* Validate */
-		//Request
-		if ( !this.util.is_string(event) || !this.util.is_func(func) ) {
-			console.warn('Invalid event handler');
-			console.groupEnd();
-			return this;
-		}
+
 		//Options
-		//Check if options omitted
-		if ( this.util.is_string(options) || this.util.is_type(options, View.Component) ) {
-			//Set context from options parameter
-			console.info('Setting context');
-			context = arguments[2];
-			options = null;
-		}
+		
+		//Default options
+		var options_std = {
+			clear:	false
+		};
 		if ( !this.util.is_obj(options, false) ) {
 			//Reset options
 			options = {};
 		}
-		//Merge options with defaults
-		var options_def = {
-			overwrite: false
-		};
-		options = $.extend({}, options_def, options);
-		
-		//Context
-		var context_def = '0';
-		if ( !this.util.is_string(context) ) {
-			console.info('Normalizing context: %o', context);
-			if ( this.util.is_num(context) ) {
-				//Convert number to string context
-				context = context.toString();
-			} else if ( this.util.is_type(context, View.Component) ) {
-				//Build context from component instance
-				var id = context.get_id(true);
-				context = ( this.util.is_string(id) ) ? id : context_def;
-				//Force unique handler
-				options.overwrite = false;
-			}
-		}
-		if ( !this.util.is_string(context) ) {
-			context = context_def;
-		}
-		console.info('Event: %o \nContext: %o', event, context);
-		var es = this._events;
+		//Build options
+		options = $.extend({}, options_std, options);
 		//Setup event
-		if ( !( event in es ) || !this.util.is_obj(es[event], false) ) {
+		if ( !this.util.is_obj(this._events, false) ) {
+			this._events = {};
+		}
+		var es = this._events;
+		if ( !( event in es ) || !this.util.is_obj(es[event], false) || !!options.clear ) {
 			console.info('Initializing event: %o', event);
-			es[event] = {};
-		}
-		var e = es[event];
-		//Check for duplicate handler
-		if ( !options.overwrite && ( context != context_def ) && ( context in e ) ) {
-			console.warn('Handler already registered');
-			console.groupEnd();
-			return this;
-		}
-		//Add context to event
-		if ( !( context in e ) ) {
-			e[context] = [];
+			es[event] = [];
 		}
 		//Add event handler
-		e[context].push(func);
+		es[event].push(fn);
 		console.groupEnd();
 		return this;
 	},
@@ -1769,8 +1733,8 @@ var Component = {
 	 * Event handlers are executed in the context of the current component instance
 	 * Event handlers are passed parameters
 	 * > ev			(obj)	Event object
-	 * 	> name	(string)	Event name
-	 * 	> data	(mixed)		Data to pass to handlers (if supplied)
+	 * 	> type		(string)	Event name
+	 * 	> data		(mixed)		Data to pass to handlers (if supplied)
 	 * > component	(obj)	Current component instance
 	 * @param string event Custom event to trigger
 	 * @param mixed data (optional) Data to pass to event handlers
@@ -1780,9 +1744,9 @@ var Component = {
 		console.groupCollapsed('Component.trigger: %o', this._slug + '.' + event);
 		var dfr = $.Deferred();
 		var dfrs = [];
+		var t = this;
 		//Handle array of events
 		if ( this.util.is_array(event) ) {
-			var t = this;
 			$.each(event, function(idx, val) {
 				//Collect promises from triggered events
 				dfrs.push( t.trigger(val, data) );
@@ -1807,20 +1771,12 @@ var Component = {
 		if ( this.util.is_set(data) ) {
 			ev.data = data;
 		}
-		//Call handlers for event
-		var es = this._events;
-		var ec;
-		//Iterate through context buckets for event
-		for ( var context in es[event] ) {
-			ec = es[event][context];
-			console.info('Bucket: %o (%o)', context, ec.length);
-			//Iterate though handlers in current context bucket
-			for ( var x = 0; x < ec.length; x++ ) {
-				//Call handler (`this` set to current instance)
-				//Collect promises from event handlers
-				dfrs.push( ec[x].call(this, ev, this) );
-			}
-		}
+		//Fire handlers for event
+		$.each(this._events[event], function(idx, fn) {
+			//Call handler (`this` set to current instance)
+			//Collect promises from event handlers
+			dfrs.push( fn.call(t, ev, t) );
+		});
 		//Resolve trigger when all handlers have been resolved
 		$.when.apply(this, dfrs).done(function() {
 			dfr.resolve();
@@ -2174,98 +2130,100 @@ var Viewer = {
 		//Get theme output
 		console.info('Rendering Theme layout');
 		var v = this;
-		//Theme event handlers
-		this.get_theme()
-			.on({
-				//Loading
-				'render-loading': function(ev, thm) {
-					console.groupCollapsed('Viewer.render.loading (Callback)');
-					var dfr = $.Deferred();
-					if ( !v.is_active() ) {
-						console.warn('Viewer not active');
-						dfr.reject();
-						console.groupEnd();
-						return dfr.promise();
-					}
-					var set_pos = function() {
-						//Set position
-						v.dom_get().css('top', $(window).scrollTop());
-					};
-					var always = function() {
-						//Set loading flag
-						v.set_loading().always(function() {
-							dfr.resolve();
-						});
-					};
-					if ( v.is_open() ) {
-						console.info('Viewer open');
-						thm.animate('unload')
-							.fail(function() {
-								set_pos();
-								thm.dom_get_tag('item', 'content').attr('style', '');
-							})
-							.always(always);
-					} else {
-						thm.animate('open')
-							.always(function() {
-								always();
-								v.events_open();
-								v.open = true;
-							})
-							.fail(function() {
-								 set_pos();
-								//Fallback open
-								v.get_overlay().show();
-								v.dom_get().show();
-							});
-					}
+		var thm = this.get_theme();
+		//Register theme event handlers
+		if ( !this.get_status('render-events') ) {
+			this.set_status('render-events');
+			thm
+			//Loading
+			.on('render-loading', function(ev, thm) {
+				console.groupCollapsed('Viewer.render.loading (Callback)');
+				var dfr = $.Deferred();
+				if ( !v.is_active() ) {
+					console.warn('Viewer not active');
+					dfr.reject();
 					console.groupEnd();
 					return dfr.promise();
-				},
-				//Complete
-				'render-complete': function(ev, thm) {
-					console.groupCollapsed('Viewer.render.complete (Callback)');
-					console.log('Completed output: %o', ev.data);
-					console.info('Theme loaded');
-					//Stop if viewer not active
-					if ( !v.is_active() ) {
-						console.groupEnd();
-						return false;
-					}
-					//Set classes
-					var d = v.dom_get();
-					var classes = ['item_single', 'item_multi'];
-					var ms = ['addClass', 'removeClass']; 
-					if ( !v.get_item().get_group().is_single() ) {
-						ms.reverse();
-					}
-					$.each(ms, function(idx, val) {
-						d[val](classes[idx]);
-					});
-					//Bind events
-					v.events_complete();
-					//Animate
-					thm.animate('complete')
-						.fail(function() {
-							//Autofit content
-							if ( v.get_attribute('autofit', true) ) {
-								var dims = $.extend({'display': 'inline-block'}, thm.get_item_dimensions());
-								var tag = thm.dom_get_tag('item', 'content').css(dims);
-							}
-						})
-						.always(function() {
-							//Unset loading flag
-							v.unset_loading();
-							//Trigger event
-							v.trigger('render-complete');
-							//Set viewer as initialized
-							v.init = true;
-						});
-					console.groupEnd();
 				}
-			}, this)
-			//Render
-			.render(this.get_item());
+				var set_pos = function() {
+					//Set position
+					v.dom_get().css('top', $(window).scrollTop());
+				};
+				var always = function() {
+					//Set loading flag
+					v.set_loading().always(function() {
+						dfr.resolve();
+					});
+				};
+				if ( v.is_open() ) {
+					console.info('Viewer open');
+					thm.animate('unload')
+						.fail(function() {
+							set_pos();
+							thm.dom_get_tag('item', 'content').attr('style', '');
+						})
+						.always(always);
+				} else {
+					thm.animate('open')
+						.always(function() {
+							always();
+							v.events_open();
+							v.open = true;
+						})
+						.fail(function() {
+							 set_pos();
+							//Fallback open
+							v.get_overlay().show();
+							v.dom_get().show();
+						});
+				}
+				console.groupEnd();
+				return dfr.promise();
+			})
+			//Complete
+			.on('render-complete', function(ev, thm) {
+				console.groupCollapsed('Viewer.render.complete (Callback)');
+				console.log('Completed output: %o', ev.data);
+				console.info('Theme loaded');
+				//Stop if viewer not active
+				if ( !v.is_active() ) {
+					console.groupEnd();
+					return false;
+				}
+				//Set classes
+				var d = v.dom_get();
+				var classes = ['item_single', 'item_multi'];
+				var ms = ['addClass', 'removeClass']; 
+				if ( !v.get_item().get_group().is_single() ) {
+					ms.reverse();
+				}
+				$.each(ms, function(idx, val) {
+					d[val](classes[idx]);
+				});
+				//Bind events
+				v.events_complete();
+				//Animate
+				thm.animate('complete')
+					.fail(function() {
+						//Autofit content
+						if ( v.get_attribute('autofit', true) ) {
+							var dims = $.extend({'display': 'inline-block'}, thm.get_item_dimensions());
+							var tag = thm.dom_get_tag('item', 'content').css(dims);
+						}
+					})
+					.always(function() {
+						//Unset loading flag
+						v.unset_loading();
+						//Trigger event
+						v.trigger('render-complete');
+						//Set viewer as initialized
+						v.init = true;
+					});
+				console.groupEnd();
+			});
+		}
+		//Render
+		thm.render();
 		console.groupEnd();
 	},
 	
@@ -2310,13 +2268,17 @@ var Viewer = {
 		var v = this;
 		console.info('Rendering basic theme layout');
 		var thm = this.get_theme();
-		thm.on('render-init', function(ev) {
-			console.groupCollapsed('Viewer.dom_init.init (callback)');
-			console.info('Basic layout: %o', ev.data);
-			//Add rendered theme layout to viewer DOM
-			v.dom_put('layout', ev.data);
-			console.groupEnd();
-		}, this).render(true);
+		if ( !this.get_status('render-init') ) {
+			this.set_status('render-init');
+			thm.on('render-init', function(ev) {
+				console.groupCollapsed('Viewer.dom_init.init (callback)');
+				console.info('Basic layout: %o', ev.data);
+				//Add rendered theme layout to viewer DOM
+				v.dom_put('layout', ev.data);
+				console.groupEnd();
+			});
+		}
+		thm.render(true);
 		console.groupEnd();
 	},
 	
@@ -2614,9 +2576,13 @@ var Viewer = {
 		var g = this.get_item().get_group(true);
 		var v = this;
 		var ev = 'item-next';
-		g.on(ev, function() {
-			v.trigger(ev);
-		}, v);
+		var st = ['events', 'viewer', ev].join('_');
+		if ( !g.get_status(st) ) {
+			g.set_status(st);
+			g.on(ev, function() {
+				v.trigger(ev);
+			});
+		}
 		g.show_next();
 	},
 	
@@ -2627,9 +2593,13 @@ var Viewer = {
 		var g = this.get_item().get_group(true);
 		var v = this;
 		var ev = 'item-prev';
-		g.on(ev, function() {
-			v.trigger(ev);
-		}, v);
+		var st = ['events', 'viewer', ev].join('_');
+		if ( !g.get_status(st) ) {
+			g.set_status(st);
+			g.on(ev, function() {
+				v.trigger(ev);
+			});
+		}
 		g.show_prev();
 	},
 	
@@ -3853,23 +3823,28 @@ var Theme = {
 	
 	/**
 	 * Render Theme output
-	 * @param Content_Item item Item to render theme for
+	 * @param bool init (optional) Initialize theme (Default: FALSE)
+	 * @see Template.render()
 	 */
-	render: function(item) {
+	render: function(init) {
 		console.group('Theme.render');
 		var thm = this;
 		var tpl = this.get_template();
-		//Register events
-		var events = [
-			'render-init',
-			'render-loading',
-			'render-complete'
-		];
-		tpl.on(events, function(ev) {
-			return thm.trigger(ev.type, ev.data);
-		}, thm);
+		var st = 'events_render';
+		if ( !this.get_status(st) ) {
+			this.set_status(st);
+			//Register events
+			tpl.on([
+				'render-init',
+				'render-loading',
+				'render-complete'
+				],
+				function(ev) {
+					return thm.trigger(ev.type, ev.data);
+				});
+		}
 		//Render template
-		tpl.render(item);
+		tpl.render(init);
 		console.groupEnd();
 	},
 	
@@ -3970,9 +3945,11 @@ var Template = {
 	
 	/**
 	 * Render output
-	 * @param Content_Item item Item to render template for
-	 *  > loading: DOM elements created and item content about to be loaded
-	 *  > success: Item content loaded, ready for display
+	 * @param bool init (optional) Whether to initialize layout (TRUE) or render item (FALSE) (Default: FALSE)
+	 * Events
+	 *  > render-init: Initialize template
+	 *  > render-loading: DOM elements created and item content about to be loaded
+	 *  > render-complete: Item content loaded, ready for display
 	 */
 	render: function(init) {
 		console.group('Template.render');
@@ -4573,19 +4550,19 @@ var Template_Tag_Handler = {
 		return dfr.promise();
 	},
 	
-	add_prop: function(prop, func) {
+	add_prop: function(prop, fn) {
 		//Get attribute
 		var a = 'props';
 		var props = this.get_attribute(a);
 		//Validate
-		if ( !this.util.is_string(prop) || !this.util.is_func(func) ) {
+		if ( !this.util.is_string(prop) || !this.util.is_func(fn) ) {
 			return false;
 		}
 		if ( !this.util.is_obj(props, false) ) {
 			props = {};
 		}
 		//Add property
-		props[prop] = func;
+		props[prop] = fn;
 		//Save attribute
 		this.set_attribute(a, props);
 	},
@@ -4684,23 +4661,8 @@ View.add_template_tag_handler('item', {
  * UI tag
  */
 View.add_template_tag_handler('ui', {
-	init: function(item, tag) {
+	init: function(item, tag, v) {
 		console.groupCollapsed('Template_Tag_Handler (UI).init: %o', tag.get_prop());
-		var v = item.get_viewer();
-		
-		//Run only once for viewer
-		var vid = v.get_id();
-		var cl = arguments.callee;
-		if ( !this.util.is_set(cl.viewers) ) {
-			cl.viewers = [];
-		}
-		if ( cl.viewers.indexOf(vid) != -1 ) {
-			console.warn('Events already initilized for viewer');
-			console.groupEnd();
-			return false;
-		}
-		cl.viewers.push(vid);
-		
 		//Add event handlers
 		v.on('events-complete', function(ev, v) {
 			console.info('Event Handler: Template_Tag_Handler(UI).complete');
@@ -4743,7 +4705,7 @@ View.add_template_tag_handler('ui', {
 			};
 			
 			v.get_theme().dom_get_tag('ui', 'slideshow_control').click(slideshow_control);
-		}, this);
+		});
 		
 		v.on('slideshow-toggle', function(ev, v) {
 			console.group('Tag.UI.slideshow-toggle');
@@ -4757,13 +4719,18 @@ View.add_template_tag_handler('ui', {
 				}
 			}
 			console.groupEnd();
-		}, this);
+		});
 		console.groupEnd();
 	},
 	render: function(item, tag) {
 		console.groupCollapsed('Template_Tag_Handler (UI).render: %o', tag.get_prop());
-		//Initialize event handlers
-		this.call_attribute('init', item, tag);
+		//Initialize event handlers (once per viewer)
+		var v = item.get_viewer();
+		var st = ['events-init', tag.get_ns(), tag.get_name()].join('_');
+		if ( !v.get_status(st) ) {
+			v.set_status(st);
+			this.call_attribute('init', item, tag, v);
+		}
 		//Process content
 		var dfr = $.Deferred();
 		var ret = this.handle_prop(tag.get_prop(), item, tag);
