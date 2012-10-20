@@ -130,6 +130,27 @@ var View = {
 			console.dir(t.options);
 			console.groupEnd();
 			
+			//History
+			$(window).on('popstate', function(e) {
+				console.dir(e);
+				var state = e.originalEvent.state;
+				if ( t.util.in_obj(state, ['item', 'viewer']) ) {
+					console.info('Event: popstate \n %o', state);
+					var v = t.get_viewer(state.viewer);
+					//Load item
+					if ( t.util.is_int(state.item, false) ) {
+						console.info('Retrieving item');
+						t.get_item(state.item).show({'event': e});
+						v.trigger('item-change');
+					} else {
+						//Close viewer
+						console.info('Close viewer');
+						v.close();
+					}
+					return e.preventDefault();
+				}
+			});
+			
 			/* Set defaults */
 			
 			//Items
@@ -142,7 +163,7 @@ var View = {
 	init_components: function() {
 		this.collections = {
 			'viewers':	 		this.Viewer,
-			'items': 			this.Content_Item,
+			'items':			this.Content_Item,
 			'content_types': 	this.Content_Type,
 			'groups': 			this.Group,
 			'themes': 			this.Theme,
@@ -487,22 +508,51 @@ var View = {
 		console.groupEnd();
 	},
 	
+	get_items: function() {
+		return this.get_components(this.Content_Item);
+	},
+	
 	/**
 	 * Retrieve specific Content_Item instance
-	 * @param obj el DOM node to get item instance for
+	 * @param mixed Item reference
+	 * > Content_Item: Item instance (returned immediately)
+	 * > DOM element: DOM element to get item for
+	 * > int: Index of cached item
 	 * @return Content_Item Item instance for DOM node
 	 */
-	get_item: function(el) {
+	get_item: function(ref) {
 		console.groupCollapsed('View.get_item');
-		console.log('Element: %o', el);
-		//Check if item instance attached to element
-		var key = this.get_component_temp(this.Content_Item).get_data_key();
-		console.log('Data Key: %o', key);
-		var item = $(el).data(key);
-		if ( this.util.is_empty(item) ) {
-			console.log('Creating new content item');
-			item = this.add_item(el);
+		console.log('Item reference: %o', ref);
+		//Evaluate reference type
+		
+		//Content Item instance
+		if ( this.util.is_type(ref, this.Content_Item) ) {
+			return ref;
 		}
+		//Retrieve item instance
+		var item = null;
+		
+		//DOM element
+		if ( this.util.in_obj(ref, 'nodeType') ) {
+			console.info('Reference is DOM element: %o', ref);
+			//Check if item instance attached to element
+			var key = this.get_component_temp(this.Content_Item).get_data_key();
+			console.log('Data Key: %o', key);
+			item = $(ref).data(key);
+		}
+		//Cached item (index)
+		else if ( this.util.is_int(ref, false) ) {
+			var items = this.get_items();
+			if ( items.length > ref ) {
+				item = items[ref];
+			}
+		}
+		//Create default item instance
+		if ( !this.util.is_type(item, this.Content_Item) ) {
+			console.info('Creating new content item');
+			item = this.add_item(ref);
+		}
+		console.info('Returning item: %o', item);
 		console.groupEnd();
 		return item;
 	},
@@ -513,7 +563,7 @@ var View = {
 	 * @return Content_Item New item instance
 	 */
 	add_item: function(el) {
-		console.groupCollapsed('View.add_item');
+		console.groupCollapsed('View.add_item: %o', el);
 		var item = new this.Content_Item(el);
 		console.log('Item: %o \nInstance: %o', el, item);
 		console.log('Item ID: %o', item.get_attribute('id'));
@@ -529,6 +579,29 @@ var View = {
 		console.group('View.show_item');
 		this.get_item(el).show();
 		console.groupEnd();
+	},
+	
+	/**
+	 * Cache item instance
+	 * @uses this.items to store cached items
+	 * @param Content_Item item Item to cache
+	 * @return int Index of item in cache
+	 */
+	save_item: function(item) {
+		var ret = -1; 
+		if ( !this.util.is_type(item, this.Content_Item) ) {
+			return ret;
+		}
+		var prop = 'items';
+		var items = this.get_items();
+		//Check if item exists in collection
+		ret = items.indexOf(item);
+		//Cache item
+		if ( -1 == ret ) {
+			ret = items.push(item) - 1;
+		}
+		//Return item index in cache
+		return ret;
 	},
 	
 	/* Content Type */
@@ -2072,15 +2145,19 @@ var Viewer = {
 	/* Display */
 	
 	/**
-	 * Display content in lightbox
+	 * Display content in viewer
+	 * @param Content_Item item Item to show
+	 * @param obj options (optional) Load options
 	 */
-	show: function(item) {
+	show: function(item, options) {
 		console.group('Viewer.show');
 		console.info('Queue item: %o', item);
+		item.set_attribute('options_show', options);
 		this.item_queued = item;
 		var fin_set = 'show_deferred';
 		var v = this;
 		var fin = function() {
+			console.group('Viewer.show.load');
 			//Lock viewer
 			v.lock();
 			//Reset callback flag (for new lock)
@@ -2090,12 +2167,34 @@ var Viewer = {
 				console.warn('Invalid request');
 				console.groupEnd();
 				v.close();
+				console.groupEnd();
 				return false;
+			}
+			//Add item to history stack
+			//Get display options
+			var item = v.get_item();
+			var opts = item.get_attribute('options_show');
+			//Save history state
+			if ( history.pushState && !v.util.in_obj(opts, 'event') ) {
+				var state = {
+					'viewer': v.get_id(),
+					'item': null,
+				};
+				if ( !v.get_status('history')) {
+					v.set_status('history', history.length);
+					console.info('History Position: %o', v.get_status('history', true));
+					//Save viewer state
+					history.pushState(state, null);
+				}
+				//Save item state
+				state.item = v.get_parent().save_item(item);
+				history.pushState(state, null);
 			}
 			//Activate
 			v.set_active();
 			//Display
 			v.render();
+			console.groupEnd();
 		}
 		if ( !this.is_locked() ) {
 			fin();
@@ -2345,6 +2444,16 @@ var Viewer = {
 		this.dom_get().hide();
 		//Restore DOM
 		this.dom_restore();
+		var hst = 'history';
+		var hidx = this.get_status(hst, true);
+		console.info('History start: %o \nCurrent Length: %o \nRelative: %o', hidx, history.length, hidx - history.length);
+		//History
+		if ( this.util.is_int(hidx, false) && hidx < history.length) {
+			//Restore history stack
+			history.go(hidx - history.length);
+			//Clear history
+			this.set_status(hst, false);
+		}
 		//Reset properties
 		this.set_active(false);
 		this.set_item(false);
@@ -2421,7 +2530,7 @@ var Viewer = {
 		if ( !this.util.is_bool(mode) ) {
 			mode = true;
 		}
-		var e = ['keydown', this.util.get_prefix()].join('.');
+		var e = ['keyup', this.util.get_prefix()].join('.');
 		var v = this;
 		var h = function(ev) {
 			return v.keys_control(ev);
@@ -3354,8 +3463,9 @@ var Content_Item = {
 	 * Display item in viewer
 	 * @uses get_viewer() to retrieve viewer instance for item
 	 * @uses Viewer.show() to display item in viewer
+	 * @param obj options (optional) Options
 	 */
-	show: function() {
+	show: function(options) {
 		console.group('Item.show');
 		//Validate content type
 		if ( !this.has_type() ) {
@@ -3364,7 +3474,7 @@ var Content_Item = {
 		//Retrieve viewer
 		var v = this.get_viewer();
 		console.info('Viewer retrieved: %o', v);
-		v.show(this);
+		v.show(this, options);
 		console.groupEnd();
 	}
 };

@@ -495,7 +495,7 @@ var Base = {
 		/* Helpers */
 
 		is_set: function(value) {
-			return ( typeof value != 'undefined' ) ? true : false;
+			return ( $.type(value) != 'undefined' ) ? true : false;
 		},
 		
 		is_type: function(value, type, nonempty) {
@@ -515,7 +515,7 @@ var Base = {
 			}
 			
 			//Validate empty values
-			if ( ret && ( typeof nonempty != this.bool || nonempty ) ) {
+			if ( ret && ( $.type(nonempty) != this.bool || nonempty ) ) {
 				ret = !this.is_empty(value);
 			}
 			return ret;
@@ -647,17 +647,25 @@ var Base = {
 		 * @param string|array key Key(s) to check for in object
 		 * @return bool TRUE if key(s) exist in object, FALSE otherwise
 		 */
-		in_obj: function(obj, key) {
-			var ret = false;
+		in_obj: function(obj, key, all) {
+			//Validate
+			if ( !this.is_bool(all) ) {
+				all = true;
+			}
 			if ( this.is_string(key) ) {
 				key = [key];
 			}
+			var ret = false;
 			if ( this.is_obj(obj) && this.is_array(key) ) {
-				var t = this;
-				$.each(key, function(idx, val) {
-					ret = ( t.is_string(val) && ( val in obj ) ) ? true : false;
-					return ret;
-				});
+				var val;
+				for ( var x = 0; x < key.length; x++ ) {
+					val = key[x];
+					ret = ( this.is_string(val) && ( val in obj ) ) ? true : false;
+					//Stop processing if conditions have been met
+					if ( ( !all && ret ) || ( all && !ret ) ) {
+						break;
+					}
+				}
 			}
 			return ret;
 		},
