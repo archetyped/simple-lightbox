@@ -132,8 +132,9 @@ var View = {
 			
 			//History
 			$(window).on('popstate', function(e) {
-				console.dir(e);
+				console.warn('Event: popstate');
 				var state = e.originalEvent.state;
+				console.info('History Length: %o', history.length);
 				if ( t.util.in_obj(state, ['item', 'viewer']) ) {
 					console.info('Event: popstate \n %o', state);
 					var v = t.get_viewer(state.viewer);
@@ -146,6 +147,7 @@ var View = {
 						//Close viewer
 						console.info('Close viewer');
 						v.close();
+						history.back();
 					}
 					return e.preventDefault();
 				}
@@ -1969,7 +1971,7 @@ var Viewer = {
 	 * @return bool TRUE if valid item set, FALSE otherwise
 	 */
 	set_item: function(item) {
-		console.groupCollapsed('Viewer.set_item');
+		console.groupCollapsed('Viewer.set_item: %o', item);
 		var i = this.set_component('item', item, function(item) {
 			return ( item.has_type() );
 		});
@@ -2147,12 +2149,11 @@ var Viewer = {
 	/**
 	 * Display content in viewer
 	 * @param Content_Item item Item to show
-	 * @param obj options (optional) Load options
+	 * @param obj options (optional) Display options
 	 */
-	show: function(item, options) {
+	show: function(item) {
 		console.group('Viewer.show');
 		console.info('Queue item: %o', item);
-		item.set_attribute('options_show', options);
 		this.item_queued = item;
 		var fin_set = 'show_deferred';
 		var v = this;
@@ -2171,25 +2172,7 @@ var Viewer = {
 				return false;
 			}
 			//Add item to history stack
-			//Get display options
-			var item = v.get_item();
-			var opts = item.get_attribute('options_show');
-			//Save history state
-			if ( history.pushState && !v.util.in_obj(opts, 'event') ) {
-				var state = {
-					'viewer': v.get_id(),
-					'item': null,
-				};
-				if ( !v.get_status('history')) {
-					v.set_status('history', history.length);
-					console.info('History Position: %o', v.get_status('history', true));
-					//Save viewer state
-					history.pushState(state, null);
-				}
-				//Save item state
-				state.item = v.get_parent().save_item(item);
-				history.pushState(state, null);
-			}
+			v.history.add.call(v);
 			//Activate
 			v.set_active();
 			//Display
@@ -2209,6 +2192,74 @@ var Viewer = {
 		console.groupEnd();
 	},
 	
+	history: {
+		get: function(full) {
+			return this.get_status('history_init', full);
+		},
+		set: function(val) {
+			return this.set_status('history_init', val);
+		},
+		add: function() {
+			if ( !history.pushState ) {
+				return false;
+			}
+			console.group('Viewer.history.add');
+			//Get display options
+			var item = this.get_item();
+			var opts = item.get_attribute('options_show');
+			//Save history state
+			var count = ( this.get_status('history_count') ) ? this.get_status('history_count', true) : history.length;
+			if ( !this.util.in_obj(opts, 'event') ) {
+				//Create state
+				var state = {
+					'viewer': this.get_id(),
+					'item': null,
+					'count': 0,
+				};
+				if ( !this.history.get.call(this) ) {
+					this.history.set.call(this, count);
+					console.info('History Position: %o', this.history.get.call(this, true));
+					//Save viewer state
+					state.count = count;
+					history.pushState(state, null);
+					console.info('Pushed history state: %o', history.state);
+				}
+				//Save item state
+				state.item = this.get_parent().save_item(item);
+				state.count = ++count;
+				history.pushState(state, null, item.get_uri('permalink'));
+				console.info('Pushed history state: %o', history.state);
+			} else {
+				var e = opts.event.originalEvent;
+				if ( this.util.in_obj(e, 'state') && this.util.in_obj(e.state, 'count') ) {
+					count = e.state.count;
+					console.info('Using history state count: %o', count);
+				} else {
+					console.warn('No history handler set');
+				}
+			}
+			//Save history item count
+			this.set_status('history_count', count);
+			console.info('History item count: %o', count);
+			console.groupEnd();
+		},
+		reset: function() {
+			console.group('Viewer.history.reset');
+			var len_init = this.history.get.call(this, true);
+			var len_curr = this.get_status('history_count', true);
+			console.info('History start: %o \nCurrent Length: %o \nRelative: %o', len_init, len_curr, len_init - len_curr);
+			if ( len_init < len_curr ) {
+				//Clear history status
+				this.history.set.call(this, false);
+				this.set_status('history_count', false);
+				
+				//Restore history stack
+				history.go(len_init - len_curr);
+			}
+			console.groupEnd();
+		}
+	},
+		
 	/**
 	 * Check if viewer is currently open
 	 * Checks if node is actually visible in DOM 
@@ -2225,7 +2276,7 @@ var Viewer = {
 	 * Load output into DOM
 	 */
 	render: function() {
-		console.group('Viewer.render');
+		console.groupCollapsed('Viewer.render');
 		//Get theme output
 		console.info('Rendering Theme layout');
 		var v = this;
@@ -2444,19 +2495,12 @@ var Viewer = {
 		this.dom_get().hide();
 		//Restore DOM
 		this.dom_restore();
-		var hst = 'history';
-		var hidx = this.get_status(hst, true);
-		console.info('History start: %o \nCurrent Length: %o \nRelative: %o', hidx, history.length, hidx - history.length);
 		//History
-		if ( this.util.is_int(hidx, false) && hidx < history.length) {
-			//Restore history stack
-			history.go(hidx - history.length);
-			//Clear history
-			this.set_status(hst, false);
-		}
+		this.history.reset.call(this);
+		//Item
+		this.set_item(false);
 		//Reset properties
 		this.set_active(false);
-		this.set_item(false);
 		this.set_loading(false);
 		this.slideshow_stop();
 		this.keys_disable();
@@ -2715,7 +2759,7 @@ var Viewer = {
 	/**
 	 * Close viewer
 	 */
-	close: function(e) {
+	close: function() {
 		console.groupCollapsed('Viewer.close');
 		//Deactivate
 		this.set_active(false);
@@ -3471,10 +3515,13 @@ var Content_Item = {
 		if ( !this.has_type() ) {
 			return false;
 		}
+		//Set display options
+		this.set_attribute('options_show', options);
 		//Retrieve viewer
 		var v = this.get_viewer();
 		console.info('Viewer retrieved: %o', v);
-		v.show(this, options);
+		//Load item
+		v.show(this);
 		console.groupEnd();
 	}
 };
