@@ -4,12 +4,18 @@ require_once 'class.base.php';
 
 /**
  * Fields - Base class
- * Core properties/methods for Content Type derivative classes
+ * Core properties/methods for fields
  * @package Simple Lightbox
  * @subpackage Fields
  * @author Archetyped
  */
 class SLB_Field_Base extends SLB_Base {
+	/*-** Config **-*/
+	
+	private $shared = false;
+	
+	/*-** Properties **-*/
+	
 	/**
 	 * @var string Unique name
 	 */
@@ -625,8 +631,9 @@ class SLB_Field_Base extends SLB_Base {
 	 * @return boolean TRUE if successful, FALSE otherwise
 	 */
 	function set_properties($properties) {
-		if ( !is_array($properties) )
+		if ( !is_array($properties) ) {
 			return false;
+		}
 		//Normalize properties
 		$properties = $this->remap_properties($properties);
 		$properties = $this->sort_properties($properties);
@@ -684,28 +691,23 @@ class SLB_Field_Base extends SLB_Base {
 	
 	/**
 	 * Build properties array
-	 * Accepts a variable number of additional arrays of default properties
-	 * that will be merged in order from last to first
-	 * (e.g. first array overwrites duplicate members in last)
-	 * @uses SLB_Field_Base::remap_properties() to remap properties members if necessary
-	 * @uses wp_parse_args()
-	 * @uses array_reverse()
-	 * @uses func_get_args()
 	 * @param array $props Instance properties
+	 * @param array $signature (optional) Default properties
 	 * @return array Normalized properties
 	 */
 	function make_properties($props, $signature = array()) {
 		$p = array();
-		if ( is_array($props) && !empty($props) ) {
+		if ( is_array($props) ) {
 			foreach ( $props as $prop ) {
 				if ( is_array($prop) ) {
 					$p = array_merge($prop, $p);
 				}
 			}
-			$props = $p;
-		} 
-		if ( is_array($signature) )
+		}
+		$props = $p;
+		if ( is_array($signature) ) {
 			$props = array_merge($signature, $props);
+		}
 		return $props;
 	}
 	
@@ -1431,7 +1433,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	);
 	
 	/**
-	 * Associative array of groups in content type
+	 * Associative array of groups in collection
 	 * Key: Group name
 	 * Value: object of group properties
 	 *  > title
@@ -1445,10 +1447,15 @@ class SLB_Field_Collection extends SLB_Field_Base {
 
 	/**
 	 * Class constructor
-	 * @param string $id Content type ID
-	 * @param array $properties (optional) Properties to set for content type (Default: none)
+	 * @uses parent::__construct()
+	 * @uses self::make_properties()
+	 * @uses self::init()
+	 * @uses self::add_groups()
+	 * @uses self::add_items()
+	 * @param string $id Collection ID
+	 * @param array $properties (optional) Properties to set for collection (Default: none)
 	 */
-	function __construct($id, $properties = null) {
+	public function __construct($id, $properties = null) {
 		$args = func_get_args();
 		$properties = $this->make_properties($args);
 		//Parent constructor
@@ -1457,17 +1464,36 @@ class SLB_Field_Collection extends SLB_Field_Base {
 		//Init
 		$this->init();
 		//Setup object based on properties
-		if ( is_array($properties) && !empty($properties) ) {
-			//Groups
-			if ( isset($properties['groups']) )
-				$this->add_groups($properties['groups']);
-			//Items
-			if ( isset($properties['items']) )
-				$this->add_items($properties['items']);
-		}
+		$this->load($properties, false);
 	}
-
+	
+	
 	/*-** Getters/Setters **-*/
+	
+	/* Setup */
+	
+	/**
+	 * Load collection with specified properties
+	 * Updates existing properties
+	 * @param array $properties Properties to load
+	 * @param bool $update (optional) Update (TRUE) or overwrite (FALSE) items/groups (Default: TRUE)
+	 * @return object Current instance
+	 */
+	public function load($properties, $update = true) {
+		$args = func_get_args();
+		$properties = $this->make_properties($args);
+		if ( !empty($properties) ) {
+			//Groups
+			if ( isset($properties['groups']) ) {
+				$this->add_groups($properties['groups'], $update);
+			}
+			//Items
+			if ( isset($properties['items']) ) {
+				$this->add_items($properties['items'], $update);
+			}
+		}
+		return $this;
+	}
 	
 	/* Data */
 	
@@ -1518,58 +1544,63 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	
 	/**
 	 * Adds item to collection
-	 * @param string $id Unique name for item
-	 * @param object|string $parent Field type that this item is based on
+	 * @param string|obj $id Unique name for item or item instance
 	 * @param array $properties (optional) Item properties
-	 * @param string $group (optional) Group ID to add item to
+	 * @param bool $update (optional) Update or overwrite existing item (Default: FALSE)
 	 * @return object Reference to new item
 	 */
-	function &add($id, $parent = null, $properties = array(), $group = null) {
+	function &add($id, $properties = array(), $update = false) {
+		$item;
 		$args = func_get_args();
-		$defaults = array (
-			'parent'		=> null,
-			'group'			=> null
-		);
-		if ( count($args) == 1 && is_array($args[0]) )
-			$properties = $args[0];
-			
-		$properties = array_merge($defaults, $properties);
+		//Properties
+		foreach ( array_reverse($args) as $arg ) {
+			if ( is_array($arg) ) {
+				$properties = $arg;
+				break;
+			}
+		}
+		if ( !is_array($properties) ) {
+			$properties = array();
+		}
 		
-		$ret = false;
-		//Check if previously created item is being added
-		if ( is_object($id) && strtolower(get_class($id)) == strtolower($this->item_type) ) {
-			$item =& $id;
-		} else {
-			//Create item
-			if ( !class_exists($this->item_type) )
-				return $ret;
-			$type = $this->item_type;
-			/**
-			 * @var SLB_Field
-			 */
-			if ( is_scalar($id) )
+		//Handle item instance
+		if ( $id instanceof $this->item_type ) {
+			$item = $id;
+			$item->set_properties($properties);
+		} elseif ( class_exists($this->item_type) ) {
+			$defaults = array (
+				'parent'		=> null,
+				'group'			=> null
+			);
+			$properties = array_merge($defaults, $properties);
+			if ( is_string($id) ) {
 				$properties['id'] = $id;
-			$item = new $type($properties);
-		}
-		if ( strlen($item->get_id()) == 0 ) {
-			return $ret;
+			}
+			if ( !!$update && $this->has($properties['id']) ) {
+				//Update existing item
+				$item = $this->get($properties['id']);
+				$item->set_properties($properties);
+			} else {
+				//Init item
+				$type = $this->item_type;
+				$item = new $type($properties);
+			}
 		}
 		
+		if ( empty($item) || 0 == strlen($item->get_id()) ) {
+			return false;
+		}
+		
+		//Set container
 		$item->set_container($this);
 
 		//Add item to collection
-		$this->items[$item->get_id()] =& $item;
+		$this->items[$item->get_id()] = $item;
 		
-		//Add item to group
-		if ( empty($group) ) {
-			//Check properties array for group
-			if ( isset($properties['group']) ) {
-				$group = $properties['group'];
-				//Remove group property from array
-				unset($properties['group']);
-			}
+		if ( isset($properties['group']) ) {
+			$this->add_to_group($properties['group'], $item->get_id());
 		}
-		$this->add_to_group($group, $item->id);
+		
 		return $item;
 	}
 
@@ -1627,9 +1658,9 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	/**
 	 * Retrieve specified item in collection
 	 * @param string|object $item Item object or ID to retrieve
-	 * @return object Specified item
+	 * @return SLB_Field Specified item
 	 */
-	function &get($item) {
+	function get($item, $safe_mode = false) {
 		if ( $this->has($item) ) {
 			if ( !is_object($item) || !is_a($item, $this->item_type) ) {
 				if ( is_string($item) ) {
@@ -1640,11 +1671,14 @@ class SLB_Field_Collection extends SLB_Field_Base {
 					$item = false;
 				}
 			}
+		} else {
+			$item = false;
 		}
 		
-		if ( !is_object($item) ) {
+		if ( !!$safe_mode && !is_object($item) ) {
 			//Fallback: Return empty item if no item exists
-			$item = new $this->item_type('');
+			$type = $this->item_type;
+			$item = new $type('');
 		}
 		return $item;
 	}
@@ -1681,13 +1715,14 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	 *  > Val (array): Item properties
 	 * @return void
 	 */
-	function add_items($items = array()) {
+	function add_items($items = array(), $update = false) {
 		//Validate
-		if ( !is_array($items) || empty($items) )
+		if ( !is_array($items) || empty($items) ) {
 			return false;
-		//Iterate
+		}
+		//Add items
 		foreach ( $items as $id => $props ) {
-			$this->add($id, $props);
+			$this->add($id, $props, $update);
 		}
 	}
 	
@@ -1695,11 +1730,31 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	 * Retrieve reference to items in collection
 	 * @return array Collection items (reference)
 	 */
-	function &get_items($group = null) {
-		if ( $this->group_exists($group) ) {
-			return $this->get_group_items($group);
+	function get_items($group = null, $sort = 'priority') {
+		$gset = $this->group_exists($group);
+		if ( $gset ) {
+			$items = $this->get_group_items($group);
+		} elseif ( !empty($group) ) {
+			$items = array();
+		} else {
+			$items = $this->items;
 		}
-		return $this->items; 
+		if ( !empty($items) ) {
+			//Sort items
+			if ( !empty($sort) && is_string($sort) ) {
+				if ( 'priority' == $sort ) {
+					if ( $gset ) {
+						//Sort by priority
+						ksort($items, SORT_NUMERIC);
+					}
+				}
+			}
+			//Release from buckets
+			if ( $gset ) {
+				$items = call_user_func_array('array_merge', $items);
+			}
+		}
+		return $items;
 	}
 	
 	/**
@@ -1710,8 +1765,9 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	function build_items($group = null) {
 		//Get group items
 		$items =& $this->get_items($group);
-		if ( empty($items) )
+		if ( empty($items) ) {
 			return false;
+		}
 		
 		$this->util->do_action_ref_array('build_items_pre', array(&$this));
 		foreach ( $items as $item ) {
@@ -1729,18 +1785,19 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	 *  > Key (string): group ID
 	 *  > Val (string): Group Title
 	 */
-	function add_groups($groups = array()) {
+	function add_groups($groups = array(), $update = false) {
 		//Validate
-		if ( !is_array($groups) || empty($groups) )
+		if ( !is_array($groups) || empty($groups) ) {
 			return false;
+		}
 		//Iterate
 		foreach ( $groups as $id => $props ) {
-			$this->add_group($id, $props);
+			$this->add_group($id, $props, null, $update);
 		}
 	}
 	
 	/**
-	 * Adds group to content type
+	 * Adds group to collection
 	 * Groups are used to display related items in the UI 
 	 * @param string $id Unique name for group
 	 * @param string $title Group title
@@ -1748,18 +1805,36 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	 * @param array $items (optional) ID's of existing items to add to group
 	 * @return object Group object
 	 */
-	function &add_group($id, $title = '', $description = '', $items = array()) {
+	function &add_group($id, $properties = array(), $items = array(), $update = false) {
 		//Create new group and set properties
+		$default = array (
+			'title'			=> '',
+			'description'	=> '',
+			'priority'		=> 10
+		);
+		$p = ( is_array($properties) ) ? array_merge($default, $properties) : $default;
+		if ( !is_int($p['priority']) || $p['priority'] < 0 ) {
+			$p['priority'] = $default['priority'];
+		}
 		$id = trim($id);
-		$this->groups[$id] =& $this->create_group($title, $description);
+		//Retrieve or init group
+		if ( !!$update && $this->group_exists($id) ) {
+			$grp = $this->get_group($id);
+			$grp->title = $p['title'];
+			$grp->description = $p['description'];
+			$grp->priority = $p['priority'];
+		} else {
+			$this->groups[$id] =& $this->create_group($p['title'], $p['description'], $p['priority']);
+		}
 		//Add items to group (if supplied)
-		if ( !empty($items) && is_array($items) )
+		if ( !empty($items) && is_array($items) ) {
 			$this->add_to_group($id, $items);
+		}
 		return $this->groups[$id];
 	}
 
 	/**
-	 * Remove specified group from content type
+	 * Remove specified group from collection
 	 * @param string $id Group ID to remove
 	 */
 	function remove_group($id) {
@@ -1773,9 +1848,10 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	 * Standardized method to create a new item group
 	 * @param string $title Group title (used in meta boxes, etc.)
 	 * @param string $description Short description of group's purpose
+	 * @param int $priority (optional) Group priority (e.g. used to sort groups during output)
 	 * @return object Group object
 	 */
-	function &create_group($title = '', $description = '') {
+	function &create_group($title = '', $description = '', $priority = 10) {
 		//Create new group object
 		$group = new stdClass();
 		/* Set group properties */
@@ -1786,6 +1862,8 @@ class SLB_Field_Collection extends SLB_Field_Base {
 		//Set Description
 		$description = ( is_scalar($description) ) ? trim($description) : '';
 		$group->description = $description;
+		//Priority
+		$group->priority = ( is_int($priority) ) ? $priority : 10;
 		//Create array to hold items
 		$group->items = array();
 		return $group;
@@ -1798,9 +1876,9 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	 */
 	function group_exists($group) {
 		$ret = false;
-		if ( is_object($group) )
+		if ( is_object($group) ) {
 			$ret = true;
-		elseif ( is_string($group) && ($group = trim($group)) && strlen($group) > 0 ) {
+		} elseif ( is_string($group) && ($group = trim($group)) && strlen($group) > 0 ) {
 			$group = trim($group);
 			//Check if group exists
 			$ret = !is_null($this->get_member_value('groups', $group, null));
@@ -1814,37 +1892,59 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	 * @param string|array $group ID of group (or group parameters if new group) to add item to
 	 * @param string|array $items Name or array of item(s) to add to group
 	 */
-	function add_to_group($group, $items) {
-		//Validate parameters
-		$group_id = '';
-		if ( !empty($group) ) {
-			if ( !is_array($group) ) {
-				$group = array($group, $group);
-			}
-			
-			$group[0] = $group_id = trim(sanitize_title_with_dashes($group[0]));
-		}
-		if ( empty($group_id) || empty($items) )
+	function add_to_group($group, $items, $priority = 10) {
+		//Validate
+		if ( empty($items) || empty($group) || ( !is_string($group) && !is_array($group) ) ) {
 			return false;
-		//Create group if it doesn't exist
-		if ( !$this->group_exists($group_id) ) {
-			call_user_func_array($this->m('add_group'), $group);
 		}
-		if ( ! is_array($items) )
+		
+		//Get group ID
+		if ( is_string($group) ) {
+			$group = array($group);
+		}
+		list($gid, $priority) = $group;
+		$gid = trim(sanitize_title_with_dashes($gid));
+		if ( empty($gid) ) {
+			return false;
+		}
+		//Item priority
+		if ( !is_int($priority) ) {
+			$priority = 10;
+		}
+		
+		//Prepare group
+		if ( !$this->group_exists($gid) ) {
+			//TODO Follow
+			call_user_func($this->m('add_group'), $gid, $group);
+		}
+		//Prepare items
+		if ( !is_array($items) ) {
 			$items = array($items);
+		}
+		//Add Items
 		foreach ( $items as $item ) {
-			if ( ! $this->has($item) )
+			//Skip if not in current collection
+			$itm_ref =& $this->get($item);
+			if ( !$itm_ref ) {
 				continue;
-			$iref =& $this->get($item);
+			}
+			$itm_id = $itm_ref->get_id();
 			//Remove item from any other group it's in (items can only be in one group)
-			foreach ( array_keys($this->groups) as $group_name ) {
-				if ( isset($this->groups[$group_name]->items[$iref->id]) )
-					unset($this->groups[$group_name]->items[$iref->id]);
+			foreach ( $this->get_groups() as $group ) {
+				foreach ( $group->items as $tmp_pri => $tmp_items ) {
+					if ( isset($group->items[$tmp_pri][$itm_id]) ) {
+						unset($group->items[$tmp_pri][$itm_id]);
+					}
+				}
 			}
 			//Add reference to item in group
-			$this->groups[$group_id]->items[$iref->id] =& $iref;
-			unset($iref);
+			$items =& $this->get_group($gid)->items;
+			if ( !isset($items[$priority]) ) {
+				$items[$priority] = array();
+			}
+			$items[$priority][$itm_id] =& $itm_ref;
 		}
+		unset($itm_ref);
 	}
 
 	/**
@@ -1882,13 +1982,16 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	 * @return object Reference to specified group
 	 */
 	function &get_group($group) {
-		if ( is_object($group) )
+		if ( is_object($group) ) {
 			return $group;
-		if ( is_string($group) )
+		}
+		if ( is_string($group) ) {
 			$group = trim($group);
+		}
 		//Create group if it doesn't already exist
-		if ( ! $this->group_exists($group) )
+		if ( ! $this->group_exists($group) ) {
 			$this->add_group($group);
+		}
 		return $this->get_member_value('groups', $group);
 	}
 	
@@ -1904,11 +2007,22 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	}
 
 	/**
-	 * Retrieve all groups in content type
+	 * Retrieve all groups in collection
 	 * @return array Reference to group objects
 	 */
-	function &get_groups() {
-		return $this->get_member_value('groups');
+	function &get_groups($opts = array()) {
+		$groups =& $this->get_member_value('groups');
+		if ( is_array($opts) && !empty($opts) ) {
+			extract($opts, EXTR_SKIP);
+			if ( !empty($groups) && !empty($sort) && is_string($sort) ) {
+				if ( property_exists(current($groups), $sort) ) {
+					//Sort groups by property
+					$sfunc = create_function('$a,$b', '$ap = $a->' . $sort . '; $bp = $b->' . $sort . '; if ( $ap == $bp ) return 0; return ( $ap > $bp ) ? 1 : -1;');
+					uasort($groups, $sfunc);
+				}
+			}
+		}
+		return $groups;
 	}
 	
 	/**
@@ -1919,7 +2033,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 		$this->util->do_action_ref_array('build_groups_pre', array(&$this));
 		
 		//Get groups to build
-		$groups = ( !empty($this->build_vars['groups']) ) ? $this->build_vars['groups'] : array_keys($this->get_groups());
+		$groups = ( !empty($this->build_vars['groups']) ) ? $this->build_vars['groups'] : array_keys($this->get_groups(array('sort' => 'priority')));
 		//Build groups
 		foreach ( $groups as $group ) {
 			$this->build_group($group);
@@ -1932,12 +2046,14 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	 * Build group
 	 */
 	function build_group($group) {
-		if ( !$this->group_exists($group) )
+		if ( !$this->group_exists($group) ) {
 			return false;
+		}
 		$group =& $this->get_group($group);
 		//Stop processing if group contains no items
-		if ( !count($this->get_items($group)) )
+		if ( !count($this->get_items($group)) ) {
 			return false;
+		}
 		
 		//Pre action
 		$this->util->do_action_ref_array('build_group_pre', array(&$this, $group));
@@ -2024,7 +2140,7 @@ class SLB_Fields extends SLB_Field_Collection {
 	/* Field Types */
 	
 	/**
-	 * Initialize fields and content types
+	 * Initialize fields
 	 */
 	function register_types() {
 		/* Field Types */

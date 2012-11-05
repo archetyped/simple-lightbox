@@ -198,7 +198,7 @@ class SLB_Options extends SLB_Field_Collection {
 	 * Key for saving version to DB
 	 * @var string
 	 */
-	var $version_key = 'version';
+	private $version_key = 'version';
 	
 	/**
 	 * Whether version has been checked
@@ -221,8 +221,9 @@ class SLB_Options extends SLB_Field_Collection {
 		//Validate arguments
 		$args = func_get_args();
 		//Set default ID
-		if ( !$this->validate_id($id) )
+		if ( !$this->validate_id($id) ) {
 			$id = 'options';
+		}
 		$defaults = $this->integrate_id($id);
 		$props = $this->make_properties($args, $defaults);
 		parent::__construct($props);
@@ -597,35 +598,15 @@ class SLB_Options extends SLB_Field_Collection {
 	 * Add option to collection
 	 * @uses SLB_Field_Collection::add() to add item
 	 * @param string $id Unique item ID
-	 * @param string $title Item title
-	 * @param mixed $default Default value
-	 * @param string $group (optional) Group ID to add item to
-	 * @return SLB_Option Option instance reference
+	 * @param array $properties Item properties
+	 * @param bool $update (optional) Should item be updated or overwritten (Default: FALSE)
+	 * @return SLB_Option Option instance
 	 */
-	function &add($id, $title = '', $default = '', $group = null) {
-		//Build properties array
-		$defaults = array (
-			'id'		=> '',
-			'title'		=> '',
-			'default'	=> '',
-			'group'		=> null
-		);
-		$args = func_get_args();
-		$properties = array();
-		foreach ( array_reverse($args) as $arg ) {
-			if ( is_array($arg) )
-				$properties = array_merge($properties, $arg);
-		}
-		if ( is_scalar($id) )
-			$properties['id'] = $id;
-		$properties = array_merge($defaults, $properties);
+	function &add($id, $properties = array(), $update = false) {
 		//Create item
-		/**
-		 * @var SLB_Option
-		 */
-		$item =& parent::add($properties);
-		
-		return $item;
+		$args = func_get_args();
+		$ret =& call_user_func_array(array('parent', 'add'), $args); 
+		return $ret;
 	}
 	
 	/**

@@ -26,24 +26,24 @@ class SLB_Theme extends SLB_Base {
 	private $_parent = null;
 	
 	/**
-	 * @var string Raw template
+	 * @var string Layout file
 	 */
-	private $_template_data = '';
+	private $_layout_path = '';
 	
 	/**
-	 * @var string Template URI (Relative or absolute path)
+	 * @var array Attached files
+	 * > scripts	array JS scripts
+	 * > styles		array Stylesheets
 	 */
-	private $_template_uri = '';
+	private $_files = array(
+		'scripts'	=> array(),
+		'styles'	=> array()
+	);
 	
 	/**
-	 * @var string Stylesheet URI (Relative or absolute path)
+	 * @var array Properties that can be inherited from parent
 	 */
-	private $_stylesheet_uri = '';
-	
-	/**
-	 * @var string Client attributes URI (Relative or absolute path)
-	 */
-	private $_client_attributes_uri = '';
+	private $_uses_parent = array();
 	
 	/**
 	 * @var string Class mode
@@ -56,33 +56,18 @@ class SLB_Theme extends SLB_Base {
 	/**
 	 * Constructor
 	 */
-	function __construct( $props = array() ) {
+	public function __construct($id, $name) {
 		parent::__construct();
-		//Normalize properties
-		if ( !is_array($props) ) {
-			$props = array();
+		$this->set_id($id);
+		$this->set_name($name);
+	}
+	
+	public function is_valid($full = false) {
+		$ret = ( strlen($this->get_id()) ) ? true : false;
+		if ( $ret && !!$full ) {
+			$ret = ( strlen($this->get_name()) ) ? true : false;
 		}
-		$defaults = array (
-			'id'					=> '',
-			'name'					=> '',
-			'parent'				=> null,
-			'template_uri'			=> '',
-			'template_data'			=> '',
-			'stylesheet_uri'		=> '',
-			'client_attributes_uri'	=> '',
-		);
-		
-		$props = array_merge($defaults, $props);
-		
-		extract($props);
-		
-		$this->set_id($id)
-			 ->set_name($name)
-			 ->set_parent($parent)
-			 ->set_template($template_data)
-			 ->set_template_uri($template_uri)
-			 ->set_stylesheet($stylesheet_uri)
-			 ->set_client_attributes($client_attributes_uri);
+		return $ret;
 	}
 	
 	/*-** Getters/Setters **-*/
@@ -100,7 +85,7 @@ class SLB_Theme extends SLB_Base {
 	 * @param string $id Theme ID
 	 * @return SLB_Theme Current theme instance
 	 */
-	public function set_id($id) {
+	private function set_id($id) {
 		if ( is_string($id) ) {
 			$this->_id = trim($id);
 		}
@@ -131,19 +116,21 @@ class SLB_Theme extends SLB_Base {
 	 * Get theme parent
 	 * @return SLB_Theme Parent theme instance
 	 */
-	public function get_parent() {
-		return $this->_parent;
+	public function get_parent($use_default = false) {
+		$ret = $this->_parent;
+		if ( empty($ret) && !!$use_default ) {
+			$ret = new SLB_Theme('', '');
+		}
+		return $ret;
 	}
 	
 	/**
 	 * Set theme's parent
-	 * @param SLB_Theme $parent Parent theme instance
+	 * @param SLB_Theme $parent Parent theme ID or instance
 	 * @return SLB_Theme Current theme instance
 	 */
 	public function set_parent($parent) {
-		if ( $parent instanceof $this ) {
-			$this->_parent = $parent;
-		}
+		$this->_parent = ( $parent instanceof $this ) ? $parent : null;
 		return $this;
 	}
 
@@ -156,116 +143,174 @@ class SLB_Theme extends SLB_Base {
 	}
 	
 	/**
-	 * Get template data
-	 * @return string Template
+	 * Retrieve all theme ancestors
+	 * @return array Theme ancestors
 	 */
-	public function get_template($format = true) {
-		if ( !is_bool($format) ) {
-			$format = true;
+	public function get_ancestors() {
+		$ret = array();
+		/**
+		 * @var SLB_Theme
+		 */
+		$thm = $this;
+		while ( $thm->has_parent() ) {
+			$par = $thm->get_parent();
+			//Add ancestor
+			if ( $par->is_valid() && !in_array($par, $ret, true) ) {
+				$ret[] = $par;
+			}
+			//Get next ancestor
+			$thm = $par;
 		}
-		//Build template
-		$tpl = null;
-		if ( empty($this->_template_data) && !empty($this->_template_uri) ) {
-			//Retrieve template from URI
-			$tpl = file_get_contents($this->util->normalize_path($this->util->get_path_base(), $this->_template_uri));
-			
-			//Save template data
-			if ( !empty($tpl) && is_string($tpl) ) {
-				$this->_template_data = $tpl;
+		return $ret;
+	}
+	
+	/* Layout */
+	
+	/**
+	 * Set layout file
+	 * @param string $src Path to the layout from WP's plugins directory. Example: 'plugin-name/theme/layout.html'
+	 * @return SLB_Theme Current theme instance
+	 */
+	public function set_layout($src) {
+		if ( !is_string($src) || !file_exists($this->util->normalize_path(WP_PLUGIN_DIR, $src)) ) {
+			$src = '';
+		}
+		$this->_layout_path = $src;
+		return $this;
+	}
+	
+	/**
+	 * Retrieve layout file
+	 * @param string $format (optional) Layout format
+	 * > default	Original value
+	 * > path		File Path (Relative to WordPress root)
+	 * > uri		File URI
+	 * @return string File path
+	 */
+	public function get_layout($format = null) {
+		$ret = ( is_string($this->_layout_path) ) ? $this->_layout_path : '';
+		if ( !empty($ret) && !empty($format) ) {
+			switch ( $format ) {
+				case 'uri' :
+					$ret = $this->util->normalize_path(WP_PLUGIN_URL, $ret);
+					break;
+				case 'path' :
+					$ret = $this->util->normalize_path(WP_PLUGIN_DIR, $ret);
+					break;
 			}
 		}
-		//Return
-		return ( $format ) ? $this->format_template( $this->_template_data ) : $this->_template_data;
+		return $ret;
 	}
 	
-	/**
-	 * Formats layout for usage in JS
-	 * @param string $tpl Template data to format
-	 * @return string Formatted template
-	 */
-	protected function format_template($tpl = '') {
-		//Validate
-		if ( !is_string($tpl) ) {
-			$tpl = '';
-		}
-		if ( !empty($tpl) ) {
-			//Remove line breaks
-			$tpl = str_replace(array("\r\n", "\n", "\r", "\t"), '', $tpl);
-			
-			//Escape quotes
-			$tpl = str_replace("'", "\'", $tpl);
-		}
-		//Return
-		return "'" . $tpl . "'";
-	}
+	/* Client files */
 	
 	/**
-	 * Set template data
-	 * @param string $data Template data (URI or Raw template)
-	 * @return SLB_Theme Current theme instance
+	 * Add file
+	 * @param string $type Group to add file to
+	 * @param string $handle Name of the stylesheet
+	 * @param string $src Path to the file from WP's plugins directory. Example: 'plugin-name/theme/style.css'
+	 * @return SLB_Theme Current theme
 	 */
-	public function set_template($data) {
-		if ( is_string($data) ) {
-			$this->_template_data = trim($data);
+	private function add_file($type, $handle, $src, $deps = array()) {
+		if ( is_string($type) && !empty($type)
+			&& is_string($handle) && !empty($handle)
+			&& is_string($src) && !empty($src) ) {
+			//Validate dependencies
+			if ( !is_array($deps) ) {
+				$deps = array();
+			}
+			//Init file group
+			if ( !is_array($this->_files[$type]) ) {
+				$this->_files[$type] = array();
+			}
+			//Add file to group
+			$this->_files[$type][$handle] = array($handle, $src, $deps); 
 		}
 		return $this;
 	}
-	
+
 	/**
-	 * Set template URI
-	 * @param string $uri Template URI
-	 * @return SLB_Theme Current theme instance
+	 * Retrieve files
+	 * All files or a specific group of files can be retrieved
+	 * @param string $type (optional) File group to retrieve
+	 * @return array Files
 	 */
-	public function set_template_uri($uri) {
-		if ( is_string($uri) ) {
-			$this->_template_uri = trim($uri);
+	private function get_files($type = null) {
+		$ret = $this->_files;
+		if ( is_string($type) ) {
+			$ret = ( isset($ret[$type]) ) ? $ret[$type] : array();
 		}
-		return $this;
-	}
-	
-	/**
-	 * Get stylesheet URI
-	 * @return string Fully-formed stylesheet URI
-	 */
-	public function get_stylesheet($full = true) {
-		if ( !is_bool($full) ) {
-			$full = true;
-		}
-		$ret = $this->_stylesheet_uri;
-		if ( !empty($ret) && $full ) {
-			//Build full URI
-			$ret = $this->util->get_file_url($ret);
+		if ( !is_array($ret) ) {
+			$ret = array();
 		}
 		return $ret;
 	}
 	
 	/**
-	 * Set stylesheet URI
-	 * @param string $id URI to stylesheet file
-	 * @return SLB_Theme Current theme instance
+	 * Retrieve file
+	 * @param string $type Group to retrieve file from
+	 * @param string $handle
+	 * @return array|null File properties (Default: NULL)
 	 */
-	public function set_stylesheet($uri) {
-		if ( is_string($uri) ) {
-			$this->_stylesheet_uri = trim($uri);
-		}
-		return $this;
-	}
-	
-	public function get_client_attributes() {
-		return $this->util->get_file_url($this->_client_attributes_uri);
+	private function get_file($type, $handle) {
+		$files = $this->get_files($type);
+		return ( is_string($type) && isset($files[$handle]) ) ? $files[$handle] : null;
 	}
 	
 	/**
-	 * Set client attributes URI
-	 * @param string $uri URI to file containing client attributes
-	 * @return SLB_Theme Current theme instance
+	 * Add stylesheet
+	 * @param string $handle Name of the stylesheet
+	 * @param string $src Path to stylesheet from WP's plugins directory. Example: 'plugin-name/theme/style.css'
+	 * @return SLB_Theme Current theme
 	 */
-	public function set_client_attributes($uri) {
-		if ( is_string($uri) ) {
-			$this->_client_attributes_uri = trim($uri);
-		}
-		return $this;
+	public function add_style($handle, $src, $deps = array()) {
+		return $this->add_file('styles', $handle, $src, $deps);
 	}
+	
+	/**
+	 * Retrieve stylesheet files
+	 * @return array Stylesheet files
+	 */
+	public function get_styles() {
+		return $this->get_files('styles');
+	}
+	
+	/**
+	 * Retrieve stylesheet file
+	 * @param string $handle Name of stylesheet
+	 * @return array|null File properties (Default: NULL)
+	 */
+	public function get_style($handle) {
+		return $this->get_file('styles', $handle);
+	}
+	
+	/**
+	 * Add script
+	 * @param string $handle Name of the script
+	 * @param string $src Path to script from WP's plugins directory. Example: 'plugin-name/theme/client.js'
+	 * @return SLB_Theme Current theme
+	 */
+	public function add_script($handle, $src, $deps = array()) {
+		return $this->add_file('scripts', $handle, $src, $deps);
+	}
+	
+	/**
+	 * Retrieve script files
+	 * @return array Script files
+	 */
+	public function get_scripts() {
+		return $this->get_files('scripts');
+	}
+	
+	/**
+	 * Retrieve script file
+	 * @param string $handle Name of script
+	 * @return array|null File properties (Default: NULL)
+	 */
+	public function get_script($handle) {
+		return $this->get_file('scripts', $handle);
+	}
+	
 }
 
 /**
@@ -276,6 +321,13 @@ class SLB_Theme extends SLB_Base {
  */
 class SLB_Themes extends SLB_Base {
 	/* Properties */
+	
+	private $_parent = null;
+	
+	/**
+	 * @var string Default item
+	 */
+	private $_id_default = 'default';
 	
 	/**
 	 * @var array Items collection
@@ -290,78 +342,90 @@ class SLB_Themes extends SLB_Base {
 	 */
 	private $_items_init = false;
 		
-	/**
-	 * @var string Default item ID (namespaced upon init)
-	 */
-	public $id_default = 'default';
-	
 	/* Methods */
 
-	function __construct() {
+	function __construct($parent = null) {
+		$this->set_parent($parent);
 		parent::__construct();
-		$this->add_prefix_ref($this->id_default);
 		$this->init();
 	}
 	
 	/* Initialization */
 	
 	function register_hooks() {
-		$this->util->add_action('init_themes', $this->m('init_defaults'));
+		parent::register_hooks();
+		//Register themes
+		$this->util->add_action('init_themes', $this->m('init_defaults'), 1);
+		
+		//Client output
+		add_action('wp_footer', $this->m('client_output'), 11);
+	}
+	
+	function init_options() {
+		$options_config = array (
+			'items'	=> array (
+				'theme_default'		=> array (
+					'default' 	=> $this->get_default_id(),
+					'group' 	=> array('ui', 0),
+					'parent' 	=> 'option_select',
+					'options' 	=> $this->m('get_field_values'),
+					'in_client'	=> true
+				),
+			)
+		);
+		
+		parent::init_options($options_config);
 	}
 	
 	/**
 	 * Add default themes
 	 * @uses register_theme() to register the theme(s)
 	 */
-	function init_defaults() {
-		$path_base = 'themes/default/';
-		$props = array (
-			'id'					=> $this->id_default,
-			'name'					=> 'Default',
-			'template_uri'			=> $path_base . 'layout.html',
-			'stylesheet_uri'		=> $path_base . 'style.css',
-			'client_attributes_uri'	=> $path_base . 'client.js',
-		);
-		$this->add_item($props);
-
-		//Testing: Additional themes
-		$props_black = array_merge($props, array (
-			'id' 				=> $this->add_prefix('black'),
-			'name'				=> 'Black',
-			'stylesheet_uri'	=> 'themes/black/style.css',
-			'parent'			=> $props['id'],
-		)); 
-		$this->add_item($props_black);
+	function init_defaults($themes) {
+		$path_base = $this->util->get_plugin_file_path('themes/default', true);
+		//Default
+		$def = $this->add_item($this->get_default_id(), 'Default')
+				 		->set_layout($path_base . 'layout.html')
+				 		->add_style('main', $path_base . 'style.css')
+				 		->add_script('main', $path_base . 'client.js');
+		//Dark
+		$path_base = $this->util->get_plugin_file_path('themes/black', true);
+		$dark = $this->add_item($this->add_prefix('black'), 'Dark')
+						 ->add_style('main', $path_base . 'style.css')
+						 ->set_parent($def);
 	}
-		
+	
+	/* Parent */
+	
+	private function set_parent($parent = null) {
+		if ( $parent instanceof SLB_Base ) {
+			$this->_parent = $parent;
+		}
+	}
+	
+	private function has_parent() {
+		return ( !empty($this->_parent) ) ? true : false;
+	}
+	
+	private function get_parent() {
+		return $this->_parent;
+	}
+	
+	/* Collection management */
+	
 	/**
 	 * Add theme to collection
-	 * @param mixed $data Theme data
-	 * > array - Theme properties
-	 * > SLB_Theme - Theme instance
-	 * @return SLB_Theme Theme instance
+	 * @param string|SLB_Theme $id Theme ID or instance
+	 * @param string $name (Optional) Name of theme to add (Not used if $id is a theme instance)
+	 * @return SLB_Theme Added theme instance
 	 */
-	public function add_item($data) {
-		global $dbg;
-		if ( !( $data instanceof SLB_Theme ) ) {
-			//Validate
-			if ( is_array($data) ) {
-				//Theme parent
-				if ( isset($data['parent']) && $this->has_item($data['parent']) ) {
-					//Get parent instance
-					$data['parent'] = $this->get_item($data['parent']);
-				} else {
-					//Clear invalid parent
-					unset($data['parent']);
-				}
-			}
-			//Create new theme instance
-			$data = new SLB_Theme($data);
+	public function add_item($id, $name = null) {
+		$thm = ( $id instanceof SLB_Theme ) ? $id : new SLB_Theme($id, $name);
+		if ( strlen($thm->get_id()) && strlen($thm->get_name()) ) {
+			//Add theme to collection
+			$this->_items[$thm->get_id()] = $thm;
 		}
-		if ( ( $id = $data->get_id() ) && !empty($id) ) {
-			$this->_items[$id] = $data;
-		}
-		return $data;
+		return $thm;
 	}
 	
 	/**
@@ -371,7 +435,7 @@ class SLB_Themes extends SLB_Base {
 	public function get_items() {
 		if ( !$this->_items_init ) {
 			$this->_items_init = true;
-			$this->util->do_action('init_themes');
+			$this->util->do_action('init_themes', $this);
 		}
 		return $this->_items;
 	}
@@ -386,17 +450,133 @@ class SLB_Themes extends SLB_Base {
 	 * @param string $id ID of theme to retrieve
 	 * @return SLB_Theme Specified theme
 	 */
-	public function get_item($id) {
-		$item = null;
+	public function get_item($id = null) {
+		if ( !is_string($id) ) {
+			//User-selected item
+			$id = $this->options->get_value('theme_default');
+			//Fallback item
+			if ( !$this->has_item($id) ) {
+				$id = $this->get_default_id();
+			}
+		}
 		if ( $this->has_item($id) ) {
 			$items = $this->get_items();
 			$item = $items[$id];
 		} else {
-			$item = new SLB_Theme(array('id' => $id));
+			$item = new SLB_Theme($id, $id);
 		}
-		return $item; 
+		return $item;
 	}
 	
+	public function get_default_id() {
+		static $id = null;
+		if ( empty($id) ) {
+			$id = $this->add_prefix($this->_id_default);
+		}
+		return $id;
+	}
 	
+	/* Output */
 	
+	/**
+	 * Output code in footer
+	 */
+	function client_output() {
+		echo '<!-- X-THM -->';
+		if ( !$this->has_parent() ) {
+			return;
+		}
+		$parent = $this->get_parent();
+		//Stop if not enabled
+		if ( !$parent->is_enabled() ) {
+			return;
+		}
+		echo '<!-- SLB-THM -->' . PHP_EOL;
+		
+		$client_out = array();
+		
+		/* Load theme */
+		
+		//Theme
+		/**
+		 * @var SLB_Theme
+		 */
+		$thm = $this->get_item();
+		if ( empty($thm) || !$thm->is_valid() ) {
+			return;
+		}
+		
+		//Process theme ancestors
+		$thms = array_reverse($thm->get_ancestors());
+		$thms[] = $thm;
+		
+		//Build output for each theme
+		foreach ( $thms as $thm ) {
+			//Theme properties
+			$thm_props = array(
+				'id'			=> $thm->get_id(),
+				'name'			=> $thm->get_name(),
+				'parent'		=> $thm->get_parent(true)->get_id()
+			);
+			//Optional properties
+			$uri = $thm->get_layout('uri');
+			if ( !empty($uri) ) {
+				$thm_props['layout_uri'] = $uri;
+			}
+			//Add theme to client
+			$client_out[] = $this->util->build_script_element( $this->util->call_client_method('View.add_theme', array( sprintf("'%s'", $thm->get_id()), json_encode($thm_props) ), false), sprintf('add_theme_%s', $thm->get_id()) );
+			
+			//Load external files
+			foreach ( array('styles' => 'build_stylesheet_element', 'scripts' => 'build_ext_script_element') as $key => $build ) {
+				foreach ( $thm->{'get_' . $key}() as $handle => $props ) {
+					$uri = $props[1];
+					if ( !empty($uri) ) {
+						$uri = $this->util->normalize_path(WP_PLUGIN_URL, $uri);
+					}
+					$client_out[] = $this->util->{$build}($uri);
+				}
+			}
+		}
+		
+		//Output
+		echo implode('', $client_out);
+		
+		echo PHP_EOL . '<!-- /SLB-THM -->' . PHP_EOL;
+	}
+	
+	/* Options */
+	
+	/**
+	 * Retrieve themes for use in option field
+	 * @uses self::theme_default
+	 * @return array Theme options
+	 */
+	public function get_field_values() {
+		//Get themes
+		$items = $this->get_items();
+		$d = $this->get_default_id();
+		//Pop out default theme
+		if ( isset($items[$d]) ) {
+			$itm_d = $items[$d];
+			unset($items[$d]);
+		}
+		
+		//Sort themes by name
+		uasort($items, create_function('$a,$b', 'return strcmp($a->get_name(), $b->get_name());'));
+		
+		//Insert default theme at top of array
+		if ( isset($itm_d) ) {
+			$items = array( $d => $itm_d ) + $items;
+		}
+		
+		//Build options
+		foreach ( $items as $item ) {
+			$items[$item->get_id()] = $item->get_name();
+		}
+		return $items;
+	}
+	
+	public function get_item_selected() {
+		
+	}
 }

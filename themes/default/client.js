@@ -1,5 +1,5 @@
 (function($) {
-return {
+SLB.View.update_theme('slb_default', {
 	/**
 	 * Animation handlers
 	 */
@@ -125,5 +125,5 @@ return {
 		dims.height = d.height();
 		return dims;
 	}
-};
+});
 })(jQuery);

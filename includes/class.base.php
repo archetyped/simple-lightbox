@@ -38,6 +38,15 @@ class SLB_Base {
 	 */
 	var $mode = 'full';
 	
+	/**
+	 * Global data
+	 * Facilitates sharing between decoupled objects
+	 * @var array
+	 */
+	private static $globals = array();
+	
+	private $shared = array('options', 'admin');
+	
 	/* Client */
 
 	/**
@@ -171,10 +180,27 @@ class SLB_Base {
 	 * To be called by child class
 	 */
 	function init_options($options_config = null) {
-		if ( !$this->is_options_valid($options_config, false) )
+		if ( !$this->is_options_valid($options_config, false) ) {
 			return false;
+		}
 		$class = $this->get_options_class();
-		$this->options = new $class($options_config);
+		$key = 'options';
+		if ( $this->shares($key) ) {
+			/**
+			 * @var SLB_Options
+			 */
+			$opts = $this->gvar($key);
+			//Setup options instance
+			if ( !is_a($opts, $class) ) {
+				$opts = $this->gvar($key, new $class());
+			}
+		} else {
+			$opts = new $class();
+		}
+		//Load options
+		$opts->load($options_config);
+		//Set instance property
+		$this->options = $opts;
 	}
 	
 	/**
@@ -200,7 +226,10 @@ class SLB_Base {
 		if ( isset($options_text['items']) ) {
 			foreach ( $options_text['items'] as $opt => $title ) {
 				$option_temp =& $this->options->get($opt);
-				if ( $option_temp->get_id() ) {
+				if ( !$option_temp ) {
+					continue;
+				}
+				if ( !!$option_temp->get_id() ) {
 					$option_temp->set_title($title);
 				}
 			}
@@ -415,6 +444,38 @@ class SLB_Base {
 	function remove_prefix($text, $sep = null) {
 		$args = func_get_args();
 		return call_user_func_array($this->util->m($this->util, 'remove_prefix'), $args);
+	}
+	
+	/*-** Globals **-*/
+	
+	/**
+	 * Get/Set (internal) global variables
+	 * @uses $globals to get/set global variables
+	 * @param string $name Variable name - If no name is specified, entire globals array is returned
+	 * @param mixed $val (optional) Set the value of a variable (Returns variable value if omitted)
+	 * @return mixed Variable value
+	 */
+	private function gvar($name = null, $val = null) {
+		$g =& self::$globals;
+		if ( !is_array($g) ) {
+			$g = array();
+		}
+		if ( !is_string($name) || empty($name) ) {
+			return $g;
+		}
+		$ret = $val;
+		if ( null !== $val ) {
+			//Set Value
+			$g[$name] = $val;
+		} elseif ( isset($g[$name]) ) {
+			//Retrieve variable
+			$ret = $g[$name];
+		}
+		return $ret;
+	}
+	
+	private function shares($name) {
+		return ( !empty($this->shared) && in_array($name, $this->shared) ) ? true : false;
 	}
 }
 

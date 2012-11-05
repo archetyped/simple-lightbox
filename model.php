@@ -33,20 +33,11 @@ class SLB_Lightbox extends SLB_Base {
 		),
 	);
 	
-	var $styles = array (
-		'theme'		=> array (
-			'file'		=> '[get_theme_style]',
-			'context'	=> array( array('public', '[is_enabled]') )
-		)
-	);
-	
 	/**
 	 * Themes collection
 	 * @var SLB_Themes
 	 */
 	var $themes = null;
-	
-	var $theme_default = 'default';
 	
 	/**
 	 * Value to identify activated links
@@ -126,11 +117,10 @@ class SLB_Lightbox extends SLB_Base {
 		//Init objects
 		$this->admin = new SLB_Admin($this);
 		$this->fields = new SLB_Fields();
-		$this->themes = new SLB_Themes();
+		$this->themes = new SLB_Themes($this);
 		
 		//Init instance
 		$this->init();
-
 	}
 	
 	/* Init */
@@ -177,39 +167,42 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	function init_options() {
 		//Setup options
-		$this->add_prefix_ref($this->theme_default);
 		$options_config = array (
+			'groups' 	=> array (
+				'activation'	=> array ( 'priority' => 10),
+				'grouping'		=> array ( 'priority' => 20),
+				'ui'			=> array ( 'priority' => 30),
+				'labels'		=> array ( 'priority' => 40),
+			),
 			'items'	=> array (
-				'enabled'					=> array('default' => true, 'group' => 'activation'),
-				'enabled_home'				=> array('default' => true, 'group' => 'activation'),
-				'enabled_post'				=> array('default' => true, 'group' => 'activation'),
-				'enabled_page'				=> array('default' => true, 'group' => 'activation'),
-				'enabled_archive'			=> array('default' => true, 'group' => 'activation'),
-				'enabled_widget'			=> array('default' => false, 'group' => 'activation'),
-				'enabled_compat'			=> array('default' => false, 'group' => 'activation'),
-				'activate_attachments'		=> array('default' => true, 'group' => 'activation'),
-				'validate_links'			=> array('default' => false, 'group' => 'activation', 'in_client' => true),
-				'group_links'				=> array('default' => true, 'group' => 'grouping'),
-				'group_post'				=> array('default' => true, 'group' => 'grouping'),
-				'group_gallery'				=> array('default' => false, 'group' => 'grouping'),
-				'group_widget'				=> array('default' => false, 'group' => 'grouping'),
-				'theme'						=> array('default' => $this->theme_default, 'group' => 'ui', 'parent' => 'option_select', 'options' => $this->m('get_theme_options')),
-				'ui_autofit'				=> array('default' => true, 'group' => 'ui', 'in_client' => true),
-				'ui_animate'				=> array('default' => true, 'group' => 'ui', 'in_client' => true),
-				'slideshow_autostart'		=> array('default' => true, 'group' => 'ui', 'in_client' => true),
-				'slideshow_duration'		=> array('default' => '6', 'attr' => array('size' => 3, 'maxlength' => 3), 'group' => 'ui', 'in_client' => true),
-				'group_loop'				=> array('default' => true, 'group' => 'ui', 'in_client' => true),
-				'ui_overlay_opacity'		=> array('default' => '0.8', 'attr' => array('size' => 3, 'maxlength' => 3), 'group' => 'ui', 'in_client' => true),
-				'ui_enabled_caption'		=> array('default' => true, 'group' => 'ui', 'in_client' => true),
-				'ui_caption_src'			=> array('default' => true, 'group' => 'ui', 'in_client' => true),
-				'ui_enabled_desc'			=> array('default' => true, 'group' => 'ui', 'in_client' => true),
-				'txt_link_close'			=> array('default' => 'close', 'group' => 'labels'),
-				'txt_loading'				=> array('default' => 'loading', 'group' => 'labels'),
-				'txt_link_next'				=> array('default' => 'next &raquo;', 'group' => 'labels'),
-				'txt_link_prev'				=> array('default' => '&laquo; prev', 'group' => 'labels'),
-				'txt_slideshow_start'		=> array('default' => 'start slideshow', 'group' => 'labels'),
-				'txt_slideshow_stop'		=> array('default' => 'stop slideshow', 'group' => 'labels'),
-				'txt_group_status'			=> array('default' => 'Image %current% of %total%', 'group' => 'labels')		
+				'enabled'					=> array('default' => true, 'group' => array('activation', 10)),
+				'enabled_home'				=> array('default' => true, 'group' => array('activation', 20)),
+				'enabled_post'				=> array('default' => true, 'group' => array('activation', 30)),
+				'enabled_page'				=> array('default' => true, 'group' => array('activation', 40)),
+				'enabled_archive'			=> array('default' => true, 'group' => array('activation', 50)),
+				'enabled_widget'			=> array('default' => false, 'group' => array('activation', 60)),
+				'activate_attachments'		=> array('default' => true, 'group' => array('activation', 70)),
+				'validate_links'			=> array('default' => false, 'group' => array('activation', 80), 'in_client' => true),
+				'group_links'				=> array('default' => true, 'group' => array('grouping', 10)),
+				'group_post'				=> array('default' => true, 'group' => array('grouping', 20)),
+				'group_gallery'				=> array('default' => false, 'group' => array('grouping', 30)),
+				'group_widget'				=> array('default' => false, 'group' => array('grouping', 40)),
+				'ui_autofit'				=> array('default' => true, 'group' => array('ui', 10), 'in_client' => true),
+				'ui_animate'				=> array('default' => true, 'group' => array('ui', 20), 'in_client' => true),
+				'slideshow_autostart'		=> array('default' => true, 'group' => array('ui', 30), 'in_client' => true),
+				'slideshow_duration'		=> array('default' => '6', 'attr' => array('size' => 3, 'maxlength' => 3), 'group' => array('ui', 40), 'in_client' => true),
+				'group_loop'				=> array('default' => true, 'group' => array('ui', 50), 'in_client' => true),
+				'ui_overlay_opacity'		=> array('default' => '0.8', 'attr' => array('size' => 3, 'maxlength' => 3), 'group' => array('ui', 60), 'in_client' => true),
+				'ui_enabled_caption'		=> array('default' => true, 'group' => array('ui', 70), 'in_client' => true),
+				'ui_caption_src'			=> array('default' => true, 'group' => array('ui', 80), 'in_client' => true),
+				'ui_enabled_desc'			=> array('default' => true, 'group' => array('ui', 90), 'in_client' => true),
+				'txt_link_close'			=> array('default' => 'close', 'group' => array('labels', 10)),
+				'txt_loading'				=> array('default' => 'loading', 'group' => array('labels', 20)),
+				'txt_link_next'				=> array('default' => 'next &raquo;', 'group' => array('labels', 30)),
+				'txt_link_prev'				=> array('default' => '&laquo; prev', 'group' => array('labels', 40)),
+				'txt_slideshow_start'		=> array('default' => 'start slideshow', 'group' => array('labels', 50)),
+				'txt_slideshow_stop'		=> array('default' => 'stop slideshow', 'group' => array('labels', 60)),
+				'txt_group_status'			=> array('default' => 'Image %current% of %total%', 'group' => array('labels', 70))		
 			),
 			'legacy' => array (
 				'header_activation'			=> null,
@@ -218,6 +211,7 @@ class SLB_Lightbox extends SLB_Base {
 				'header_ui'					=> null,
 				'txt_numDisplayPrefix' 		=> null,
 				'txt_numDisplaySeparator'	=> null,
+				'enabled_compat'			=> null,
 				'enabled_single'			=> array('enabled_post', 'enabled_page'),
 				'caption_src'				=> 'ui_caption_src',
 				'animate'					=> 'ui_animate',
@@ -258,14 +252,13 @@ class SLB_Lightbox extends SLB_Base {
 				'enabled_page'				=> __('Enable on Pages', $p),
 				'enabled_archive'			=> __('Enable on Archive Pages (tags, categories, etc.)', $p),
 				'enabled_widget'			=> __('Enable for Widgets', $p),
-				'enabled_compat'			=> __('Enable backwards-compatibility with legacy lightbox links', $p),
 				'activate_attachments'		=> __('Activate image attachment links', $p),
 				'validate_links'			=> __('Validate links', $p),
 				'group_links'				=> __('Group image links (for displaying as a slideshow)', $p),
 				'group_post'				=> __('Group image links by Post (e.g. on pages with multiple posts)', $p),
 				'group_gallery'				=> __('Group gallery links separately', $p),
 				'group_widget'				=> __('Group widget links separately', $p),
-				'theme'						=> __('Theme', $p),
+				'theme_default'				=> __('Theme', $p),
 				'ui_autofit'				=> __('Automatically fit lightbox in browser', $p),
 				'ui_animate'				=> __('Animate lightbox resizing', $p),
 				'slideshow_autostart'		=> __('Automatically Start Slideshow', $p),
@@ -281,7 +274,7 @@ class SLB_Lightbox extends SLB_Base {
 				'txt_link_prev'				=> __('Previous Image link', $p),
 				'txt_slideshow_start'		=> __('Start Slideshow link', $p),
 				'txt_slideshow_stop'		=> __('Stop Slideshow link', $p),
-				'txt_group_status'		=> __('Slideshow status format', $p),
+				'txt_group_status'			=> __('Slideshow status format', $p),
 			)
 		);
 		
@@ -363,7 +356,6 @@ class SLB_Lightbox extends SLB_Base {
 	 * @return void
 	 */
 	function set_client_context() {
-		global $dbg;
 		if ( !is_admin() && !$this->is_enabled() )
 			return false;
 		$ctx = new stdClass();
@@ -461,7 +453,6 @@ class SLB_Lightbox extends SLB_Base {
 	 * @return string Content with processed links 
 	 */
 	function process_links($content, $group = null) {
-		global $dbg;
 		//Validate
 		if ( !is_string($content) || empty($content) ) {
 			return $content;
@@ -607,25 +598,8 @@ class SLB_Lightbox extends SLB_Base {
 			return;
 		}
 		echo PHP_EOL . '<!-- SLB -->' . PHP_EOL;
-		$options = array();
-		$out = array();
-		$js_code = array();
 		//Get options
-		$options = wp_parse_args($this->options->build_client_output(), array (
-			'identifier'		=> array($this->get_prefix())
-		));
-		//Legacy support
-		//@TODO Remove this check
-		if ( $this->options->get_bool('enabled_compat') ) {
-			$options['identifier'][] = $this->attr_legacy;
-		}
-			
-		//Load UI Strings
-		if ( ($labels = $this->build_labels()) && !empty($labels) ) {
-			$options['ui_labels'] = $labels;
-		}
-		//Set default theme
-		$options['theme_default'] = $this->get_theme()->get_id();
+		$options = $this->options->build_client_output();
 
 		//Build client output
 		echo $this->util->build_script_element($this->util->call_client_method('View.init', $options), 'init', true, true);
@@ -637,43 +611,16 @@ class SLB_Lightbox extends SLB_Base {
 	 * > Media attachment URLs
 	 * @uses `_wp_attached_file` to match attachment ID to URI
 	 * @uses `_wp_attachment_metadata` to retrieve attachment metadata
-	 * @TODO Refactor theme functionality
 	 */
 	function client_footer() {
-		global $dbg;
-		echo '<!-- X -->';
+		echo '<!-- X-M -->';
 		//Stop if not enabled
 		if ( !$this->is_enabled() ) {
 			return;
 		}
-		echo '<!-- SLB -->' . PHP_EOL;
+		echo '<!-- SLB-M -->' . PHP_EOL;
 		
 		$client_out = array();
-		
-		/* Load components */
-		//Theme
-		$thm = $this->get_theme();
-		$thm_data = array();
-		$tpl = $thm->get_template();
-		$prt = ( $thm->get_parent() instanceof SLB_Theme ) ? $thm->get_parent()->get_id() : '';
-		
-		if ( !empty($tpl) && is_string($tpl) ) {
-			$thm_data[] = json_encode(array(
-				'id'			=> $thm->get_id(),
-				'name'			=> $thm->get_name(),
-				'parent'		=> $prt,
-				'layout_raw'	=> $tpl)
-			);
-		}
-		//Client attributes
-		$c_attr = $thm->get_client_attributes();
-		if ( !empty($c_attr) ) {
-			$thm_data[] = sprintf("'%s'", $c_attr);
-		}
-		if ( !empty($thm_data) ) {
-			array_unshift($thm_data, sprintf("'%s'", $thm->get_id()));
-			$client_out[] = $this->util->call_client_method('View.add_theme', $thm_data, false);
-		}
 		
 		/* Load cached media */
 		if ( $this->has_cached_media_items() ) {
@@ -827,7 +774,7 @@ class SLB_Lightbox extends SLB_Base {
 		if ( !empty($client_out) ) {
 			echo $this->util->build_script_element($client_out, 'footer');	
 		}
-		echo PHP_EOL . '<!-- /SLB -->' . PHP_EOL;
+		echo PHP_EOL . '<!-- /SLB-M -->' . PHP_EOL;
 	}
 
 	/*-** Media **-*/
@@ -929,31 +876,6 @@ class SLB_Lightbox extends SLB_Base {
 	/*-** Theme **-*/
 	
 	/**
-	 * Retrieve themes for use in option field
-	 * @uses self::theme_default
-	 * @return array Theme options
-	 */
-	function get_theme_options() {
-		//Get themes
-		$themes = $this->themes->get_items();
-		//Pop out default theme
-		$theme_default = $themes[$this->theme_default];
-		unset($themes[$this->theme_default]);
-		
-		//Sort themes by title
-		uasort($themes, create_function('$a,$b', 'return strcmp($a->get_name(), $b->get_name());'));
-		
-		//Insert default theme at top of array
-		$themes = array($this->theme_default => $theme_default) + $themes;
-		
-		//Build options
-		foreach ( $themes as $theme ) {
-			$themes[$theme->get_id()] = $theme->get_name();
-		}
-		return $themes;
-	}
-	
-	/**
 	 * Retrieve theme
 	 * @param string $id ID of theme to retrieve
 	 * @return SLB_Theme Theme instance
@@ -964,20 +886,10 @@ class SLB_Lightbox extends SLB_Base {
 		if ( !$this->themes->has_item($id) ) {
 			$id = $this->options->get_value('theme');
 			if ( !$this->themes->has_item($id) ) {
-				$id = $this->theme_default;
+				$id = $this->themes->get_default_id();
 			}
 		}
 		return $this->themes->get_item($id);
-	}
-
-	/**
-	 * Retrieve theme stylesheet URI
-	 * @param string $name Theme name
-	 * @return string Stylesheet URI
-	 * @TODO Refactor
-	 */
-	function get_theme_style($name = '') {
-		return $this->get_theme()->get_stylesheet();
 	}
 
 	/*-** Grouping **-*/

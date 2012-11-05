@@ -4,6 +4,31 @@
  * @author Archetyped
  */
 
+/*
+window.console = {
+	log: function() {},
+	debug: function() {},
+	info: function() {},
+	warn: function() {},
+	error: function() {},
+	assert: function() {},
+	clear: function() {},
+	dir: function() {},
+	dirxml: function() {},
+	trace: function() {},
+	group: function() {},
+	groupCollapsed: function() {},
+	groupEnd: function() {},
+	time: function() {},
+	timeEnd: function() {},
+	timeStamp: function() {},
+	profile: function() {},
+	profileEnd: function() {},
+	count: function() {},
+	exception: function() {},
+	table: function() {}
+};
+*/
 
 (function($){
 

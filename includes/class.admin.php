@@ -333,8 +333,9 @@ class SLB_Admin extends SLB_Base {
 		//Add page
 		$pid = $this->add_page($id, $parent, $labels, $options, $callback, $capability);
 		//Set parent as WP
-		if ( $pid )
+		if ( $pid ) {
 			$this->pages[$pid]->set_parent_wp();
+		}
 		return $pid;
 	}
 	
@@ -1226,8 +1227,9 @@ class SLB_Admin_View extends SLB_Base {
 	
 	function show_options($show_submit = true) {
 		//Build options output
-		if ( !$this->is_options_valid() )
+		if ( !$this->is_options_valid() ) {
 			return false;
+		}
 		/**
 		 * @var SLB_Options
 		 */
