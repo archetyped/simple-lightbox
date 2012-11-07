@@ -12,7 +12,7 @@ A simple, themeable, and customizable Lightbox for WordPress
 Simple Lightbox is a very simple and customizable lightbox that is easy to add to your WordPress website.
 
 ### BETA NOTES
-The current release is a beta version.  Please test and [provide feedback on the beta release page](http://archetyped.com/lab/slb-1-5-5-beta/).
+The current release is a beta version.  Please test and [provide feedback on the beta release page](http://archetyped.happyfox.com/).
 Main changes
 
 #### Beta 1

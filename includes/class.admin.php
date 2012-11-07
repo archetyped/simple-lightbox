@@ -101,21 +101,6 @@ class SLB_Admin extends SLB_Base {
 		add_filter('site_transient_update_plugins', $this->m('plugin_update_transient'));
 	}
 	
-	function test_globals() {
-		global $compat;
-		global $parent_file;
-		global $menu;
-		global $submenu;
-		global $pagenow;
-		global $typenow;
-		global $plugin_page;
-		global $_wp_real_parent_file;
-		global $_wp_menu_nopriv;
-		global $_wp_submenu_nopriv;
-		global $dbg;
-		global $admin_page_hooks;
-	}
-	
 	/* Handlers */
 	
 	function handle_action() {
@@ -1151,11 +1136,7 @@ class SLB_Admin_View extends SLB_Base {
 	 * Default View handler
 	 * Used as callback when none set
 	 */
-	function handle() {
-		global $dbg;
-		$dbg->print_message('Default view handler');
-		
-	}
+	function handle() {}
 	
 	/* Validation */
 	

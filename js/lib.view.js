@@ -74,7 +74,7 @@ var View = {
 		ui_caption_src: true,
 		slideshow_enabled: true,
 		slideshow_autostart: false,
-		slideshow_duration: '6',
+		slideshow_duration: '6'
 	},
 	
 	/* Methods */
@@ -874,7 +874,7 @@ var View = {
 	 */
 	get_template_tag_handler: function(id) {
 		return ( this.util.is_string(id) && ( id in this.get_template_tag_handlers() ) ) ? this.get_template_tag_handlers()[id] : this.add_template_tag_handler(id, {}, false);
-	},
+	}
 };
 
 /* Components */
@@ -1843,7 +1843,7 @@ var Component = {
 		});
 		console.groupEnd();
 		return dfr.promise();
-	},
+	}
 };
 
 View.Component = Component = SLB.Class.extend(Component);
@@ -1884,7 +1884,7 @@ var Viewer = {
 			slideshow_start: 'start slideshow',
 			slideshow_stop: 'stop slideshow',
 			group_status: 'Image %current% of %total%',
-			loading: 'loading',
+			loading: 'loading'
 		}
 	},
 	
@@ -2241,7 +2241,7 @@ var Viewer = {
 			var state = {
 				'viewer': this.get_id(),
 				'item': null,
-				'count': count,
+				'count': count
 			};
 			//Init: Save viewer state
 			if ( !count ) {
@@ -2430,7 +2430,7 @@ var Viewer = {
 		//Save element to instance
 		var d = this.dom_set($('<div/>', {
 			'id':  this.get_id(true),
-			'class': this.get_ns(),
+			'class': this.get_ns()
 		})).appendTo(this.dom_get_container()).hide();
 		//Add theme classes
 		var thm = this.get_theme();
@@ -3039,7 +3039,7 @@ var Content_Type = {
 	
 	_slug: 'content_type',
 	_refs: {
-		'item': 'Content_Item',
+		'item': 'Content_Item'
 	},
 	
 	/* References */
@@ -3321,7 +3321,7 @@ var Content_Item = {
 	get_uri: function(mode) {
 		console.groupCollapsed('Item.get_uri');
 		//Validate
-		if ( ['source', 'permalink'].indexOf(mode) == -1 ) {
+		if ( $.inArray(mode ,['source', 'permalink']) == -1 ) {
 			mode = 'source';
 		}
 		console.log('Mode: %o', mode);
@@ -3735,7 +3735,7 @@ var Modeled_Component = {
 			}
 		}
 		return m;
-	},
+	}
 
 };
 
@@ -4151,7 +4151,7 @@ var Theme = {
 		}
 		console.groupEnd();
 		return dfr.promise();
-	},
+	}
 };
 
 View.Theme = Modeled_Component.extend(Theme);
@@ -4569,7 +4569,7 @@ var Template = {
 		console.log('Tag elements: %o', ret);
 		console.groupEnd();
 		return ret;
-	},
+	}
 };
 
 View.Template = Modeled_Component.extend(Template);
@@ -4757,7 +4757,7 @@ var Template_Tag = {
 	 */
 	get_selector: function(level) {
 		return '.' + this.get_class(level);
-	},
+	}
 };
 
 View.Template_Tag = Component.extend(Template_Tag);
@@ -4829,7 +4829,7 @@ var Template_Tag_Handler = {
 			out = item.get_viewer().get_label(prop);
 		}
 		return out;
-	},
+	}
 };
 
 View.Template_Tag_Handler = Component.extend(Template_Tag_Handler);

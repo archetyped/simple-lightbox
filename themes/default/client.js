@@ -23,7 +23,8 @@ SLB.View.update_theme('slb_default', {
 				var pos = { top: ( $(document).scrollTop() + $(window).height() / 2 ) - ( l.height() / 2 ) };
 				o.fadeIn(function() {
 					l.css(pos);
-					dfr.resolve();				});
+					dfr.resolve();
+				});
 			});
 			console.groupEnd();
 			return dfr.promise();
@@ -113,7 +114,7 @@ SLB.View.update_theme('slb_default', {
 			});
 			console.groupEnd();
 			return dfr.promise();
-		},
+		}
 	},
 	/**
 	 * Theme-specific margins 

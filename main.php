@@ -1,8 +1,8 @@
 <?php 
 /* 
 Plugin Name: Simple Lightbox
-Plugin URI: http://archetyped.com/tools/simple-lightbox/
-Description: Customizable Lightbox for Wordpress
+Plugin URI: http://archetyped.happyfox.com/
+Description: Customizable Lightbox for WordPress
 Version: 2.0b1 (BETA)
 Author: Archetyped
 Author URI: http://archetyped.com
