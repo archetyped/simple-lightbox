@@ -196,10 +196,10 @@ class SLB_Lightbox extends SLB_Base {
 				'ui_enabled_caption'		=> array('default' => true, 'group' => array('ui', 70), 'in_client' => true),
 				'ui_caption_src'			=> array('default' => true, 'group' => array('ui', 80), 'in_client' => true),
 				'ui_enabled_desc'			=> array('default' => true, 'group' => array('ui', 90), 'in_client' => true),
-				'txt_link_close'			=> array('default' => 'close', 'group' => array('labels', 10)),
 				'txt_loading'				=> array('default' => 'loading', 'group' => array('labels', 20)),
-				'txt_link_next'				=> array('default' => 'next &raquo;', 'group' => array('labels', 30)),
-				'txt_link_prev'				=> array('default' => '&laquo; prev', 'group' => array('labels', 40)),
+				'txt_close'					=> array('default' => 'close', 'group' => array('labels', 10)),
+				'txt_nav_next'				=> array('default' => 'next &raquo;', 'group' => array('labels', 30)),
+				'txt_nav_prev'				=> array('default' => '&laquo; prev', 'group' => array('labels', 40)),
 				'txt_slideshow_start'		=> array('default' => 'start slideshow', 'group' => array('labels', 50)),
 				'txt_slideshow_stop'		=> array('default' => 'stop slideshow', 'group' => array('labels', 60)),
 				'txt_group_status'			=> array('default' => 'Image %current% of %total%', 'group' => array('labels', 70))		
@@ -226,7 +226,10 @@ class SLB_Lightbox extends SLB_Base {
 				'loop'						=> 'group_loop',
 				'autostart'					=> 'slideshow_autostart',
 				'duration'					=> 'slideshow_duration',
-				'txt_loadingMsg'			=> 'txt_loading'
+				'txt_loadingMsg'			=> 'txt_loading',
+				'txt_link_next'				=> 'txt_nav_next',
+				'txt_link_prev'				=> 'txt_nav_prev',
+				'txt_link_close'			=> 'txt_close'
 			)
 		);
 		
@@ -268,10 +271,10 @@ class SLB_Lightbox extends SLB_Base {
 				'ui_enabled_caption'		=> __('Enable caption', $p),
 				'ui_enabled_desc'			=> __('Enable description', $p),
 				'ui_caption_src'			=> __('Set file name as caption when link title not set', $p),
-				'txt_link_close'			=> __('Close link (for accessibility only, image used for button)', $p),
+				'txt_close'					=> __('Close link (for accessibility only, image used for button)', $p),
 				'txt_loading'				=> __('Loading indicator', $p),
-				'txt_link_next'				=> __('Next Image link', $p),
-				'txt_link_prev'				=> __('Previous Image link', $p),
+				'txt_nav_next'				=> __('Next Image link', $p),
+				'txt_nav_prev'				=> __('Previous Image link', $p),
 				'txt_slideshow_start'		=> __('Start Slideshow link', $p),
 				'txt_slideshow_stop'		=> __('Stop Slideshow link', $p),
 				'txt_group_status'			=> __('Slideshow status format', $p),
@@ -600,7 +603,12 @@ class SLB_Lightbox extends SLB_Base {
 		echo PHP_EOL . '<!-- SLB -->' . PHP_EOL;
 		//Get options
 		$options = $this->options->build_client_output();
-
+		
+		//Load UI Strings
+		if ( ($labels = $this->build_labels()) && !empty($labels) ) {
+			$options['ui_labels'] = $labels;
+		}
+		
 		//Build client output
 		echo $this->util->build_script_element($this->util->call_client_method('View.init', $options), 'init', true, true);
 		echo '<!-- /SLB -->' . PHP_EOL;

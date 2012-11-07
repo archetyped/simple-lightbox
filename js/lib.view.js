@@ -3708,6 +3708,7 @@ var Modeled_Component = {
 		if ( !this.util.is_bool(safe_mode) ) {
 			safe_mode = true;
 		}
+		var mcurr;
 		var m = mcurr = this.get_model();
 		var found = false;
 		while ( this.util.is_obj(m) ) {
