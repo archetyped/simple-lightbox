@@ -113,7 +113,6 @@ var View = {
 		/* Initialize components */
 		console.log('Initializing components');
 		this.init_components();
-		
 		console.groupEnd();
 	},
 	
@@ -233,7 +232,6 @@ var View = {
 			return ret;
 		}
 		console.info('Component type is valid');
-
 		//Sanitize id
 		if ( !this.util.is_string(id) ) {
 			console.log('ID is invalid, unsetting');
@@ -1224,9 +1222,7 @@ var Component = {
 			recursive = true;
 		}
 		var ctype = this._refs[cname];
-		
 		console.log('Validated Parameters\nProperty: %o \nType: %o \nGet Default: %o \nRecursive: %o', cname, ctype.prototype._slug, get_default, recursive);
-
 		//Phase 1: Check if component reference previously set
 		console.info('Check for property');
 		if ( this.util.is_type(this[cname], ctype) ) {
@@ -1335,7 +1331,6 @@ var Component = {
 		}
 		//Set (or clear) component reference
 		this[name] = ref;
-		
 		console.groupEnd();
 		//Return value for confirmation
 		return this[name];
@@ -1548,7 +1543,6 @@ var Component = {
 		if ( this.util.is_obj(attributes) ) {
 			$.extend(this.attributes, attributes);
 		}
-		
 		console.groupEnd();
 	},
 	
@@ -3788,7 +3782,6 @@ var Theme = {
 		
 		//Set theme model
 		this.set_model(id);
-		
 		console.groupEnd();
 	},
 	
@@ -4470,7 +4463,6 @@ var Template = {
 			return '';
 		}
 		//Parse tags in layout
-		
 		console.groupCollapsed('Find tags');
 		//Tag regex
 		var re = /\{{2}\s*(\w.*?)\s*\}{2}/gim;
@@ -4900,7 +4892,6 @@ var Template_Tag_Handler = {
 };
 
 View.Template_Tag_Handler = Component.extend(Template_Tag_Handler);
-
 console.groupCollapsed('Pre Init');
 /* Update References */
 
