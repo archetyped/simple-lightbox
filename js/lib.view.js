@@ -760,6 +760,9 @@ var View = {
 			});
 		}
 		
+		//Set ID
+		attrs.push({'id': id});
+		
 		//Create theme model
 		var model = $.extend.apply(null, attrs);
 		
@@ -3966,7 +3969,7 @@ var Theme = {
 		}
 		//Generate measurement
 		if ( !this.util.is_obj(meas) ) {
-			console.info('Generating margins');
+			console.info('Generating offsets');
 			//Get custom theme measurement
 			meas = this.call_attribute(attr);
 			if ( !this.util.is_obj(meas) ) {
@@ -4011,20 +4014,20 @@ var Theme = {
 	},
 	
 	/**
-	 * Retrieve theme margins
-	 * @return obj Theme margins with `width` & `height` properties
+	 * Retrieve theme offset
+	 * @return obj Theme offset with `width` & `height` properties
 	 */
-	get_margin: function() {
-		return this.get_measurement('margin', { 'width': 0, 'height': 0});
+	get_offset: function() {
+		return this.get_measurement('offset', { 'width': 0, 'height': 0});
 	},
 	
 	/**
-	 * Generate default margins
-	 * @return obj Theme margins with `width` & `height` properties
+	 * Generate default offset
+	 * @return obj Theme offsets with `width` & `height` properties
 	 */
-	get_margin_default: function() {
-		console.groupCollapsed('Theme.get_margin_default');
-		var margin = { 'width': 0, 'height': 0 };
+	get_offset_default: function() {
+		console.groupCollapsed('Theme.get_offset_default');
+		var offset = { 'width': 0, 'height': 0 };
 		var v = this.get_viewer();
 		var vn = v.dom_get();
 		//Clone viewer
@@ -4035,7 +4038,7 @@ var Theme = {
 			.removeClass('loading')
 			.appendTo(vn.parent());
 		console.log('Cloned viewer', vc);
-		//Get margin from layout node
+		//Get offset from layout node
 		var l = vc.find(v.dom_get_selector('layout'));
 		console.info('Layout (%o): %o \nHeight: %o \nWidth: %o', v.dom_get_selector('layout'), l, l.height(), l.width());
 		if ( l.length ) {
@@ -4049,37 +4052,37 @@ var Theme = {
 			console.group('Resizing content tag');
 			var tags = this.get_tags('item', 'content');
 			if ( tags.length ) {
-				var offset = v.get_item().get_dimensions();
+				var offset_item = v.get_item().get_dimensions();
 				//Set content dimensions
-				tags = $(l.find(tags[0].get_selector('full')).get(0)).css({'width': offset.width, 'height': offset.height});
-				$.each(offset, function(key, val) {
-					margin[key] = -1 * val;
+				tags = $(l.find(tags[0].get_selector('full')).get(0)).css({'width': offset_item.width, 'height': offset_item.height});
+				$.each(offset_item, function(key, val) {
+					offset[key] = -1 * val;
 				});
 			}
 			
-			//Set margin
-			margin.width += l.width();
-			margin.height += l.height();
+			//Set offset
+			offset.width += l.width();
+			offset.height += l.height();
 			//Normalize
-			$.each(margin, function(key, val) {
+			$.each(offset, function(key, val) {
 				if ( val < 0 ) {
-					margin[key] = 0;
+					offset[key] = 0;
 				}
 			});
 			console.groupEnd();
 		}
-		console.info('Layout\nWidth: %o \nHeight: %o \nCalculated margins: %o', l.width(), l.height(), margin);
+		console.info('Layout\nWidth: %o \nHeight: %o \nCalculated offsets: %o', l.width(), l.height(), offset);
 		vc.empty().remove();
 		console.groupEnd();
-		return margin;
+		return offset;
 	},
 	
 	/**
 	 * Retrieve theme offsets
 	 * @return obj Theme offsets with `width` & `height` properties 
 	 */
-	get_offset: function() {
-		return this.get_measurement('offset', {'width': 0, 'height': 0});
+	get_margin: function() {
+		return this.get_measurement('margin', {'width': 0, 'height': 0});
 	},
 	
 	/**
@@ -4095,20 +4098,20 @@ var Theme = {
 		if ( v.get_attribute('autofit', false) ) {
 			console.log('Processing resize');
 			//Get maximum dimensions
-			var offset = this.get_offset();
 			var margin = this.get_margin();
-			margin.height += offset.height;
-			margin.width += offset.width;
+			var offset = this.get_offset();
+			offset.height += margin.height;
+			offset.width += margin.width;
 			var max =  {'width': $(window).width(), 'height': $(window).height() };
-			if ( max.width > margin.width ) {
-				max.width -= margin.width;
+			if ( max.width > offset.width ) {
+				max.width -= offset.width;
 			}
-			if ( max.height > margin.height ) {
-				max.height -= margin.height;
+			if ( max.height > offset.height ) {
+				max.height -= offset.height;
 			}
 			//Get resize factor
 			var factor = Math.min(max.width / dims.width, max.height / dims.height);
-			console.info('Margin: %o \nMax: %o \nFactor: %o', margin, max, factor);
+			console.info('Offset: %o \nMax: %o \nFactor: %o', offset, max, factor);
 			//Resize dimensions
 			if ( factor < 1 ) {
 				console.log('Resizing');
@@ -4129,9 +4132,9 @@ var Theme = {
 	 */
 	get_dimensions: function() {
 		var dims = this.get_item_dimensions();
-		var margin = this.get_margin();
+		var offset = this.get_offset();
 		$.each(dims, function(key, val) {
-			dims[key] += margin[key];
+			dims[key] += offset[key];
 		});
 		return dims;
 	},

@@ -483,14 +483,11 @@ class SLB_Themes extends SLB_Base {
 	 */
 	function client_output() {
 		echo '<!-- X-THM -->';
-		if ( !$this->has_parent() ) {
-			return;
-		}
-		$parent = $this->get_parent();
 		//Stop if not enabled
-		if ( !$parent->is_enabled() ) {
+		if ( !$this->has_parent() || !$this->get_parent()->is_enabled() ) {
 			return;
 		}
+		
 		echo '<!-- SLB-THM -->' . PHP_EOL;
 		
 		$client_out = array();
@@ -514,7 +511,6 @@ class SLB_Themes extends SLB_Base {
 		foreach ( $thms as $thm ) {
 			//Theme properties
 			$thm_props = array(
-				'id'			=> $thm->get_id(),
 				'name'			=> $thm->get_name(),
 				'parent'		=> $thm->get_parent(true)->get_id()
 			);
