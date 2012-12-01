@@ -494,7 +494,7 @@ var View = {
 		var sel = 'a[href][%s="%s"]'.sprintf(this.util.get_attribute('active'), 1);
 		console.log('Selector: %o \nItems: %o', sel, $(sel));
 		//Add event handler
-		$(sel).click(handler);
+		$(document).on('click', sel, handler);
 		console.groupEnd();
 	},
 	
@@ -2109,8 +2109,8 @@ var Viewer = {
 		console.info('Loading method: %o', m);
 		$(this.dom_get())[m]('loading');
 		if ( mode ) {
-			//Loading animation
-			this.get_theme().animate('load').always(function() {
+			//Loading transition
+			this.get_theme().transition('load').always(function() {
 				dfr.resolve();
 			});
 		} else {
@@ -2324,14 +2324,14 @@ var Viewer = {
 				};
 				if ( v.is_open() ) {
 					console.info('Viewer open');
-					thm.animate('unload')
+					thm.transition('unload')
 						.fail(function() {
 							set_pos();
 							thm.dom_get_tag('item', 'content').attr('style', '');
 						})
 						.always(always);
 				} else {
-					thm.animate('open')
+					thm.transition('open')
 						.always(function() {
 							always();
 							v.events_open();
@@ -2369,8 +2369,8 @@ var Viewer = {
 				});
 				//Bind events
 				v.events_complete();
-				//Animate
-				thm.animate('complete')
+				//Transition
+				thm.transition('complete')
 					.fail(function() {
 						//Autofit content
 						if ( v.get_attribute('autofit', true) ) {
@@ -2467,6 +2467,12 @@ var Viewer = {
 			}
 		});
 		return ret;
+	},
+	
+	/* Animation */
+	
+	animation_enabled: function() {
+		return this.get_attribute('animate', true);
 	},
 	
 	/* Overlay */
@@ -2666,6 +2672,7 @@ var Viewer = {
 			return false;
 		}
 		this.set_attribute('slideshow_active', true);
+		this.dom_get().addClass('slideshow_active');
 		//Clear residual timers
 		this.slideshow_clear_timer();
 		//Start timer
@@ -2690,6 +2697,7 @@ var Viewer = {
 		}
 		if ( full ) {
 			this.set_attribute('slideshow_active', false);
+			this.dom_get().removeClass('slideshow_active');
 		}
 		//Kill timers
 		this.slideshow_clear_timer();
@@ -2784,9 +2792,9 @@ var Viewer = {
 		this.set_active(false);
 		var v = this;
 		var thm = this.get_theme();
-		thm.animate('unload')
+		thm.transition('unload')
 			.always(function() {
-				thm.animate('close', true).always(function() {
+				thm.transition('close', true).always(function() {
 					//End processes
 					v.reset();
 					v.trigger('close');
@@ -4168,14 +4176,15 @@ var Theme = {
 		console.groupEnd();
 	},
 	
-	animate: function(event, clear_queue) {
-		console.groupCollapsed('Theme.animate: %o', event);
+	transition: function(event, clear_queue) {
+		console.groupCollapsed('Theme.transition: %o', event);
 		var dfr = null;
-		var attr = 'animate';
+		var attr = 'transition';
 		var v = this.get_viewer();
+		var fx_temp = null;
+		var anim_on = v.animation_enabled();
 		if ( v.get_attribute(attr, true) && this.util.is_string(event) ) {
-			//Stop queued animations
-			if ( !!clear_queue ) {
+			var anim_stop = function() {
 				var l = v.get_layout();
 				l.find('*').each(function() {
 					var el = $(this);
@@ -4184,34 +4193,49 @@ var Theme = {
 					}
 				});
 			}
-			//Get animation handlers
+			//Stop queued animations
+			if ( !!clear_queue ) {
+				anim_stop();
+			}
+			//Get transition handlers
 			var attr_set = [attr, 'set'].join('_');
-			var anims;
+			var trns;
 			if ( !this.get_attribute(attr_set) ) {
 				var models = this.get_ancestors(true);
-				anims = [];
+				trns = [];
 				this.set_attribute(attr_set, true);
 				var thm = this;
 				$.each(models, function(idx, model) {
 					if ( attr in model && thm.util.is_obj(model[attr]) ) {
-						anims.push(model[attr]);
+						trns.push(model[attr]);
 					}
 				});
-				//Merge animation handlers into current theme
-				anims.push({});
-				anims = this.set_attribute(attr, $.extend.apply($, anims.reverse()));
+				//Merge transition handlers into current theme
+				trns.push({});
+				trns = this.set_attribute(attr, $.extend.apply($, trns.reverse()));
 			} else {
-				anims = this.get_attribute(attr, {});
+				trns = this.get_attribute(attr, {});
 			}
-			if ( this.util.is_method(anims, event) ) {
-				//Pass control to animation event
-				dfr = anims[event].call(this, v, $.Deferred());
+			if ( this.util.is_method(trns, event) ) {
+				//Disable animations if necessary
+				if ( !anim_on ) {
+					fx_temp = $.fx.off;
+					$.fx.off = true;
+				}
+				//Pass control to transition event
+				dfr = trns[event].call(this, v, $.Deferred());
 			}
 		}
 		if ( !this.util.is_promise(dfr) ) {
 			dfr = $.Deferred();
 			dfr.reject();
 		}
+		dfr.always(function() {
+			//Restore animation state
+			if ( null !== fx_temp ) {
+				$.fx.off = fx_temp;
+			}
+		});
 		console.groupEnd();
 		return dfr.promise();
 	}
@@ -4885,7 +4909,7 @@ var Template_Tag_Handler = {
 		//Locate property
 		var props = this.get_attribute('props');
 		var out = '';
-		if ( this.util.is_obj(props) && prop in props && this.util.is_func(props[prop]) ) {
+		if ( this.util.is_obj(props) && ( prop in props ) && this.util.is_func(props[prop]) ) {
 			out = props[prop].call(this, item, instance);
 		} else {
 			out = item.get_viewer().get_label(prop);
@@ -5040,6 +5064,10 @@ View.add_template_tag_handler('ui', {
 		//Initialize event handlers (once per viewer)
 		var v = item.get_viewer();
 		var st = ['events-init', tag.get_ns(), tag.get_name()].join('_');
+		var fmt = function(output) {
+			//return '<a href="#" title="%s">%s</a>'.sprintf(output, output);
+			return output;
+		};
 		if ( !v.get_status(st) ) {
 			v.set_status(st);
 			this.call_attribute('init', item, tag, v);
@@ -5049,10 +5077,10 @@ View.add_template_tag_handler('ui', {
 		var ret = this.handle_prop(tag.get_prop(), item, tag);
 		if ( this.util.is_promise(ret) ) {
 			ret.done(function(output) {
-				dfr.resolve(output);
+				dfr.resolve(fmt(output));
 			});
 		} else {
-			dfr.resolve(ret);
+			dfr.resolve(fmt(ret));
 		}
 		console.groupEnd();
 		return dfr.promise();

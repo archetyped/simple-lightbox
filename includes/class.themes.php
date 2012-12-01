@@ -384,13 +384,13 @@ class SLB_Themes extends SLB_Base {
 	function init_defaults($themes) {
 		$path_base = $this->util->get_plugin_file_path('themes/default', true);
 		//Default
-		$def = $this->add_item($this->get_default_id(), 'Default')
+		$def = $this->add_item($this->get_default_id(), 'Default (Light)')
 				 		->set_layout($path_base . 'layout.html')
 				 		->add_style('main', $path_base . 'style.css')
 				 		->add_script('main', $path_base . 'client.js');
 		//Dark
 		$path_base = $this->util->get_plugin_file_path('themes/black', true);
-		$dark = $this->add_item($this->add_prefix('black'), 'Dark')
+		$dark = $this->add_item($this->add_prefix('black'), 'Default (Dark)')
 						 ->add_style('main', $path_base . 'style.css')
 						 ->set_parent($def);
 	}
