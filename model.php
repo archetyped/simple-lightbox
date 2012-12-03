@@ -1096,12 +1096,12 @@ class SLB_Lightbox extends SLB_Base {
 			'captionEnabled'	=> $this->options->get_bool('enabled_caption'),
 			'captionSrc'		=> $this->options->get_bool('caption_src'),
 			'descEnabled'		=> $this->options->get_bool('enabled_desc'),
-			'relAttribute'		=> array($this->get_prefix()),
+			'trigger'			=> array($this->get_prefix()),
 			'prefix'			=> $this->get_prefix()
 		);
 		//Backwards compatibility
 		if ( $this->options->get_bool('enabled_compat'))
-			$options['relAttribute'][] = $this->attr_legacy;
+			$options['trigger'][] = $this->attr_legacy;
 			
 		//Load UI Strings
 		if ( ($strings = $this->build_labels()) && !empty($strings) )
