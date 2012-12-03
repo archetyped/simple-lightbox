@@ -2,8 +2,8 @@
 Contributors: Archetyped
 Donate link: http://mycharitywater.org/archetyped-2012-fall
 Tags: lightbox, gallery, photography, images, theme, template, style
-Requires at least: 3.3.2
-Tested up to: 3.4
+Requires at least: 3.4
+Tested up to: 3.5
 License: GPLv2 or later
 Stable tag: trunk
 
