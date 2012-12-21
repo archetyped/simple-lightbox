@@ -2,7 +2,7 @@
 Contributors: Archetyped
 Donate link: http://mycharitywater.org/archetyped-2012-fall
 Tags: lightbox, gallery, photography, images, theme, template, style
-Requires at least: 3.4.2
+Requires at least: 3.5
 Tested up to: 3.5
 Stable tag: trunk
 
@@ -14,6 +14,10 @@ Simple Lightbox is a very simple and customizable lightbox that is easy to add t
 ### BETA NOTES
 The current release is a beta version.  Please test and [provide feedback on the beta release page](http://archetyped.happyfox.com/).
 Main changes
+
+#### Beta 4
+* Optimize: Link activation
+* Optimize: Responsive (mobile) layout for default theme
 
 #### Beta 3
 * Update: Completely redesigned & fully responsive default themes

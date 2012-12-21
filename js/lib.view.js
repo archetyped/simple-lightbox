@@ -486,9 +486,24 @@ var View = {
 		//Define handler
 		var t = this;
 		var handler = function() {
-			t.show_item(this);
+			var ret = t.show_item(this);
+			if ( !t.util.is_bool(ret) ) {
+				ret = true;
+			}
+			console.info('Show Item: %o', ret);
+			return !ret;
+		};
+		
+		/*
+		handler = function() {
+			var $w = $(window);
+			var metrics = ['Width', 'Height', 'Outer Width', 'Outer Height'];
+			var vals = [$w.width(), $w.height(), window.outerWidth, window.outerHeight];
+			var str = metrics.join(': %s \n') + ': %s';
+			alert(String.prototype.sprintf.apply(str, vals));
 			return false;
 		};
+		*/
 		
 		//Get activated links
 		var sel = 'a[href][%s="%s"]'.sprintf(this.util.get_attribute('active'), 1);
@@ -567,8 +582,9 @@ var View = {
 	 */
 	show_item: function(el) {
 		console.group('View.show_item');
-		this.get_item(el).show();
+		var ret = this.get_item(el).show();
 		console.groupEnd();
+		return ret;
 	},
 	
 	/**
@@ -2249,7 +2265,7 @@ var Viewer = {
 			//Always: Save item state
 			state.item = this.get_parent().save_item(item);
 			state.count = ++count;
-			history.pushState(state, null, '#%s'.sprintf(escape(item.get_uri('permalink'))));
+			history.pushState(state, '');
 			console.info('Pushed history state: %o', history.state);
 		} else {
 			var e = opts.event.originalEvent;
@@ -3237,14 +3253,39 @@ var Content_Item = {
 		console.groupCollapsed('Content_Item.init_default_attributes');
 		this._super();
 		//Add asset properties
-		var key = this.dom_get().attr('href') || null;
+		var d = this.dom_get();
+		var key = d.attr('href') || null;
 		var assets = this.get_parent().assets || null;
 		console.log('Key: %o \nAssets: %o', key, assets);
 		//Merge asset data with default attributes
 		if ( this.util.is_string(key) ) {
 			var attrs = [{}, this._attr_default, {'permalink': key}];
-			if ( this.util.is_obj(assets) && ( key in assets ) && this.util.is_obj(assets[key]) ) {
-				attrs.push(assets[key]);
+			if ( this.util.is_obj(assets) ) {
+				var t = this;
+				var get_assets = function(key, raw) {
+					var ret = {};
+					if ( key in assets && t.util.is_obj(assets[key]) ) {
+						var ret = assets[key];
+						if ( t.util.is_string(raw) ) {
+							var e = '_entries';
+							if ( !( e in ret ) || ret[e].indexOf(raw) == -1 ) {
+								console.warn('No match for raw key found: %o / %o', key, raw);
+								console.dir(ret[e]);
+								ret = {};
+							}
+						}
+					}
+					return ret;
+				};
+				var asset = get_assets(key);
+				if ( this.util.is_empty(asset) && ( kpos = key.indexOf('?') ) && kpos != -1 ) {
+					var key_base = key.substr(0, kpos);
+					asset = get_assets(key_base, key); 
+				}
+				console.dir(asset);
+				if ( !this.util.is_empty(asset) ) {
+					attrs.push(asset);
+				}
 			}
 			this._attr_default = $.extend.apply(this, attrs);
 			console.log('Default Attributes Updated: %o', this._attr_default);
@@ -3540,16 +3581,20 @@ var Content_Item = {
 		console.group('Item.show');
 		//Validate content type
 		if ( !this.has_type() ) {
+			console.warn('Item has invalid type');
+			console.groupEnd();
 			return false;
 		}
+		console.info('Valid type');
 		//Set display options
 		this.set_attribute('options_show', options);
 		//Retrieve viewer
 		var v = this.get_viewer();
 		console.info('Viewer retrieved: %o', v);
 		//Load item
-		v.show(this);
+		var ret = v.show(this);
 		console.groupEnd();
+		return ret;
 	},
 	
 	reset: function() {
@@ -4342,7 +4387,7 @@ var Template = {
 			//Iterate through tags and populate layout
 			if ( v.is_active() && this.has_tags() ) {
 				var loading_promise = this.trigger('render-loading');
-				console.info('Loading is promise: %o \nResolved: %o', this.util.is_promise(loading_promise), loading_promise.isResolved());
+				console.info('Loading is promise: %o \nResolved: %o', this.util.is_promise(loading_promise), loading_promise.state());
 				var tpl = this;
 				var tags = this.get_tags(),
 					tag_promises = [];
