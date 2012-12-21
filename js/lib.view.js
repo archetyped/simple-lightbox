@@ -494,17 +494,6 @@ var View = {
 			return !ret;
 		};
 		
-		/*
-		handler = function() {
-			var $w = $(window);
-			var metrics = ['Width', 'Height', 'Outer Width', 'Outer Height'];
-			var vals = [$w.width(), $w.height(), window.outerWidth, window.outerHeight];
-			var str = metrics.join(': %s \n') + ': %s';
-			alert(String.prototype.sprintf.apply(str, vals));
-			return false;
-		};
-		*/
-		
 		//Get activated links
 		var sel = 'a[href][%s="%s"]'.sprintf(this.util.get_attribute('active'), 1);
 		console.log('Selector: %o \nItems: %o', sel, $(sel));

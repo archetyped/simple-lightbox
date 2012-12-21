@@ -16,8 +16,10 @@ The current release is a beta version.  Please test and [provide feedback on the
 Main changes
 
 #### Beta 4
-* Optimize: Link activation
 * Optimize: Responsive (mobile) layout for default theme
+* Optimize: Automatic backwards-compatibility with legacy links
+* Optimize: Link activation
+* Update: SLB requires WordPress 3.5
 
 #### Beta 3
 * Update: Completely redesigned & fully responsive default themes
