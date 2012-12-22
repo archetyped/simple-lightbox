@@ -673,7 +673,7 @@ class SLB_Lightbox extends SLB_Base {
 			global $wpdb;
 			
 			$this->media_items = array();
-			$props = array('id', 'type', 'desc', 'title', 'source');
+			$props = array('id', 'type', 'description', 'title', 'source');
 			$props = (object) array_combine($props, $props);
 	
 			//Separate media into buckets by type
@@ -782,7 +782,7 @@ class SLB_Lightbox extends SLB_Base {
 						//Set post data
 						$m = array(
 							$props->title	=> $att->post_title,
-							$props->desc	=> $att->post_content,
+							$props->description	=> $att->post_content,
 						);
 						
 						//Update content type

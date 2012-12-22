@@ -152,7 +152,7 @@ SLB.View.update_theme('slb_default', {
 			console.group('Theme.transition.complete()');
 			//Elements
 			var l = v.get_layout(),
-				loader = l.find('.slb_loading');
+				loader = l.find('.slb_loading'),
 				det = l.find('.slb_details'),
 				det_data = det.find('.slb_data'),
 				c = l.find('.slb_content'),
