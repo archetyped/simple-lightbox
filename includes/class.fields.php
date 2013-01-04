@@ -909,14 +909,13 @@ class SLB_Field_Base extends SLB_Base {
 	 * @return mixed Formatted value
 	 */
 	function format($value, $context = '') {
-		if ( !is_string($context) || empty($context) ) {
-			return value;
-		}
-		$handler = 'format_' . trim(strval($context));
-		//Only process if context is valid and has a handler
-		if ( !empty($context) && method_exists($this, $handler) ) {
-			//Pass value to handler
-			$value = $this->{$handler}($value, $context);
+		if ( is_string($context) && !empty($context) ) {
+			//Only process if context is valid and has a handler
+			$handler = 'format_' . trim($context);
+			if ( method_exists($this, $handler) ) {
+				//Pass value to handler
+				$value = $this->{$handler}($value, $context);
+			}
 		}
 		//Return formatted value
 		return $value;
