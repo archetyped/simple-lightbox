@@ -36,6 +36,11 @@ SLB.View.update_theme('slb_default', {
 				l = v.get_layout().hide(),
 				o = v.get_overlay().hide();
 			var pos = {'top' : ''};
+			var final = function() {
+				t.call_attribute('zoom_set');
+				l.css(pos);
+				dfr.resolve();
+			};
 			//Clean UI
 			d.find('.slb_content').css({width: '', height: ''}).find('.slb_template_tag').hide();
 			d.find('.slb_details').height(0);
@@ -51,11 +56,6 @@ SLB.View.update_theme('slb_default', {
 					final();
 				}
 			});
-			var final = function() {
-				t.call_attribute('zoom_set');
-				l.css(pos);
-				dfr.resolve();
-			}
 			console.groupEnd();
 			return dfr.promise();
 		},

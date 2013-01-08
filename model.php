@@ -154,7 +154,7 @@ class SLB_Lightbox extends SLB_Base {
 		$lpath = $this->util->get_plugin_file_path($ldir, array(false, false));
 		$lpath_abs = $this->util->get_file_path($ldir);
 		if ( is_dir($lpath_abs) ) {
-			load_plugin_textdomain($this->util->get_plugin_textdomain(), false,	$lpath);
+			load_plugin_textdomain('simple-lightbox', false, $lpath);
 		}
 		
 		//Context
@@ -193,16 +193,13 @@ class SLB_Lightbox extends SLB_Base {
 				'slideshow_duration'		=> array('default' => '6', 'attr' => array('size' => 3, 'maxlength' => 3), 'group' => array('ui', 40), 'in_client' => true),
 				'group_loop'				=> array('default' => true, 'group' => array('ui', 50), 'in_client' => true),
 				'ui_overlay_opacity'		=> array('default' => '0.8', 'attr' => array('size' => 3, 'maxlength' => 3), 'group' => array('ui', 60), 'in_client' => true),
-				'ui_enabled_caption'		=> array('default' => true, 'group' => array('ui', 70), 'in_client' => true),
-				'ui_caption_src'			=> array('default' => true, 'group' => array('ui', 80), 'in_client' => true),
-				'ui_enabled_desc'			=> array('default' => true, 'group' => array('ui', 90), 'in_client' => true),
-				'txt_loading'				=> array('default' => 'loading', 'group' => array('labels', 20)),
-				'txt_close'					=> array('default' => 'close', 'group' => array('labels', 10)),
-				'txt_nav_next'				=> array('default' => 'next &raquo;', 'group' => array('labels', 30)),
-				'txt_nav_prev'				=> array('default' => '&laquo; prev', 'group' => array('labels', 40)),
-				'txt_slideshow_start'		=> array('default' => 'start slideshow', 'group' => array('labels', 50)),
-				'txt_slideshow_stop'		=> array('default' => 'stop slideshow', 'group' => array('labels', 60)),
-				'txt_group_status'			=> array('default' => 'Image %current% of %total%', 'group' => array('labels', 70))		
+				'txt_loading'				=> array('default' => 'Loading', 'group' => array('labels', 20)),
+				'txt_close'					=> array('default' => 'Close', 'group' => array('labels', 10)),
+				'txt_nav_next'				=> array('default' => 'Next', 'group' => array('labels', 30)),
+				'txt_nav_prev'				=> array('default' => 'Previous', 'group' => array('labels', 40)),
+				'txt_slideshow_start'		=> array('default' => 'Start slideshow', 'group' => array('labels', 50)),
+				'txt_slideshow_stop'		=> array('default' => 'Stop slideshow', 'group' => array('labels', 60)),
+				'txt_group_status'			=> array('default' => 'Item %current% of %total%', 'group' => array('labels', 70))		
 			),
 			'legacy' => array (
 				'header_activation'			=> null,
@@ -212,6 +209,9 @@ class SLB_Lightbox extends SLB_Base {
 				'txt_numDisplayPrefix' 		=> null,
 				'txt_numDisplaySeparator'	=> null,
 				'enabled_compat'			=> null,
+				'ui_enabled_caption'		=> null,
+				'ui_caption_src'			=> null,
+				'ui_enabled_desc'			=> null,
 				'enabled_single'			=> array('enabled_post', 'enabled_page'),
 				'caption_src'				=> 'ui_caption_src',
 				'animate'					=> 'ui_animate',
@@ -240,44 +240,40 @@ class SLB_Lightbox extends SLB_Base {
 	 * Set option titles
 	 */
 	function init_options_text() {
-		$p = $this->util->get_plugin_textdomain();
 		$options_config = array (
 			'groups' 	=> array (
-				'activation'	=> __('Activation', $p),
-				'grouping'		=> __('Grouping', $p),
-				'ui'			=> __('UI', $p),
-				'labels'		=> __('Labels', $p)
+				'activation'	=> __('Activation', 'simple-lightbox'),
+				'grouping'		=> __('Grouping', 'simple-lightbox'),
+				'ui'			=> __('UI', 'simple-lightbox'),
+				'labels'		=> __('Labels', 'simple-lightbox')
 			),
 			'items'		=> array (
-				'enabled'					=> __('Enable Lightbox Functionality', $p),
-				'enabled_home'				=> __('Enable on Home page', $p),
-				'enabled_post'				=> __('Enable on Posts', $p),
-				'enabled_page'				=> __('Enable on Pages', $p),
-				'enabled_archive'			=> __('Enable on Archive Pages (tags, categories, etc.)', $p),
-				'enabled_widget'			=> __('Enable for Widgets', $p),
-				'activate_attachments'		=> __('Activate image attachment links', $p),
-				'validate_links'			=> __('Validate links', $p),
-				'group_links'				=> __('Group image links (for displaying as a slideshow)', $p),
-				'group_post'				=> __('Group image links by Post (e.g. on pages with multiple posts)', $p),
-				'group_gallery'				=> __('Group gallery links separately', $p),
-				'group_widget'				=> __('Group widget links separately', $p),
-				'theme_default'				=> __('Theme', $p),
-				'ui_autofit'				=> __('Resize lightbox to fit in window', $p),
-				'ui_animate'				=> __('Enable animations', $p),
-				'slideshow_autostart'		=> __('Start Slideshow Automatically', $p),
-				'slideshow_duration'		=> __('Slide Duration (Seconds)', $p),
-				'group_loop'				=> __('Loop through images', $p),
-				'ui_overlay_opacity'		=> __('Overlay Opacity (0 - 1)', $p),
-				'ui_enabled_caption'		=> __('Enable caption', $p),
-				'ui_enabled_desc'			=> __('Enable description', $p),
-				'ui_caption_src'			=> __('Set file name as caption when link title not set', $p),
-				'txt_close'					=> __('Close link (for accessibility only, image used for button)', $p),
-				'txt_loading'				=> __('Loading indicator', $p),
-				'txt_nav_next'				=> __('Next Image link', $p),
-				'txt_nav_prev'				=> __('Previous Image link', $p),
-				'txt_slideshow_start'		=> __('Start Slideshow link', $p),
-				'txt_slideshow_stop'		=> __('Stop Slideshow link', $p),
-				'txt_group_status'			=> __('Slideshow status format', $p),
+				'enabled'					=> __('Enable Lightbox Functionality', 'simple-lightbox'),
+				'enabled_home'				=> __('Enable on Home page', 'simple-lightbox'),
+				'enabled_post'				=> __('Enable on Posts', 'simple-lightbox'),
+				'enabled_page'				=> __('Enable on Pages', 'simple-lightbox'),
+				'enabled_archive'			=> __('Enable on Archive Pages (tags, categories, etc.)', 'simple-lightbox'),
+				'enabled_widget'			=> __('Enable for Widgets', 'simple-lightbox'),
+				'activate_attachments'		=> __('Activate image attachment links', 'simple-lightbox'),
+				'validate_links'			=> __('Validate links', 'simple-lightbox'),
+				'group_links'				=> __('Group image links (for displaying as a slideshow)', 'simple-lightbox'),
+				'group_post'				=> __('Group image links by Post (e.g. on pages with multiple posts)', 'simple-lightbox'),
+				'group_gallery'				=> __('Group gallery links separately', 'simple-lightbox'),
+				'group_widget'				=> __('Group widget links separately', 'simple-lightbox'),
+				'theme_default'				=> __('Theme', 'simple-lightbox'),
+				'ui_autofit'				=> __('Resize lightbox to fit in window', 'simple-lightbox'),
+				'ui_animate'				=> __('Enable animations', 'simple-lightbox'),
+				'slideshow_autostart'		=> __('Start Slideshow Automatically', 'simple-lightbox'),
+				'slideshow_duration'		=> __('Slide Duration (Seconds)', 'simple-lightbox'),
+				'group_loop'				=> __('Loop through images', 'simple-lightbox'),
+				'ui_overlay_opacity'		=> __('Overlay Opacity (0 - 1)', 'simple-lightbox'),
+				'txt_close'					=> __('Close button', 'simple-lightbox'),
+				'txt_loading'				=> __('Loading indicator', 'simple-lightbox'),
+				'txt_nav_next'				=> __('Next Item button', 'simple-lightbox'),
+				'txt_nav_prev'				=> __('Previous Item button', 'simple-lightbox'),
+				'txt_slideshow_start'		=> __('Start Slideshow button', 'simple-lightbox'),
+				'txt_slideshow_stop'		=> __('Stop Slideshow button', 'simple-lightbox'),
+				'txt_group_status'			=> __('Slideshow status format', 'simple-lightbox'),
 			)
 		);
 		
@@ -322,14 +318,12 @@ class SLB_Lightbox extends SLB_Base {
 	/**
 	 * Add admin menus
 	 * @uses this->admin->add_theme_page
-	 * @uses this->util->get_plugin_textdomain()
 	 */
 	function admin_menus() {
-		$dom = $this->util->get_plugin_textdomain();
 		$options_labels = array(
-			'menu'			=> __('Lightbox', $dom),
-			'header'		=> __('Lightbox Settings', $dom),
-			'plugin_action'	=> __('Settings', $dom)
+			'menu'			=> __('Lightbox', 'simple-lightbox'),
+			'header'		=> __('Lightbox Settings', 'simple-lightbox'),
+			'plugin_action'	=> __('Settings', 'simple-lightbox')
 		);
 		/*
 		$menu_labels = $options_labels;
@@ -339,14 +333,13 @@ class SLB_Lightbox extends SLB_Base {
 		$this->admin->add_menu('menu', $menu_labels);
 		*/
 		$labels_reset = array (
-			'title'			=> __('Reset', $dom),
-			'confirm'		=> __('Are you sure you want to reset settings?', $dom),
-			'success'		=> __('Setting Reset', $dom),
-			'failure'		=> __('Settings were not reset', $dom)
+			'title'			=> __('Reset', 'simple-lightbox'),
+			'confirm'		=> __('Are you sure you want to reset settings?', 'simple-lightbox'),
+			'success'		=> __('Settings Reset', 'simple-lightbox'),
+			'failure'		=> __('Settings were not reset', 'simple-lightbox')
 		);
 		
 		$this->admin->add_theme_page('options', $options_labels, $this->options);
-		// $this->admin->add_section('section', 'media', $section_labels, $this->options);
 		$this->admin->add_reset('reset', $labels_reset, $this->options);
 	}
 	
@@ -472,15 +465,16 @@ class SLB_Lightbox extends SLB_Base {
 		$types = $this->get_media_types();
 		$qv_att = 'attachment_id';
 		
-		//Format Group
-		if ( $this->options->get_bool('group_links') ) {
-			if ( is_scalar($group) ) {
-				$group_base = trim(strval($group));
-			} else {
-				$group_base = '';
-			}
-		} else {
-			$group_base = null;
+		//Setup group properties
+		$g_props = (object) array(
+			'enabled'			=> $this->options->get_bool('group_links'),
+			'attr'				=> 'group',
+			'base'				=> '',
+			'legacy_prefix'		=> 'lightbox[',
+			'legacy_suffix'		=> ']'
+		);
+		if ( $g_props->enabled ) {
+			$g_props->base = ( is_scalar($group) ) ? trim(strval($group)) : '';
 		}
 		
 		//Iterate through links & add lightbox if necessary
@@ -493,8 +487,8 @@ class SLB_Lightbox extends SLB_Base {
 			$uri = new stdClass();
 			
 			//Parse link attributes
-			$attrs = $this->util->parse_attribute_string($link_new, array('rel' => '', 'href' => ''));
-			$attrs_legacy = explode(' ', $attrs['rel']);
+			$attrs = $this->util->parse_attribute_string($link_new, array('href' => ''));
+			$attrs_legacy = ( isset($attrs['rel']) && !empty($attrs['rel']) ) ? explode(' ', trim($attrs['rel'])) : array();
 			//Get URI
 			$uri->raw =  $attrs['href'];
 			
@@ -508,17 +502,14 @@ class SLB_Lightbox extends SLB_Base {
 			}
 			
 			//Process legacy attributes
-			//Group
-			if ( empty($group_base) && $this->options->get_bool('group_links') ) {
-				foreach ( $attrs_legacy as $attr_lgy ) {
-					if ( empty($attr_lgy) ) {
-						continue;
-					}
-					$grp_id = 'lightbox[';
-					$grp_pos = strpos($attr_lgy, $grp_id);
-					if ( $grp_pos === 0 && ']' == $attr_lgy[strlen($attr_lgy) - 1] ) {
-						$group_base = trim( substr($attr_lgy, strlen($grp_id), -1) );
-						break;
+			if ( !empty($attrs_legacy) ) {
+				//Group
+				if ( $g_props->enabled ) {
+					foreach ( $attrs_legacy as $attr_lgy ) {
+						if ( 0 === strpos($attr_lgy, $g_props->legacy_prefix) && substr($attr_lgy, -1) == $g_props->legacy_suffix ) {
+							$this->set_attribute($attrs, $g_props->attr, substr($attr_lgy, strlen($g_props->legacy_prefix), -1));
+							break;
+						}
 					}
 				}
 			}
@@ -574,13 +565,13 @@ class SLB_Lightbox extends SLB_Base {
 			}
 			
 			//Set group (if necessary)
-			if ( null !== $group_base ) {
-				$group = $group_base;
-				$g_name = 'group';
+			if ( $g_props->enabled ) {
 				//Get preset group attribute
-				$g = ( $this->has_attribute($attrs, $g_name) ) ? $this->get_attribute($attrs, $g_name) : ''; 
+				$g = ( $this->has_attribute($attrs, $g_props->attr) ) ? $this->get_attribute($attrs, $g_props->attr) : ''; 
 				if ( is_string($g) && ($g = trim($g)) && !empty($g) ) {
 					$group = $g;
+				} else {
+					$group = $g_props->base;
 				}
 				//Group links by post?
 				if ( !$this->widget_processing && $this->options->get_bool('group_post') ) {
@@ -593,7 +584,8 @@ class SLB_Lightbox extends SLB_Base {
 				}
 				
 				//Set group attribute
-				$this->set_attribute($attrs, $g_name, $group);
+				$this->set_attribute($attrs, $g_props->attr, $group);
+				unset($g);
 			}
 			
 			//Activate link
@@ -673,8 +665,9 @@ class SLB_Lightbox extends SLB_Base {
 			global $wpdb;
 			
 			$this->media_items = array();
-			$props = array('id', 'type', 'description', 'title', 'source');
+			$props = array('id', 'type', 'description', 'title', 'source', 'caption');
 			$props = (object) array_combine($props, $props);
+			$props_map = array('description' => 'post_content', 'title' => 'post_title', 'caption' => 'post_excerpt');
 	
 			//Separate media into buckets by type
 			$m_bucket = array();
@@ -780,10 +773,11 @@ class SLB_Lightbox extends SLB_Base {
 					$props_exclude = array('hwstring_small');
 					foreach ( $atts as $att ) {
 						//Set post data
-						$m = array(
-							$props->title	=> $att->post_title,
-							$props->description	=> $att->post_content,
-						);
+						$m = array();
+						//Remap post data to properties
+						foreach ( $props_map as $prop_key => $prop_source ) {
+							$m[$props->{$prop_key}] = $att->{$prop_source};
+						}
 						
 						//Update content type
 						if ( isset($att->post_mime_type) && !empty($att->post_mime_type) ) {

@@ -3371,33 +3371,25 @@ var Content_Item = {
 	},
 	
 	get_title: function() {
-		var prop = 'title';
 		//Check saved attributes
-		var title = this.get_attribute(prop);
-		if ( this.util.is_string(title) ) {
-			return title;
+		var props = ['caption', 'title'];
+		var title = '';
+		for ( var x = 0; x < props.length; x++ ) {
+			title = this.get_attribute(props[x]);
+			if ( this.util.is_string(title) ) {
+				return title;
+			}
 		}
 		
 		//Generate title from item metadata
+		var prop = 'title';
 		var dom = this.dom_get();
 		
 		//Caption
 		if ( dom.length ) {
-			var sel = '.wp-caption-text'
-			if ( this.in_gallery('wp') ) {
-				title = dom.parent().siblings(sel).html();
-			} else {
-				title = dom.siblings(sel).html();
-			}
-		}
+			var sel = '.wp-caption-text';
+			title = ( this.in_gallery('wp') ) ? dom.parent().siblings(sel).html() : dom.siblings(sel).html(); 
 		
-		//Attributes
-		if ( !title ) {
-			title = this.get_attribute(prop);
-		}
-		
-		//DOM attributes
-		if ( dom.length ) {
 			//Image title
 			if ( !title ) {
 				var img = dom.find('img').first();
