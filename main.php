@@ -1,9 +1,9 @@
 <?php 
 /* 
 Plugin Name: Simple Lightbox
-Plugin URI: http://archetyped.com/tools/simple-lightbox/
-Description: Customizable Lightbox for Wordpress
-Version: 1.7b1 (BETA)
+Plugin URI: http://archetyped.happyfox.com/
+Description: Customizable Lightbox for WordPress
+Version: 2.0b4 (BETA)
 Author: Archetyped
 Author URI: http://archetyped.com
 */
@@ -26,12 +26,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 require_once 'model.php';
 
-$slb =& new SLB_Lightbox();
-
-function slb_enabled() {
-	global $slb;
-	return $slb->is_enabled();
-}
+$slb = new SLB_Lightbox();
 
 function slb_register_theme($name, $title, $stylesheet_url, $layout) {
 	global $slb;

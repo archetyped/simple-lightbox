@@ -5,26 +5,33 @@ require_once 'class.fields.php';
  * Option object
  * @package Simple Lightbox
  * @subpackage Options
- * @author SM
+ * @author Archetyped
  */
 class SLB_Option extends SLB_Field {
-
+	
+	/* Properties */
+	
+	var $hook_prefix = 'option';
+	
+	/**
+	 * Determines whether option will be sent to client
+	 * @var bool
+	 */
+	var $in_client = false;
+	
 	/**
 	 * Child mapping
 	 * @see SLB_Field_Base::map
 	 * @var array
 	 */
-	var $map = array(
+	var $map = array (
 		'default'	=> 'data',
 		'attr'		=> 'properties'
 	);
-		
-	/* Init */
 	
-	function SLB_Option($id, $title = '', $default = '') {
-		$args = func_get_args();
-		call_user_func_array(array(&$this, '__construct'), $args);
-	}
+	var $property_priority = array ('id', 'data', 'parent');
+	
+	/* Init */
 	
 	/**
 	 * @see SLB_Field::__construct()
@@ -36,9 +43,11 @@ class SLB_Option extends SLB_Field {
 	function __construct($id, $title = '', $default = '') {
 		//Normalize properties
 		$args = func_get_args();
-		$props = SLB_Utilities::func_get_options($args);
-		$props = wp_parse_args($props, array ('id' => $id, 'title' => $title, 'default' => $default));
+		$defaults = array ('title' => '', 'default' => '');
+		$props = $this->make_properties($args, $defaults);
 		//Validate
+		if ( is_scalar($id) )
+			$props['id'] = $id;
 		if ( !is_string($props['title']) )
 			$props['title'] = '';
 		//Send to parent constructor
@@ -54,7 +63,7 @@ class SLB_Option extends SLB_Field {
 	function get_default($context = '') {
 		return $this->get_data($context, false);	
 	}
-	
+			
 	/**
 	 * Sets parent based on default value
 	 */
@@ -72,6 +81,25 @@ class SLB_Option extends SLB_Field {
 		parent::set_parent($parent);
 	}
 	
+	/**
+	 * Set in_client property
+	 * @uses this::in_client
+	 * @param bool Whether or not option should be included in client output (Default: false)
+	 * @return void
+	 */
+	function set_in_client($in_client = false) {
+		$this->in_client = !!$in_client;
+	}
+	
+	/**
+	 * Determines whether option should be included in client output
+	 * @uses this::in_client
+	 * @return bool TRUE if option is included in client output
+	 */
+	function get_in_client() {
+		return $this->in_client;
+	}
+	
 	/* Formatting */
 	
 	/**
@@ -83,14 +111,34 @@ class SLB_Option extends SLB_Field {
 	 */
 	function format_display($value, $context = '') {
 		if ( !is_string($value) ) {
-			if ( is_bool($value) )
-				$value = ( $value ) ? 'Enabled' : 'Disabled';
+			if ( is_bool($value) ) {
+				$value = ( $value ) ? __('Enabled', 'simple-lightbox') : __('Disabled', 'simple-lightbox');
+			}
 			elseif ( is_null($value) )
 				$value = '';
 			else
 				$value = strval($value);
 		}
 		return htmlentities($value);
+	}
+	
+	/**
+	 * Format data using same format as default value
+	 * @see SLB_Field_Base::format()
+	 * @param mixed $value Data to format
+	 * @param string $context (optional) Current context
+	 * @return mixed Formatted option value 
+	 */
+	function format_default($value, $context = '') {
+		//Get default value
+		$d = $this->get_default();
+		if ( empty($d) )
+			return $value;
+		if ( is_bool($d) )
+			$value = $this->format_bool($value);
+		elseif ( is_string($d) )
+			$value = $this->format_string($value);
+		return $value;
 	}
 	
 	/**
@@ -126,6 +174,7 @@ class SLB_Option extends SLB_Field {
 		else {
 			$value = strval($value);
 		}
+		return $value;
 	}
 }
 
@@ -133,47 +182,50 @@ class SLB_Option extends SLB_Field {
  * Options collection
  * @package Simple Lightbox
  * @subpackage Options
- * @author SM
+ * @author Archetyped
  * @uses SLB_Field_Collection
  */
 class SLB_Options extends SLB_Field_Collection {
 	
 	/* Properties */
+	
+	var $hook_prefix = 'options';
 
 	var $item_type = 'SLB_Option';
-	
+
 	/**
 	 * Key for saving version to DB
 	 * @var string
 	 */
-	var $version_key = 'version';
-	
+	private $version_key = 'version';
 	
 	/**
-	 * Whether verison has been checked
+	 * Whether version has been checked
 	 * @var bool
 	 */
 	var $version_checked = false;
 	
+	var $items_migrated = false;
+		
+	var $build_vars = array (
+		'validate_pre'	=> false,
+		'validate_post'	=> false,
+		'save_pre'		=> false,
+		'save_post'		=> false
+	);
+	
 	/* Init */
 	
-	function SLB_Options($id = '', $props = array()) {
-		$args = func_get_args();
-		call_user_func_array(array(&$this, '__construct'), $args);
-	}
-	
 	function __construct($id = '', $props = array()) {
-		$args = func_get_args();
 		//Validate arguments
-		if ( count($args) == 1 && is_array($args[0]) ) {
-			$props = $id;
-			$id = '';
-		}
+		$args = func_get_args();
 		//Set default ID
-		if ( !is_string($id) || empty($id) ) {
+		if ( !$this->validate_id($id) ) {
 			$id = 'options';
 		}
-		parent::__construct($id, $props);
+		$defaults = $this->integrate_id($id);
+		$props = $this->make_properties($args, $defaults);
+		parent::__construct($props);
 		$this->add_prefix_ref($this->version_key);
 	}
 	
@@ -183,6 +235,8 @@ class SLB_Options extends SLB_Field_Collection {
 		add_action($this->add_prefix('register_fields'), $this->m('register_fields'));
 		//Set option parents
 		add_action($this->add_prefix('fields_registered'), $this->m('set_parents'));
+		//Building
+		$this->util->add_action('build_init', $this->m('build_init'));
 	}
 	
 	/* Legacy/Migration */
@@ -197,8 +251,9 @@ class SLB_Options extends SLB_Field_Collection {
 	function check_update() {
 		if ( !$this->version_checked ) {
 			$this->version_checked = true;
+			$version_changed = false;
 			//Get version from DB
-			$vo = get_option($this->version_key);
+			$vo = $this->get_version();
 			//Get current version
 			$vn = $this->util->get_plugin_version();
 			//Compare versions
@@ -207,11 +262,14 @@ class SLB_Options extends SLB_Field_Collection {
 				$this->set_version($vn);
 				//Migrate old version to new version
 				if ( strcasecmp($vo, $vn) < 0 ) {
-					//Migrate
-					$this->migrate();
+					//Force full migration
+					$version_changed = true;
 				}
 			}
+			//Migrate
+			$this->migrate($version_changed);
 		}
+		
 		return $this->version_checked;
 	}
 	
@@ -230,53 +288,119 @@ class SLB_Options extends SLB_Field_Collection {
 	}
 	
 	/**
-	 * Migrate options from old versions to current version
+	 * Retrieve saved version data
+	 * @return string Saved version
 	 */
-	function migrate() {
+	function get_version() {
+		return get_option($this->version_key, '');
+	}
+	
+	/**
+	 * Migrate options from old versions to current version
+	 * @uses self::items_migrated to determine if simple migration has been performed in current request or not
+	 * @uses self::save() to save data after migration
+	 * @param bool $full Whether to perform a full migration or not (Default: No)
+	 */
+	function migrate($full = false) {
+		if ( !$full && $this->items_migrated )
+			return false;
+		
 		//Legacy options
 		$d = null;
 		$this->load_data();
 		
-		//Migrate separate options to unified option
 		$items =& $this->get_items();
-		foreach ( $items as $id => $opt ) {
-			$oid = $this->add_prefix($id);
-			$o = get_option($oid, $d);
-			if ( $o !== $d ) {
-				//Migrate value to data array
-				$this->set_data($id, $o, false);
-				//Delete legacy option
-				delete_option($oid);
+		
+		//Migrate separate options to unified option
+		if ( $full ) {
+			foreach ( $items as $opt => $props ) {
+				$oid = $this->add_prefix($opt);
+				$o = get_option($oid, $d);
+				if ( $o !== $d ) {
+					//Migrate value to data array
+					$this->set_data($opt, $o, false);
+					//Delete legacy option
+					delete_option($oid);
+				}
 			}
 		}
 		
 		//Migrate legacy items
 		if ( is_array($this->properties_init) && isset($this->properties_init['legacy']) && is_array($this->properties_init['legacy']) ) {
-			foreach( $this->properties_init['legacy'] as $opt => $dest ) {
-				$oid = $this->add_prefix($opt);
-				$o = get_option($oid, $d);
-				//Only migrate valid values
-				if ( $o !== $d ) {
-					//Wrap single destination in array
-					if ( is_string($dest) ) {
-						$dest = array($dest);
-					}
-					//Process destinations
-					if ( is_array($dest) ) {
+			$l =& $this->properties_init['legacy'];
+			//Normalize legacy map
+			foreach ( $l as $opt => $dest ) {
+				if ( !is_array($dest) ) {
+					if ( is_string($dest) )
+						$l[$opt] = array($dest);
+					else
+						unset($l[$opt]);
+				}
+			}
+			
+			/* Separate options */
+			if ( $full ) {
+				foreach ( $l as $opt => $dest ) {
+					$oid = $this->add_prefix($opt);
+					$o = get_option($oid, $d);
+					//Only migrate valid values
+					if ( $o !== $d ) {
+						//Process destinations
 						foreach ( $dest as $id ) {
-							$this->set_data($id, $o, false);
+							$this->set_data($id, $o, false, true);
 						}
 					}
+					//Remove legacy option
+					delete_option($oid);
 				}
-				//Remove legacy item
-				delete_option($this->add_prefix($opt));
+			}
+			
+			/* Simple Migration (Internal options only) */
+			
+			//Get existing items that are also legacy items
+			$opts = array_intersect_key($this->get_data(), $l);
+			foreach ( $opts as $opt => $val ) {
+				$d = $this->get_data($opt);
+				//Migrate data from old option to new option
+				$dest = $l[$opt];
+				//Validate new options to send data to
+				foreach ( $dest as $id ) {
+					$this->set_data($id, $d, false, true);
+				}
+				//Remove legacy option
+				$this->remove($opt, false);
 			}
 		}
 		//Save changes
 		$this->save();
+		//Set flag
+		$this->items_migrated = true;
 	}
 	
 	/* Option setup */
+	
+	/**
+	 * Get elements for creating fields
+	 * @return obj
+	 */
+	function get_field_elements() {
+		static $o = null;
+		if ( empty($o) ) {
+			$o = new stdClass();
+			/* Layout */
+			$layout = new stdClass();
+			$layout->label = '<label for="{field_id}" class="title block">{label}</label>';
+			$layout->label_ref = '{label ref_base="layout"}';
+			$layout->field_pre = '<div class="input block">';
+			$layout->field_post = '</div>';
+			$layout->opt_pre = '<div class="' . $this->add_prefix('option_item') . '">';
+			$layout->opt_post = '</div>';
+			$layout->form = '<{form_attr ref_base="layout"} /> <span class="description">(' . __('Default', 'simple-lightbox') . ': {data context="display" top="0"})</span>';
+			/* Combine */
+			$o->layout =& $layout;
+		}
+		return $o;
+	}
 	
 	/**
 	 * Register option-specific fields
@@ -285,35 +409,31 @@ class SLB_Options extends SLB_Field_Collection {
 	 */
 	function register_fields(&$fields) {
 		//Layouts
-		$layout_label = '<label for="{field_id}" class="title block">{label}</label>';
-		$label_ref = '{label ref_base="layout"}';
-		$field_pre = '<div class="input block">';
-		$field_post = '</div>';
-		$opt_pre = '<div class="' . $this->add_prefix('option_item') . '">';
-		$opt_post = '</div>';
-		$layout_form = '<{form_attr ref_base="layout"} /> <span class="description">(Default: {data context="display" top="0"})</span>'; 
+		$o = $this->get_field_elements();
+		
+		$form = $o->layout->opt_pre . $o->layout->label_ref . $o->layout->field_pre . $o->layout->form . $o->layout->field_post . $o->layout->opt_post;
 		
 		//Text input
-		$otxt =& new SLB_Field_Type('option_text', 'text');
+		$otxt = new SLB_Field_Type('option_text', 'text');
 		$otxt->set_property('class', '{inherit} code');
 		$otxt->set_property('size', null);
 		$otxt->set_property('value', '{data context="form"}');
-		$otxt->set_layout('label', $layout_label);
-		$otxt->set_layout('form', $opt_pre . $label_ref . $field_pre . $layout_form . $field_post . $opt_post);
+		$otxt->set_layout('label', $o->layout->label);
+		$otxt->set_layout('form', $form);
 		$fields->add($otxt);
 		
 		//Checkbox
-		$ocb =& new SLB_Field_Type('option_checkbox', 'checkbox');
-		$ocb->set_layout('label', $layout_label);
-		$ocb->set_layout('form', $opt_pre . $label_ref . $field_pre . $layout_form . $field_post . $opt_post);
+		$ocb = new SLB_Field_Type('option_checkbox', 'checkbox');
+		$ocb->set_layout('label', $o->layout->label);
+		$ocb->set_layout('form', $form);
 		$fields->add($ocb);
 		
-		//Theme
-		$othm =& new SLB_Field_Type('option_theme', 'select');
-		$othm->set_layout('label', $layout_label);
-		$othm->set_layout('form_start', $field_pre . '{inherit}');
-		$othm->set_layout('form_end', '{inherit}' . $field_post);
-		$othm->set_layout('form', $opt_pre . '{inherit}' . $opt_post);
+		//Select
+		$othm = new SLB_Field_Type('option_select', 'select');
+		$othm->set_layout('label', $o->layout->label);
+		$othm->set_layout('form_start', $o->layout->field_pre . '{inherit}');
+		$othm->set_layout('form_end', '{inherit}' . $o->layout->field_post);
+		$othm->set_layout('form', $o->layout->opt_pre . '{inherit}' . $o->layout->opt_post);
 		$fields->add($othm);
 	}
 	
@@ -341,7 +461,21 @@ class SLB_Options extends SLB_Field_Collection {
 	
 	/* Processing */
 	
-	function validate($values) {
+	/**
+	 * Validate option values
+	 * Used for validating options (e.g. admin form submission) prior to saving options to DB
+	 * Reformats values based on options' default values (i.e. bool, int, string, etc.)
+	 * Adds option items not included in original submission 
+	 * @param array $values (optional) Option values
+	 * @return array Full options data
+	 */
+	function validate($values = null, $force_save = false) {
+		if ( empty($values) && isset($_REQUEST[$this->add_prefix('options')]) ) {
+			$values_orig = $values;
+			if ( is_string($values_orig) ) 
+				$force_save = true;
+			$values = $_REQUEST[$this->add_prefix('options')];
+		}
 		if ( is_array($values) ) {
 			//Format data based on option type (bool, string, etc.)
 			foreach ( $values as $id => $val ) {
@@ -364,6 +498,11 @@ class SLB_Options extends SLB_Field_Collection {
 			}
 		}
 		
+		if ( $force_save ) {
+			$this->set_data($values);
+			$values = $values_orig;
+		}
+		
 		//Return value
 		return $values;
 	}
@@ -376,8 +515,6 @@ class SLB_Options extends SLB_Field_Collection {
 	 * @return array Options data
 	 */
 	function fetch_data($sanitize = true) {
-		//Check update
-		$this->check_update();
 		//Get data
 		$data = get_option($this->get_key(), null);
 		if ( $sanitize && is_array($data) ) {
@@ -387,9 +524,10 @@ class SLB_Options extends SLB_Field_Collection {
 					$opt = $this->get($id);
 					if ( is_bool($opt->get_default()) )
 						$data[$id] = !!$val;
-				} else {
+				}/* else {
+					//Remove data that has no matching item
 					unset($data[$id]);
-				}
+				}*/
 			}
 		}
 		return $data;
@@ -400,10 +538,12 @@ class SLB_Options extends SLB_Field_Collection {
 	 * @see SLB_Field_Collection::load_data()
 	 */
 	function load_data() {
-		if ( !$this->data_fetched ) {
+		if ( !$this->data_loaded ) {
 			//Retrieve data
 			$this->data = $this->fetch_data();
-			$this->data_fetched = true;
+			$this->data_loaded = true;
+			//Check update
+			$this->check_update();
 		}
 	}
 	
@@ -425,13 +565,22 @@ class SLB_Options extends SLB_Field_Collection {
 	 * Save options data to database
 	 */
 	function save() {
-		$opts =& $this->get_items();
+		$this->normalize_data();
+		update_option($this->get_key(), $this->data);
+	}
+	
+	/**
+	 * Normalize data
+	 * Assures that data in collection match items
+	 * @uses self::data to reset and save collection data after normalization
+	 */
+	function normalize_data() {
 		$data = array();
-		foreach ( $opts as $id => $opt ) {
+		foreach ( $this->get_items() as $id => $opt ) {
 			$data[$id] = $opt->get_data();
 		}
-		$this->data = $data;
-		update_option($this->get_key(), $data);
+		$this->data =& $data;
+		return $data;
 	}
 
 	/* Collection */
@@ -448,22 +597,15 @@ class SLB_Options extends SLB_Field_Collection {
 	 * Add option to collection
 	 * @uses SLB_Field_Collection::add() to add item
 	 * @param string $id Unique item ID
-	 * @param string $title Item title
-	 * @param mixed $default Default value
-	 * @param string $group (optional) Group ID to add item to
-	 * @return SLB_Option Option instance reference
+	 * @param array $properties Item properties
+	 * @param bool $update (optional) Should item be updated or overwritten (Default: FALSE)
+	 * @return SLB_Option Option instance
 	 */
-	function &add($id, $title = '', $default = '', $group = null) {
-		//Build properties array
-		$properties = $this->make_properties($title, array('title' => $title, 'group' => $group, 'default' => $default));
-		
+	function &add($id, $properties = array(), $update = false) {
 		//Create item
-		/**
-		 * @var SLB_Option
-		 */
-		$item =& parent::add($id, $properties);
-		
-		return $item;
+		$args = func_get_args();
+		$ret =& call_user_func_array(array('parent', 'add'), $args); 
+		return $ret;
 	}
 	
 	/**
@@ -504,17 +646,27 @@ class SLB_Options extends SLB_Field_Collection {
 	
 	/* Output */
 	
-	function build_group($group) {
-		if ( !$this->group_exists($group) )
-			return false;
-		$group =& $this->get_group($group);
-		//Stop processing if group contains no items
-		if ( !count($this->get_items($group)) )
-			return false;
-		
-		//Group header
-		echo '<h4 class="subhead">' . $group->title . '</h4>';
-		//Build items
-		echo $this->build_items($group);
+	function build_init() {
+		if ( $this->build_vars['validate_pre'] ) {
+			$values = $this->validate();
+			if ( $this->build_vars['save_pre'] ) {
+				$this->set_data($values);
+			}
+		}
+	}
+	
+	/**
+	 * Build array of option values for client output
+	 * @return array Associative array of options
+	 */
+	function build_client_output() {
+		$items =& $this->get_items();
+		$out = array();
+		foreach ( $items as $option ) {
+			if ( !$option->get_in_client() )
+				continue;
+			$out[$option->get_id()] = $option->get_data('default');
+		}
+		return $out;
 	}
 }
