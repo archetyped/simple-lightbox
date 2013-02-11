@@ -205,7 +205,7 @@ SLB.View.update_theme('slb_default', {
 		if ( window.outerWidth > 480 ) {
 			var d = this.get_viewer().get_layout().find('.slb_details');
 			d.find('.slb_template_tag').show();
-			dims.height = d.find('.slb_data').outerHeight();
+			$.extend(dims, {'width': 32, 'height': d.find('.slb_data').outerHeight()})
 		}
 		return dims;
 	},
@@ -216,7 +216,7 @@ SLB.View.update_theme('slb_default', {
 	'margin': function() {
 		var m = {'height': 0, 'width': 0};
 		if ( window.outerWidth > 480 ) {
-			m.height = 50;
+			$.extend(m, {'height': 50, 'width': 20});
 		}
 		return m;
 	}

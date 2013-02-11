@@ -3400,6 +3400,16 @@ var Content_Item = {
 			if ( !title ) {
 				title = dom.attr(prop);
 			}
+			
+			//Element text
+			if ( !title ) {
+				title = dom.text();
+			}
+		}
+		
+		//Validate
+		if ( !this.util.is_string(title) ) {
+			title = '';
 		}
 		
 		//Return value
@@ -4112,8 +4122,8 @@ var Theme = {
 	},
 	
 	/**
-	 * Retrieve theme offsets
-	 * @return obj Theme offsets with `width` & `height` properties 
+	 * Retrieve theme margins
+	 * @return obj Theme margin with `width` & `height` properties 
 	 */
 	get_margin: function() {
 		return this.get_measurement('margin', {'width': 0, 'height': 0});
