@@ -123,8 +123,9 @@ SLB.View.update_theme('slb_default', {
 		var dims = {'width': 0, 'height': 0};
 		var d = this.get_viewer().get_layout().find('.slb_details');
 		d.find('.slb_template_tag').show();
-		dims.height = d.height();
+		dims.height = d.outerHeight();
 		return dims;
-	}
+	},
+	'offset': {'height': 50}
 });
 })(jQuery);

@@ -1343,7 +1343,7 @@ var Component = {
 	 * @param arguments (optional) Additional arguments to pass to method
 	 */
 	call_attribute: function(attr, args) {
-		attr = this.get_attribute(attr, function() {});
+		attr = this.get_attribute(attr);
 		if ( this.util.is_func(attr) ) {
 			//Get arguments
 			var args = Array.prototype.slice.call(arguments, 1);
@@ -3547,13 +3547,23 @@ var Theme = {
 	},
 	
 	/**
-	 * Retrieve theme margins
-	 * @return obj Theme margins with `width` & `height` properties
+	 * Get custom measurement
+	 * @param string attr Measurement to retrieve
+	 * @param obj def (optional) Default value
+	 * @return obj Attribute measurements
 	 */
-	get_margin: function() {
-		var margin = null; 
-		var attr = 'margin_cache';
-		var cache = this.get_attribute(attr, {}, false);
+	get_measurement: function(attr, def) {
+		var meas = null;
+		//Validate
+		if ( !this.util.is_string(attr) ) {
+			return meas;	
+		}
+		if ( !this.util.is_obj(def, false) ) {
+			def = {};
+		}
+		//Manage cache
+		var attr_cache = '%s_cache'.sprintf(attr); 
+		var cache = this.get_attribute(attr_cache, {}, false);
 		var status = '_status';
 		var item = this.get_viewer().get_item();
 		var w = $(window);
@@ -3569,29 +3579,65 @@ var Theme = {
 				'index': []
 			};
 		}
-		//Retrieve cached margin
+		//Retrieve cached values
 		var pos = cache[status].index.indexOf(item);
 		if ( pos != -1 && pos in cache ) {
-			margin = cache[pos];
+			meas = cache[pos];
 		}
-		//Generate margin
-		if ( !this.util.is_obj(margin) ) {
-			//Get theme margins
-			margin = this.call_attribute('margin');
-			if ( !this.util.is_obj(margin) ) {
-				//Retrieve fallback margin
-				margin = this.get_margin_default();
+		//Generate measurement
+		if ( !this.util.is_obj(meas) ) {
+			//Get custom theme measurement
+			meas = this.call_attribute(attr);
+			if ( !this.util.is_obj(meas) ) {
+				//Retrieve fallback value
+				meas = this.get_measurement_default(attr);
 			}
-			//Normalize margins
-			margin = $.extend({'width': 0, 'height': 0}, margin);
-			//Cache margin
-			pos = cache[status].index.push(item) - 1;
-			cache[pos] = margin;
-			this.set_attribute(attr, cache, false);
 		}
-		return margin;
+		//Normalize measurement
+		meas = ( this.util.is_obj(meas) ) ? $.extend({}, def, meas) : def;
+		//Cache measurement
+		pos = cache[status].index.push(item) - 1;
+		cache[pos] = meas;
+		this.set_attribute(attr_cache, cache, false);
+		return meas;
 	},
 	
+	/**
+	 * Get default measurement using attribute's default handler
+	 * @param string attr Measurement attribute
+	 * @return obj Measurement values
+	 */
+	get_measurement_default: function(attr) {
+		//Validate
+		if ( !this.util.is_string(attr) ) {
+			return null;
+		}
+		//Find default handler
+		attr = 'get_%s_default'.sprintf(attr);
+		if ( this.util.in_obj(this, attr) ) {
+			attr = this[attr];
+			if ( this.util.is_func(attr) ) {
+				//Execute default handler
+				attr = attr.call(this);
+			}
+		} else {
+			attr = null;
+		}
+		return attr;
+	},
+	
+	/**
+	 * Retrieve theme margins
+	 * @return obj Theme margins with `width` & `height` properties
+	 */
+	get_margin: function() {
+		return this.get_measurement('margin', { 'width': 0, 'height': 0});
+	},
+	
+	/**
+	 * Generate default margins
+	 * @return obj Theme margins with `width` & `height` properties
+	 */
 	get_margin_default: function() {
 		var margin = { 'width': 0, 'height': 0 };
 		var v = this.get_viewer();
@@ -3637,12 +3683,28 @@ var Theme = {
 		return margin;
 	},
 	
+	/**
+	 * Retrieve theme offsets
+	 * @return obj Theme offsets with `width` & `height` properties 
+	 */
+	get_offset: function() {
+		return this.get_measurement('offset', {'width': 0, 'height': 0});
+	},
+	
+	/**
+	 * Retrieve item dimensions
+	 * Dimensions are adjusted to fit window (if necessary)
+	 * @return obj Item dimensions with `width` & `height` properties
+	 */
 	get_item_dimensions: function() {
 		var v = this.get_viewer();
 		var dims = v.get_item().get_dimensions();
 		if ( v.get_attribute('autofit', false) ) {
 			//Get maximum dimensions
+			var offset = this.get_offset();
 			var margin = this.get_margin();
+			margin.height += offset.height;
+			margin.width += offset.width;
 			var max =  {'width': $(window).width(), 'height': $(window).height() };
 			if ( max.width > margin.width ) {
 				max.width -= margin.width;
@@ -3662,6 +3724,10 @@ var Theme = {
 		return $.extend({}, dims);
 	},
 	
+	/**
+	 * Retrieve theme dimensions
+	 * @return obj Theme dimensions with `width` & `height` properties
+	 */
 	get_dimensions: function() {
 		var dims = this.get_item_dimensions();
 		var margin = this.get_margin();
