@@ -38,9 +38,6 @@ class SLB_Option extends SLB_Field {
 		$args = func_get_args();
 		$props = SLB_Utilities::func_get_options($args);
 		$props = wp_parse_args($props, array ('id' => $id, 'title' => $title, 'default' => $default));
-		//Validate
-		if ( !is_string($props['title']) )
-			$props['title'] = '';
 		//Send to parent constructor
 		parent::__construct($props);
 	}
@@ -294,7 +291,7 @@ class SLB_Options extends SLB_Field_Collection {
 		$layout_form = '<{form_attr ref_base="layout"} /> <span class="description">(Default: {data context="display" top="0"})</span>'; 
 		
 		//Text input
-		$otxt =& new SLB_Field_Type('option_text', 'text');
+		$otxt = new SLB_Field_Type('option_text', 'text');
 		$otxt->set_property('class', '{inherit} code');
 		$otxt->set_property('size', null);
 		$otxt->set_property('value', '{data context="form"}');
@@ -303,13 +300,13 @@ class SLB_Options extends SLB_Field_Collection {
 		$fields->add($otxt);
 		
 		//Checkbox
-		$ocb =& new SLB_Field_Type('option_checkbox', 'checkbox');
+		$ocb = new SLB_Field_Type('option_checkbox', 'checkbox');
 		$ocb->set_layout('label', $layout_label);
 		$ocb->set_layout('form', $opt_pre . $label_ref . $field_pre . $layout_form . $field_post . $opt_post);
 		$fields->add($ocb);
 		
 		//Theme
-		$othm =& new SLB_Field_Type('option_theme', 'select');
+		$othm = new SLB_Field_Type('option_theme', 'select');
 		$othm->set_layout('label', $layout_label);
 		$othm->set_layout('form_start', $field_pre . '{inherit}');
 		$othm->set_layout('form_end', '{inherit}' . $field_post);
