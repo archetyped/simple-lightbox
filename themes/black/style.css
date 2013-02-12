@@ -1,0 +1,26 @@
+@import url('../default/style.css');
+
+/* General */
+
+#slb_viewer_wrap .slb_theme_slb_black {
+	color:#fff;
+}
+
+#slb_viewer_wrap .slb_theme_slb_black .slb_container {
+	background-color: #000;
+	box-shadow: 0 0 10px #fff;
+}
+
+/* Loading */
+
+#slb_viewer_wrap .slb_theme_slb_black .slb_loading {
+	background: url('images/loading.gif') center center no-repeat;
+}
+
+/* UI */
+
+#slb_viewer_wrap .slb_theme_slb_default .slb_nav .slb_template_tag_ui,
+#slb_viewer_wrap .slb_theme_slb_default .slb_close {
+	background: #ccc;
+	color: #333;
+}

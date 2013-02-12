@@ -2,23 +2,24 @@
 Contributors: Archetyped
 Donate link: http://mycharitywater.org/archetyped-2012-fall
 Tags: lightbox, gallery, photography, images, theme, template, style
-Requires at least: 3.4
-Tested up to: 3.5
-License: GPLv2 or later
+Requires at least: 3.4.2
+Tested up to: 3.4.2
 Stable tag: trunk
 
-A simple, themeable, and highly customizable Lightbox for Wordpress
+A simple, themeable, and customizable Lightbox for WordPress
 
 == Description ==
+Simple Lightbox is a very simple and customizable lightbox that is easy to add to your WordPress website.
 
-#### Simple Lightbox 2.0 Beta!
-The next generation of Simple Lightbox is here and ready for brave beta testers.
-[Sign up for SLB 2.0 beta now](http://archetyped.com/lab/simple-lightbox-2-0-beta/) while there's still space available! 
+### BETA NOTES
+The current release is a beta version.  Please test and [provide feedback on the beta release page](http://archetyped.happyfox.com/).
+Main changes
 
-Simple Lightbox is a very simple and highly customizable lightbox that is easy to add to your Wordpress website.  It also [supports skins](http://archetyped.com/lab/slb-registering-themes/), so it can be fully integrated with your site's theme.
+#### Beta 1
+* Update: Everything
 
 #### Features
-Options for customizing the lightbox behavior are located in the **Settings > Media** admin menu in the **Lightbox Settings** section (or just click the **Settings** link below the plugin's name when viewing the list of installed plugins)
+Options for customizing the lightbox behavior are located in the **Appearance > Lightbox** admin menu (or just click the **Settings** link below the plugin's name when viewing the list of installed plugins)
 
 * **Supports links in Widgets (New!)**
 * **Supports Image Attachment links**
@@ -60,23 +61,6 @@ Post your questions and comments on [Simple Lightbox's official page](http://arc
 2. Customized UI Text
 
 == Changelog ==
-
-= 1.6.3.1 =
-* Fix: Backward compatibility restored (Backward Genius)
-
-= 1.6.3 =
-* Optimize: Improved lightbox overlay display
-
-= 1.6.2 =
-* Update: Rebuild JS code
-* Optimize: Improved compatibility with PHP 5+
-* Optimize: Improved utility code
-* Fix: Some elements can overlap lightbox
-* Fix: Slideshow not automatically starting (Laurence of Autoplay)
-
-= 1.6.1 =
-* Optimize: Handle repeated initializations of lightbox on client-side
-* Fix: Localization not properly loaded (Mustafa Lingo)
 
 = 1.6 =
 * Add: Widget support
