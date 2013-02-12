@@ -127,14 +127,6 @@ class SLB_Field_Base extends SLB_Base {
 	var $map = null;
 	
 	/**
-	 * Legacy Constructor
-	 */
-	function SLB_Field_Base($id = '', $parent = null) {
-		$args = func_get_args();
-		call_user_func_array(array(&$this, '__construct'), $args);
-	}
-
-	/**
 	 * Constructor
 	 */
 	function __construct($id = '', $parent = null) {
@@ -913,15 +905,17 @@ class SLB_Field_Base extends SLB_Base {
 	/**
 	 * Format value based on specified context
 	 * @param mixed $value Value to format
-	 * @param string $context Current context
+	 * @param string (optional) $context Current context
 	 * @return mixed Formatted value
 	 */
 	function format($value, $context = '') {
-		$handler = 'format_' . trim(strval($context));
-		//Only process if context is valid and has a handler
-		if ( !empty($context) && method_exists($this, $handler) ) {
-			//Pass value to handler
-			$value = $this->{$handler}($value, $context);
+		if ( is_string($context) && !empty($context) ) {
+			//Only process if context is valid and has a handler
+			$handler = 'format_' . trim($context);
+			if ( method_exists($this, $handler) ) {
+				//Pass value to handler
+				$value = $this->{$handler}($value, $context);
+			}
 		}
 		//Return formatted value
 		return $value;
