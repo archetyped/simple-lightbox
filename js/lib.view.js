@@ -82,7 +82,6 @@ var View = {
 	/* Init */
 	
 	update_refs: function() {
-		console.groupCollapsed('Updating component references');
 		var c;
 		var r;
 		var ref;
@@ -90,7 +89,6 @@ var View = {
 			if ( !this.util.is_func(this[p]) || !( '_refs' in this[p].prototype ) ) {
 				continue;
 			}
-			console.groupCollapsed('Processing component: %o', p);
 			//Set component
 			c = this[p];
 			if ( !this.util.is_empty(c.prototype._refs) ) {
@@ -107,13 +105,10 @@ var View = {
 					}
 				}
 			}
-			console.groupEnd();
 		}
 		
 		/* Initialize components */
-		console.log('Initializing components');
 		this.init_components();
-		console.groupEnd();
 	},
 	
 	/**
@@ -122,20 +117,13 @@ var View = {
 	init: function(options) {
 		var t = this;
 		$.when.apply($, this.loading).always(function() {
-			console.groupCollapsed('View.init');
 			//Set options
 			$.extend(true, t.options, options);
-			console.groupCollapsed('Options');
-			console.dir(t.options);
-			console.groupEnd();
 			
 			//History
 			$(window).on('popstate', function(e) {
-				console.warn('Event: popstate');
 				var state = e.originalEvent.state;
-				console.info('History Length: %o', history.length);
 				if ( t.util.in_obj(state, ['item', 'viewer']) ) {
-					console.info('Event: popstate \n %o', state);
 					var v = t.get_viewer(state.viewer);
 					v.history_handle(e);
 					return e.preventDefault();
@@ -146,8 +134,6 @@ var View = {
 			
 			//Items
 			t.init_items();
-			console.info('Init complete');
-			console.groupEnd();
 		});
 	},
 	
@@ -170,19 +156,13 @@ var View = {
 	/* Components */
 
 	component_make_default: function(type) {
-		console.groupCollapsed('View.component_make_default');
 		var ret = false;
-		console.dir(this.component_defaults);
 		for ( var x = 0; x < this.component_defaults.length; x++ ) {
-			console.log(x);
-			console.log('Checking: %o \nMatch: %o', this.component_defaults[x].prototype._slug);
 			if ( type == this.component_defaults[x] ) {
 				ret = true;
 				break;
 			}
 		}
-		console.log('Type: %o \nDefaults: %o', type.prototype._slug, ret);
-		console.groupEnd();
 		return ret;
 	},
 	
@@ -222,44 +202,31 @@ var View = {
 	 * @return object|null Component reference (NULL if invalid)
 	 */
 	get_component: function(type, id) {
-		console.groupCollapsed('View.get_component');
-		console.log('Type: %o \nSlug: %o \nID: %o', type, type.prototype._slug, id);
 		var ret = null;
 		//Validate parameters
 		if ( !this.util.is_func(type) ) {
-			console.warn('Data type is invalid');
-			console.groupEnd();
 			return ret;
 		}
-		console.info('Component type is valid');
 		//Sanitize id
 		if ( !this.util.is_string(id) ) {
-			console.log('ID is invalid, unsetting');
 			id = null;
 		}
 		
 		//Get component from collection
 		var coll = this.get_components(type);
-		console.log('Components: %o', coll);
-		console.log('ID: %o', id);
 		if ( this.util.is_obj(coll) ) {
 			var tid = ( this.util.is_string(id) ) ? id : this.util.add_prefix('default');
-			console.log('Checking for component: %o', tid);
 			if ( tid in coll ) {
-				console.log('Component found, retrieving');
 				ret = coll[tid];
 			}
 		}
 		
 		//Default: Create default component
 		if ( this.util.is_empty(ret) ) {
-			console.warn('Component does not exist\nID: %o \nType: %o \nReturn: %o', id, type.prototype._slug, ret);
 			if ( this.util.is_string(id) || this.component_make_default(type) ) {
-				console.log('Creating new component instance');
 				ret = this.add_component(type, id);
 			}
 		}
-		console.groupEnd();
 		//Return component
 		return ret;
 	},
@@ -272,18 +239,12 @@ var View = {
 	 * @return object|null New component (NULL if invalid)
 	 */
 	add_component: function(type, id, options) {
-		console.groupCollapsed('View.add_component');
-		console.log('Type: %o \nID: %o \nOptions: %o', type, id, options);
 		//Validate type
 		if ( !this.util.is_func(type) ) {
-			console.warn('Invalid type');
-			console.groupEnd();
 			return false;
 		}
 		//Validate request
 		if ( this.util.is_empty(id) && !this.component_make_default(type) ) {
-			console.warn('Invalid request');
-			console.groupEnd();
 			return false;
 		}
 		//Defaults
@@ -297,12 +258,10 @@ var View = {
 		//Check if specialized method exists for component type
 		var m = ( 'component' != type.prototype._slug ) ? 'add_' + type.prototype._slug : null;
 		if ( !this.util.is_empty(m) && ( m in this ) && this.util.is_func(this[m]) ) {
-			console.log('Passing to specialized constructor');
 			ret = this[m](id, options);
 		}
 		//Default process
 		else {
-			console.log('Calling constructor directly');
 			ret = new type(id, options);
 		}
 		
@@ -322,7 +281,6 @@ var View = {
 		} else {
 			ret = null;
 		}
-		console.groupEnd();
 		//Return new component
 		return ret;
 	},
@@ -350,7 +308,6 @@ var View = {
 	 * @return obj Temporary component instance
 	 */
 	get_component_temp: function(type) {
-		console.info('Get default component: %o', type.prototype._slug);
 		return ( this.has_component_temp(type) ) ? this.component_temps[type.prototype._slug] : this.add_component_temp(type);
 	},
 	
@@ -371,16 +328,12 @@ var View = {
 	 * @return object Specified options (Default: empty object)
 	 */
 	get_options: function(opts) {
-		console.groupCollapsed('View.get_options');
-		console.info('Options to get: %o', opts);
 		var ret = {};
 		//Validate
 		if ( this.util.is_string(opts) ) {
 			opts = [opts];
 		}
 		if ( !this.util.is_array(opts) ) {
-			console.warn('No options specified');
-			console.groupEnd();
 			return ret;
 		}
 		//Get specified options
@@ -391,8 +344,6 @@ var View = {
 			}
 			ret[ opts[x] ] = this.options[ opts[x] ]; 
 		}
-		console.info('Options retrieved: %o', ret);
-		console.groupEnd();
 		return ret;
 	},
 	
@@ -421,11 +372,8 @@ var View = {
 	 * @param obj options Viewer options
 	 */
 	add_viewer: function(id, options) {
-		console.groupCollapsed('View.add_viewer');
-		console.log('ID: %o \nOptions: %o', id, options);
 		//Validate
 		if ( !this.util.is_string(id) ) {
-			console.groupEnd();
 			return false;
 		}
 		if ( !this.util.is_obj(options, false) ) {
@@ -435,7 +383,6 @@ var View = {
 		var v = new this.Viewer(id, options);
 		//Add to collection
 		this.viewers[v.get_id()] = v;
-		console.groupEnd();
 		//Return viewer
 		return v;
 	},
@@ -482,7 +429,6 @@ var View = {
 	 * Set event handlers
 	 */
 	init_items: function() {
-		console.groupCollapsed('Items');
 		//Define handler
 		var t = this;
 		var handler = function() {
@@ -492,10 +438,8 @@ var View = {
 		
 		//Get activated links
 		var sel = 'a[href][%s="%s"]'.sprintf(this.util.get_attribute('active'), 1);
-		console.log('Selector: %o \nItems: %o', sel, $(sel));
 		//Add event handler
 		$(document).on('click', sel, handler);
-		console.groupEnd();
 	},
 	
 	get_items: function() {
@@ -511,8 +455,6 @@ var View = {
 	 * @return Content_Item Item instance for DOM node
 	 */
 	get_item: function(ref) {
-		console.groupCollapsed('View.get_item');
-		console.log('Item reference: %o', ref);
 		//Evaluate reference type
 		
 		//Content Item instance
@@ -524,10 +466,8 @@ var View = {
 		
 		//DOM element
 		if ( this.util.in_obj(ref, 'nodeType') ) {
-			console.info('Reference is DOM element: %o', ref);
 			//Check if item instance attached to element
 			var key = this.get_component_temp(this.Content_Item).get_data_key();
-			console.log('Data Key: %o', key);
 			item = $(ref).data(key);
 		}
 		//Cached item (index)
@@ -539,11 +479,8 @@ var View = {
 		}
 		//Create default item instance
 		if ( !this.util.is_type(item, this.Content_Item) ) {
-			console.info('Creating new content item');
 			item = this.add_item(ref);
 		}
-		console.info('Returning item: %o', item);
-		console.groupEnd();
 		return item;
 	},
 	
@@ -553,11 +490,7 @@ var View = {
 	 * @return Content_Item New item instance
 	 */
 	add_item: function(el) {
-		console.groupCollapsed('View.add_item: %o', el);
 		var item = new this.Content_Item(el);
-		console.log('Item: %o \nInstance: %o', el, item);
-		console.log('Item ID: %o', item.get_attribute('id'));
-		console.groupEnd();
 		return item;
 	},
 	
@@ -566,9 +499,7 @@ var View = {
 	 * @param obj el DOM element representing item
 	 */
 	show_item: function(el) {
-		console.group('View.show_item');
 		this.get_item(el).show();
-		console.groupEnd();
 	},
 	
 	/**
@@ -606,42 +537,26 @@ var View = {
 	 * @return Content_Type|null Matching content type (NULL if no matching type found) 
 	 */
 	get_content_type: function(item) {
-		console.groupCollapsed('View.get_content_type');
 		//Check for source URI
 		var types = this.get_content_types();
 		//Iterate through types until match found
 		var pri = Object.keys(types).sort(function(a, b){return a - b;});
-		console.log('Type Priorities: %o', pri);
 		var g, type, match;
-		console.log('Iterating by priority');
 		for ( var p = 0; p < pri.length; p++ ) {
-			console.log('Priority: %o', pri[p]);
 			g = types[pri[p]];
-			console.log('Items in group: %o', g.length);
-			console.dir(g);
 			for ( var x = 0; x < g.length; x++ ) {
-				console.groupCollapsed('Checking Type: %o', g[x]);
 				type = g[x];
-				console.log('Checking Type Match: %o', type);
 				if ( type.match(item) ) {
-					console.info('Matching type found: %o', type.get_id());
-					console.groupEnd();
-					console.groupEnd();
 					return type;
 				}
-				console.groupEnd();
 			}
 		}
-		console.groupEnd();
 		return null;
 	},
 	
 	add_content_type: function(id, attributes, priority) {
-		console.groupCollapsed('View.add_content_type');
 		//Validate
 		if ( !this.util.is_string(id) ) {
-			console.error('ID not set');
-			console.groupEnd();
 			return false;
 		}
 		if ( !this.util.is_obj(attributes, false) ) {
@@ -650,21 +565,15 @@ var View = {
 		if ( !this.util.is_int(priority) ) {
 			priority = 10;
 		}
-		console.log('Default values set\nID: %o \nAttr: %o \nPriority: %o', id, attributes, priority);
-		console.info('Saving content type properties');
 		//Save
 		var types = this.get_components(this.Content_Type);
-		console.log(types);
 		if ( !this.util.is_obj(types, false) ) {
-			console.log('Init types');
 			types = {};
 		}
 		if ( !(priority in types) ) {
 			types[priority] = [];
 		}
 		types[priority].push(new this.Content_Type(id, attributes));
-		console.log('Types: %o \nCollection: %o', types, this.get_components(this.Content_Type));
-		console.groupEnd();
 	},
 	
 	/* Group */
@@ -676,16 +585,12 @@ var View = {
 	 * @param object attrs (optional) Group attributes
 	 */
 	add_group: function(g, attrs) {
-		console.groupCollapsed('View.add_group');
 		//Create new group
 		g = new this.Group(g, attrs);
-		console.log('New group: %o', g.get_id());
 		//Add group to collection
 		if ( this.util.is_string(g.get_id()) ) {
 			this.groups[g.get_id()] = g;
-			console.log('Add group to collection');
 		}
-		console.groupEnd();
 	},
 	
 	/**
@@ -703,7 +608,6 @@ var View = {
 	 * @return object|null Group instance (NULL if group does not exist)
 	 */
 	get_group: function(g) {
-		console.groupCollapsed('View.get_group');
 		if ( this.util.is_string(g) ) {
 			if ( !this.has_group(g) ) {
 				//Add new group (if necessary)
@@ -712,7 +616,6 @@ var View = {
 			//Retrieve group
 			g = this.get_groups()[g];
 		}
-		console.groupEnd();
 		return ( this.util.is_type(g, this.Group) ) ? g : null;
 	},
 	
@@ -735,12 +638,9 @@ var View = {
 	 * @return obj Theme model
 	 */
 	add_theme: function(id, attr) {
-		console.groupCollapsed('View.add_theme');
-		console.log('ID: %o \nAttributes: %o', id, attr);
 		var t = this;
 		//Validate
 		if ( !this.util.is_string(id) ) {
-			console.groupEnd();
 			return false;
 		}
 		var dfr = $.Deferred();
@@ -753,8 +653,6 @@ var View = {
 			var t = this;
 			$.each(args, function(idx, arg) {
 				if ( t.util.is_obj(arg) ) {
-					console.log('Adding attributes');
-					console.dir(arg);
 					attrs.push(arg)
 				}
 			});
@@ -786,7 +684,6 @@ var View = {
 		}
 		//Add theme model
 		this.Theme.prototype._models[id] = model;
-		console.groupEnd();
 		return model;
 	},
 	
@@ -973,16 +870,12 @@ var Component = {
 	/* Init */
 	
 	_c: function(id, attributes) {
-		console.groupCollapsed('Component.Constructor: %o', this._slug);
 		//Set ID
 		this.set_id(id);
-		console.info('ID set: %o', id);
 		
 		//Save init attributes
-		console.info('Setting attributes: %o', attributes);
 		this._attr_init = attributes;
 		this.register_hooks();
-		console.groupEnd();
 	},
 	
 	_set_parent: function() {
@@ -1204,13 +1097,9 @@ var Component = {
 	 * @return object|null Component reference (NULL if no component found)
 	 */
 	get_component: function(cname, check_attr, get_default, recursive) {
-		console.groupCollapsed('Component.get_component(): %o', cname);
-		console.log('Property: %o \nCheck Attribute: %o\nGet Default: %o \nRecursive: %o', cname, check_attr, get_default, recursive);
 		var c = null;
 		//Validate request
 		if ( !this.util.is_string(cname) || !( cname in this ) || !this.has_reference(cname) ) {
-			console.warn('Request is invalid, quitting\nName: %o \nValid Property: %o \nHas Reference: %o \nReferences: %o', cname, (cname in this), this.has_reference(cname), this._refs);
-			console.groupEnd();
 			return c;
 		}
 		
@@ -1225,74 +1114,50 @@ var Component = {
 			recursive = true;
 		}
 		var ctype = this._refs[cname];
-		console.log('Validated Parameters\nProperty: %o \nType: %o \nGet Default: %o \nRecursive: %o', cname, ctype.prototype._slug, get_default, recursive);
 		//Phase 1: Check if component reference previously set
-		console.info('Check for property');
 		if ( this.util.is_type(this[cname], ctype) ) {
-			console.log('Component is set returning immediately: %o', this[cname]);
-			console.groupEnd();
 			return this[cname];
 		}
-		console.warn('First-class property not set');
 		//If reference not set, iterate through component hierarchy until reference is found
 		c = this[cname] = null;
 				
 		//Phase 2: Check attributes
 		if ( check_attr ) {
-			console.info('Check for component in attributes');
-			console.log('Attributes: %o', this.get_attributes());
 			c = this.get_attribute(cname);
-			console.log('Attribute value: %o', c);
 			//Save object-specific component reference
 			if ( !this.util.is_empty(c) ) {
-				console.log('Saving component');
 				c = this.set_component(cname, c);
 			}
 		}
 
 		//Phase 3: Check Container(s)
 		if ( recursive && this.util.is_empty(c) && this.has_containers() ) {
-			console.info('Checking object container(s)');
 			var containers = this.get_containers();
-			console.log('Containers: %o', containers);
 			var con = null;
 			for ( var i = 0; i < containers.length; i++ ) {
 				con = containers[i];
-				console.groupCollapsed('Container %d : %s', i, con);
 				//Validate container
 				if ( con == cname ) {
-					console.warn('Container is current component, skipping');
-					console.groupEnd();
 					continue;
 				}
 				//Retrieve container
 				con = this.get_component(con, true, false);
-				console.log('Container: %o', con);
 				if ( this.util.is_empty(con) ) {
-					console.warn('Container could not be found, skipping');
-					console.groupEnd();
 					continue;
 				}
-				console.log('Check for component in container: %o', con);
 				//Attempt to retrieve component from container
 				c = con.get_component(cname);
-				console.info('Component: %o', c);
 				//Stop iterating if valid component found
 				if ( !this.util.is_empty(c) ) {
-					console.groupEnd();
 					break;
 				}
-				console.groupEnd();
 			}
 		}
 		
 		//Phase 4: From controller (optional)
 		if ( get_default && this.util.is_empty(c) ) {
-			console.info('Get default component (from controller)');
 			c = this.get_parent().get_component(ctype);
 		}
-		console.log('Component: %o', c);
-		console.groupEnd();		
 		return c;
 	},
 	
@@ -1305,12 +1170,9 @@ var Component = {
 	 * @return object Component (NULL if invalid)
 	 */
 	set_component: function(name, ref, validate) {
-		console.groupCollapsed('Component.set_component: %o', name);
-		console.log('Component: %o \nObject: %o', name, ref);
 		var clear = null;
 		//Make sure component property exists
 		if ( !this.has_reference(name) ) {
-			console.groupEnd();
 			return clear;
 		}
 		//Normalize reference
@@ -1334,7 +1196,6 @@ var Component = {
 		}
 		//Set (or clear) component reference
 		this[name] = ref;
-		console.groupEnd();
 		//Return value for confirmation
 		return this[name];
 	},
@@ -1349,8 +1210,6 @@ var Component = {
 			force = false;
 		}
 		if ( force || !this.util.is_obj(this.attributes) ) {
-			console.groupCollapsed('Component.init_attributes');
-			console.info('Initializing attributes');
 			this.attributes = {};
 			//Build attribute groups
 			var attrs = [{}];
@@ -1361,10 +1220,8 @@ var Component = {
 			if ( this.util.is_obj(this._attr_init) ) {
 				attrs.push(this._attr_init);
 			}
-			console.log('Attribute objects: %o', attrs);
 			//Merge attributes
 			this.attributes = $.extend.apply(null, attrs);
-			console.groupEnd()
 		}
 	},
 	
@@ -1376,14 +1233,9 @@ var Component = {
 	 * @uses _attr_default to Store default attributes
 	 */
 	init_default_attributes: function() {
-		console.groupCollapsed('Component.init_default_attributes');
-		console.log('Default attributes: %o', this._attr_default);
-		console.log('Get parent options: %o', this._attr_parent);
 		//Get parent options
 		var opts = this.get_parent().get_options(this._attr_parent);
-		console.log('Parent Options: %o \nEmpty: %o', opts, this.util.is_empty(opts));
 		if ( this.util.is_obj(opts) ) {
-			console.log('Remap options: %o \nMap: %o', opts, this._attr_map);
 			//Remap
 			for ( var opt in this._attr_map ) {
 				if ( opt in opts ) {
@@ -1393,12 +1245,9 @@ var Component = {
 					delete opts[opt];
 				}
 			}
-			console.info('Options remapped: %o', opts);
 			//Merge with default attributes
 			$.extend(true, this._attr_default, opts);
-			console.log('Options merged with defaults: %o', this._attr_default);
 		}
-		console.groupEnd();
 		return this._attr_default;
 	},
 	
@@ -1406,32 +1255,24 @@ var Component = {
 	 * Retrieve DOM attributes
 	 */
 	get_dom_attributes: function() {
-		console.groupCollapsed('Component.get_dom_attributes');
 		var attrs = {};
 		var el = this.dom_get();
 		if ( el.length ) {
-			console.info('Checking DOM element for attributes');
 			//Get attributes from element
 			var opts = $(el).get(0).attributes;
 			if ( this.util.is_obj(opts) ) {
-				console.group('Processing DOM Attributes: %o', opts);
 				var attr_prefix = this.util.get_attribute();
 				$.each(opts, function(idx, opt) {
 					if ( opt.name.indexOf( attr_prefix ) == -1 ) {
 						return true;
 					}
-					console.log('Index: %o \nOption: %o', idx, opt.name);
 					//Process custom attributes
 					//Strip prefix
 					var key = opt.name.substr(attr_prefix.length + 1);
-					console.log('Attribute: %o \nValue: %o', key, opt.value);
 					attrs[key] = opt.value;
 				});
-				console.groupEnd();
 			}
 		}
-		console.log('DOM Attribute: %o', attrs);
-		console.groupEnd();
 		return attrs;
 	},
 	
@@ -1505,16 +1346,13 @@ var Component = {
 	 * @param arguments (optional) Additional arguments to pass to method
 	 */
 	call_attribute: function(attr, args) {
-		console.groupCollapsed('Component.call_attribute');
 		attr = this.get_attribute(attr);
 		if ( this.util.is_func(attr) ) {
-			console.info('Passing to attribute (method)');
 			//Get arguments
 			var args = Array.prototype.slice.call(arguments, 1);
 			//Pass arguments to user-defined method
 			attr = attr.apply(this, args);
 		}
-		console.groupEnd();
 		return attr;
 	},
 	
@@ -1533,8 +1371,6 @@ var Component = {
 	 * @param bool full (optional) Whether to fully replace or merge component's attributes with new values (Default: Merge)
 	 */
 	set_attributes: function(attributes, full) {
-		console.groupCollapsed('Component.set_attributes');
-		console.log('Instance Attributes: %o \nAttributes Passed: %o \nFull Reset: %o', this.attributes, attributes, full);
 		if ( !this.util.is_bool(full) ) {
 			full = false;
 		}
@@ -1546,7 +1382,6 @@ var Component = {
 		if ( this.util.is_obj(attributes) ) {
 			$.extend(this.attributes, attributes);
 		}
-		console.groupEnd();
 	},
 	
 	/**
@@ -1584,8 +1419,6 @@ var Component = {
 	 * @return jQuery DOM element set
 	 */
 	dom_set: function(el) {
-		console.groupCollapsed('Component.dom_set');
-		console.log('Element: %o', el);
 		el = $(el);
 		//Save instance to DOM object
 		el.data(this.get_data_key(), this);
@@ -1593,7 +1426,6 @@ var Component = {
 		if ( this._reciprocal ) {
 			this._dom = el;
 		}
-		console.groupEnd();
 		return el;
 	},
 	
@@ -1607,7 +1439,6 @@ var Component = {
 	 * @return obj jQuery DOM element
 	 */
 	dom_get: function(element, put, options) {
-		console.groupCollapsed('Component.dom_get: %o', this._slug);
 		//Init Component DOM
 		if ( !this.get_status('dom_init') ) {
 			this.set_status('dom_init');
@@ -1625,7 +1456,6 @@ var Component = {
 				ret = this.dom_put(element, options);
 			}
 		}
-		console.groupEnd();
 		
 		return $(ret);
 	},
@@ -1646,23 +1476,18 @@ var Component = {
 	 * @return jQuery Inserted element(s)
 	 */
 	dom_put: function(element, content) {
-		console.groupCollapsed('Component.dom_put: %o', element);
 		var r = null;
 		//Stop processing if main DOM element not set or element is not valid
 		if ( !this.dom_has() || !this.util.is_string(element) ) {
-			console.warn('Invalid parameters');
-			console.groupEnd();
 			return $(r);
 		}
 		//Setup options
-		console.log('Setup options');
 		var strip = ['tag', 'content', 'put_success'];
 		var options = {
 			'tag': 'div',
 			'content': '',
 			'class': this.add_ns(element)
 		}
-		console.log('Setup content');
 		//Setup content
 		if ( !this.util.is_empty(content) && !this.util.is_obj(content) && !this.util.is_type(content, jQuery) ) {
 			$.extend(options, content);
@@ -1670,28 +1495,21 @@ var Component = {
 			options.content = content;
 		}
 		var attrs = $.extend({}, options);
-		console.log('Element Attributes');
-		console.dir(attrs);
 		for ( var x = 0; x < strip.length; x++ ) {
 			delete attrs[strip[x]];
 		}
-		console.log('Element options');
-		console.dir(options);
 		//Retrieve existing element
 		var d = this.dom_get();
 		r = $(this.dom_get_selector(element), d);
 		//Create element (if necessary)
 		if ( !r.length ) {
 			r = $('<%s />'.sprintf(options.tag), attrs).appendTo(d);
-			console.log('Adding element: %o \nDOM: %o \nElement: %o', options, d, r);
 			if ( r.length && this.util.is_method(options, 'put_success') ) {
 				options['put_success'].call(r, r);
 			}
 		}
 		//Set content
-		console.log('Append content');
 		$(r).append(options.content);
-		console.groupEnd();
 		return $(r);
 	},
 	
@@ -1732,21 +1550,14 @@ var Component = {
 	 * @return obj Component instance (allows chaining) 
 	 */
 	on: function(event, fn, options) {
-		console.groupCollapsed('Component.on: %o', this._slug + '.' + event);
-		console.log('Event: %o \nFunc: %o \nOptions: %o', event, fn, options);
 		//Handle request types
 		if ( !this.util.is_string(event) || !this.util.is_func(fn) ) { 
 			var t = this;
 			var args = Array.prototype.slice.call(arguments, 1);
 			if ( this.util.is_array(event) ) {
 				//Events array
-				console.info('Event array');
-				console.log('Common Arguments: %o', args);
 				$.each(event, function(idx, val) {
-					console.group('Registering event: %o', val);
-					console.log('Arguments: %o \nMerged: %o', args, [val].concat(args));
 					t.on.apply(t, [val].concat(args));
-					console.groupEnd();
 				});
 			} else if ( this.util.is_obj(event) ) {
 				//Events map
@@ -1754,7 +1565,6 @@ var Component = {
 					t.on.apply(t, [ev, hdl].concat(args));
 				});
 			}
-			console.groupEnd();
 			return this;
 		}
 
@@ -1776,12 +1586,10 @@ var Component = {
 		}
 		var es = this._events;
 		if ( !( event in es ) || !this.util.is_obj(es[event], false) || !!options.clear ) {
-			console.info('Initializing event: %o', event);
 			es[event] = [];
 		}
 		//Add event handler
 		es[event].push(fn);
-		console.groupEnd();
 		return this;
 	},
 	
@@ -1798,7 +1606,6 @@ var Component = {
 	 * @return jQuery.Promise Promise that is resolved once event handlers are resolved
 	 */
 	trigger: function(event, data) {
-		console.groupCollapsed('Component.trigger: %o', this._slug + '.' + event);
 		var dfr = $.Deferred();
 		var dfrs = [];
 		var t = this;
@@ -1812,14 +1619,11 @@ var Component = {
 			$.when.apply(t, dfrs).done(function() {
 				dfr.resolve();
 			});
-			console.groupEnd();
 			return dfr.promise();
 		}
 		//Validate
 		if ( !this.util.is_string(event) || !( event in this._events ) ) {
-			console.warn('Invalid event');
 			dfr.resolve();
-			console.groupEnd();
 			return dfr.promise();
 		}
 		//Create event object
@@ -1838,7 +1642,6 @@ var Component = {
 		$.when.apply(this, dfrs).done(function() {
 			dfr.resolve();
 		});
-		console.groupEnd();
 		return dfr.promise();
 	}
 };
@@ -1933,7 +1736,6 @@ var Viewer = {
 	/* Init */
 	
 	register_hooks: function() {
-		console.groupCollapsed('Viewer.register_hooks');
 		this
 			.on(['item-prev', 'item-next'], function() {
 				this.trigger('item-change');
@@ -1941,7 +1743,6 @@ var Viewer = {
 			.on(['close', 'item-change'], function() {
 				this.unlock();
 			});
-		console.groupEnd();
 	},
 	
 	/* References */
@@ -1953,23 +1754,19 @@ var Viewer = {
 	 * @return bool TRUE if valid item set, FALSE otherwise
 	 */
 	set_item: function(item) {
-		console.groupCollapsed('Viewer.set_item: %o', item);
 		//Clear existing item
 		this.clear_item(false);
 		var i = this.set_component('item', item, function(item) {
 			return ( item.has_type() );
 		});
-		console.groupEnd();
 		return ( !this.util.is_empty(i) );
 	},
 	
 	clear_item: function(full) {
-		console.group('Viewer.clear_item');
 		//Validate
 		if ( !this.util.is_bool(full) ) {
 			full = true;
 		}
-		console.info('Full clear: %o', full);
 		var item = this.get_item();
 		if ( !!item ) {
 			item.reset();
@@ -1977,7 +1774,6 @@ var Viewer = {
 		if ( full ) {
 			this.set_item(false);
 		}
-		console.groupEnd();
 	},
 	
 	/**
@@ -1993,15 +1789,12 @@ var Viewer = {
 	 * @return object Theme reference
 	 */
 	get_theme: function() {
-		console.groupCollapsed('Viewer.get_theme');
 		//Get saved theme
 		var ret = this.get_component('theme', false, false, false);
 		if ( this.util.is_empty(ret) ) {
 			//Theme needs to be initialized
 			ret = this.set_component('theme', new View.Theme(this));
 		}
-		console.log('Theme: %o', ret);
-		console.groupEnd();
 		return ret;
 	},
 	
@@ -2062,8 +1855,6 @@ var Viewer = {
 	 * @return jQuery.Deferred Resolved instance
 	 */
 	unlock: function() {
-		console.groupCollapsed('Viewer.unlock');
-		console.groupEnd();
 		return this.get_lock(false, true).resolve();
 	},
 	
@@ -2093,20 +1884,17 @@ var Viewer = {
 	 * @return jQuery.Promise Promise that resolves when loading mode is set
 	 */
 	set_loading: function(mode) {
-		console.groupCollapsed('Viewer.set_loading: %o', mode);
 		var dfr = $.Deferred();
 		if ( !this.util.is_bool(mode) ) {
 			mode = true;
 		}
 		this.loading = mode;
-		console.info('Loading: %o', mode);
 		//Pause/Resume slideshow
 		if ( this.slideshow_active() ) {
 			this.slideshow_pause(mode);
 		}
 		//Set CSS class on DOM element
 		var m = ( mode ) ? 'addClass' : 'removeClass';
-		console.info('Loading method: %o', m);
 		$(this.dom_get())[m]('loading');
 		if ( mode ) {
 			//Loading transition
@@ -2116,7 +1904,6 @@ var Viewer = {
 		} else {
 			dfr.resolve();
 		}
-		console.groupEnd();
 		return dfr.promise();
 	},
 	
@@ -2153,23 +1940,17 @@ var Viewer = {
 	 * @param obj options (optional) Display options
 	 */
 	show: function(item) {
-		console.group('Viewer.show');
-		console.info('Queue item: %o', item);
 		this.item_queued = item;
 		var fin_set = 'show_deferred';
 		var v = this;
 		var fin = function() {
-			console.group('Viewer.show.load');
 			//Lock viewer
 			v.lock();
 			//Reset callback flag (for new lock)
 			v.set_status(fin_set, false);
 			//Validate request
 			if ( !v.set_item(v.item_queued) || !v.get_theme() ) {
-				console.warn('Invalid request');
-				console.groupEnd();
 				v.close();
-				console.groupEnd();
 				return false;
 			}
 			//Add item to history stack
@@ -2178,30 +1959,24 @@ var Viewer = {
 			v.set_active();
 			//Display
 			v.render();
-			console.groupEnd();
 		}
 		if ( !this.is_locked() ) {
 			fin();
 		} else if ( !this.get_status(fin_set) ) {
-			console.info('Setting deferred callback');
 			//Set flag to avoid duplicate callbacks
 			this.set_status(fin_set);
 			this.get_lock().always(function() {
 				fin();
 			});
 		}
-		console.groupEnd();
 	},
 	
 	/* History Management */
 	
 	history_handle: function(e) {
-		console.groupCollapsed('Viewer.history_handle');
 		var state = e.originalEvent.state;
-		console.dir(state);
 		//Load item
 		if ( this.util.is_int(state.item, false) ) {
-			console.info('Retrieving item');
 			this.get_parent().get_item(state.item).show({'event': e});
 			this.trigger('item-change');
 		} else {
@@ -2210,11 +1985,9 @@ var Viewer = {
 			this.history_set(0);
 			//Close viewer
 			if ( -1 != count ) {
-				console.info('Closing viewer');
 				this.close();
 			}	
 		}
-		console.groupEnd();
 	},
 	
 	history_get: function(full) {
@@ -2227,7 +2000,6 @@ var Viewer = {
 		if ( !history.pushState ) {
 			return false;
 		}
-		console.group('Viewer.history_add');
 		//Get display options
 		var item = this.get_item();
 		var opts = item.get_attribute('options_show');
@@ -2242,39 +2014,29 @@ var Viewer = {
 			};
 			//Init: Save viewer state
 			if ( !count ) {
-				console.info('Adding Viewer reference (position): %o', count);
 				history.replaceState(state, null);
-				console.info('Pushed history state: %o', history.state);
 			}
 			//Always: Save item state
 			state.item = this.get_parent().save_item(item);
 			state.count = ++count;
 			history.pushState(state, null, '#%s'.sprintf(escape(item.get_uri('permalink'))));
-			console.info('Pushed history state: %o', history.state);
 		} else {
 			var e = opts.event.originalEvent;
 			if ( this.util.in_obj(e, 'state') && this.util.in_obj(e.state, 'count') ) {
 				count = e.state.count;
-				console.info('Using history state count: %o', count);
 			}
 		}
 		//Save history item count
 		this.history_set(count);
-		console.info('History item count: %o', count);
-		console.groupEnd();
 	},
 	history_reset: function() {
-		console.group('Viewer.history_reset');
 		var count = this.history_get(true);
-		console.info('History count: %o', count);
 		if ( count ) {
 			//Clear history status
 			this.history_set(-1);
-			console.info('History movement: %o', -1 * count);
 			//Restore history stack
 			history.go( -1 * count );
 		}
-		console.groupEnd();
 	},
 		
 	/**
@@ -2283,9 +2045,6 @@ var Viewer = {
 	 * @return bool TRUE if viewer is open, FALSE otherwise 
 	 */
 	is_open: function() {
-		console.group('Viewer.is_open');
-		console.log('DOM Display: %o', this.dom_get().css('display'));
-		console.groupEnd();
 		return ( this.dom_get().css('display') == 'none' ) ? false : true;
 	},
 	
@@ -2293,9 +2052,7 @@ var Viewer = {
 	 * Load output into DOM
 	 */
 	render: function() {
-		console.groupCollapsed('Viewer.render');
 		//Get theme output
-		console.info('Rendering Theme layout');
 		var v = this;
 		var thm = this.get_theme();
 		//Register theme event handlers
@@ -2304,12 +2061,9 @@ var Viewer = {
 			thm
 			//Loading
 			.on('render-loading', function(ev, thm) {
-				console.groupCollapsed('Viewer.render.loading (Callback)');
 				var dfr = $.Deferred();
 				if ( !v.is_active() ) {
-					console.warn('Viewer not active');
 					dfr.reject();
-					console.groupEnd();
 					return dfr.promise();
 				}
 				var set_pos = function() {
@@ -2323,7 +2077,6 @@ var Viewer = {
 					});
 				};
 				if ( v.is_open() ) {
-					console.info('Viewer open');
 					thm.transition('unload')
 						.fail(function() {
 							set_pos();
@@ -2344,17 +2097,12 @@ var Viewer = {
 							v.dom_get().show();
 						});
 				}
-				console.groupEnd();
 				return dfr.promise();
 			})
 			//Complete
 			.on('render-complete', function(ev, thm) {
-				console.groupCollapsed('Viewer.render.complete (Callback)');
-				console.log('Completed output: %o', ev.data);
-				console.info('Theme loaded');
 				//Stop if viewer not active
 				if ( !v.is_active() ) {
-					console.groupEnd();
 					return false;
 				}
 				//Set classes
@@ -2386,12 +2134,10 @@ var Viewer = {
 						//Set viewer as initialized
 						v.init = true;
 					});
-				console.groupEnd();
 			});
 		}
 		//Render
 		thm.render();
-		console.groupEnd();
 	},
 	
 	/**
@@ -2400,7 +2146,6 @@ var Viewer = {
 	 * @return jQuery Container element
 	 */
 	dom_get_container: function() {
-		console.groupCollapsed('Viewer.dom_get_container');
 		var sel = this.get_attribute('container');
 		//Set default container
 		if ( this.util.is_empty(sel) ) {
@@ -2414,7 +2159,6 @@ var Viewer = {
 			//Add element
 			c = $('<div />', {'id': id}).appendTo('body');
 		}
-		console.groupEnd();
 		return c;
 	},
 	
@@ -2422,7 +2166,6 @@ var Viewer = {
 	 * Custom Viewer DOM initialization
 	 */
 	dom_init: function() {
-		console.groupCollapsed('Viewer.dom_init');
 		//Create element & add to DOM
 		//Save element to instance
 		var d = this.dom_set($('<div/>', {
@@ -2432,23 +2175,16 @@ var Viewer = {
 		//Add theme classes
 		var thm = this.get_theme();
 		d.addClass(thm.get_classes(' '));
-		console.log('Theme ID: %o', thm.get_id(true));
-		console.log('DOM element added');
 		//Add theme layout (basic)
 		var v = this;
-		console.info('Rendering basic theme layout');
 		if ( !this.get_status('render-init') ) {
 			this.set_status('render-init');
 			thm.on('render-init', function(ev) {
-				console.groupCollapsed('Viewer.dom_init.init (callback)');
-				console.info('Basic layout: %o', ev.data);
 				//Add rendered theme layout to viewer DOM
 				v.dom_put('layout', ev.data);
-				console.groupEnd();
 			});
 		}
 		thm.render(true);
-		console.groupEnd();
 	},
 	
 	/**
@@ -2491,9 +2227,7 @@ var Viewer = {
 	 * @return jQuery Overlay element (NULL if no overlay set for viewer)
 	 */
 	get_overlay: function() {
-		console.groupCollapsed('Viewer.get_overlay');
 		var o = null;
-		console.log('Enabled: %o', this.overlay_enabled());
 		if ( this.overlay_enabled() ) {
 			o = this.dom_get('overlay', true, {
 				'put_success': function() {
@@ -2501,9 +2235,7 @@ var Viewer = {
 				}
 			});
 		} else {
-			console.warn('Problem with overlay');
 		}
-		console.groupEnd();
 		return $(o);
 	},
 	
@@ -2515,7 +2247,6 @@ var Viewer = {
 	 * Reset viewer
 	 */
 	reset: function() {
-		console.groupCollapsed('Viewer.reset');
 		//Hide viewer
 		this.dom_get().hide();
 		//Restore DOM
@@ -2531,7 +2262,6 @@ var Viewer = {
 		this.keys_disable();
 		//Clear for next item
 		this.get_status('item_working', true).resolve();
-		console.groupEnd();
 	},
 	
 	/* Content */
@@ -2551,12 +2281,9 @@ var Viewer = {
 	 * Initialize event handlers upon opening lightbox
 	 */
 	events_open: function() {
-		console.groupCollapsed('Viewer.events_open');
 		//Keyboard bindings
 		this.keys_enable();
 		if ( this.open ) {
-			console.warn('Event handlers previously set');
-			console.groupEnd();
 			return false;
 		}
 		
@@ -2577,22 +2304,17 @@ var Viewer = {
 		this.get_overlay().click(close);
 		//Fire event
 		this.trigger('events-open');
-		console.groupEnd();
 	},
 	
 	/**
 	 * Initialize event handlers upon completing lightbox rendering
 	 */
 	events_complete: function() {
-		console.groupCollapsed('Viewer.events_complete');
 		if ( this.init ) {
-			console.warn('Event handlers previously set');
-			console.groupEnd();
 			return false;
 		}
 		//Fire event
 		this.trigger('events-complete');
-		console.groupEnd();
 	},
 	
 	keys_enable: function(mode) {
@@ -2616,20 +2338,15 @@ var Viewer = {
 	},
 	
 	keys_control: function(ev) {
-		console.groupCollapsed('Viewer.keys_control');
-		console.log('Code: %o', ev.which);
 		var handlers = {
 			27: this.close,
 			37: this.item_prev,
 			39: this.item_next
 		};
 		if ( ev.which in handlers ) {
-			console.info('Handler found: %o', handlers[ev.which]);
 			handlers[ev.which].call(this);
-			console.groupEnd();
 			return false;
 		}
-		console.groupEnd();
 	},
 		
 	/**
@@ -2705,10 +2422,7 @@ var Viewer = {
 	},
 	
 	slideshow_toggle: function() {
-		console.groupCollapsed('Viewer.slideshow_toggle');
 		if ( !this.slideshow_enabled() ) {
-			console.warn('Slideshow not enabled');
-			console.groupEnd();
 			return false;
 		}
 		if ( this.slideshow_active() ) {
@@ -2717,7 +2431,6 @@ var Viewer = {
 			this.slideshow_start();
 		}
 		this.trigger('slideshow-toggle');
-		console.groupEnd();
 	},
 	
 	/**
@@ -2787,7 +2500,6 @@ var Viewer = {
 	 * Close viewer
 	 */
 	close: function() {
-		console.groupCollapsed('Viewer.close');
 		//Deactivate
 		this.set_active(false);
 		var v = this;
@@ -2803,7 +2515,6 @@ var Viewer = {
 			.fail(function() {
 				thm.dom_get_tag('item', 'content').attr('style', '');
 			});
-		console.groupEnd();
 		return false;
 	}
 };
@@ -2852,13 +2563,10 @@ var Group = {
 	 * @return string Group items selector 
 	 */
 	get_selector: function() {
-		console.groupCollapsed('Group.get_selector');
 		if ( this.util.is_empty(this.selector) ) {
 			//Build selector
 			this.selector = 'a[%s="%s"]'.sprintf(this.dom_get_attribute(), this.get_id());
-			console.info('Selector: %o', this.selector);
 		}
-		console.groupEnd();
 		return this.selector;
 	},
 	
@@ -2866,10 +2574,7 @@ var Group = {
 	 * Retrieve group items
 	 */
 	get_items: function() {
-		console.groupCollapsed('Group.get_items');
 		var items = ( !this.util.is_empty(this.get_id()) ) ? $(this.get_selector()) : this.get_current().dom_get();
-		console.log('Items (%o): %o', items.length, items);
-		console.groupEnd();
 		return items;
 	},
 	
@@ -2880,7 +2585,6 @@ var Group = {
 	 * @return Content_Item Item
 	 */
 	get_item: function(idx) {
-		console.groupCollapsed('Group.get_item: %o', idx);
 		//Validation
 		if ( !this.util.is_int(idx) ) {
 			idx = 0;
@@ -2893,7 +2597,6 @@ var Group = {
 			idx = max;
 		}
 		//Return specified item
-		console.groupEnd();
 		return items.get(idx);
 	},
 	
@@ -2917,10 +2620,8 @@ var Group = {
 	get_current: function() {
 		//Sanitize
 		if ( !this.util.is_empty(this.current) && !this.util.is_type(this.current, View.Content_Item) ) {
-			console.warn('Resetting current item: %o', this.current);
 			this.current = null;
 		}
-		console.log('Current: %o', this.current);
 		return this.current;
 	},
 	
@@ -2929,27 +2630,19 @@ var Group = {
 	 * @param Content_Item item Item to set as current
 	 */
 	set_current: function(item) {
-		console.groupCollapsed('Group.set_current');
-		console.log('Item: %o', item);
 		//Validate
 		if ( this.util.is_type(item, View.Content_Item) ) {
 			//Set current item
-			console.log('Setting current item');
 			this.current = item;
 		}
-		console.groupEnd();
 	},
 		
 	get_next: function(item) {
-		console.groupCollapsed('Group.get_next');
 		//Validate
 		if ( !this.util.is_type(item, View.Content_Item) ) {
-			console.log('Retrieving current item');
 			item = this.get_current();
 		}
 		if ( this.get_size() == 1 ) {
-			console.warn('Single item in group');
-			console.groupEnd();
 			return item;
 		}
 		var next = null;
@@ -2958,21 +2651,15 @@ var Group = {
 			pos = ( pos + 1 < this.get_size() ) ? pos + 1 : 0;
 			next = this.get_item(pos);
 		}
-		console.log('Position in Group: %o \nItem: %o', pos, next);
-		console.groupEnd();
 		return next;
 	},
 	
 	get_prev: function(item) {
-		console.groupCollapsed('Group.get_prev');
 		//Validate
 		if ( !this.util.is_type(item, View.Content_Item) ) {
-			console.log('Retrieving current item');
 			item = this.get_current();
 		}
 		if ( this.get_size() == 1 ) {
-			console.warn('Single item in group');
-			console.groupEnd();
 			return item;
 		}
 		var prev = null;
@@ -2984,13 +2671,10 @@ var Group = {
 			pos -= 1;
 			prev = this.get_item(pos);
 		}
-		console.log('Position in Group: %o \nItem: %o', pos, prev);
-		console.groupEnd();
 		return prev;
 	},
 	
 	show_next: function(item) {
-		console.groupCollapsed('Group.show_next');
 		if ( this.get_size() > 1 ) {
 			//Retrieve item
 			var i = this.get_parent().get_item(this.get_next(item));
@@ -3001,11 +2685,9 @@ var Group = {
 			//Fire event
 			this.trigger('item-next');
 		}
-		console.groupEnd();
 	},
 	
 	show_prev: function(item) {
-		console.groupCollapsed('Group.show_prev');
 		if ( this.get_size() > 1 ) {
 			//Retrieve item
 			var i = this.get_parent().get_item(this.get_prev(item));
@@ -3016,7 +2698,6 @@ var Group = {
 			//Fire event
 			this.trigger('item-prev');
 		}
-		console.groupEnd();
 	},
 	
 	/**
@@ -3111,7 +2792,6 @@ var Content_Type = {
 	 * @return bool TRUE if type matches, FALSE otherwise 
 	 */
 	match: function(item) {
-		console.groupCollapsed('Content_Type.match');
 		//Validate
 		var attr = 'match';
 		var m = this.get_attribute(attr);
@@ -3122,26 +2802,19 @@ var Content_Type = {
 			//String-based
 			if ( this.util.is_string(m) ) {
 				//Create new regexp object
-				console.log('Processing string regex');
 				m = new RegExp(m, "i");
 				this.set_attribute(attr, m);
 			}
 			//RegExp based
 			if ( this.util.is_type(m, RegExp) ) {
-				console.info('Checking regex: %o \nMatch: %o', m, m.test(item.get_uri()));
-				console.groupEnd();
 				return m.test(item.get_uri());
 			}
 			//Process function
 			if ( this.util.is_func(m) ) {
-				console.info('Processing match function');
-				console.groupEnd();
 				return ( m.call(this, item) ) ? true : false;
 			}
 		}
 		//Default
-		console.warn('No match algorithm');
-		console.groupEnd();
 		return false;
 	},
 	
@@ -3153,7 +2826,6 @@ var Content_Type = {
 	 * @return obj jQuery.Promise that is resolved when item is rendered
 	 */
 	render: function(item) {
-		console.groupCollapsed('Content_Type.render');
 		var dfr = $.Deferred();
 		//Validate
 		var ret = this.call_attribute('render', item);
@@ -3164,13 +2836,11 @@ var Content_Type = {
 		} else {
 			//String format
 			if ( this.util.is_string(ret) ) {
-				console.log('Processing string format');
 				ret = ret.sprintf(item.get_uri());
 			}
 			//Resolve deferred immediately
 			dfr.resolve(ret);
 		}
-		console.groupEnd();
 		return dfr.promise();
 	}
 };
@@ -3216,7 +2886,6 @@ var Content_Item = {
 	/* Init */
 	
 	_c: function(el) {
-		console.info('New Content Item');
 		//Save element to instance
 		this.dom_set(el);
 		//Default initialization
@@ -3234,12 +2903,10 @@ var Content_Item = {
 	 * @uses Component.init_default_attributes()
 	 */
 	init_default_attributes: function() {
-		console.groupCollapsed('Content_Item.init_default_attributes');
 		this._super();
 		//Add asset properties
 		var key = this.dom_get().attr('href') || null;
 		var assets = this.get_parent().assets || null;
-		console.log('Key: %o \nAssets: %o', key, assets);
 		//Merge asset data with default attributes
 		if ( this.util.is_string(key) ) {
 			var attrs = [{}, this._attr_default, {'permalink': key}];
@@ -3247,9 +2914,7 @@ var Content_Item = {
 				attrs.push(assets[key]);
 			}
 			this._attr_default = $.extend.apply(this, attrs);
-			console.log('Default Attributes Updated: %o', this._attr_default);
 		}
-		console.groupEnd();
 		return this._attr_default;
 	},
 	
@@ -3265,8 +2930,6 @@ var Content_Item = {
 	 * @return obj jQuery.Promise that is resolved when output is retrieved
 	 */
 	get_output: function() {
-		console.groupCollapsed('Item.get_output');
-		console.info('Checking for cached output');
 		var dfr = $.Deferred();
 		//Check for cached output
 		var ret = this.get_attribute('output');
@@ -3274,16 +2937,11 @@ var Content_Item = {
 			dfr.resolve(ret);
 		} else if ( this.has_type() ) {
 			//Render output from scratch (if necessary)
-			console.info('Rendering output');
-			console.info('Get item type');
 			//Get item type
 			var type = this.get_type();
-			console.log('Item type: %o', type);
 			//Render type-based output
 			var item = this;
 			type.render(this).done(function(output) {
-				console.info('Output Retrieved: %o', output);
-				console.info('Caching item output');
 				//Cache output
 				item.set_output(output);
 				dfr.resolve(output);
@@ -3291,7 +2949,6 @@ var Content_Item = {
 		} else {
 			dfr.resolve('');
 		}
-		console.groupEnd();
 		return dfr.promise();
 	},
 	
@@ -3300,11 +2957,9 @@ var Content_Item = {
 	 * @uses set_attribute() to cache output
 	 */
 	set_output: function(out) {
-		console.groupCollapsed('Item.set_output: %o', out);
 		if ( this.util.is_string(out, false) ) {
 			this.set_attribute('output', out);
 		}
-		console.groupEnd();
 	},
 	
 	/**
@@ -3324,19 +2979,15 @@ var Content_Item = {
 	 * @return string Item URI
 	 */
 	get_uri: function(mode) {
-		console.groupCollapsed('Item.get_uri');
 		//Validate
 		if ( $.inArray(mode ,['source', 'permalink']) == -1 ) {
 			mode = 'source';
 		}
-		console.log('Mode: %o', mode);
 		//Retrieve URI
 		var ret = this.get_attribute(mode);
 		if ( !this.util.is_string(ret) ) {
 			ret = ( 'source' == mode ) ? this.get_attribute('permalink') : '';
 		}
-		console.log('Item URI: %o', ret);
-		console.groupEnd();
 		return ret;
 	},
 	
@@ -3448,14 +3099,11 @@ var Content_Item = {
 	 * @return View.Group|bool Group reference item belongs to (FALSE if no group)
 	 */
 	get_group: function(set_current) {
-		console.groupCollapsed('Item.get_group');
 		var prop = 'group';
 		//Check if group reference already set
 		var g = this.get_component(prop, true, false, false);
 		if ( g ) {
-			console.log('Group: %o', g);
 		} else {
-			console.warn('No group reference: %o', g);
 			//Set empty group if no group exists
 			g = this.set_component(prop, new View.Group());
 			set_current = true;
@@ -3463,7 +3111,6 @@ var Content_Item = {
 		if ( this.util.is_bool(set_current) && set_current ) {
 			g.set_current(this);
 		}
-		console.groupEnd();
 		return g;
 	},
 	
@@ -3475,8 +3122,6 @@ var Content_Item = {
 	 *  > Item's group is reset if invalid group provided
 	 */
 	set_group: function(g) {
-		console.groupCollapsed('Item.set_group');
-		console.log('Group: %o', g);
 		//If group ID set, get object reference
 		if ( this.util.is_string(g) ) {
 			g = this.get_parent().get_group(g);
@@ -3484,7 +3129,6 @@ var Content_Item = {
 		
 		//Set (or clear) group property
 		this.group = ( this.util.is_type(g, View.Group) ) ? g : false;
-		console.groupEnd();
 	},
 	
 	/* Content Type */
@@ -3496,15 +3140,10 @@ var Content_Item = {
 	 * @return Content_Type|null Content Type of item (NULL no valid type exists)
 	 */
 	get_type: function() {
-		console.groupCollapsed('Item.get_type');
-		console.info('Retrieving saved type reference');
 		var t = this.get_component('type', false, false, false);
 		if ( !t ) {
-			console.info('No type reference, getting type from Controller');
 			t = this.set_type(this.get_parent().get_content_type(this));
 		}
-		console.info('Type: %o', t);
-		console.groupEnd();
 		return t;
 	},
 	
@@ -3522,9 +3161,7 @@ var Content_Item = {
 	 * @return bool TRUE if content type exists, FALSE otherwise
 	 */
 	has_type: function() {
-		console.groupCollapsed('Item.has_type');
 		var ret = !this.util.is_empty(this.get_type());
-		console.groupEnd();
 		return ret;
 	},
 	
@@ -3537,7 +3174,6 @@ var Content_Item = {
 	 * @param obj options (optional) Options
 	 */
 	show: function(options) {
-		console.group('Item.show');
 		//Validate content type
 		if ( !this.has_type() ) {
 			return false;
@@ -3546,10 +3182,8 @@ var Content_Item = {
 		this.set_attribute('options_show', options);
 		//Retrieve viewer
 		var v = this.get_viewer();
-		console.info('Viewer retrieved: %o', v);
 		//Load item
 		v.show(this);
-		console.groupEnd();
 	},
 	
 	reset: function() {
@@ -3616,12 +3250,8 @@ var Modeled_Component = {
 	 * @return mixed Attribute value
 	 */
 	set_attribute: function(key, val, use_model) {
-		console.groupCollapsed('Modeled_Component.set_attribute');
-		console.log('Key: %o \nValue: %o', key, val);
 		//Validate
 		if ( ( !this.util.is_string(key) ) || !this.util.is_set(val) ) {
-			console.warn('Invalid request');
-			console.groupEnd();
 			return false;
 		}
 		if ( !this.util.is_bool(use_model) && !this.util.is_obj(use_model) ) {
@@ -3629,7 +3259,6 @@ var Modeled_Component = {
 		}
 		//Determine where to set attribute
 		if ( !!use_model ) {
-			console.info('Setting model attribute: %o', this.get_model());
 			var model = this.util.is_obj(use_model) ? use_model : this.get_model();
 			
 			//Set attribute in model
@@ -3638,7 +3267,6 @@ var Modeled_Component = {
 			//Set as standard attribute
 			this._super(key, val);
 		}
-		console.groupEnd();
 		return val;
 	},
 
@@ -3779,7 +3407,6 @@ var Theme = {
 	 * @see Component._c()
 	 */
 	_c: function(id, attributes, viewer) {
-		console.groupCollapsed('Theme.Constructor');
 		//Validate
 		if ( arguments.length == 1 && this.util.is_type(arguments[0], View.Viewer) ) {
 			viewer = arguments[0];
@@ -3793,7 +3420,6 @@ var Theme = {
 		
 		//Set theme model
 		this.set_model(id);
-		console.groupEnd();
 	},
 	
 	/* Viewer */
@@ -3820,7 +3446,6 @@ var Theme = {
 	 * @return Template instance
 	 */
 	get_template: function() {
-		console.groupCollapsed('Theme.get_template');
 		//Get saved template
 		var ret = this.get_component('template', true, false, false);
 		//Template needs to be initialized
@@ -3829,7 +3454,6 @@ var Theme = {
 			var attr = { 'theme': this, 'model': this.get_model() };
 			ret = this.set_component('template', new View.Template(attr));
 		}
-		console.groupEnd();
 		return ret;
 	},
 	
@@ -3940,11 +3564,9 @@ var Theme = {
 	 * @return obj Attribute measurements
 	 */
 	get_measurement: function(attr, def) {
-		console.groupCollapsed('Theme.get_measurement (%o)', attr);
 		var meas = null;
 		//Validate
 		if ( !this.util.is_string(attr) ) {
-			console.groupEnd();
 			return meas;	
 		}
 		if ( !this.util.is_obj(def, false) ) {
@@ -3958,7 +3580,6 @@ var Theme = {
 		var w = $(window);
 		//Check cache freshness
 		if ( !( status in cache ) || !this.util.is_obj(cache[status]) || cache[status].width != w.width() || cache[status].height != w.height() ) {
-				console.warn('Resetting cache');
 				cache = {};
 		}
 		if ( this.util.is_empty(cache) ) {
@@ -3972,18 +3593,15 @@ var Theme = {
 		//Retrieve cached values
 		var pos = cache[status].index.indexOf(item);
 		if ( pos != -1 && pos in cache ) {
-			console.info('Retrieving cached data: %o \n%o', pos, cache[pos]);
 			meas = cache[pos];
 		}
 		//Generate measurement
 		if ( !this.util.is_obj(meas) ) {
-			console.info('Generating offsets');
 			//Get custom theme measurement
 			meas = this.call_attribute(attr);
 			if ( !this.util.is_obj(meas) ) {
 				//Retrieve fallback value
 				meas = this.get_measurement_default(attr);
-				console.warn('Fallback measurement: %o', meas);
 			}
 		}
 		//Normalize measurement
@@ -3992,8 +3610,6 @@ var Theme = {
 		pos = cache[status].index.push(item) - 1;
 		cache[pos] = meas;
 		this.set_attribute(attr_cache, cache, false);
-		console.log('Measurement cached: %o', meas);
-		console.groupEnd();
 		return meas;
 	},
 	
@@ -4034,7 +3650,6 @@ var Theme = {
 	 * @return obj Theme offsets with `width` & `height` properties
 	 */
 	get_offset_default: function() {
-		console.groupCollapsed('Theme.get_offset_default');
 		var offset = { 'width': 0, 'height': 0 };
 		var v = this.get_viewer();
 		var vn = v.dom_get();
@@ -4045,10 +3660,8 @@ var Theme = {
 			.css({'visibility': 'hidden', 'position': 'absolute', 'top': ''})
 			.removeClass('loading')
 			.appendTo(vn.parent());
-		console.log('Cloned viewer', vc);
 		//Get offset from layout node
 		var l = vc.find(v.dom_get_selector('layout'));
-		console.info('Layout (%o): %o \nHeight: %o \nWidth: %o', v.dom_get_selector('layout'), l, l.height(), l.width());
 		if ( l.length ) {
 			//Clear inline styles
 			l.find('*').css({
@@ -4057,7 +3670,6 @@ var Theme = {
 				'display': ''
 			});
 			//Resize content nodes
-			console.group('Resizing content tag');
 			var tags = this.get_tags('item', 'content');
 			if ( tags.length ) {
 				var offset_item = v.get_item().get_dimensions();
@@ -4077,11 +3689,8 @@ var Theme = {
 					offset[key] = 0;
 				}
 			});
-			console.groupEnd();
 		}
-		console.info('Layout\nWidth: %o \nHeight: %o \nCalculated offsets: %o', l.width(), l.height(), offset);
 		vc.empty().remove();
-		console.groupEnd();
 		return offset;
 	},
 	
@@ -4099,12 +3708,9 @@ var Theme = {
 	 * @return obj Item dimensions with `width` & `height` properties
 	 */
 	get_item_dimensions: function() {
-		console.groupCollapsed('Theme.get_item_dimensions()');
 		var v = this.get_viewer();
 		var dims = v.get_item().get_dimensions();
-		console.info('Original dimensions: %o \nAutofit: %o', dims, v.get_attribute('autofit'));
 		if ( v.get_attribute('autofit', false) ) {
-			console.log('Processing resize');
 			//Get maximum dimensions
 			var margin = this.get_margin();
 			var offset = this.get_offset();
@@ -4119,18 +3725,13 @@ var Theme = {
 			}
 			//Get resize factor
 			var factor = Math.min(max.width / dims.width, max.height / dims.height);
-			console.info('Offset: %o \nMax: %o \nFactor: %o', offset, max, factor);
 			//Resize dimensions
 			if ( factor < 1 ) {
-				console.log('Resizing');
 				$.each(dims, function(key, val) {
 					dims[key] = Math.round(dims[key] * factor);
 				});
-				console.info('Resized: %o', dims);
 			}
 		}
-		console.info('Final dimensions: %o', dims);
-		console.groupEnd();
 		return $.extend({}, dims);
 	},
 	
@@ -4155,7 +3756,6 @@ var Theme = {
 	 * @see Template.render()
 	 */
 	render: function(init) {
-		console.group('Theme.render');
 		var thm = this;
 		var tpl = this.get_template();
 		var st = 'events_render';
@@ -4173,11 +3773,9 @@ var Theme = {
 		}
 		//Render template
 		tpl.render(init);
-		console.groupEnd();
 	},
 	
 	transition: function(event, clear_queue) {
-		console.groupCollapsed('Theme.transition: %o', event);
 		var dfr = null;
 		var attr = 'transition';
 		var v = this.get_viewer();
@@ -4236,7 +3834,6 @@ var Theme = {
 				$.fx.off = fx_temp;
 			}
 		});
-		console.groupEnd();
 		return dfr.promise();
 	}
 };
@@ -4297,15 +3894,11 @@ var Template = {
 	/* Methods */
 	
 	_c: function(attributes) {
-		console.groupCollapsed('Template.Constructor');
 		this._super('', attributes);
-		console.groupEnd();
 	},
 	
 	get_theme: function() {
-		console.groupCollapsed('Template.get_theme');
 		var ret = this.get_component('theme', true, false, false);
-		console.groupEnd();
 		return ret;
 	},
 	
@@ -4320,7 +3913,6 @@ var Template = {
 	 *  > render-complete: Item content loaded, ready for display
 	 */
 	render: function(init) {
-		console.group('Template.render');
 		var v = this.get_theme().get_viewer();
 		if ( !this.util.is_bool(init) ) {
 			init = false;
@@ -4328,50 +3920,35 @@ var Template = {
 		//Populate layout
 		if ( !init ) {
 			if ( !v.is_active() ) {
-				console.groupEnd();
 				return false;
 			}
 			var item = v.get_item();
-			console.log('Item is valid: %o', this.util.is_type(item, View.Content_Item));
 			if ( !this.util.is_type(item, View.Content_Item) ) {
 				v.close();
-				console.groupEnd();
 				return false;
 			}
-			console.info('Rendering Item');
 			//Iterate through tags and populate layout
 			if ( v.is_active() && this.has_tags() ) {
 				var loading_promise = this.trigger('render-loading');
-				console.info('Loading is promise: %o \nResolved: %o', this.util.is_promise(loading_promise), loading_promise.isResolved());
 				var tpl = this;
 				var tags = this.get_tags(),
 					tag_promises = [];
-				console.info('Tags in template: %o', tags);
 				//Render Tag output
 				loading_promise.done(function() {
 					if ( !v.is_active() ) {
 						return false;
 					}
-					console.groupCollapsed('Processing Tags');
 					$.each(tags, function(idx, tag) {
 						if ( !v.is_active() ) {
 							return false;
 						}
-						console.log('Tag DOM: %o', tag.dom_get().get(0));
-						console.groupCollapsed('Processing Tag: %o', [tag.get_name(), tag.get_prop()].join('.'));
 						tag_promises.push(tag.render(item).done(function(r) {
 							if ( !v.is_active() ) {
 								return false;
 							}
-							console.log('Tag rendered: %o', [r.tag.get_name(), r.tag.get_prop()].join('.'));
-							console.group('Tag Processing Callback');
-							console.info('Tag Output: %o', r.output);
 							r.tag.dom_get().html(r.output);
-							console.groupEnd();
 						}));
-						console.groupEnd();
 					});
-					console.groupEnd();
 					//Fire event when all tags rendered
 					if ( !v.is_active() ) {
 						return false;
@@ -4382,11 +3959,9 @@ var Template = {
 				});
 			}
 		} else {
-			console.info('Building basic layout');
 			//Get Layout (basic)
 			this.trigger('render-init', this.dom_get());
 		}
-		console.groupEnd();
 	},
 	
 	/*-** Layout **-*/
@@ -4397,15 +3972,12 @@ var Template = {
 	 * @return string Layout (HTML)
 	 */
 	get_layout: function(parsed) {
-		console.groupCollapsed('Template.get_layout: %o', parsed);
 		//Validate
 		if ( !this.util.is_bool(parsed) ) {
 			parsed = true;
 		}
 		//Determine which layout to retrieve (raw/parsed)
 		var l = ( parsed ) ? this.parse_layout() : this.get_attribute('layout_raw', '');
-		console.log('Layout: %o', l);
-		console.groupEnd();
 		return l;
 	},
 	
@@ -4440,12 +4012,8 @@ var Template = {
 	 * @return obj|string Sanitized layout (Same data type that was passed to method)
 	 */
 	sanitize_layout: function(l) {
-		console.groupCollapsed('Template.sanitize_layout');
-		console.log('Pre sanitize: %o', l);
 		//Stop processing if invalid value
 		if ( this.util.is_empty(l) ) {
-			console.warn('Layout is empty, nothing to sanitize');
-			console.groupEnd();
 			return l;
 		}
 		//Set return type
@@ -4466,11 +4034,9 @@ var Template = {
 		switch ( rtype ) {
 			case 'string' :
 				dom = dom.wrap('<div />').parent().html();
-				console.info('Converting DOM tree to string: %o', dom);
 			default :
 				l = dom;
 		}
-		console.groupEnd();
 		return l;
 	},
 	
@@ -4484,13 +4050,11 @@ var Template = {
 	 * @return string Parsed layout
 	 */
 	parse_tags: function(l) {
-		console.group('Template.parse_tags');
 		//Validate
 		if ( !this.util.is_string(l) ) {
 			return '';
 		}
 		//Parse tags in layout
-		console.groupCollapsed('Find tags');
 		//Tag regex
 		var re = /\{{2}\s*(\w.*?)\s*\}{2}/gim;
 		//Tag match results
@@ -4500,9 +4064,6 @@ var Template = {
 			//Replace tag in layout with DOM container
 			l = l.substring(0, match.index) + this.get_tag_container(match[1]) + l.substring(match.index + match[0].length);
 		}
-		console.groupEnd();
-		console.log('Parsed Layout: %o', l);
-		console.groupEnd();
 		return l;
 	},
 	
@@ -4513,9 +4074,7 @@ var Template = {
 	 */
 	get_tag_container: function(tag) {
 		//Build element
-		console.log('Tag: %o', tag);
 		var attr = this.get_tag_attribute();
-		console.log('Attribute: %o', attr);
 		return '<span %s="%s"></span>'.sprintf(attr, escape(tag)); 
 	},
 	
@@ -4549,28 +4108,23 @@ var Template = {
 	 * @return array Template_Tag instances
 	 */
 	get_tags: function(name, prop) {
-		console.groupCollapsed('Template.get_tags');
 		var a = 'tags';
 		var tags = this.get_attribute(a);
 		//Initialize tags
 		if ( !this.util.is_array(tags) ) {
 			tags = [];
-			console.groupCollapsed('Retrieving tags');
 			//Retrieve layout DOM tree
 			var d = this.dom_get();
 			//Select tag nodes
 			var attr = this.get_tag_attribute();
 			var nodes = $(d).find('[' + attr + ']');
-			console.log('Nodes: %o', nodes);
 			//Build tag instances from nodes
 			$(nodes).each(function(idx) {
 				//Get tag placeholder
 				var el = $(this);
 				var tag = new View.Template_Tag(unescape(el.attr(attr)));
-				console.log('Node: %o \nTag: %o', el, tag);
 				//Populate valid tags
 				if ( tag.has_handler() ) {
-					console.info('Tag has handler');
 					//Add tag to array
 					tags.push(tag);
 					//Connect tag to DOM node
@@ -4583,8 +4137,6 @@ var Template = {
 			});
 			//Save tags
 			this.set_attribute(a, tags, false);
-			console.log('Saved tags: %o', tags);
-			console.groupEnd();
 		}
 		tags = this.get_attribute(a, [], false);
 		//Filter tags by parameters
@@ -4606,8 +4158,6 @@ var Template = {
 			}
 			tags = tags_filtered;
 		}
-		console.log('Return value: %o', tags);
-		console.groupEnd();
 		return ( this.util.is_array(tags, false) ) ? tags : [];
 	},
 	
@@ -4625,11 +4175,8 @@ var Template = {
 	 * Custom DOM initialization 
 	 */
 	dom_init: function() {
-		console.group('Template.dom_init');
-		console.info('Layout needs to be parsed');
 		//Create DOM object from parsed layout
 		this.dom_set(this.get_layout());
-		console.groupEnd();
 	},
 	
 	/**
@@ -4639,7 +4186,6 @@ var Template = {
 	 * @return array DOM elements for tag
 	 */
 	dom_get_tag: function(tag, prop) {
-		console.groupCollapsed('Template.dom_get_tag()');
 		var ret = $();
 		var tags = this.get_tags(tag, prop);
 		if ( tags.length ) {
@@ -4649,11 +4195,8 @@ var Template = {
 				level = ( this.util.is_string(prop) ) ? 'full' : 'tag';
 			}
 			var sel = '.' + tags[0].get_class(level);
-			console.log('Selector')
 			ret = this.dom_get().find(sel);
 		}
-		console.log('Tag elements: %o', ret);
-		console.groupEnd();
 		return ret;
 	}
 };
@@ -4686,10 +4229,7 @@ var Template_Tag = {
 	 * @param 
 	 */
 	_c: function(tag_match) {
-		console.groupCollapsed('Template_Tag.Constructor');
-		console.info('Parse tag instance');
 		this.parse(tag_match);		
-		console.groupEnd();
 	},
 	
 	/**
@@ -4697,17 +4237,14 @@ var Template_Tag = {
 	 * @param string tag_match Extracted tag match
 	 */
 	parse: function(tag_match) {
-		console.groupCollapsed('Template_Tag.parse');
 		//Return default value for invalid instances
 		if ( !this.util.is_string(tag_match) ) {
-			console.groupEnd();
 			return false;
 		}
 		//Parse instance options
 		var parts = tag_match.split('|'),
 			part;
 		if ( !parts.length ) {
-			console.groupEnd();
 			return null;
 		}
 		var attrs = {
@@ -4733,7 +4270,6 @@ var Template_Tag = {
 		}
 		//Save to instance
 		this.set_attributes(attrs, true);
-		console.groupEnd();
 	},
 	
 	/**
@@ -4870,7 +4406,6 @@ var Template_Tag_Handler = {
 	 * @return obj jQuery.Promise linked to rendering process
 	 */
 	render: function(item, instance) {
-		console.group('Template_Tag_Handler.render');
 		var dfr = $.Deferred();
 		//Pass to attribute method
 		var ret = this.call_attribute('render', item, instance);
@@ -4884,7 +4419,6 @@ var Template_Tag_Handler = {
 			dfr.resolve(ret);
 		}
 		//Return promise
-		console.groupEnd();
 		return dfr.promise();
 	},
 	
@@ -4919,19 +4453,16 @@ var Template_Tag_Handler = {
 };
 
 View.Template_Tag_Handler = Component.extend(Template_Tag_Handler);
-console.groupCollapsed('Pre Init');
 /* Update References */
 
 //Attach to global object
 SLB.attach('View', View);
 View = SLB.View;
-console.info('Updating references');
 View.update_refs();
 
 /*-** Registration **-*/
 
 /* Content Types */
-console.info('Adding default content types');
 View.add_content_type('image', {
 	match: /^.+\.(jpg|png|gif)$/i,
 	render: function(item) {
@@ -4941,18 +4472,15 @@ View.add_content_type('image', {
 		var type = this;
 		//Set load event
 		var handler = function(e) {
-			console.groupCollapsed('Content_Type.image.load (Callback)');
 			//Save Data
 			item.set_data(this);
 			//Set attributes
 			var dim = {'width': this.width, 'height': this.height};
-			console.info('Setting dimensions', dim);
 			item.set_attribute('dimensions', dim);
 			//Build output
 			var out = $('<img />', {'src': item.get_uri()});
 			//Resolve deferred
 			dfr.resolve(out);
-			console.groupEnd();
 		};
 		
 		//Attach event handler
@@ -4971,14 +4499,11 @@ View.add_content_type('image', {
 });
 
 /* Template Tags */
-console.info('Adding template tag handlers');
 /**
  * Item data tag
  */
 View.add_template_tag_handler('item', {
 	render: function(item, tag) {
-		console.groupCollapsed('Template_Tag_Handler (Item).render: %o', tag.get_prop());
-		console.log('Property: %o', item.get_attributes());
 		var dfr = $.Deferred();
 		var m = 'get_' + tag.get_prop();
 		var ret = ( this.util.is_method(item, m) ) ? item[m]() : item.get_attribute(tag.get_prop(), '');
@@ -4989,7 +4514,6 @@ View.add_template_tag_handler('item', {
 		} else {
 			dfr.resolve(ret);
 		}
-		console.groupEnd();
 		return dfr.promise();
 	}
 });
@@ -4999,10 +4523,8 @@ View.add_template_tag_handler('item', {
  */
 View.add_template_tag_handler('ui', {
 	init: function(item, tag, v) {
-		console.groupCollapsed('Template_Tag_Handler (UI).init: %o', tag.get_prop());
 		//Add event handlers
 		v.on('events-complete', function(ev, v) {
-			console.info('Event Handler: Template_Tag_Handler(UI).complete');
 			//Register event handlers
 
 			/* Close */
@@ -5016,17 +4538,11 @@ View.add_template_tag_handler('ui', {
 			/* Navigation */
 			
 			var nav_next = function() {
-				console.info('Viewer.event.nav_next');
-				console.groupCollapsed('Tag.UI.nav_next');
 				v.item_next();
-				console.groupEnd();
 			};
 			
 			var nav_prev = function() {
-				console.info('Viewer.event.nav_prev');
-				console.groupCollapsed('Tag.UI.nav_prev');
 				v.item_prev();
-				console.groupEnd();
 			};
 			
 			v.get_theme().dom_get_tag('ui', 'nav_next').click(nav_next);
@@ -5035,17 +4551,13 @@ View.add_template_tag_handler('ui', {
 			/* Slideshow */
 			
 			var slideshow_control = function() {
-				console.info('Viewer.event.slideshow_control');
-				console.groupCollapsed('Tag.UI.slideshow_control');
 				v.slideshow_toggle();
-				console.groupEnd();
 			};
 			
 			v.get_theme().dom_get_tag('ui', 'slideshow_control').click(slideshow_control);
 		});
 		
 		v.on('slideshow-toggle', function(ev, v) {
-			console.group('Tag.UI.slideshow-toggle');
 			//Update slideshow control tag
 			var tags = v.get_theme().get_tags('ui', 'slideshow_control');
 			if ( tags.length ) {
@@ -5055,12 +4567,9 @@ View.add_template_tag_handler('ui', {
 					});
 				}
 			}
-			console.groupEnd();
 		});
-		console.groupEnd();
 	},
 	render: function(item, tag) {
-		console.groupCollapsed('Template_Tag_Handler (UI).render: %o', tag.get_prop());
 		//Initialize event handlers (once per viewer)
 		var v = item.get_viewer();
 		var st = ['events-init', tag.get_ns(), tag.get_name()].join('_');
@@ -5082,7 +4591,6 @@ View.add_template_tag_handler('ui', {
 		} else {
 			dfr.resolve(fmt(ret));
 		}
-		console.groupEnd();
 		return dfr.promise();
 	},
 	props: {
@@ -5120,5 +4628,4 @@ View.add_template_tag_handler('ui', {
 		}
 	}
 });
-console.groupEnd();
 })(jQuery);

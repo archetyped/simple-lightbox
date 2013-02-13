@@ -11,7 +11,6 @@ SLB.View.update_theme('slb_default', {
 		 * @return jQuery.Promise Resolved when transition is complete
 		 */
 		'open': function(v, dfr) {
-			console.groupCollapsed('Theme.transition.open()');
 			var d = v.dom_get(),
 				l = v.get_layout().hide(),
 				o = v.get_overlay().hide();
@@ -27,7 +26,6 @@ SLB.View.update_theme('slb_default', {
 					dfr.resolve();
 				});
 			});
-			console.groupEnd();
 			return dfr.promise();
 		},
 		/**
@@ -37,7 +35,6 @@ SLB.View.update_theme('slb_default', {
 		 * @return jQuery.Promise Resolved when transition is complete
 		 */
 		'close': function(v, dfr) {
-			console.groupCollapsed('Theme.transition.close()');
 			var l = v.get_layout(),
 				c = l.find('.slb_content');
 			var reset = function() {
@@ -67,7 +64,6 @@ SLB.View.update_theme('slb_default', {
 				v.get_overlay().hide();
 				reset();
 			}
-			console.groupEnd();
 			return dfr.promise();
 		},
 		/**
@@ -77,9 +73,7 @@ SLB.View.update_theme('slb_default', {
 		 * @return jQuery.Promise Resolved when transition is complete
 		 */
 		'load': function(v, dfr) {
-			console.groupCollapsed('Theme.transition.load()');
 			v.get_layout().find('.slb_loading').show();
-			console.groupEnd();
 			return v.get_layout().fadeIn().promise();
 		},
 		/**
@@ -89,7 +83,6 @@ SLB.View.update_theme('slb_default', {
 		 * @return jQuery.Promise Resolved when transition is complete
 		 */
 		'unload': function(v, dfr) {
-			console.groupCollapsed('Theme.transition.unload()');
 			var l = v.get_layout();
 			//Hide details
 			var det = l.find('.slb_details').animate({height: 0}, 'slow');
@@ -98,7 +91,6 @@ SLB.View.update_theme('slb_default', {
 			$.when(det.promise(), cont.promise()).done(function() {
 				dfr.resolve();
 			});
-			console.groupEnd();
 			return dfr.promise();
 		},
 		/**
@@ -108,7 +100,6 @@ SLB.View.update_theme('slb_default', {
 		 * @return jQuery.Promise Resolved when transition is complete
 		 */
 		'complete': function(v, dfr) {
-			console.group('Theme.transition.complete()');
 			var l = v.get_layout();
 			var det = l.find('.slb_details');
 			var c = l.find('.slb_content');
@@ -117,7 +108,6 @@ SLB.View.update_theme('slb_default', {
 			//Show detail tags (container still hidden)
 			det.find('.slb_template_tag').show();
 			var pos = { 'top': $(document).scrollTop() + ( $(window).height() / 2 ) - ( this.get_dimensions().height / 2 ) };
-			console.info('Pos (Top): %o \nScrollTop: %o \nWindow Height: %o \nLayout Height: %o', pos.top, $(document).scrollTop(), $(window).height(), this.get_dimensions().height);
 			pos.top = pos.top || 0;
 			//Resize container
 			pos = l.animate(pos).promise();
@@ -138,7 +128,6 @@ SLB.View.update_theme('slb_default', {
 					});
 				});
 			});
-			console.groupEnd();
 			return dfr.promise();
 		}
 	},
