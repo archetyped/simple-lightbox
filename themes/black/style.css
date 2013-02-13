@@ -1,26 +1,21 @@
-@import url('../default/style.css');
-
-/* General */
-
-#slb_viewer_wrap .slb_theme_slb_black {
-	color:#fff;
-}
-
-#slb_viewer_wrap .slb_theme_slb_black .slb_container {
-	background-color: #000;
-	box-shadow: 0 0 10px #fff;
-}
-
-/* Loading */
-
 #slb_viewer_wrap .slb_theme_slb_black .slb_loading {
-	background: url('images/loading.gif') center center no-repeat;
+  background-image: url("images/loading.gif");
 }
-
-/* UI */
-
-#slb_viewer_wrap .slb_theme_slb_default .slb_nav .slb_template_tag_ui,
-#slb_viewer_wrap .slb_theme_slb_default .slb_close {
-	background: #ccc;
-	color: #333;
+#slb_viewer_wrap .slb_theme_slb_black .slb_container {
+  background-color: #151515;
+}
+#slb_viewer_wrap .slb_theme_slb_black .slb_prev a {
+  background-image: url("images/nav_prev.png");
+}
+#slb_viewer_wrap .slb_theme_slb_black .slb_next a {
+  background-image: url("images/nav_next.png");
+}
+#slb_viewer_wrap .slb_theme_slb_black .slb_data_title {
+  color: #e3e3e3;
+}
+#slb_viewer_wrap .slb_theme_slb_black .slb_data_desc {
+  color: #cecece;
+}
+#slb_viewer_wrap .slb_theme_slb_black .slb_group_status {
+  color: #999;
 }

@@ -439,7 +439,7 @@ var View = {
 		//Get activated links
 		var sel = 'a[href][%s="%s"]'.sprintf(this.util.get_attribute('active'), 1);
 		//Add event handler
-		$(sel).click(handler);
+		$(document).on('click', sel, handler);
 	},
 	
 	get_items: function() {
@@ -657,6 +657,9 @@ var View = {
 				}
 			});
 		}
+		
+		//Set ID
+		attrs.push({'id': id});
 		
 		//Create theme model
 		var model = $.extend.apply(null, attrs);
@@ -1894,8 +1897,8 @@ var Viewer = {
 		var m = ( mode ) ? 'addClass' : 'removeClass';
 		$(this.dom_get())[m]('loading');
 		if ( mode ) {
-			//Loading animation
-			this.get_theme().animate('load').always(function() {
+			//Loading transition
+			this.get_theme().transition('load').always(function() {
 				dfr.resolve();
 			});
 		} else {
@@ -2074,14 +2077,14 @@ var Viewer = {
 					});
 				};
 				if ( v.is_open() ) {
-					thm.animate('unload')
+					thm.transition('unload')
 						.fail(function() {
 							set_pos();
 							thm.dom_get_tag('item', 'content').attr('style', '');
 						})
 						.always(always);
 				} else {
-					thm.animate('open')
+					thm.transition('open')
 						.always(function() {
 							always();
 							v.events_open();
@@ -2114,8 +2117,8 @@ var Viewer = {
 				});
 				//Bind events
 				v.events_complete();
-				//Animate
-				thm.animate('complete')
+				//Transition
+				thm.transition('complete')
 					.fail(function() {
 						//Autofit content
 						if ( v.get_attribute('autofit', true) ) {
@@ -2200,6 +2203,12 @@ var Viewer = {
 			}
 		});
 		return ret;
+	},
+	
+	/* Animation */
+	
+	animation_enabled: function() {
+		return this.get_attribute('animate', true);
 	},
 	
 	/* Overlay */
@@ -2380,6 +2389,7 @@ var Viewer = {
 			return false;
 		}
 		this.set_attribute('slideshow_active', true);
+		this.dom_get().addClass('slideshow_active');
 		//Clear residual timers
 		this.slideshow_clear_timer();
 		//Start timer
@@ -2404,6 +2414,7 @@ var Viewer = {
 		}
 		if ( full ) {
 			this.set_attribute('slideshow_active', false);
+			this.dom_get().removeClass('slideshow_active');
 		}
 		//Kill timers
 		this.slideshow_clear_timer();
@@ -2493,9 +2504,9 @@ var Viewer = {
 		this.set_active(false);
 		var v = this;
 		var thm = this.get_theme();
-		thm.animate('unload')
+		thm.transition('unload')
 			.always(function() {
-				thm.animate('close', true).always(function() {
+				thm.transition('close', true).always(function() {
 					//End processes
 					v.reset();
 					v.trigger('close');
@@ -3627,19 +3638,19 @@ var Theme = {
 	},
 	
 	/**
-	 * Retrieve theme margins
-	 * @return obj Theme margins with `width` & `height` properties
+	 * Retrieve theme offset
+	 * @return obj Theme offset with `width` & `height` properties
 	 */
-	get_margin: function() {
-		return this.get_measurement('margin', { 'width': 0, 'height': 0});
+	get_offset: function() {
+		return this.get_measurement('offset', { 'width': 0, 'height': 0});
 	},
 	
 	/**
-	 * Generate default margins
-	 * @return obj Theme margins with `width` & `height` properties
+	 * Generate default offset
+	 * @return obj Theme offsets with `width` & `height` properties
 	 */
-	get_margin_default: function() {
-		var margin = { 'width': 0, 'height': 0 };
+	get_offset_default: function() {
+		var offset = { 'width': 0, 'height': 0 };
 		var v = this.get_viewer();
 		var vn = v.dom_get();
 		//Clone viewer
@@ -3649,7 +3660,7 @@ var Theme = {
 			.css({'visibility': 'hidden', 'position': 'absolute', 'top': ''})
 			.removeClass('loading')
 			.appendTo(vn.parent());
-		//Get margin from layout node
+		//Get offset from layout node
 		var l = vc.find(v.dom_get_selector('layout'));
 		if ( l.length ) {
 			//Clear inline styles
@@ -3661,34 +3672,34 @@ var Theme = {
 			//Resize content nodes
 			var tags = this.get_tags('item', 'content');
 			if ( tags.length ) {
-				var offset = v.get_item().get_dimensions();
+				var offset_item = v.get_item().get_dimensions();
 				//Set content dimensions
-				tags = $(l.find(tags[0].get_selector('full')).get(0)).css({'width': offset.width, 'height': offset.height});
-				$.each(offset, function(key, val) {
-					margin[key] = -1 * val;
+				tags = $(l.find(tags[0].get_selector('full')).get(0)).css({'width': offset_item.width, 'height': offset_item.height});
+				$.each(offset_item, function(key, val) {
+					offset[key] = -1 * val;
 				});
 			}
 			
-			//Set margin
-			margin.width += l.width();
-			margin.height += l.height();
+			//Set offset
+			offset.width += l.width();
+			offset.height += l.height();
 			//Normalize
-			$.each(margin, function(key, val) {
+			$.each(offset, function(key, val) {
 				if ( val < 0 ) {
-					margin[key] = 0;
+					offset[key] = 0;
 				}
 			});
 		}
 		vc.empty().remove();
-		return margin;
+		return offset;
 	},
 	
 	/**
 	 * Retrieve theme offsets
 	 * @return obj Theme offsets with `width` & `height` properties 
 	 */
-	get_offset: function() {
-		return this.get_measurement('offset', {'width': 0, 'height': 0});
+	get_margin: function() {
+		return this.get_measurement('margin', {'width': 0, 'height': 0});
 	},
 	
 	/**
@@ -3701,16 +3712,16 @@ var Theme = {
 		var dims = v.get_item().get_dimensions();
 		if ( v.get_attribute('autofit', false) ) {
 			//Get maximum dimensions
-			var offset = this.get_offset();
 			var margin = this.get_margin();
-			margin.height += offset.height;
-			margin.width += offset.width;
+			var offset = this.get_offset();
+			offset.height += margin.height;
+			offset.width += margin.width;
 			var max =  {'width': $(window).width(), 'height': $(window).height() };
-			if ( max.width > margin.width ) {
-				max.width -= margin.width;
+			if ( max.width > offset.width ) {
+				max.width -= offset.width;
 			}
-			if ( max.height > margin.height ) {
-				max.height -= margin.height;
+			if ( max.height > offset.height ) {
+				max.height -= offset.height;
 			}
 			//Get resize factor
 			var factor = Math.min(max.width / dims.width, max.height / dims.height);
@@ -3730,9 +3741,9 @@ var Theme = {
 	 */
 	get_dimensions: function() {
 		var dims = this.get_item_dimensions();
-		var margin = this.get_margin();
+		var offset = this.get_offset();
 		$.each(dims, function(key, val) {
-			dims[key] += margin[key];
+			dims[key] += offset[key];
 		});
 		return dims;
 	},
@@ -3764,13 +3775,14 @@ var Theme = {
 		tpl.render(init);
 	},
 	
-	animate: function(event, clear_queue) {
+	transition: function(event, clear_queue) {
 		var dfr = null;
-		var attr = 'animate';
+		var attr = 'transition';
 		var v = this.get_viewer();
+		var fx_temp = null;
+		var anim_on = v.animation_enabled();
 		if ( v.get_attribute(attr, true) && this.util.is_string(event) ) {
-			//Stop queued animations
-			if ( !!clear_queue ) {
+			var anim_stop = function() {
 				var l = v.get_layout();
 				l.find('*').each(function() {
 					var el = $(this);
@@ -3779,34 +3791,49 @@ var Theme = {
 					}
 				});
 			}
-			//Get animation handlers
+			//Stop queued animations
+			if ( !!clear_queue ) {
+				anim_stop();
+			}
+			//Get transition handlers
 			var attr_set = [attr, 'set'].join('_');
-			var anims;
+			var trns;
 			if ( !this.get_attribute(attr_set) ) {
 				var models = this.get_ancestors(true);
-				anims = [];
+				trns = [];
 				this.set_attribute(attr_set, true);
 				var thm = this;
 				$.each(models, function(idx, model) {
 					if ( attr in model && thm.util.is_obj(model[attr]) ) {
-						anims.push(model[attr]);
+						trns.push(model[attr]);
 					}
 				});
-				//Merge animation handlers into current theme
-				anims.push({});
-				anims = this.set_attribute(attr, $.extend.apply($, anims.reverse()));
+				//Merge transition handlers into current theme
+				trns.push({});
+				trns = this.set_attribute(attr, $.extend.apply($, trns.reverse()));
 			} else {
-				anims = this.get_attribute(attr, {});
+				trns = this.get_attribute(attr, {});
 			}
-			if ( this.util.is_method(anims, event) ) {
-				//Pass control to animation event
-				dfr = anims[event].call(this, v, $.Deferred());
+			if ( this.util.is_method(trns, event) ) {
+				//Disable animations if necessary
+				if ( !anim_on ) {
+					fx_temp = $.fx.off;
+					$.fx.off = true;
+				}
+				//Pass control to transition event
+				dfr = trns[event].call(this, v, $.Deferred());
 			}
 		}
 		if ( !this.util.is_promise(dfr) ) {
 			dfr = $.Deferred();
 			dfr.reject();
 		}
+		dfr.always(function() {
+			//Restore animation state
+			if ( null !== fx_temp ) {
+				$.fx.off = fx_temp;
+			}
+		});
 		return dfr.promise();
 	}
 };
@@ -4416,7 +4443,7 @@ var Template_Tag_Handler = {
 		//Locate property
 		var props = this.get_attribute('props');
 		var out = '';
-		if ( this.util.is_obj(props) && prop in props && this.util.is_func(props[prop]) ) {
+		if ( this.util.is_obj(props) && ( prop in props ) && this.util.is_func(props[prop]) ) {
 			out = props[prop].call(this, item, instance);
 		} else {
 			out = item.get_viewer().get_label(prop);
@@ -4546,6 +4573,10 @@ View.add_template_tag_handler('ui', {
 		//Initialize event handlers (once per viewer)
 		var v = item.get_viewer();
 		var st = ['events-init', tag.get_ns(), tag.get_name()].join('_');
+		var fmt = function(output) {
+			//return '<a href="#" title="%s">%s</a>'.sprintf(output, output);
+			return output;
+		};
 		if ( !v.get_status(st) ) {
 			v.set_status(st);
 			this.call_attribute('init', item, tag, v);
@@ -4555,10 +4586,10 @@ View.add_template_tag_handler('ui', {
 		var ret = this.handle_prop(tag.get_prop(), item, tag);
 		if ( this.util.is_promise(ret) ) {
 			ret.done(function(output) {
-				dfr.resolve(output);
+				dfr.resolve(fmt(output));
 			});
 		} else {
-			dfr.resolve(ret);
+			dfr.resolve(fmt(ret));
 		}
 		return dfr.promise();
 	},

@@ -15,6 +15,10 @@ Simple Lightbox is a very simple and customizable lightbox that is easy to add t
 The current release is a beta version.  Please test and [provide feedback on the beta release page](http://archetyped.happyfox.com/).
 Main changes
 
+#### Beta 3
+* Update: Completely redesigned & fully responsive default themes
+* Fix: Image links loaded via AJAX are not displayed in a lightbox (Ren&eacute; &amp; Geert's Infinite Playlist)
+
 #### Beta 2
 * Fix: Custom text labels not used (Lid&eacute;n's Hidin' Labels)
 * Fix: Incorrect automatic resizing for ungrouped items (Erik the Resizer) 

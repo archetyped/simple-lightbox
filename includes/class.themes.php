@@ -384,13 +384,13 @@ class SLB_Themes extends SLB_Base {
 	function init_defaults($themes) {
 		$path_base = $this->util->get_plugin_file_path('themes/default', true);
 		//Default
-		$def = $this->add_item($this->get_default_id(), 'Default')
+		$def = $this->add_item($this->get_default_id(), 'Default (Light)')
 				 		->set_layout($path_base . 'layout.html')
 				 		->add_style('main', $path_base . 'style.css')
 				 		->add_script('main', $path_base . 'client.js');
 		//Dark
 		$path_base = $this->util->get_plugin_file_path('themes/black', true);
-		$dark = $this->add_item($this->add_prefix('black'), 'Dark')
+		$dark = $this->add_item($this->add_prefix('black'), 'Default (Dark)')
 						 ->add_style('main', $path_base . 'style.css')
 						 ->set_parent($def);
 	}
@@ -483,14 +483,11 @@ class SLB_Themes extends SLB_Base {
 	 */
 	function client_output() {
 		echo '<!-- X-THM -->';
-		if ( !$this->has_parent() ) {
-			return;
-		}
-		$parent = $this->get_parent();
 		//Stop if not enabled
-		if ( !$parent->is_enabled() ) {
+		if ( !$this->has_parent() || !$this->get_parent()->is_enabled() ) {
 			return;
 		}
+		
 		echo '<!-- SLB-THM -->' . PHP_EOL;
 		
 		$client_out = array();
@@ -514,7 +511,6 @@ class SLB_Themes extends SLB_Base {
 		foreach ( $thms as $thm ) {
 			//Theme properties
 			$thm_props = array(
-				'id'			=> $thm->get_id(),
 				'name'			=> $thm->get_name(),
 				'parent'		=> $thm->get_parent(true)->get_id()
 			);
