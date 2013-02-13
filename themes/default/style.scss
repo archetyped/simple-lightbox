@@ -260,7 +260,7 @@
 		}
 		
 		/* Media */
-		@media (max-width: 480px) {
+		@media only screen and (max-device-width: 480px), only screen and (max-width: 480px) {
 			@mixin vsizing {
 				min-height: 100%;
 				min-width: 320px;
@@ -286,10 +286,11 @@
 				top: 0;
 				left: 0;
 				.slb_content  {
-					max-width: 100%;
-					height: auto !important;
 					img, iframe, object, .slb_inner {
 						max-width: 100%;
+					}
+					img {
+						height: auto;
 					}
 				}
 			}

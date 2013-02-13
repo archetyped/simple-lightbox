@@ -432,8 +432,11 @@ var View = {
 		//Define handler
 		var t = this;
 		var handler = function() {
-			t.show_item(this);
-			return false;
+			var ret = t.show_item(this);
+			if ( !t.util.is_bool(ret) ) {
+				ret = true;
+			}
+			return !ret;
 		};
 		
 		//Get activated links
@@ -499,7 +502,8 @@ var View = {
 	 * @param obj el DOM element representing item
 	 */
 	show_item: function(el) {
-		this.get_item(el).show();
+		var ret = this.get_item(el).show();
+		return ret;
 	},
 	
 	/**
@@ -2019,7 +2023,7 @@ var Viewer = {
 			//Always: Save item state
 			state.item = this.get_parent().save_item(item);
 			state.count = ++count;
-			history.pushState(state, null, '#%s'.sprintf(escape(item.get_uri('permalink'))));
+			history.pushState(state, '');
 		} else {
 			var e = opts.event.originalEvent;
 			if ( this.util.in_obj(e, 'state') && this.util.in_obj(e.state, 'count') ) {
@@ -2905,13 +2909,35 @@ var Content_Item = {
 	init_default_attributes: function() {
 		this._super();
 		//Add asset properties
-		var key = this.dom_get().attr('href') || null;
+		var d = this.dom_get();
+		var key = d.attr('href') || null;
 		var assets = this.get_parent().assets || null;
 		//Merge asset data with default attributes
 		if ( this.util.is_string(key) ) {
 			var attrs = [{}, this._attr_default, {'permalink': key}];
-			if ( this.util.is_obj(assets) && ( key in assets ) && this.util.is_obj(assets[key]) ) {
-				attrs.push(assets[key]);
+			if ( this.util.is_obj(assets) ) {
+				var t = this;
+				var get_assets = function(key, raw) {
+					var ret = {};
+					if ( key in assets && t.util.is_obj(assets[key]) ) {
+						var ret = assets[key];
+						if ( t.util.is_string(raw) ) {
+							var e = '_entries';
+							if ( !( e in ret ) || ret[e].indexOf(raw) == -1 ) {
+								ret = {};
+							}
+						}
+					}
+					return ret;
+				};
+				var asset = get_assets(key);
+				if ( this.util.is_empty(asset) && ( kpos = key.indexOf('?') ) && kpos != -1 ) {
+					var key_base = key.substr(0, kpos);
+					asset = get_assets(key_base, key); 
+				}
+				if ( !this.util.is_empty(asset) ) {
+					attrs.push(asset);
+				}
 			}
 			this._attr_default = $.extend.apply(this, attrs);
 		}
@@ -3183,7 +3209,8 @@ var Content_Item = {
 		//Retrieve viewer
 		var v = this.get_viewer();
 		//Load item
-		v.show(this);
+		var ret = v.show(this);
+		return ret;
 	},
 	
 	reset: function() {

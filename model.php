@@ -470,6 +470,7 @@ class SLB_Lightbox extends SLB_Base {
 		$protocol = array('http://', 'https://');
 		$domain = str_replace($protocol, '', strtolower(get_bloginfo('url')));
 		$types = $this->get_media_types();
+		$qv_att = 'attachment_id';
 		
 		//Format Group
 		if ( $this->options->get_bool('group_links') ) {
@@ -488,43 +489,81 @@ class SLB_Lightbox extends SLB_Base {
 			$pid = 0;
 			$link_new = $link;
 			$internal = false;
+			$q = null;
+			$uri = new stdClass();
 			
 			//Parse link attributes
 			$attrs = $this->util->parse_attribute_string($link_new, array('rel' => '', 'href' => ''));
 			$attrs_legacy = explode(' ', $attrs['rel']);
-			$h =& $attrs['href'];
+			//Get URI
+			$uri->raw =  $attrs['href'];
 			
-			//Stop processing invalid, disabled
-			if ( empty($h) 
-				|| 0 === strpos($h, '#')
+			//Stop processing invalid, disabled links
+			if ( empty($uri->raw) 
+				|| 0 === strpos($uri->raw, '#')
 				|| $this->has_attribute($attrs, 'active', false) 
 				|| in_array($this->add_prefix('off'), $attrs_legacy)
 				) {
 				continue;
 			}
 			
+			//Process legacy attributes
+			//Group
+			if ( empty($group_base) && $this->options->get_bool('group_links') ) {
+				foreach ( $attrs_legacy as $attr_lgy ) {
+					if ( empty($attr_lgy) ) {
+						continue;
+					}
+					$grp_id = 'lightbox[';
+					$grp_pos = strpos($attr_lgy, $grp_id);
+					if ( $grp_pos === 0 && ']' == $attr_lgy[strlen($attr_lgy) - 1] ) {
+						$group_base = trim( substr($attr_lgy, strlen($grp_id), -1) );
+						break;
+					}
+				}
+			}
+			
 			//Check if item links to internal media (attachment)
-			$hdom = str_replace($protocol, '', strtolower($h));
-			if ( strpos($hdom, $domain) === 0 ) {
+			$uri_dom = str_replace($protocol, '', strtolower($uri->raw));
+			if ( strpos($uri_dom, $domain) === 0 ) {
 				//Save URL for further processing
 				$internal = true;
+			}
+			
+			//Sanitize URI
+			$qpos = strpos($uri->raw, '?');
+			if ( $qpos !== false ) {
+				$uri->base = substr($uri->raw, 0, $qpos);
+				if ( $internal ) {
+					//Extract query string
+					$q = substr($uri->raw, $qpos + 1);
+					//Check for attachment ID
+					if ( strpos($q, $qv_att . '=') !== false ) {
+						//Parse query string
+						wp_parse_str($q, $q);
+						//Strip other variables from query string
+						$uri->base = add_query_arg($qv_att, $q[$qv_att], $uri->base);
+					}
+				}
+			} else {
+				$uri->base = $uri->raw;
 			}
 			
 			//Determine link type
 			$type = false;
 			
 			//Check if link has already been processed
-			if ( $internal && $this->media_item_cached($h) ) {
-				$i = $this->get_cached_media_item($h);
+			if ( $internal && $this->media_item_cached($uri->base) ) {
+				$i = $this->get_cached_media_item($uri->base);
 				$type = $i['type'];
 			}
 			
-			elseif ( $this->util->has_file_extension($h, array('jpg', 'jpeg', 'gif', 'png')) ) {
+			elseif ( $this->util->has_file_extension($uri->base, array('jpg', 'jpeg', 'jpe', 'jfif', 'jif', 'gif', 'png')) ) {
 				//Direct Image file
 				$type = $types->img;
 			}
 			
-			elseif ( $internal && is_local_attachment($h) && ( $pid = url_to_postid($h) ) && wp_attachment_is_image($pid) ) {
+			elseif ( $internal && is_local_attachment($uri->base) && ( $pid = url_to_postid($uri->base) ) && wp_attachment_is_image($pid) ) {
 				//Attachment URI
 				$type = $types->att;
 			}
@@ -554,24 +593,23 @@ class SLB_Lightbox extends SLB_Base {
 				}
 				
 				//Set group attribute
-				$attrs = $this->set_attribute($attrs, $g_name, $group);
+				$this->set_attribute($attrs, $g_name, $group);
 			}
 			
 			//Activate link
-			$attrs = $this->set_attribute($attrs, 'active');
+			$this->set_attribute($attrs, 'active');
 			
 			//Process internal links
 			if ( $internal ) {
 				//Mark as internal
-				$attrs = $this->set_attribute($attrs, 'internal', $pid);
-				//Add to media items array
-				$this->cache_media_item($h, $type, $pid);
+				$this->set_attribute($attrs, 'internal', $pid);
 			}
+			//Cache item attributes
+			$this->cache_media_item($uri, $type, $pid);
 			
 			//Update link in content
 			$link_new = '<a ' . $this->util->build_attribute_string($attrs) . '>';
 			$content = str_replace($link, $link_new, $content);
-			unset($h);
 		}
 		return $content;
 	}
@@ -642,16 +680,14 @@ class SLB_Lightbox extends SLB_Base {
 			$m_bucket = array();
 			$type = $id = null;
 			
-			$m_items =& $this->get_cached_media_items();
+			$m_items = $this->media_items = $this->get_cached_media_items();
 			foreach ( $m_items as $uri => $p ) {
 				$type = $p[$props->type];
-				if ( empty($type) ) {
-					continue;
-				}
+				//Initialize bucket (if necessary)
 				if ( !isset($m_bucket[$type]) ) {
 					$m_bucket[$type] = array();
 				}
-				//Add to bucket for type (by reference)
+				//Add item to bucket
 				$m_bucket[$type][$uri] =& $m_items[$uri];
 			}
 			
@@ -665,19 +701,22 @@ class SLB_Lightbox extends SLB_Base {
 				$uri_prefix = wp_upload_dir();
 				$uri_prefix = $this->util->normalize_path($uri_prefix['baseurl'], true);
 				foreach ( array_keys($b) as $uri ) {
-					$uris_base[str_replace($uri_prefix, '', $uri)] = $uri;
+					//Prepare internal links
+					if ( strpos($uri, $uri_prefix) === 0 ) {
+						$uris_base[str_replace($uri_prefix, '', $uri)] = $uri;
+					}
 				}
 				
 				//Retrieve attachment IDs
 				$uris_flat = "('" . implode("','", array_keys($uris_base)) . "')";
-				$q = $wpdb->prepare("SELECT post_id, meta_value FROM $wpdb->postmeta WHERE `meta_key` = %s AND LOWER(`meta_value`) IN $uris_flat LIMIT %d", '_wp_attached_file', count($b));
+				$q = $wpdb->prepare("SELECT post_id, meta_value FROM $wpdb->postmeta WHERE `meta_key` = %s AND LOWER(`meta_value`) IN $uris_flat LIMIT %d", '_wp_attached_file', count($uris_base));
 				$pids_temp = $wpdb->get_results($q);
-				//Match IDs with URIs
+				//Match IDs to URIs
 				if ( $pids_temp ) {
 					foreach ( $pids_temp as $pd ) {
 						$f = $pd->meta_value;
-						if ( is_numeric($pd->post_id) && isset($uris_base[$f]) ) {
-							$b[$uris_base[$f]][$props->id] = absint($pd->post_id);
+						if ( isset($uris_base[$f]) ) {
+							$b[ $uris_base[$f] ][$props->id] = absint($pd->post_id);
 						}
 					}
 				}
@@ -685,21 +724,22 @@ class SLB_Lightbox extends SLB_Base {
 				unset($b, $uri, $uris_base, $uris_flat, $q, $pids_temp, $pd);
 			}
 			
-			//Image attachments
+			//Attachments
 			if ( isset($m_bucket[$t->att]) ) {
 				$b =& $m_bucket[$t->att];
 				
-				//Attachment source URI
+				//Get attachment source URI
 				foreach ( $b as $uri => $p ) {
 					$s = wp_get_attachment_url($p[$props->id]);
-					if ( !!$s )
+					if ( !!$s ) {
 						$b[$uri][$props->source] = $s;
+					}
 				}
 				//Destroy worker vars
 				unset($b, $uri, $p);
 			}
 			
-			//Retrieve attachment IDs
+			//Process items with attachment IDs
 			$ids = array();
 			foreach ( $m_items as $uri => $p ) {
 				//Add post ID to query
@@ -717,10 +757,12 @@ class SLB_Lightbox extends SLB_Base {
 			//Retrieve attachment properties
 			if ( !empty($ids) ) {
 				$ids_flat = array_keys($ids);
+				//Retrieve attachment post data
 				$atts = get_posts(array('post_type' => 'attachment', 'include' => $ids_flat));
 				$ids_flat = "('" . implode("','", $ids_flat) . "')";
+				//Retrieve attachment metadata
 				$atts_meta = $wpdb->get_results($wpdb->prepare("SELECT `post_id`,`meta_value` FROM $wpdb->postmeta WHERE `post_id` IN $ids_flat AND `meta_key` = %s LIMIT %d", '_wp_attachment_metadata', count($ids)));
-				//Rebuild metadata array
+				//Restructure metadata array by post ID
 				if ( $atts_meta ) {
 					$meta = array();
 					foreach ( $atts_meta as $att_meta ) {
@@ -734,40 +776,53 @@ class SLB_Lightbox extends SLB_Base {
 				
 				//Process attachments
 				if ( $atts ) {
+					$props_size = array('file', 'width', 'height');
+					$props_exclude = array('hwstring_small');
 					foreach ( $atts as $att ) {
-						if ( !isset($ids[$att->ID]) )
-							continue;
-						//Add attachment
-						//Set properties
+						//Set post data
 						$m = array(
 							$props->title	=> $att->post_title,
 							$props->desc	=> $att->post_content,
 						);
+						
+						//Update content type
+						if ( isset($att->post_mime_type) && !empty($att->post_mime_type) ) {
+							$m[$props->type] = $att->post_mime_type;
+							//Filter secondary type (if necessary)
+							$pos = strpos($m[$props->type], '/');
+							if ( $pos !== false ) {
+								$m[$props->type] = substr($m[$props->type], 0, $pos);
+							}
+							unset($pos);
+						}
+						
 						//Add metadata
 						if ( isset($atts_meta[$att->ID]) && ($a = unserialize($atts_meta[$att->ID])) && is_array($a) ) {
 							//Move original size into `sizes` array
-							foreach ( array('file', 'width', 'height') as $d ) {
-								if ( !isset($a[$d]) )
+							foreach ( $props_size as $d ) {
+								if ( !isset($a[$d]) ) {
 									continue;
+								}
 								$a['sizes']['original'][$d] = $a[$d];
 								unset($a[$d]);
 							}
 	
 							//Strip extraneous metadata
-							foreach ( array('hwstring_small') as $d ) {
-								if ( isset($a[$d]) )
+							foreach ( $props_exclude as $d ) {
+								if ( isset($a[$d]) ) {
 									unset($a[$d]);
+								}
 							}
-	
+							
+							//Merge post data & meta data
 							$m = array_merge($a, $m);
+							//Destroy worker vars
 							unset($a, $d);
 						}
 						
-						//Save to object
+						//Save attachment data (post & meta) to original object(s)
 						foreach ( $ids[$att->ID] as $uri ) {
-							if ( isset($m_items[$uri]) )
-								$m = array_merge($m_items[$uri], $m);
-							$this->media_items[$uri] = $m;
+							$this->media_items[$uri] = array_merge($m_items[$uri], $m);
 						}
 					}
 				}
@@ -817,26 +872,45 @@ class SLB_Lightbox extends SLB_Base {
 	
 	/**
 	 * Cache media properties for later processing
-	 * @param string $uri URI for internal media (e.g. direct uri, attachment uri, etc.) 
+	 * @param string|array $uri URI for internal media (e.g. direct uri, attachment uri, etc.)
+	 * > string: Base URI
+	 * > array: Associative array of URI types (raw, uri) 
 	 * @param string $type Media type (image, attachment, etc.)
 	 * @param int (optional) $id ID of media item (if available) (Default: NULL)
 	 */
 	function cache_media_item($uri, $type, $id = null) {
 		//Cache media item
-		if ( $this->is_media_type_supported($type) && !$this->media_item_cached($uri) ) {
-			//Set properties
-			$i = array('type' => null, 'id' => null, 'source' => null);
-			//Type
-			$i['type'] = $type;
-			$t = $this->get_media_types();
-			//Source
-			if ( $type == $t->img )
-				$i['source'] = $uri;
-			//ID
-			if ( is_numeric($id) )
-				$i['id'] = absint($id);
-			
-			$this->media_items_raw[$uri] = $i;
+		if ( $this->is_media_type_supported($type) ) {
+			if ( is_array($uri) || is_object($uri) ) {
+				extract( (array)$uri );
+				if ( isset($base) ) {
+					$uri = $base;
+				}
+			}
+			if ( !is_string($uri) ) {
+				return false;
+			}
+			if ( !$this->media_item_cached($uri) ) {
+				//Set properties
+				$i = array('type' => null, 'id' => null, 'source' => null, '_entries' => array());
+				//Type
+				$i['type'] = $type;
+				$t = $this->get_media_types();
+				//Source
+				if ( $type == $t->img ) {
+					$i['source'] = $uri;
+				}
+				//ID
+				if ( is_numeric($id) ) {
+					$i['id'] = absint($id);
+				}
+				$this->media_items_raw[$uri] = $i;
+			}
+			//Add URI variants
+			$entries =& $this->media_items_raw[$uri]['_entries'];
+			if ( isset($raw) && $raw != $uri && is_string($raw) && !in_array($raw, $entries) ) {
+				$entries[] = $raw;
+			}
 		}
 	}
 	
@@ -1100,12 +1174,12 @@ class SLB_Lightbox extends SLB_Base {
 	/**
 	 * Set attribute to array
 	 * Attribute is added to array if it does not exist
-	 * @param array $attrs Current attribute array
+	 * @param array $attrs Array to add attribute to (Passed by reference)
 	 * @param string $name Name of attribute to add
 	 * @param string (optional) $value Attribute value
 	 * @return array Updated attribute array
 	 */
-	function set_attribute($attrs, $name, $value = true) {
+	function set_attribute(&$attrs, $name, $value = true) {
 		//Validate
 		$attrs = $this->get_attributes($attrs, false);
 		if ( !is_string($name) || empty($name) ) {
