@@ -1,14 +1,14 @@
 <?php 
 /* 
 Plugin Name: Simple Lightbox
-Plugin URI: http://archetyped.happyfox.com/
-Description: Customizable Lightbox for WordPress
-Version: 2.0b4 (BETA)
+Plugin URI: https://github.com/archetyped/simple-lightbox
+Description: The highly customizable lightbox for WordPress
+Version: 2.0b5 (BETA)
 Author: Archetyped
 Author URI: http://archetyped.com
 */
 /* 
-Copyright 2011 Solomon Marchessault (contact@archetyped.com)
+Copyright 2011 Solomon Marchessault (sol@archetyped.com)
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
