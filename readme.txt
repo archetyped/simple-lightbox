@@ -15,6 +15,13 @@ Simple Lightbox is a very simple and customizable lightbox that is easy to add t
 The current release is a beta version.  Please test and [provide feedback on the beta release page](http://archetyped.happyfox.com/).
 Main changes
 
+#### Beta 6
+* Optimize: JPEG file extension support (JPEGs on the Brinke)
+
+
+#### Beta 5
+* Update: Public beta released
+
 #### Beta 4
 * Optimize: Responsive (mobile) layout for default theme
 * Optimize: Automatic backwards-compatibility with legacy links
