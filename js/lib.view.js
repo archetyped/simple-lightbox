@@ -4969,7 +4969,7 @@ View.update_refs();
 /* Content Types */
 console.info('Adding default content types');
 View.add_content_type('image', {
-	match: /^.+\.(jpg|png|gif)$/i,
+	match: /^.+\.(jpg|jpeg|jpe|jfif|jif|gif|png)$/i,
 	render: function(item) {
 		var dfr = $.Deferred();
 		//Create image object
