@@ -16,8 +16,18 @@ The current release is a beta version.  Please test and [provide feedback on the
 Main changes
 
 #### Beta 6
-* Optimize: JPEG file extension support (JPEGs on the Brinke)
-
+* Update: Use hardcoded `simple-lightbox` text domain value
+* Fix: Wrong property name for item's description content (Descriptive Syd)
+* Fix: Legacy group name overflows to following items
+* Fix: Error when animation disabled (Animation Low-down)
+* Fix: Inconsistent automatic resizing (Robbing the cache)
+* Optimize: Theme Margin/Offset calculations
+* Optimize: JPEG file extension support (Julian's JPEGs)
+* Optimize: Remove unused options (Phantom Options on the Brinke)
+* Optimize: Group handling
+* Optimize: Legacy attributes handling
+* Optimize: `get_title()` output
+* Add: `caption` property
 
 #### Beta 5
 * Update: Public beta released
