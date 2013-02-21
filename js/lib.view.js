@@ -4030,7 +4030,8 @@ var Theme = {
 		this.set_attribute(attr_cache, cache, false);
 		console.log('Measurement cached: %o', meas);
 		console.groupEnd();
-		return meas;
+		//Return measurement (copy)
+		return $.extend({}, meas);
 	},
 	
 	/**
