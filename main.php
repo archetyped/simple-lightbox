@@ -8,7 +8,7 @@ Author: Archetyped
 Author URI: http://archetyped.com
 */
 /* 
-Copyright 2011 Solomon Marchessault (contact@archetyped.com)
+Copyright 2011 Solomon Marchessault (sol@archetyped.com)
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License

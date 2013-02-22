@@ -6,13 +6,13 @@ Requires at least: 3.5
 Tested up to: 3.5
 Stable tag: trunk
 
-A simple, themeable, and customizable Lightbox for WordPress
+The highly customizable lightbox for WordPress
 
 == Description ==
 Simple Lightbox is a very simple and customizable lightbox that is easy to add to your WordPress website.
 
 ### BETA NOTES
-The current release is a beta version.  Please test and [provide feedback on the beta release page](http://archetyped.happyfox.com/).
+The current release is a beta version.  Please test and [provide feedback on GitHub](https://github.com/archetyped/simple-lightbox/issues).
 Main changes
 
 #### Beta 6
