@@ -112,8 +112,7 @@ class SLB_Option extends SLB_Field {
 	function format_display($value, $context = '') {
 		if ( !is_string($value) ) {
 			if ( is_bool($value) ) {
-				$p = $this->util->get_plugin_textdomain();
-				$value = ( $value ) ? __('Enabled', $p) : __('Disabled', $p);
+				$value = ( $value ) ? __('Enabled', 'simple-lightbox') : __('Disabled', 'simple-lightbox');
 			}
 			elseif ( is_null($value) )
 				$value = '';
@@ -396,7 +395,7 @@ class SLB_Options extends SLB_Field_Collection {
 			$layout->field_post = '</div>';
 			$layout->opt_pre = '<div class="' . $this->add_prefix('option_item') . '">';
 			$layout->opt_post = '</div>';
-			$layout->form = '<{form_attr ref_base="layout"} /> <span class="description">(' . __('Default', $this->util->get_plugin_textdomain()) . ': {data context="display" top="0"})</span>';
+			$layout->form = '<{form_attr ref_base="layout"} /> <span class="description">(' . __('Default', 'simple-lightbox') . ': {data context="display" top="0"})</span>';
 			/* Combine */
 			$o->layout =& $layout;
 		}

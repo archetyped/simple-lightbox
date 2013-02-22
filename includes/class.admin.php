@@ -139,7 +139,7 @@ class SLB_Admin extends SLB_Base {
 			?>
 			<div id="<?php echo esc_attr($mid); ?>" class="updated fade">
 				<p>
-					<?php esc_html_e($msg, $this->util->get_plugin_textdomain());?>
+					<?php esc_html_e($msg, 'simple-lightbox');?>
 				</p>
 			</div>
 			<?php

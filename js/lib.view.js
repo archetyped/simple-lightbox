@@ -3018,33 +3018,25 @@ var Content_Item = {
 	},
 	
 	get_title: function() {
-		var prop = 'title';
 		//Check saved attributes
-		var title = this.get_attribute(prop);
-		if ( this.util.is_string(title) ) {
-			return title;
+		var props = ['caption', 'title'];
+		var title = '';
+		for ( var x = 0; x < props.length; x++ ) {
+			title = this.get_attribute(props[x]);
+			if ( this.util.is_string(title) ) {
+				return title;
+			}
 		}
 		
 		//Generate title from item metadata
+		var prop = 'title';
 		var dom = this.dom_get();
 		
 		//Caption
 		if ( dom.length ) {
-			var sel = '.wp-caption-text'
-			if ( this.in_gallery('wp') ) {
-				title = dom.parent().siblings(sel).html();
-			} else {
-				title = dom.siblings(sel).html();
-			}
-		}
+			var sel = '.wp-caption-text';
+			title = ( this.in_gallery('wp') ) ? dom.parent().siblings(sel).html() : dom.siblings(sel).html(); 
 		
-		//Attributes
-		if ( !title ) {
-			title = this.get_attribute(prop);
-		}
-		
-		//DOM attributes
-		if ( dom.length ) {
 			//Image title
 			if ( !title ) {
 				var img = dom.find('img').first();
@@ -3055,6 +3047,16 @@ var Content_Item = {
 			if ( !title ) {
 				title = dom.attr(prop);
 			}
+			
+			//Element text
+			if ( !title ) {
+				title = dom.text();
+			}
+		}
+		
+		//Validate
+		if ( !this.util.is_string(title) ) {
+			title = '';
 		}
 		
 		//Return value
@@ -3637,7 +3639,8 @@ var Theme = {
 		pos = cache[status].index.push(item) - 1;
 		cache[pos] = meas;
 		this.set_attribute(attr_cache, cache, false);
-		return meas;
+		//Return measurement (copy)
+		return $.extend({}, meas);
 	},
 	
 	/**
@@ -3722,8 +3725,8 @@ var Theme = {
 	},
 	
 	/**
-	 * Retrieve theme offsets
-	 * @return obj Theme offsets with `width` & `height` properties 
+	 * Retrieve theme margins
+	 * @return obj Theme margin with `width` & `height` properties 
 	 */
 	get_margin: function() {
 		return this.get_measurement('margin', {'width': 0, 'height': 0});
@@ -4256,7 +4259,7 @@ var Template_Tag = {
 	 * @param 
 	 */
 	_c: function(tag_match) {
-		this.parse(tag_match);		
+		this.parse(tag_match);
 	},
 	
 	/**
@@ -4491,7 +4494,7 @@ View.update_refs();
 
 /* Content Types */
 View.add_content_type('image', {
-	match: /^.+\.(jpg|png|gif)$/i,
+	match: /^.+\.(jpg|jpeg|jpe|jfif|jif|gif|png)$/i,
 	render: function(item) {
 		var dfr = $.Deferred();
 		//Create image object
