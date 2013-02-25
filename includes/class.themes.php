@@ -8,6 +8,10 @@ require_once 'class.base.php';
  * @author Archetyped
  */
 class SLB_Theme extends SLB_Base {
+	/* Configuration */
+	
+	protected $mode = 'object';
+	
 	/*-** Properties **-*/
 	
 	/**
@@ -352,8 +356,8 @@ class SLB_Themes extends SLB_Base {
 	
 	/* Initialization */
 	
-	function register_hooks() {
-		parent::register_hooks();
+	protected function _hooks() {
+		parent::_hooks();
 		//Register themes
 		$this->util->add_action('init_themes', $this->m('init_defaults'), 1);
 		
@@ -361,10 +365,11 @@ class SLB_Themes extends SLB_Base {
 		add_action('wp_footer', $this->m('client_output'), 11);
 	}
 	
-	function init_options() {
-		$options_config = array (
+	protected function _options() {
+		$opts = array (
 			'items'	=> array (
 				'theme_default'		=> array (
+					'title'		=> __('Theme', 'simple-lightbox'),
 					'default' 	=> $this->get_default_id(),
 					'group' 	=> array('ui', 0),
 					'parent' 	=> 'option_select',
@@ -374,7 +379,7 @@ class SLB_Themes extends SLB_Base {
 			)
 		);
 		
-		parent::init_options($options_config);
+		parent::_options($opts);
 	}
 	
 	/**
