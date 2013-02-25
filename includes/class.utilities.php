@@ -23,15 +23,15 @@ class SLB_Utilities {
 	 * @var array
 	 */
 	var $plugin_headers = array (
-		'Name' => 'Plugin Name',
-		'PluginURI' => 'Plugin URI',
-		'Version' => 'Version',
-		'Description' => 'Description',
-		'Author' => 'Author',
-		'AuthorURI' => 'Author URI',
-		'TextDomain' => 'Text Domain',
-		'DomainPath' => 'Domain Path',
-		'Network' => 'Network',
+		'Name'			=> 'Plugin Name',
+		'PluginURI'		=> 'Plugin URI',
+		'Version'		=> 'Version',
+		'Description'	=> 'Description',
+		'Author'		=> 'Author',
+		'AuthorURI'		=> 'Author URI',
+		'TextDomain'	=> 'Text Domain',
+		'DomainPath'	=> 'Domain Path',
+		'Network'		=> 'Network',
 	);
 	
 	/* Constructors */
@@ -47,11 +47,16 @@ class SLB_Utilities {
 	 * @param string $method Name of method
 	 * @return array Callback array
 	 */
-	function &m(&$obj, $method = '') {
-		if ( $obj == null && isset($this) )
-			$obj =& $this;
-		$arr = array(&$obj, $method);
-		return $arr;
+	function m($obj, $method = '') {
+		if ( is_string($obj) ) {
+			$method = $obj;
+			$obj = null;
+		}
+		if ( !is_object($obj) && isset($this) ) {
+			$obj = $this;
+		}
+		$cb = array($obj, $method);
+		return $cb;
 	}
 	
 	/* Helper Functions */
@@ -744,9 +749,20 @@ class SLB_Utilities {
 				 );
 	}
 	
+	/* Class */
+	
 	function is_a($obj, $class_name) {
 		return ( is_object($obj) && is_a($obj, $this->add_prefix_uc($class_name)) ) ? true : false;
 	}
+	
+	/**
+	 * Retrieve name of internal class
+	 * @param string $class Base name of class
+	 * @return string Full name of internal class
+	 */
+	function get_class($class) {
+		return $this->add_prefix_uc($class);
+	} 
 	
 	/* Context */
 	
@@ -762,15 +778,23 @@ class SLB_Utilities {
 			$ctx = array($this->build_context());
 			//Action
 			$action = $this->get_action();
-			if ( !empty($action) )
+			if ( !empty($action) ) {
 				$ctx[] = $this->build_context('action', $action);
+			}
+			//Post type
+			$post_type = $this->get_post_type();
+			if ( !empty($action) ) {
+				$ctx[] = $this->build_context('post-type', $post_type);
+			}
 			//Admin page
 			if ( is_admin() ) {
 				global $pagenow;
 				$pg = $this->strip_file_extension($pagenow);
 				$ctx[] = $this->build_context('page', $pg);
-				if ( !empty($action) )
+				if ( !empty($action) ) {
 					$ctx[] = $this->build_context('page', $pg, 'action', $action);
+					$ctx[] = $this->build_context('post-type', $post_type, 'action', $action);
+				}
 			}
 			//User
 			$u = wp_get_current_user();
@@ -822,6 +846,18 @@ class SLB_Utilities {
 				$ret = true;
 		}
 		return $ret;
+	}
+
+	/**
+	 * Output current context to client-side
+	 * @uses `wp_head` action hook
+	 * @uses `admin_head` action hook
+	 * @return void
+	 */
+	function set_client_context() {
+		$ctx = new stdClass();
+		$ctx->context = $this->get_context();
+		$this->extend_client_object($ctx, true);
 	}
 	
 	/**
@@ -1123,6 +1159,21 @@ class SLB_Utilities {
 		if ( empty($dom) )
 			$dom = $this->get_plugin_base(true);
 		return $dom;
+	}
+	
+	/**
+	 * Retrieve current post type based on URL query variables
+	 * @return string|null Current post type
+	 */
+	public function get_post_type() {
+		if ( isset($_GET['post_type']) && !empty($_GET['post_type']) ) {
+			return $_GET['post_type'];
+		}
+		$pt = null;
+		if ( isset($_GET['post']) && is_numeric($_GET['post']) ) {
+			$pt = get_post_type($_GET['post']);
+		}
+		return $pt;
 	}
 	
 	/**
@@ -1561,8 +1612,19 @@ class SLB_Utilities {
 		$el_start = '<';
 		$el_end = '>';
 		$el_close = '/';
-		extract(wp_parse_args($args, $defaults), EXTR_SKIP);
+		$args = wp_parse_args($args, $defaults);
+		//Collect attributes
+		$attr_exclude = array( 'content', 'tag', 'wrap', 'attributes' );
+		$attr_extra = array_diff_key($args, array_fill_keys($attr_exclude, null));
+		if ( count($attr_extra) ) {
+			//Merge attributes
+			$args['attributes'] = wp_parse_args($attr_extra, $args['attributes']);
+			//Remove attributes from top-level arguments
+			$args = array_diff_key($args, $attr_extra);
+		}
+		extract($args, EXTR_SKIP);
 		$content = trim($content);
+		
 		
 		if ( !$wrap && strlen($content) > 0 )
 			$wrap = true;
@@ -1704,5 +1766,71 @@ class SLB_Utilities {
 		if ( isset($_wp_real_parent_file[$parent]) )
 			$parent = $_wp_real_parent_file[$parent];
 		return $parent;
+	}
+	
+	/* Shortcodes */
+	
+	/**
+	 * Generate shortcode to be used in content
+	 * @param string $tag Shortcode tag
+	 * @param array $attr Associative array of attributes
+	 * @return string Shortcode markup
+	 */
+	public function make_shortcode($tag, $attr = array()) {
+		return '[' . $tag . ']';
+	}
+	
+	/**
+	 * Build shortcode regex pattern for specific shortcode
+	 * @uses $shortcode_tags
+	 * @param string $tag Shortcode tag
+	 * @return string Shortcode regex pattern
+	 */
+	public function get_shortcode_regex($tag) {
+		global $shortcode_tags;
+		//Backup shortcodes
+		$tgs_temp = $shortcode_tags;
+		$ret = '';
+		if ( !is_string($tag) || empty($tag) ) {
+			return $ret;
+		}
+		//Modify
+		$shortcode_tags = array( $tag => null );
+		//Build pattern
+		$ret = get_shortcode_regex();
+		//Restore shortcodes
+		$shortcode_tags = $tgs_temp;
+		
+		return $ret;
+	}
+	/**
+	 * Check if content contains shortcode
+	 * @param string $tag Name of shortcode to check for
+	 * @param string $content Content to check for shortcode
+	 * @return bool TRUE if content contains shortcode
+	 */
+	public function has_shortcode($content, $tag) {
+		$ptn = $this->get_shortcode_regex($tag);
+		$ret = ( is_string($content) && preg_match("/$ptn/s", $content) == 1 ) ? true : false;
+		return $ret;
+	}
+	
+	/**
+	 * Add shortcode to content
+	 * @param string $content Content to add shortcode to
+	 * @param bool $in_footer (optional) Add shortcode to head or footer of content (Default: footer)
+	 * @return string Modified content
+	 */
+	public function add_shortcode($content, $tag, $attr = null, $in_footer = true) {
+		if ( !is_string($content) ) {
+			$content = '';
+		}
+		$sc = $this->make_shortcode($tag, $attr);
+		if ( !!$in_footer ) {
+			$content .= $sc;
+		} else {
+			$content = $sc . $content;
+		}
+		return $content;
 	}
 }

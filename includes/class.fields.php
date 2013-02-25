@@ -11,8 +11,8 @@ require_once 'class.base.php';
  */
 class SLB_Field_Base extends SLB_Base {
 	/*-** Config **-*/
-	
-	private $shared = false;
+	protected $mode = 'object';
+	protected $shared = false;
 	
 	/*-** Properties **-*/
 	
@@ -48,6 +48,22 @@ class SLB_Field_Base extends SLB_Base {
 			'prefix'	=> array('get_container', 'get_id', 'add_prefix')
 		)
 	);
+	
+	/**
+	 * Special characters/phrases
+	 * Used for preserving special characters during formatting
+	 * Merged with $special_chars_default
+	 * Array Structure
+	 * > Key: Special character/phrase
+	 * > Value: Placeholder for special character
+	 * @var array
+	 */
+	var $special_chars = null;
+	
+	var $special_chars_default = array(
+		'{'		=> '%SQB_L%',
+		'}'		=> '%SQB_R%',
+	);
 
 	/**
 	 * Reference to parent object that current instance inherits from
@@ -75,7 +91,7 @@ class SLB_Field_Base extends SLB_Base {
 	 * Initialization properties
 	 * @var array
 	 */
-	var $properties_init = null;
+	protected $properties_init = null;
 	
 	/**
 	 * Structure: Property names stored as keys in group
@@ -987,6 +1003,48 @@ class SLB_Field_Base extends SLB_Base {
 			$value = htmlspecialchars($value);
 		return $value;
 	}
+	
+	/**
+	 * Final formatting before output
+	 * Restores special characters, etc.
+	 * @uses $special_chars
+	 * @uses $special_chars_default
+	 * @param mixed $value Pre-final field output
+	 * @param string $context (Optional) Formatting context
+	 * @return mixed Formatted value
+	 */
+	function format_final($value, $context = '') {
+		if ( !is_string($value) )
+			return $value;
+		
+		//Restore special chars
+		return $this->restore_special_chars($value, $context);
+	}
+	
+	function preserve_special_chars($value, $context = '') {
+		if ( !is_string($value) )
+			return $value;
+		$specials = $this->get_special_chars();
+		return str_replace(array_keys($specials), $specials, $value);
+	}
+	
+	function restore_special_chars($value, $context = '') {
+		if ( !is_string($value) )
+			return $value;
+		$specials = $this->get_special_chars();
+		return str_replace($specials, array_keys($specials), $value);
+	}
+	
+	/**
+	 * Retrieve special characters/placeholders
+	 * Merges defaults with class-specific characters
+	 * @uses $special_chars
+	 * @uses $special_chars_default
+	 * @return array Special characters/placeholders
+	 */
+	function get_special_chars() {
+		return wp_parse_args($this->special_chars, $this->special_chars_default);
+	}
 }
 
 /**
@@ -1357,8 +1415,6 @@ class SLB_Field_Type extends SLB_Field_Base {
 		$out_default = '';
 		//Get base layout
 		$out = $this->get_layout($layout);
-		$par = $this->get_parent();
-		$ppar = $par->get_parent();
 		//Only parse valid layouts
 		if ( $this->is_valid_layout($out) ) {
 			//Parse Layout
@@ -1381,6 +1437,7 @@ class SLB_Field_Type extends SLB_Field_Base {
 						if ( !is_scalar($target_property) ) {
 							$target_property = '';
 						}
+						
 						//Replace layout placeholder with retrieved item data
 						$out = str_replace($ph->start . $instance['match'] . $ph->end, $target_property, $out);
 					}
@@ -1390,6 +1447,7 @@ class SLB_Field_Type extends SLB_Field_Base {
 			$out = $out_default;
 		}
 		/* Return generated value */
+		$out = $this->format_final($out);
 		return $out;
 	}
 }
@@ -1403,6 +1461,10 @@ class SLB_Field extends SLB_Field_Type {}
  * @author Archetyped
  */
 class SLB_Field_Collection extends SLB_Field_Base {
+
+	/* Configuration */
+	
+	protected $mode = 'sub';
 	
 	/* Properties */
 	
@@ -1427,9 +1489,11 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	);
 	
 	var $build_vars_default = array ( 
-		'groups'	=> array(),
-		'context'	=> '',
-		'layout'	=> 'form',
+		'groups'		=> array(),
+		'context'		=> '',
+		'layout'		=> 'form',
+		'build'			=> true,
+		'build_groups'	=> true,
 	);
 	
 	/**
@@ -1442,6 +1506,8 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	 * @var array
 	 */
 	var $groups = array();
+	
+	protected $properties_init = null;
 	
 	/* Constructors */
 
@@ -1461,12 +1527,14 @@ class SLB_Field_Collection extends SLB_Field_Base {
 		//Parent constructor
 		parent::__construct($properties);
 		
-		//Init
-		$this->init();
-		//Setup object based on properties
-		$this->load($properties, false);
+		//Save initial properties
+		$this->properties_init = $properties;
 	}
 	
+	public function _init() {
+		parent::_init();
+		$this->load($this->properties_init, false);
+	}
 	
 	/*-** Getters/Setters **-*/
 	
@@ -2034,9 +2102,15 @@ class SLB_Field_Collection extends SLB_Field_Base {
 		
 		//Get groups to build
 		$groups = ( !empty($this->build_vars['groups']) ) ? $this->build_vars['groups'] : array_keys($this->get_groups(array('sort' => 'priority')));
-		//Build groups
-		foreach ( $groups as $group ) {
-			$this->build_group($group);
+		//Check options
+		if ( is_callable($this->build_vars['build_groups']) ) {
+			//Pass groups to callback to build output
+			call_user_func_array($this->build_vars['build_groups'], array($this, $groups));
+		} elseif ( !!$this->build_vars['build_groups'] ) {
+			//Build groups
+			foreach ( $groups as $group ) {
+				$this->build_group($group);
+			}
 		}
 		
 		$this->util->do_action_ref_array('build_groups_post', array(&$this));
@@ -2128,9 +2202,8 @@ class SLB_Fields extends SLB_Field_Collection {
 		parent::__construct('fields');
 	}
 	
-	function register_hooks() {
-		parent::register_hooks();
-		
+	protected function _hooks() {
+		parent::_hooks();
 		//Init fields
 		add_action('init', $this->m('register_types'));
 		//Init placeholders
@@ -2387,6 +2460,7 @@ class SLB_Fields extends SLB_Field_Collection {
 		}
 		
 		//Format data based on context
+		$out = $item->preserve_special_chars($out, $context);
 		$out = $item->format($out, $context);
 		//Return data
 		return $out;
@@ -2467,7 +2541,7 @@ class SLB_Fields extends SLB_Field_Collection {
 		if ( isset($placeholder['attributes']['id']) && ($key = $placeholder['attributes']['id']) && isset($data[$key]) ) {
 			$output = strval($data[$key]);
 		}
-
+		
 		return $output;
 	}
 	

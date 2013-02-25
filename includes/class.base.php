@@ -1,6 +1,8 @@
 <?php
 
 require_once 'class.utilities.php';
+require_once 'class.options.php';
+require_once 'class.admin.php';
 
 /**
  * @package Simple Lightbox
@@ -9,25 +11,7 @@ require_once 'class.utilities.php';
  *
  */
 class SLB_Base {
-	
-	/**
-	 * Variable name of base object in global scope
-	 * @var string
-	 */
-	var $base = 'slb';
-	
-	/**
-	 * Prefix for plugin-related data (attributes, DB tables, etc.)
-	 * @var string
-	 */
-	var $prefix = 'slb';
-	
-	/**
-	 * Prefix to be added when creating internal hook (action/filter) tags
-	 * Used by Utilities
-	 * @var string
-	 */
-	var $hook_prefix = '';
+	/* Configuration */
 	
 	/**
 	 * Class type
@@ -36,7 +20,34 @@ class SLB_Base {
 	 * > object - Simple object class (no hooks, etc.)
 	 * @var string
 	 */
-	var $mode = 'full';
+	protected $mode = 'full';
+	
+	/**
+	 * Indicates that instance is model (main controller)
+	 * @var bool
+	 */
+	protected $model = false;
+	
+	/* Properties */
+			
+	/**
+	 * Variable name of base object in global scope
+	 * @var string
+	 */
+	protected $base = 'ars';
+	
+	/**
+	 * Prefix for plugin-related data (attributes, DB tables, etc.)
+	 * @var string
+	 */
+	public $prefix = 'ars';
+	
+	/**
+	 * Prefix to be added when creating internal hook (action/filter) tags
+	 * Used by Utilities
+	 * @var string
+	 */
+	public $hook_prefix = '';
 	
 	/**
 	 * Global data
@@ -45,7 +56,9 @@ class SLB_Base {
 	 */
 	private static $globals = array();
 	
-	private $shared = array('options', 'admin');
+	protected $shared = array('options', 'admin');
+	
+	protected $_init = false;
 	
 	/* Client */
 
@@ -85,105 +98,85 @@ class SLB_Base {
 	var $options = null;
 	
 	/**
-	 * Admin instance
+	 * Admin
 	 * @var SLB_Admin
 	 */
 	var $admin = null;
 	
-	/*-** Init **-*/
+	/*-** Initialization **-*/
 	
 	/**
 	 * Constructor
 	 */
 	function __construct() {
 		$this->util = new SLB_Utilities($this);
+		if ( $this->can('init') ) {
+			$hook = 'plugins_loaded';
+			if ( current_filter() == $hook ) {
+				$this->_init();
+			} else {
+				add_action('plugins_loaded', $this->m('_init'));
+			}
+		}
 	}
 	
 	/**
 	 * Default initialization method
-	 * To be overridden by child classes
-	 * @uses this::init_options()
-	 * @uses this::init_client_files()
-	 * @uses this::register_hooks()
-	 * @uses this::init_env()
-	 * @uses add_action()
+	 * 
+	 * @uses _env()
+	 * @uses _options()
+	 * @uses _admin()
+	 * @uses _hooks()
+	 * @uses _client_files()
 	 */
-	function init() {
-		if ( !isset($this) )
+	public function _init() {
+		if ( $this->_init || !isset($this) || !$this->can('init') )
 			return false;
-		
-		switch ( $this->mode ) {
-			case 'object' :
-				break;
-			default :
-				//Options
-				$this->init_options();
-				add_action('admin_init', $this->m('init_options_text'));
-				
-				//Admin
-				$this->init_admin();
-				
-				/* Client files */
-				$this->init_client_files();
-				
-				/* Hooks */
-				$this->register_hooks();
-				
-				/* Environment */
-				add_action('init', $this->m('init_env'), 1);
+		$this->_init = true;
+		//Environment
+		$this->_env();
+
+		if ( $this->can('control') ) {
+			//Options
+			$this->_options();
+			
+			//Admin
+			if ( is_admin() )
+				$this->_admin();
 		}
-	}
-	
-	function register_hooks() {
-		//Activation
-		$func_activate = 'activate';
-		if ( method_exists($this, $func_activate) )
-			register_activation_hook($this->util->get_plugin_base_file(), $this->m($func_activate));
-		//Deactivation
-		$func_deactivate = 'deactivate';
-		if ( method_exists($this, $func_deactivate) )
-			register_deactivation_hook($this->util->get_plugin_base_file(), $this->m($func_deactivate));
+
+		//Hooks
+		$this->_hooks();
+		
+		//Client files
+		$this->_client_files();
 	}
 	
 	/**
-	 * Checks if options are valid
-	 * @param array $data Data to be used on options
-	 * @return bool TRUE if options are valid, FALSE otherwise
+	 * Initialize environment (Localization, etc.)
 	 */
-	function is_options_valid($data, $check_var = true) {
-		$class = $this->get_options_class();
-		$ret = ( empty($data) || !is_array($data) || !class_exists($class) ) ? false : true;
-		if ( $ret && $check_var && !is_a($this->options, $class) )
-			$ret = false;
-		return $ret;
-	}
-	
-	/**
-	 * Retrieves options class name
-	 * @return string
-	 */
-	function get_options_class() {
-		return $this->add_prefix_uc('Options');
-	}
-	
-	/**
-	 * Initializes admin functionality
-	 * To be overridden by child class
-	 */
-	function init_admin() {
-		if ( !empty($this->admin) && $this->util->is_a($this->admin, 'Admin') )
-			$this->admin->init();
+	private function _env() {
+		if ( !$this->can('singleton') ) {
+			return false;
+		}
+		//Localization
+		$ldir = 'l10n';
+		$lpath = $this->util->get_plugin_file_path($ldir, array(false, false));
+		$lpath_abs = $this->util->get_file_path($ldir);
+		if ( is_dir($lpath_abs) ) {
+			load_plugin_textdomain('ar-series', false, $lpath);
+		}
+		
+		//Context
+		add_action( ( is_admin() ) ? 'admin_head' : 'wp_head',  $this->util->m('set_client_context') );
 	}
 	
 	/**
 	 * Initialize options
 	 * To be called by child class
 	 */
-	function init_options($options_config = null) {
-		if ( !$this->is_options_valid($options_config, false) ) {
-			return false;
-		}
-		$class = $this->get_options_class();
+	protected function _options($options_config = null) {
+		$class = $this->util->get_class('Options');
 		$key = 'options';
 		if ( $this->shares($key) ) {
 			/**
@@ -198,52 +191,59 @@ class SLB_Base {
 			$opts = new $class();
 		}
 		//Load options
-		$opts->load($options_config);
+		if ( $this->is_options_valid($options_config, false) ) {
+			$opts->load($options_config);
+		}
 		//Set instance property
 		$this->options = $opts;
 	}
 	
 	/**
-	 * Initialize options text
-	 * Must be called separately from standard options init because textdomain is not available until later
-	 * To be called by method in child class
-	 * @param array $opts_text Options passed by method in child class
-	 * @return void
+	 * Initialize admin
+	 * To be called by child class
 	 */
-	function init_options_text($options_text = null) {
-		if ( !$this->is_options_valid($options_text) )
+	private function _admin() {
+		if ( !is_admin() ) {
 			return false;
-		
-		//Groups
-		if ( isset($options_text['groups']) ) {
-			foreach ( $options_text['groups'] as $id => $title) {
-				$g_temp =& $this->options->get_group($id);
-				$g_temp->title = $title;
-			}
 		}
-		
-		//Options
-		if ( isset($options_text['items']) ) {
-			foreach ( $options_text['items'] as $opt => $title ) {
-				$option_temp =& $this->options->get($opt);
-				if ( !$option_temp ) {
-					continue;
-				}
-				if ( !!$option_temp->get_id() ) {
-					$option_temp->set_title($title);
-				}
+		$class = $this->util->get_class('Admin');
+		$key = 'admin';
+		if ( $this->shares($key) ) {
+			/**
+			 * @var ARS_Admin
+			 */
+			$adm = $this->gvar($key);
+			//Setup options instance
+			if ( !is_a($adm, $class) ) {
+				$adm = $this->gvar($key, new $class($this));
 			}
+		} else {
+			$adm = new $class($this);
 		}
+		//Set instance property
+		$this->admin = $adm;
 	}
 	
 	/**
-	 * Initialize environment (Localization, etc.)
-	 * To be overriden by child class
-	 * @uses `init` Action hook as trigger
+	 * Register default hooks
 	 */
-	function init_env() {}
+	protected function _hooks() {
+		$base = $this->util->get_plugin_base_file();
+		//Activation
+		$func_activate = '_activate';
+		if ( method_exists($this, $func_activate) )
+			register_activation_hook($base, $this->m($func_activate));
+		
+		//Deactivation
+		$func_deactivate = '_deactivate';
+		if ( method_exists($this, $func_deactivate) )
+			register_deactivation_hook($base, $this->m($func_deactivate));
+	}
 	
-	function init_client_files() {
+	/**
+	 * Initialize client files
+	 */
+	protected function _client_files() {
 		foreach ( $this->client_files as $key => $val ) {
 			if ( empty($val) && isset($this->{$key}) )
 				$this->client_files[$key] =& $this->{$key};
@@ -270,7 +270,7 @@ class SLB_Base {
 	 * @uses `init` Action hook for execution
 	 * @return void
 	 */
-	function register_client_files() {
+	public function register_client_files() {
 		$v = $this->util->get_plugin_version();
 		foreach ( $this->client_files as $type => $files ) {
 			$func = $this->get_client_files_handler($type, 'register');
@@ -371,7 +371,7 @@ class SLB_Base {
 	 * @param string $method Method name
 	 * @return array Callback array
 	 */
-	function &m($method) {
+	function m($method) {
 		return $this->util->m($this, $method);
 	}
 	
@@ -446,6 +446,21 @@ class SLB_Base {
 		return call_user_func_array($this->util->m($this->util, 'remove_prefix'), $args);
 	}
 	
+	/*-** Capabilities **-*/
+	
+	protected function can($cap) {
+		static $caps = null;
+		if ( is_null($caps) ) {
+			//Build capabilities based on instance properties
+			$caps = array(
+				'init'			=> ( 'object' != $this->mode ) ? true : false,
+				'singleton'		=> ( !!$this->model ) ? true : false,
+				'control'		=> ( 'sub' == $this->mode || 'object' == $this->mode ) ? false : true,
+			);
+		}
+		return ( isset($caps[$cap]) ) ? $caps[$cap] : false;
+	}
+	
 	/*-** Globals **-*/
 	
 	/**
@@ -476,6 +491,21 @@ class SLB_Base {
 	
 	private function shares($name) {
 		return ( !empty($this->shared) && in_array($name, $this->shared) ) ? true : false;
+	}
+	
+	/*-** Options **-*/
+	
+	/**
+	 * Checks if options are valid
+	 * @param array $data Data to be used on options
+	 * @return bool TRUE if options are valid, FALSE otherwise
+	 */
+	function is_options_valid($data, $check_var = true) {
+		$class = $this->util->get_class('Options');
+		$ret = ( empty($data) || !is_array($data) || !class_exists($class) ) ? false : true;
+		if ( $ret && $check_var && !is_a($this->options, $class) )
+			$ret = false;
+		return $ret;
 	}
 }
 

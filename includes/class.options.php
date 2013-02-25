@@ -11,7 +11,7 @@ class SLB_Option extends SLB_Field {
 	
 	/* Properties */
 	
-	var $hook_prefix = 'option';
+	public $hook_prefix = 'option';
 	
 	/**
 	 * Determines whether option will be sent to client
@@ -118,6 +118,8 @@ class SLB_Option extends SLB_Field {
 				$value = '';
 			else
 				$value = strval($value);
+		} elseif ( empty($value) ) {
+			$value = 'empty';
 		}
 		return htmlentities($value);
 	}
@@ -189,7 +191,7 @@ class SLB_Options extends SLB_Field_Collection {
 	
 	/* Properties */
 	
-	var $hook_prefix = 'options';
+	public $hook_prefix = 'options';
 
 	var $item_type = 'SLB_Option';
 
@@ -229,8 +231,8 @@ class SLB_Options extends SLB_Field_Collection {
 		$this->add_prefix_ref($this->version_key);
 	}
 	
-	function register_hooks() {
-		parent::register_hooks();
+	protected function _hooks() {
+		parent::_hooks();
 		//Register fields
 		add_action($this->add_prefix('register_fields'), $this->m('register_fields'));
 		//Set option parents
