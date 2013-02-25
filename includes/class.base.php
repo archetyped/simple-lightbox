@@ -17,6 +17,7 @@ class SLB_Base {
 	 * Class type
 	 * Controls initialization, etc.
 	 * > full - Fully-functional class
+	 * > sub - Sub-class (attached to an instance)
 	 * > object - Simple object class (no hooks, etc.)
 	 * @var string
 	 */
