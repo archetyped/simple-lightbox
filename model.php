@@ -1,12 +1,10 @@
 <?php 
 
 require_once 'includes/class.base.php';
-require_once 'includes/class.admin.php';
-require_once 'includes/class.options.php';
 require_once 'includes/class.themes.php';
 
 /**
- * Lightbox functionality class
+ * Model (Core functionality)
  * @package Simple Lightbox
  * @author Archetyped
  */
@@ -14,24 +12,32 @@ class SLB_Lightbox extends SLB_Base {
 	
 	/*-** Properties **-*/
 	
+	protected $model = true;
+		
 	/* Files */
 	
 	var $scripts = array (
 		'core'			=> array (
-			'file'		=> 'js/lib.core.js',
+			'file'		=> 'client/js/lib.core.js',
 			'deps'		=> 'jquery',
 		),
 		'view'			=> array (
-			'file'		=> 'js/lib.view.js',
+			'file'		=> 'client/js/lib.view.js',
 			'deps'		=> array('jquery', '[core]'),
 			'context'	=> array( array('public', '[is_enabled]') ),
 		),
 		'test'			=> array (
-			'file'		=> 'js/lib.test.js',
+			'file'		=> 'client/js/lib.test.js',
 			'deps'		=> array('jquery', '[core]'),
 			'context'	=> array( array('public', '[xvv]') ),
 		),
 	);
+
+	/**
+	 * Fields
+	 * @var ARS_Fields
+	 */
+	public $fields = null;
 	
 	/**
 	 * Themes collection
@@ -98,108 +104,95 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	var $widget_processing = false;
 
-	/* Instance members */
-	
 	/**
-	 * Base field definitions
-	 * Stores system/user-defined field definitions
-	 * @var SLB_Fields
-	 */
-	var $fields = null;
-	
-	/* Constructor */
-	
+	 * Constructor
+	 */	
 	function __construct() {
 		parent::__construct();
 		//Init properties
 		$this->attr = $this->get_prefix();
 		
-		//Init objects
-		$this->admin = new SLB_Admin($this);
+		//Init instances
 		$this->fields = new SLB_Fields();
 		$this->themes = new SLB_Themes($this);
-		
-		//Init instance
-		$this->init();
 	}
 	
 	/* Init */
 	
 	/**
-	 * Initialize client files
-	 * Overrides parent method
-	 * @see parent::init_client_files()
-	 * @uses parent::init_client_files()
-	 * @return void
+	 * Register hooks
+	 * @uses parent::_hooks()
 	 */
-	function init_client_files() {
-		//Load appropriate file for request
-		/*
-		if ( ( defined('WP_DEBUG') && WP_DEBUG ) || isset($_REQUEST[$this->add_prefix('debug')]) )
-			$this->scripts['lightbox']['file'] = 'js/dev/lib.lightbox.dev.js';
-		*/
-		//Default init
-		parent::init_client_files();
-	}
-	
-	/**
-	 * Initialize environment
-	 * Overrides parent method
-	 * @see parent::init_env
-	 * @return void
-	 */
-	function init_env() {
-		//Localization
-		$ldir = 'l10n';
-		$lpath = $this->util->get_plugin_file_path($ldir, array(false, false));
-		$lpath_abs = $this->util->get_file_path($ldir);
-		if ( is_dir($lpath_abs) ) {
-			load_plugin_textdomain('simple-lightbox', false, $lpath);
-		}
+	protected function _hooks() {
+		parent::_hooks();
+
+		/* Admin */
+		add_action('admin_menu', $this->m('admin_menus'));
+		//Init lightbox admin
+		// add_action('admin_init', $this->m('admin_settings'));
+		// //Reset Settings
+		// add_action('admin_action_' . $this->add_prefix('reset'), $this->m('admin_reset'));
+		// add_action('admin_notices', $this->m('admin_notices'));
+		// //Plugin listing
+		// add_filter('plugin_action_links_' . $this->util->get_plugin_base_name(), $this->m('admin_plugin_action_links'), 10, 4);
+		// add_action('in_plugin_update_message-' . $this->util->get_plugin_base_name(), $this->m('admin_plugin_update_message'), 10, 2);
+		// add_filter('site_transient_update_plugins', $this->m('admin_plugin_update_transient'));
 		
-		//Context
-		add_action(( is_admin() ) ? 'admin_head' : 'wp_head', $this->m('set_client_context'));
+		/* Client-side */
+		
+		//Init lightbox
+		$priority = 99;
+		add_action('wp_footer', $this->m('client_init'), 11);
+		add_action('wp_footer', $this->m('client_footer'), $priority);
+		//Link activation
+		add_filter('the_content', $this->m('activate_links'), $priority);
+		//Gallery wrapping
+		add_filter('the_content', $this->m('gallery_wrap'), 1);
+		add_filter('the_content', $this->m('gallery_unwrap'), $priority + 1);
+		
+		/* Widgets */
+		add_filter('sidebars_widgets', $this->m('sidebars_widgets'));
 	}
 	
 	/**
 	 * Init options
 	 * 
 	 */
-	function init_options() {
+	protected function _options() {
 		//Setup options
-		$options_config = array (
+		$opts = array (
 			'groups' 	=> array (
-				'activation'	=> array ( 'priority' => 10),
-				'grouping'		=> array ( 'priority' => 20),
-				'ui'			=> array ( 'priority' => 30),
-				'labels'		=> array ( 'priority' => 40),
+				'activation'	=> array ( 'title' => __('Activation', 'simple-lightbox'), 'priority' => 10),
+				'grouping'		=> array ( 'title' => __('Grouping', 'simple-lightbox'), 'priority' => 20),
+				'ui'			=> array ( 'title' => __('UI', 'simple-lightbox'), 'priority' => 30),
+				'labels'		=> array ( 'title' => __('Labels', 'simple-lightbox'), 'priority' => 40),
 			),
 			'items'	=> array (
-				'enabled'					=> array('default' => true, 'group' => array('activation', 10)),
-				'enabled_home'				=> array('default' => true, 'group' => array('activation', 20)),
-				'enabled_post'				=> array('default' => true, 'group' => array('activation', 30)),
-				'enabled_page'				=> array('default' => true, 'group' => array('activation', 40)),
-				'enabled_archive'			=> array('default' => true, 'group' => array('activation', 50)),
-				'enabled_widget'			=> array('default' => false, 'group' => array('activation', 60)),
-				'activate_attachments'		=> array('default' => true, 'group' => array('activation', 70)),
-				'validate_links'			=> array('default' => false, 'group' => array('activation', 80), 'in_client' => true),
-				'group_links'				=> array('default' => true, 'group' => array('grouping', 10)),
-				'group_post'				=> array('default' => true, 'group' => array('grouping', 20)),
-				'group_gallery'				=> array('default' => false, 'group' => array('grouping', 30)),
-				'group_widget'				=> array('default' => false, 'group' => array('grouping', 40)),
-				'ui_autofit'				=> array('default' => true, 'group' => array('ui', 10), 'in_client' => true),
-				'ui_animate'				=> array('default' => true, 'group' => array('ui', 20), 'in_client' => true),
-				'slideshow_autostart'		=> array('default' => true, 'group' => array('ui', 30), 'in_client' => true),
-				'slideshow_duration'		=> array('default' => '6', 'attr' => array('size' => 3, 'maxlength' => 3), 'group' => array('ui', 40), 'in_client' => true),
-				'group_loop'				=> array('default' => true, 'group' => array('ui', 50), 'in_client' => true),
-				'ui_overlay_opacity'		=> array('default' => '0.8', 'attr' => array('size' => 3, 'maxlength' => 3), 'group' => array('ui', 60), 'in_client' => true),
-				'txt_loading'				=> array('default' => 'Loading', 'group' => array('labels', 20)),
-				'txt_close'					=> array('default' => 'Close', 'group' => array('labels', 10)),
-				'txt_nav_next'				=> array('default' => 'Next', 'group' => array('labels', 30)),
-				'txt_nav_prev'				=> array('default' => 'Previous', 'group' => array('labels', 40)),
-				'txt_slideshow_start'		=> array('default' => 'Start slideshow', 'group' => array('labels', 50)),
-				'txt_slideshow_stop'		=> array('default' => 'Stop slideshow', 'group' => array('labels', 60)),
-				'txt_group_status'			=> array('default' => 'Item %current% of %total%', 'group' => array('labels', 70))		
+				'enabled'					=> array('title' => __('Enable Lightbox Functionality', 'simple-lightbox'), 'default' => true, 'group' => array('activation', 10)),
+				'enabled_home'				=> array('title' => __('Enable on Home page', 'simple-lightbox'), 'default' => true, 'group' => array('activation', 20)),
+				'enabled_post'				=> array('title' => __('Enable on Posts', 'simple-lightbox'), 'default' => true, 'group' => array('activation', 30)),
+				'enabled_page'				=> array('title' => __('Enable on Pages', 'simple-lightbox'), 'default' => true, 'group' => array('activation', 40)),
+				'enabled_archive'			=> array('title' => __('Enable on Archive Pages (tags, categories, etc.)', 'simple-lightbox'), 'default' => true, 'group' => array('activation', 50)),
+				'enabled_widget'			=> array('title' => __('Enable for Widgets', 'simple-lightbox'), 'default' => false, 'group' => array('activation', 60)),
+				'activate_attachments'		=> array('title' => __('Activate image attachment links', 'simple-lightbox'), 'default' => true, 'group' => array('activation', 70)),
+				'validate_links'			=> array('title' => __('Validate links', 'simple-lightbox'), 'default' => false, 'group' => array('activation', 80), 'in_client' => true),
+				'group_links'				=> array('title' => __('Group image links (for displaying as a slideshow)', 'simple-lightbox'), 'default' => true, 'group' => array('grouping', 10)),
+				'group_post'				=> array('title' => __('Group image links by Post (e.g. on pages with multiple posts)', 'simple-lightbox'), 'default' => true, 'group' => array('grouping', 20)),
+				'group_gallery'				=> array('title' => __('Group gallery links separately', 'simple-lightbox'), 'default' => false, 'group' => array('grouping', 30)),
+				'group_widget'				=> array('title' => __('Group widget links separately', 'simple-lightbox'), 'default' => false, 'group' => array('grouping', 40)),
+				'ui_autofit'				=> array('title' => __('Resize lightbox to fit in window', 'simple-lightbox'), 'default' => true, 'group' => array('ui', 10), 'in_client' => true),
+				'ui_animate'				=> array('title' => __('Enable animations', 'simple-lightbox'), 'default' => true, 'group' => array('ui', 20), 'in_client' => true),
+				'slideshow_autostart'		=> array('title' => __('Start Slideshow Automatically', 'simple-lightbox'), 'default' => true, 'group' => array('ui', 30), 'in_client' => true),
+				'slideshow_duration'		=> array('title' => __('Slide Duration (Seconds)', 'simple-lightbox'), 'default' => '6', 'attr' => array('size' => 3, 'maxlength' => 3), 'group' => array('ui', 40), 'in_client' => true),
+				'group_loop'				=> array('title' => __('Loop through images', 'simple-lightbox'),'default' => true, 'group' => array('ui', 50), 'in_client' => true),
+				'ui_overlay_opacity'		=> array('title' => __('Overlay Opacity (0 - 1)', 'simple-lightbox'), 'default' => '0.8', 'attr' => array('size' => 3, 'maxlength' => 3), 'group' => array('ui', 60), 'in_client' => true),
+				'txt_loading'				=> array('title' => __('Loading indicator', 'simple-lightbox'), 'default' => 'Loading', 'group' => array('labels', 20)),
+				'txt_close'					=> array('title' => __('Close button', 'simple-lightbox'), 'default' => 'Close', 'group' => array('labels', 10)),
+				'txt_nav_next'				=> array('title' => __('Next Item button', 'simple-lightbox'), 'default' => 'Next', 'group' => array('labels', 30)),
+				'txt_nav_prev'				=> array('title' => __('Previous Item button', 'simple-lightbox'), 'default' => 'Previous', 'group' => array('labels', 40)),
+				'txt_slideshow_start'		=> array('title' => __('Start Slideshow button', 'simple-lightbox'), 'default' => 'Start slideshow', 'group' => array('labels', 50)),
+				'txt_slideshow_stop'		=> array('title' => __('Stop Slideshow button', 'simple-lightbox'),'default' => 'Stop slideshow', 'group' => array('labels', 60)),
+				'txt_group_status'			=> array('title' => __('Slideshow status format', 'simple-lightbox'), 'default' => 'Item %current% of %total%', 'group' => array('labels', 70))		
 			),
 			'legacy' => array (
 				'header_activation'			=> null,
@@ -233,82 +226,7 @@ class SLB_Lightbox extends SLB_Base {
 			)
 		);
 		
-		parent::init_options($options_config);
-	}
-
-	/**
-	 * Set option titles
-	 */
-	function init_options_text() {
-		$options_config = array (
-			'groups' 	=> array (
-				'activation'	=> __('Activation', 'simple-lightbox'),
-				'grouping'		=> __('Grouping', 'simple-lightbox'),
-				'ui'			=> __('UI', 'simple-lightbox'),
-				'labels'		=> __('Labels', 'simple-lightbox')
-			),
-			'items'		=> array (
-				'enabled'					=> __('Enable Lightbox Functionality', 'simple-lightbox'),
-				'enabled_home'				=> __('Enable on Home page', 'simple-lightbox'),
-				'enabled_post'				=> __('Enable on Posts', 'simple-lightbox'),
-				'enabled_page'				=> __('Enable on Pages', 'simple-lightbox'),
-				'enabled_archive'			=> __('Enable on Archive Pages (tags, categories, etc.)', 'simple-lightbox'),
-				'enabled_widget'			=> __('Enable for Widgets', 'simple-lightbox'),
-				'activate_attachments'		=> __('Activate image attachment links', 'simple-lightbox'),
-				'validate_links'			=> __('Validate links', 'simple-lightbox'),
-				'group_links'				=> __('Group image links (for displaying as a slideshow)', 'simple-lightbox'),
-				'group_post'				=> __('Group image links by Post (e.g. on pages with multiple posts)', 'simple-lightbox'),
-				'group_gallery'				=> __('Group gallery links separately', 'simple-lightbox'),
-				'group_widget'				=> __('Group widget links separately', 'simple-lightbox'),
-				'theme_default'				=> __('Theme', 'simple-lightbox'),
-				'ui_autofit'				=> __('Resize lightbox to fit in window', 'simple-lightbox'),
-				'ui_animate'				=> __('Enable animations', 'simple-lightbox'),
-				'slideshow_autostart'		=> __('Start Slideshow Automatically', 'simple-lightbox'),
-				'slideshow_duration'		=> __('Slide Duration (Seconds)', 'simple-lightbox'),
-				'group_loop'				=> __('Loop through images', 'simple-lightbox'),
-				'ui_overlay_opacity'		=> __('Overlay Opacity (0 - 1)', 'simple-lightbox'),
-				'txt_close'					=> __('Close button', 'simple-lightbox'),
-				'txt_loading'				=> __('Loading indicator', 'simple-lightbox'),
-				'txt_nav_next'				=> __('Next Item button', 'simple-lightbox'),
-				'txt_nav_prev'				=> __('Previous Item button', 'simple-lightbox'),
-				'txt_slideshow_start'		=> __('Start Slideshow button', 'simple-lightbox'),
-				'txt_slideshow_stop'		=> __('Stop Slideshow button', 'simple-lightbox'),
-				'txt_group_status'			=> __('Slideshow status format', 'simple-lightbox'),
-			)
-		);
-		
-		parent::init_options_text($options_config);
-	}
-	
-	function register_hooks() {
-		parent::register_hooks();
-
-		/* Admin */
-		add_action('admin_menu', $this->m('admin_menus'));
-		//Init lightbox admin
-		// add_action('admin_init', $this->m('admin_settings'));
-		// //Reset Settings
-		// add_action('admin_action_' . $this->add_prefix('reset'), $this->m('admin_reset'));
-		// add_action('admin_notices', $this->m('admin_notices'));
-		// //Plugin listing
-		// add_filter('plugin_action_links_' . $this->util->get_plugin_base_name(), $this->m('admin_plugin_action_links'), 10, 4);
-		// add_action('in_plugin_update_message-' . $this->util->get_plugin_base_name(), $this->m('admin_plugin_update_message'), 10, 2);
-		// add_filter('site_transient_update_plugins', $this->m('admin_plugin_update_transient'));
-		
-		/* Client-side */
-		
-		//Init lightbox
-		$priority = 99;
-		add_action('wp_footer', $this->m('client_init'), 11);
-		add_action('wp_footer', $this->m('client_footer'), $priority);
-		//Link activation
-		add_filter('the_content', $this->m('activate_links'), $priority);
-		//Gallery wrapping
-		add_filter('the_content', $this->m('gallery_wrap'), 1);
-		add_filter('the_content', $this->m('gallery_unwrap'), $priority + 1);
-		
-		/* Widgets */
-		add_filter('sidebars_widgets', $this->m('sidebars_widgets'));
+		parent::_options($opts);
 	}
 
 	/* Methods */
@@ -341,22 +259,6 @@ class SLB_Lightbox extends SLB_Base {
 		
 		$this->admin->add_theme_page('options', $options_labels, $this->options);
 		$this->admin->add_reset('reset', $labels_reset, $this->options);
-	}
-	
-	/*-** Request **-*/
-
-	/**
-	 * Output current context to client-side
-	 * @uses `wp_head` action hook
-	 * @uses `admin_head` action hook
-	 * @return void
-	 */
-	function set_client_context() {
-		if ( !is_admin() && !$this->is_enabled() )
-			return false;
-		$ctx = new stdClass();
-		$ctx->context = $this->util->get_context();
-		$this->util->extend_client_object($ctx, true);
 	}
 
 	/*-** Functionality **-*/
@@ -1276,5 +1178,3 @@ class SLB_Lightbox extends SLB_Base {
 		return $ret;
 	}
 }
-
-?>
