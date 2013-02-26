@@ -10,6 +10,10 @@ require_once 'class.base.php';
 class SLB_Theme extends SLB_Base {
 	/* Configuration */
 	
+	/**
+	 * @var string
+	 * @see Base::$mode
+	 */
 	protected $mode = 'object';
 	
 	/*-** Properties **-*/
@@ -48,12 +52,6 @@ class SLB_Theme extends SLB_Base {
 	 * @var array Properties that can be inherited from parent
 	 */
 	private $_uses_parent = array();
-	
-	/**
-	 * @var string Class mode
-	 * @see SLB_Base::$mode
-	 */
-	var $mode = 'object';
 	
 	/*-** Methods **-*/
 	
@@ -324,6 +322,10 @@ class SLB_Theme extends SLB_Base {
  * @author Archetyped
  */
 class SLB_Themes extends SLB_Base {
+	/* Configuration */
+	
+	protected $mode = 'sub';
+	
 	/* Properties */
 	
 	private $_parent = null;
@@ -348,10 +350,9 @@ class SLB_Themes extends SLB_Base {
 		
 	/* Methods */
 
-	function __construct($parent = null) {
+	public function __construct($parent = null) {
 		$this->set_parent($parent);
 		parent::__construct();
-		$this->init();
 	}
 	
 	/* Initialization */
