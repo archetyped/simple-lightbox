@@ -324,7 +324,7 @@ class SLB_Theme extends SLB_Base {
 class SLB_Themes extends SLB_Base {
 	/* Configuration */
 	
-	protected $mode = 'sub';
+	protected $mode = 'full';
 	
 	/* Properties */
 	
