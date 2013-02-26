@@ -35,7 +35,7 @@ class SLB_Lightbox extends SLB_Base {
 
 	/**
 	 * Fields
-	 * @var ARS_Fields
+	 * @var SLB_Fields
 	 */
 	public $fields = null;
 	

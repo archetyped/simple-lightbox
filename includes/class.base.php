@@ -35,13 +35,13 @@ class SLB_Base {
 	 * Variable name of base object in global scope
 	 * @var string
 	 */
-	protected $base = 'ars';
+	protected $base = 'slb';
 	
 	/**
 	 * Prefix for plugin-related data (attributes, DB tables, etc.)
 	 * @var string
 	 */
-	public $prefix = 'ars';
+	public $prefix = 'slb';
 	
 	/**
 	 * Prefix to be added when creating internal hook (action/filter) tags
@@ -211,7 +211,7 @@ class SLB_Base {
 		$key = 'admin';
 		if ( $this->shares($key) ) {
 			/**
-			 * @var ARS_Admin
+			 * @var SLB_Admin
 			 */
 			$adm = $this->gvar($key);
 			//Setup options instance

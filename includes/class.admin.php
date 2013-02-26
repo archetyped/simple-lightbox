@@ -8,7 +8,7 @@ require_once 'class.base.php';
  * @subpackage Admin
  * @author Archetyped
  */
-class ARS_Admin extends ARS_Base {
+class SLB_Admin extends SLB_Base {
 	/* Configuration */
 	
 	protected $mode = 'sub';
@@ -1221,7 +1221,7 @@ class SLB_Admin_View extends SLB_Base {
 	
 	/**
 	 * Builds option groups output
-	 * @param ARS_Options $options Options instance
+	 * @param SLB_Options $options Options instance
 	 * @param array $groups Groups to build
 	 */
 	function options_build_groups($options, $groups) {
