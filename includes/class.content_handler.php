@@ -2,12 +2,12 @@
 require_once 'class.base_object.php';
 
 /**
- * Content Type
+ * Content Handler
  * @package Simple Lightbox
- * @subpackage Content Type
+ * @subpackage Content
  * @author Archetyped
  */
-class SLB_Content_Type extends SLB_Base_Object {
+class SLB_Content_Handler extends SLB_Base_Object {
 	/* Properties */
 	
 	/**
