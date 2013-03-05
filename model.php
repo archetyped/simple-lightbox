@@ -387,11 +387,9 @@ class SLB_Lightbox extends SLB_Base {
 		}
 		
 		//Initialize content handlers
-		if ( is_null($this->handlers) ) {
+		if ( !( $this->handlers instanceof SLB_Content_Handlers ) ) {
 			$this->handlers = new SLB_Content_Handlers($this);
 		}
-		
-		$hdls = $this->handlers->get();
 		
 		//Iterate through links & add lightbox if necessary
 		foreach ( $links as $link ) {
@@ -427,6 +425,7 @@ class SLB_Lightbox extends SLB_Base {
 							break;
 						}
 					}
+					unset($attr);
 				}
 			}
 			
