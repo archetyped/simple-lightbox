@@ -30,19 +30,21 @@ class SLB_Base_Collection extends SLB_Base {
 	 */
 	var $items = null;
 	
-	/* Constructors */
-
-	/**
-	 * Class constructor
-	 * @uses parent::__construct()
-	 * @uses self::init()
-	 */
-	public function __construct() {
-		//Parent constructor
-		parent::__construct();
-	}
-	
 	/* Item Management */
+	
+	/**
+	 * Initialize collections
+	 * Calls `init` action if collection has a hook prefix
+	 */
+	private function init() {
+		//Initialize
+		if ( is_null($this->items) ) {
+			$this->items = array();
+			if ( !empty($this->hook_prefix) ) {
+				$this->util->do_action('init', $this);
+			}
+		}
+	}
 	
 	/**
 	 * Normalize/Validate item(s)
@@ -77,6 +79,7 @@ class SLB_Base_Collection extends SLB_Base {
 	 * @return bool TRUE if key is valid
 	 */
 	protected function key_valid($key) {
+		$this->init();
 		return ( ( ( is_string($key) && !empty($key) ) || is_int($key) ) && isset($this->items[$key]) ) ? true : false;
 	}
 	
@@ -86,6 +89,7 @@ class SLB_Base_Collection extends SLB_Base {
 	 * @return Current instance
 	 */
 	public function add($items) {
+		$this->init();
 		//Validate
 		$items = $this->normalize($items);
 		//Add items to collection
@@ -133,13 +137,9 @@ class SLB_Base_Collection extends SLB_Base {
 	 * @return object|array Specified item(s)
 	 */
 	public function get($item = null) {
-		//Initialize
-		if ( is_null($this->items) ) {
-			$this->items = array();
-			$this->util->do_action('init', $this);
-		}
+		$this->init();
 		$ret = array();
-		if ( 0 != func_num_args() ) {
+		if ( func_num_args() > 0 ) {
 			$single = false;
 			if ( !is_array($item) ) {
 				$single = true;
