@@ -38,6 +38,20 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 		}
 	}
 	
+	/**
+	 * Get matching handler for URI
+	 * @param string $uri URI to find match for
+	 * @return SLB_Content_Handler Matching handler (NULL if no handler matched)
+	 */
+	public function get_match($uri) {
+		foreach ( $this->get() as $handler ) {
+			if ( $handler->match($uri) ) {
+				return $handler;
+			}
+		}
+		return null;
+	}
+	
 	/* Handlers */
 	
 	/**
@@ -62,6 +76,6 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 	 * @return bool TRUE if URI is image
 	 */
 	public function match_image($uri) {
-		return true;
+		return ( $this->util->has_file_extension($uri, array('jpg', 'jpeg', 'jpe', 'jfif', 'jif', 'gif', 'png')) ) ? true : false;
 	}
 }

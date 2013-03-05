@@ -74,6 +74,19 @@ class SLB_Content_Handler extends SLB_Base_Object {
 		return ( is_null($this->match) ) ? false : true;
 	}
 	
+	/**
+	 * Match handler against URI
+	 * @param string $uri URI to check for match
+	 * @return bool TRUE if handler matches URI
+	 */
+	public function match($uri) {
+		$ret = false;
+		if ( !!$uri && is_string($uri) && $this->has_match() ) {
+			$ret = call_user_func($this->get_match(), $uri);
+		}
+		return $ret;
+	}
+	
 	/* Client handler */
 	
 	/**

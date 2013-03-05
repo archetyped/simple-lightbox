@@ -371,7 +371,6 @@ class SLB_Lightbox extends SLB_Base {
 		//Process links
 		$protocol = array('http://', 'https://');
 		$domain = str_replace($protocol, '', strtolower(get_bloginfo('url')));
-		$types = $this->get_media_types(); //TODO: Remove
 		$qv_att = 'attachment_id';
 		
 		//Setup group properties
@@ -398,19 +397,20 @@ class SLB_Lightbox extends SLB_Base {
 			$link_new = $link;
 			$internal = false;
 			$q = null;
-			$uri = new stdClass();
+			$uri = (object) array('raw' => '', 'base' => '', 'src' => '');
+			$type = false;
 			
 			//Parse link attributes
 			$attrs = $this->util->parse_attribute_string($link_new, array('href' => ''));
 			$attrs_legacy = ( isset($attrs['rel']) && !empty($attrs['rel']) ) ? explode(' ', trim($attrs['rel'])) : array();
 			//Get URI
-			$uri->raw =  $attrs['href'];
+			$uri->raw = $uri->base = $uri->src = $attrs['href'];
 			
-			//Stop processing invalid, disabled links
-			if ( empty($uri->raw) 
-				|| 0 === strpos($uri->raw, '#')
-				|| $this->has_attribute($attrs, 'active', false) 
-				|| in_array($this->add_prefix('off'), $attrs_legacy)
+			//Stop processing invalid links
+			if ( empty($uri->raw) //Empty
+				|| 0 === strpos($uri->raw, '#') //Invalid
+				|| $this->has_attribute($attrs, 'active', false) //Prev-processed
+				|| in_array($this->add_prefix('off'), $attrs_legacy) //Disabled
 				) {
 				continue;
 			}
@@ -451,31 +451,37 @@ class SLB_Lightbox extends SLB_Base {
 						$uri->base = add_query_arg($qv_att, $q[$qv_att], $uri->base);
 					}
 				}
-			} else {
-				$uri->base = $uri->raw;
+			}
+						
+			//Get source URI
+			$uri->src = $uri->base;
+			if ( $internal && is_local_attachment($uri->src) ) {
+				$pid = url_to_postid($uri->base);
+				$src = wp_get_attachment_url($pid);
+				if ( !!$src ) {
+					$uri->src = $src;
+				}
+				unset($src);
 			}
 			
-			//Determine link type
-			$type = false;
+			/* Determine link type */
 			
-			//Check if link has already been processed
-			if ( $internal && $this->media_item_cached($uri->base) ) {
+			//Check if URI has already been processed
+			if ( $this->media_item_cached($uri->base) ) {
 				$i = $this->get_cached_media_item($uri->base);
 				$type = $i['type'];
 			}
 			
-			elseif ( $this->util->has_file_extension($uri->base, array('jpg', 'jpeg', 'jpe', 'jfif', 'jif', 'gif', 'png')) ) {
-				//Direct Image file
-				$type = $types->img;
-			}
-			
-			elseif ( $internal && is_local_attachment($uri->base) && ( $pid = url_to_postid($uri->base) ) && wp_attachment_is_image($pid) ) {
-				//Attachment URI
-				$type = $types->att;
+			//Get handler match
+			else {
+				$handler = $this->handlers->get_match($uri->src);
+				if ( !!$handler ) {
+					$type = $handler->get_id();
+				}
 			}
 			
 			//Stop processing if link type not valid
-			if ( !$type || ( $type == $types->att && !$this->options->get_bool('activate_attachments') ) ) {
+			if ( !$type ) {
 				continue;
 			}
 			
@@ -511,6 +517,7 @@ class SLB_Lightbox extends SLB_Base {
 				//Mark as internal
 				$this->set_attribute($attrs, 'internal', $pid);
 			}
+			
 			//Cache item attributes
 			$this->cache_media_item($uri, $type, $pid);
 			
@@ -787,7 +794,7 @@ class SLB_Lightbox extends SLB_Base {
 	 * @param string $type Media type (image, attachment, etc.)
 	 * @param int (optional) $id ID of media item (if available) (Default: NULL)
 	 */
-	function cache_media_item($uri, $type, $id = null) {
+	private function cache_media_item($uri, $type, $id = null) {
 		//Cache media item
 		if ( $this->is_media_type_supported($type) ) {
 			if ( is_array($uri) || is_object($uri) ) {
@@ -1157,6 +1164,7 @@ class SLB_Lightbox extends SLB_Base {
 	 * @param string $attr Attribute name to retrieve
 	 * @param mixed $value (optional) Attribute value to check for
 	 * @param bool $internal (optional) Whether to check only internal attributes (Default: TRUE)
+	 * @see get_attribute()
 	 * @return bool Whether or not attribute (with matching value if specified) exists
 	 */
 	function has_attribute($attrs, $attr, $value = null, $internal = true) {
