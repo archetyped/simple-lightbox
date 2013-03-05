@@ -181,7 +181,6 @@ class SLB_Lightbox extends SLB_Base {
 				'enabled_page'				=> array('title' => __('Enable on Pages', 'simple-lightbox'), 'default' => true, 'group' => array('activation', 40)),
 				'enabled_archive'			=> array('title' => __('Enable on Archive Pages (tags, categories, etc.)', 'simple-lightbox'), 'default' => true, 'group' => array('activation', 50)),
 				'enabled_widget'			=> array('title' => __('Enable for Widgets', 'simple-lightbox'), 'default' => false, 'group' => array('activation', 60)),
-				'activate_attachments'		=> array('title' => __('Activate image attachment links', 'simple-lightbox'), 'default' => true, 'group' => array('activation', 70)),
 				'validate_links'			=> array('title' => __('Validate links', 'simple-lightbox'), 'default' => false, 'group' => array('activation', 80), 'in_client' => true),
 				'group_links'				=> array('title' => __('Group image links (for displaying as a slideshow)', 'simple-lightbox'), 'default' => true, 'group' => array('grouping', 10)),
 				'group_post'				=> array('title' => __('Group image links by Post (e.g. on pages with multiple posts)', 'simple-lightbox'), 'default' => true, 'group' => array('grouping', 20)),
@@ -206,30 +205,31 @@ class SLB_Lightbox extends SLB_Base {
 				'header_enabled'			=> null,
 				'header_strings'			=> null,
 				'header_ui'					=> null,
-				'txt_numDisplayPrefix' 		=> null,
-				'txt_numDisplaySeparator'	=> null,
+				'activate_attachments'		=> null,
 				'enabled_compat'			=> null,
+				'enabled_single'			=> array('enabled_post', 'enabled_page'),
+				'enabled_caption'			=> 'ui_enabled_caption',
+				'enabled_desc'				=> 'ui_enabled_desc',
 				'ui_enabled_caption'		=> null,
 				'ui_caption_src'			=> null,
 				'ui_enabled_desc'			=> null,
-				'enabled_single'			=> array('enabled_post', 'enabled_page'),
 				'caption_src'				=> 'ui_caption_src',
 				'animate'					=> 'ui_animate',
 				'overlay_opacity'			=> 'ui_overlay_opacity',
-				'enabled_caption'			=> 'ui_enabled_caption',
-				'enabled_desc'				=> 'ui_enabled_desc',
+				'loop'						=> 'group_loop',
+				'autostart'					=> 'slideshow_autostart',
+				'duration'					=> 'slideshow_duration',
+				'txt_numDisplayPrefix' 		=> null,
+				'txt_numDisplaySeparator'	=> null,
 				'txt_closeLink'				=> 'txt_link_close',
 				'txt_nextLink'				=> 'txt_link_next',
 				'txt_prevLink'				=> 'txt_link_prev',
 				'txt_startSlideshow'		=> 'txt_slideshow_start',	
 				'txt_stopSlideshow'			=> 'txt_slideshow_stop',
-				'loop'						=> 'group_loop',
-				'autostart'					=> 'slideshow_autostart',
-				'duration'					=> 'slideshow_duration',
 				'txt_loadingMsg'			=> 'txt_loading',
 				'txt_link_next'				=> 'txt_nav_next',
 				'txt_link_prev'				=> 'txt_nav_prev',
-				'txt_link_close'			=> 'txt_close'
+				'txt_link_close'			=> 'txt_close',
 			)
 		);
 		
@@ -371,7 +371,7 @@ class SLB_Lightbox extends SLB_Base {
 		//Process links
 		$protocol = array('http://', 'https://');
 		$domain = str_replace($protocol, '', strtolower(get_bloginfo('url')));
-		$types = $this->get_media_types();
+		$types = $this->get_media_types(); //TODO: Remove
 		$qv_att = 'attachment_id';
 		
 		//Setup group properties
@@ -419,9 +419,9 @@ class SLB_Lightbox extends SLB_Base {
 			if ( !empty($attrs_legacy) ) {
 				//Group
 				if ( $g_props->enabled ) {
-					foreach ( $attrs_legacy as $attr_lgy ) {
-						if ( 0 === strpos($attr_lgy, $g_props->legacy_prefix) && substr($attr_lgy, -1) == $g_props->legacy_suffix ) {
-							$this->set_attribute($attrs, $g_props->attr, substr($attr_lgy, strlen($g_props->legacy_prefix), -1));
+					foreach ( $attrs_legacy as $attr ) {
+						if ( 0 === strpos($attr, $g_props->legacy_prefix) && substr($attr, -1) == $g_props->legacy_suffix ) {
+							$this->set_attribute($attrs, $g_props->attr, substr($attr, strlen($g_props->legacy_prefix), -1));
 							break;
 						}
 					}
