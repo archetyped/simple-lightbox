@@ -61,6 +61,8 @@ class SLB_Base {
 	
 	protected $_init = false;
 	
+	private static $_init_passed = false;
+	
 	/* Client */
 
 	/**
@@ -113,17 +115,17 @@ class SLB_Base {
 		$this->util = new SLB_Utilities($this);
 		if ( $this->can('init') ) {
 			$hook = 'plugins_loaded';
-			if ( current_filter() == $hook ) {
+			if ( current_filter() == $hook || self::$_init_passed ) {
 				$this->_init();
 			} else {
-				add_action('plugins_loaded', $this->m('_init'));
+				add_action($hook, $this->m('_init'));
 			}
 		}
 	}
 	
 	/**
 	 * Default initialization method
-	 * 
+	 * @uses _init_passed
 	 * @uses _env()
 	 * @uses _options()
 	 * @uses _admin()
@@ -131,6 +133,7 @@ class SLB_Base {
 	 * @uses _client_files()
 	 */
 	public function _init() {
+		self::$_init_passed = true;
 		if ( $this->_init || !isset($this) || !$this->can('init') )
 			return false;
 		$this->_init = true;
