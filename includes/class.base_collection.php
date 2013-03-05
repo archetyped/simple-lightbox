@@ -28,7 +28,7 @@ class SLB_Base_Collection extends SLB_Base {
 	 * Indexed array of items in collection
 	 * @var array
 	 */
-	var $items = array();
+	var $items = null;
 	
 	/* Constructors */
 
@@ -133,6 +133,11 @@ class SLB_Base_Collection extends SLB_Base {
 	 * @return object|array Specified item(s)
 	 */
 	public function get($item = null) {
+		//Initialize
+		if ( is_null($this->items) ) {
+			$this->items = array();
+			$this->util->do_action('init', $this);
+		}
 		$ret = array();
 		if ( 0 != func_num_args() ) {
 			$single = false;
