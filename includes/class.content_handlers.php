@@ -1,5 +1,5 @@
 <?php
-require_once 'class.base_collection.php';
+require_once 'class.collection_controller.php';
 require_once 'class.content_handler.php';
 
 /**
@@ -8,12 +8,19 @@ require_once 'class.content_handler.php';
  * @subpackage Content
  * @author Archetyped
  */
-class SLB_Content_Handlers extends SLB_Base_Collection {
+class SLB_Content_Handlers extends SLB_Collection_Controller {
 	/* Configuration */
 	
-	protected $item_type = SLB_Content_Type;
+	protected $item_type = 'SLB_Content_Handler';
 	
-	public $hook_prefix = 'content_handler';
+	public $hook_prefix = 'content_handlers';
+	
+	/* Initialization */
+	
+	protected function _hooks() {
+		parent::_hooks();
+		$this->util->add_action('init', $this->m('init_defaults'));
+	}
 	
 	/* Collection Management */
 	
@@ -29,5 +36,32 @@ class SLB_Content_Handlers extends SLB_Base_Collection {
 			//Add handler to collection
 			parent::add($handler);
 		}
+	}
+	
+	/* Handlers */
+	
+	/**
+	 * Initialize default handlers
+	 * @param SLB_Content_Handlers $controller Handlers controller
+	 */
+	public function init_defaults($controller) {
+		$handlers = array (
+			'image'		=> array (
+				'match'			=> $this->m('match_image'),
+				'client_script'	=> $this->util->get_plugin_file_path('client/js/handler.image.js'),
+			),
+		);
+		foreach ( $handlers as $id => $props ) {
+			$controller->add($id, $props);
+		}
+	}
+	
+	/**
+	 * Matches image URIs
+	 * @param string $uri URI to match
+	 * @return bool TRUE if URI is image
+	 */
+	public function match_image($uri) {
+		return true;
 	}
 }
