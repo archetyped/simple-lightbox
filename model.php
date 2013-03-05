@@ -2,6 +2,7 @@
 
 require_once 'includes/class.base.php';
 require_once 'includes/class.themes.php';
+require_once 'includes/class.content_handlers.php';
 
 /**
  * Model (Core functionality)
@@ -44,6 +45,12 @@ class SLB_Lightbox extends SLB_Base {
 	 * @var SLB_Themes
 	 */
 	var $themes = null;
+	
+	/**
+	 * Content types
+	 * @var SLB_Content_Handlers
+	 */
+	var $handlers = null;
 	
 	/**
 	 * Value to identify activated links
@@ -378,6 +385,13 @@ class SLB_Lightbox extends SLB_Base {
 		if ( $g_props->enabled ) {
 			$g_props->base = ( is_scalar($group) ) ? trim(strval($group)) : '';
 		}
+		
+		//Initialize content handlers
+		if ( is_null($this->handlers) ) {
+			$this->handlers = new SLB_Content_Handlers($this);
+		}
+		
+		$hdls = $this->handlers->get();
 		
 		//Iterate through links & add lightbox if necessary
 		foreach ( $links as $link ) {
