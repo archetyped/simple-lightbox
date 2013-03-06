@@ -140,7 +140,7 @@ class SLB_Base_Object extends SLB_Base {
 	 * @return object Current instance
 	 */
 	protected function add_file($type, $handle, $src, $deps = array()) {
-		if ( !is_string($type) && !is_string($handle) && !is_string($src) ) {
+		if ( is_string($type) && is_string($handle) && is_string($src) ) {
 			//Validate dependencies
 			if ( !is_array($deps) ) {
 				$deps = array();
@@ -150,7 +150,7 @@ class SLB_Base_Object extends SLB_Base {
 				$this->files[$type] = array();
 			}
 			//Add file to group
-			$this->files[$type][$handle] = array($handle, $src, $deps); 
+			$this->files[$type][$handle] = array('handle' => $handle, 'path' => $src, 'deps' => $deps); 
 		}
 		return $this;
 	}

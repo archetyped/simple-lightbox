@@ -4,7 +4,7 @@ require_once 'class.base_object.php';
 /**
  * Content Handler
  * @package Simple Lightbox
- * @subpackage Content
+ * @subpackage Content Handler
  * @author Archetyped
  */
 class SLB_Content_Handler extends SLB_Base_Object {
@@ -105,9 +105,24 @@ class SLB_Content_Handler extends SLB_Base_Object {
 	/**
 	 * Retrieve client script
 	 * @see Base_Object::get_script()
-	 * @return array|null File properties
+	 * @param string $format (optional) Data format of return value
+	 * @return mixed Client script data (formatted according to $format parameter)
 	 */
-	public function get_client_script() {
-		return $this->get_script('client');
+	public function get_client_script($format = null) {
+		$s = $this->get_script('client');
+		switch ( $format ) {
+			case 'path':
+				$ret = $s['path'];
+				break;
+			case 'uri':
+				$ret = $this->util->normalize_path(WP_PLUGIN_URL, $s['path']);
+				break;
+			case 'object':
+				$ret = (object) $s;
+				break;
+			default:
+				$ret = $s;
+		}
+		return $ret;
 	}
 }

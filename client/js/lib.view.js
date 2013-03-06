@@ -153,12 +153,12 @@ var View = {
 	
 	init_components: function() {
 		this.collections = {
-			'viewers':	 		this.Viewer,
-			'items':			this.Content_Item,
+			'viewers':	 			this.Viewer,
+			'items':				this.Content_Item,
 			'content_handlers': 	this.Content_Handler,
-			'groups': 			this.Group,
-			'themes': 			this.Theme,
-			'template_tags': 	this.Template_Tag
+			'groups': 				this.Group,
+			'themes': 				this.Theme,
+			'template_tags': 		this.Template_Tag
 		};
 		
 		this.component_defaults = [
@@ -607,41 +607,25 @@ var View = {
 	
 	/**
 	 * Find matching content handler for item
-	 * @param Content_Item item Item to find type for
-	 * @return Content_Handler|null Matching content handler (NULL if no matching type found) 
+	 * @param Content_Item|string item Item to find handler for (or ID of Handler)
+	 * @return Content_Handler|null Matching content handler (NULL if no matching handler found) 
 	 */
 	get_content_handler: function(item) {
 		console.groupCollapsed('View.get_content_handler');
-		//Check for source URI
+		//Determine handler to retrieve
+		var type = ( this.util.is_type(item, this.Content_Item) ) ? item.get_attribute('type', '') : item.toString();
+		//Retrieve handler
 		var types = this.get_content_handlers();
-		//Iterate through types until match found
-		var pri = Object.keys(types).sort(function(a, b){return a - b;});
-		console.log('Type Priorities: %o', pri);
-		var g, type, match;
-		console.log('Iterating by priority');
-		for ( var p = 0; p < pri.length; p++ ) {
-			console.log('Priority: %o', pri[p]);
-			g = types[pri[p]];
-			console.log('Items in group: %o', g.length);
-			console.dir(g);
-			for ( var x = 0; x < g.length; x++ ) {
-				console.groupCollapsed('Checking Type: %o', g[x]);
-				type = g[x];
-				console.log('Checking Type Match: %o', type);
-				if ( type.match(item) ) {
-					console.info('Matching type found: %o', type.get_id());
-					console.groupEnd();
-					console.groupEnd();
-					return type;
-				}
-				console.groupEnd();
-			}
-		}
 		console.groupEnd();
-		return null;
+		return ( type in types ) ? types[type] : null;
 	},
 	
-	add_content_handler: function(id, attributes, priority) {
+	/**
+	 * Add Content Handler
+	 * @param string id Handler ID
+	 * @param obj attributes (optional) Handler properties/methods
+	 */
+	add_content_handler: function(id, attributes) {
 		console.groupCollapsed('View.add_content_handler');
 		//Validate
 		if ( !this.util.is_string(id) ) {
@@ -652,10 +636,6 @@ var View = {
 		if ( !this.util.is_obj(attributes, false) ) {
 			attributes = {};
 		}
-		if ( !this.util.is_int(priority) ) {
-			priority = 10;
-		}
-		console.log('Default values set\nID: %o \nAttr: %o \nPriority: %o', id, attributes, priority);
 		console.info('Saving content handler properties');
 		//Save
 		var types = this.get_components(this.Content_Handler);
@@ -664,10 +644,7 @@ var View = {
 			console.log('Init types');
 			types = {};
 		}
-		if ( !(priority in types) ) {
-			types[priority] = [];
-		}
-		types[priority].push(new this.Content_Handler(id, attributes));
+		types[id] = new this.Content_Handler(id, attributes);
 		console.log('Types: %o \nCollection: %o', types, this.get_components(this.Content_Handler));
 		console.groupEnd();
 	},
@@ -678,25 +655,16 @@ var View = {
 	 * @param obj attr Variable number of attribute objects to add handlera
 	 */
 	update_content_handler: function(id, attr) {
-		var model = this.get_theme_model(id);
-		var args = Array.prototype.slice.call(arguments);
-		if ( this.util.is_empty(model) ) {
-			model = this.add_model.apply(this, args);
-		} else {
-			//Process attributes
-			args.shift();
-			var attrs = [];
-			var t = this;
-			$.each(args, function(idx, arg) {
-				if ( t.util.is_obj(arg) ) {
-					attrs.push(arg);
-				}
-			});
-			//Merge attributes into model
-			attrs.unshift(model);
-			$.extend.apply($, attrs);
+		if ( !this.util.is_string(id) || !this.util.is_obj(attr) ) {
+			return false;
 		}
-		return model;
+		//Get existing handler
+		var h = this.get_content_handler(id);
+		if ( null == h ) {
+			return false;
+		}
+		//Add additional attributes
+		h.set_attributes(attr);
 	},
 	
 	/* Group */

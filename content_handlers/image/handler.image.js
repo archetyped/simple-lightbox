@@ -1,4 +1,4 @@
-function($) {
+(function($) {
 SLB.View.update_content_handler('image', {
 	render: function(item) {
 		var dfr = $.Deferred();

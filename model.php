@@ -452,7 +452,7 @@ class SLB_Lightbox extends SLB_Base {
 			
 			//Get handler match
 			else {
-				$handler = $this->handlers->get_match($uri->source);
+				$handler = $this->handlers->match($uri->source);
 				if ( !!$handler ) {
 					$type = $handler->get_id();
 				}

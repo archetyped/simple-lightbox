@@ -5,7 +5,7 @@ require_once 'class.content_handler.php';
 /**
  * Content Handler Collection
  * @package Simple Lightbox
- * @subpackage Content
+ * @subpackage Content Handler
  * @author Archetyped
  */
 class SLB_Content_Handlers extends SLB_Collection_Controller {
@@ -15,11 +15,17 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 	
 	public $hook_prefix = 'content_handlers';
 	
+	/* Properties */
+	
+	protected $request_matches = array();
+	
 	/* Initialization */
 	
 	protected function _hooks() {
 		parent::_hooks();
 		$this->util->add_action('init', $this->m('init_defaults'));
+		
+		add_action('wp_footer', $this->m('client_output'), 11);
 	}
 	
 	/* Collection Management */
@@ -43,9 +49,14 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 	 * @param string $uri URI to find match for
 	 * @return SLB_Content_Handler Matching handler (NULL if no handler matched)
 	 */
-	public function get_match($uri) {
+	public function match($uri) {
 		foreach ( $this->get() as $handler ) {
 			if ( $handler->match($uri) ) {
+				//Save match
+				$hid = $handler->get_id();
+				if ( !isset($this->request_matches[$hid]) ) {
+					$this->request_matches[$hid] = $handler;
+				}
 				return $handler;
 			}
 		}
@@ -77,5 +88,28 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 	 */
 	public function match_image($uri) {
 		return ( $this->util->has_file_extension($uri, array('jpg', 'jpeg', 'jpe', 'jfif', 'jif', 'gif', 'png')) ) ? true : false;
+	}
+	
+	/* Output */
+	
+	/**
+	 * Client output
+	 */
+	public function client_output() {
+		//Stop if not enabled
+		if ( !$this->has_parent() || !$this->get_parent()->is_enabled() ) {
+			return;
+		}
+		$out = array();
+		$out[] = '<!-- SLB-HDL -->' . PHP_EOL;
+		//Load matched handlers
+		foreach ( $this->request_matches as $handler ) {
+			//Define
+			$out[] = $this->util->build_script_element( $this->util->call_client_method('View.add_content_handler',  $handler->get_id()), sprintf('add_handler_%s', $handler->get_id()) );
+			//Load external file
+			$out[] = $this->util->build_ext_script_element( $handler->get_client_script('uri') );
+		}
+		$out[] = '<!-- /SLB-HDL -->' . PHP_EOL;
+		echo implode('', $out);
 	}
 }

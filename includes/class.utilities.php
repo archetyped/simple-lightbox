@@ -1594,7 +1594,7 @@ class SLB_Utilities {
 	 */
 	function build_ext_script_element($url = '') {
 		$attributes = array('src' => $url, 'type' => 'text/javascript');
-		return $this->build_html_element(array('tag' => 'script', 'attributes' => $attributes));
+		return $this->build_html_element(array('tag' => 'script', 'attributes' => $attributes)) . PHP_EOL;
 	}
 	
 	/**
