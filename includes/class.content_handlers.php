@@ -62,7 +62,7 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 		$handlers = array (
 			'image'		=> array (
 				'match'			=> $this->m('match_image'),
-				'client_script'	=> $this->util->get_plugin_file_path('client/js/handler.image.js'),
+				'client_script'	=> $this->util->get_plugin_file_path('content_handlers/image/handler.image.js'),
 			),
 		);
 		foreach ( $handlers as $id => $props ) {
