@@ -8,6 +8,14 @@ require_once 'class.base.php';
  * @author Archetyped
  */
 class SLB_Theme extends SLB_Base {
+	/* Configuration */
+	
+	/**
+	 * @var string
+	 * @see Base::$mode
+	 */
+	protected $mode = 'object';
+	
 	/*-** Properties **-*/
 	
 	/**
@@ -44,12 +52,6 @@ class SLB_Theme extends SLB_Base {
 	 * @var array Properties that can be inherited from parent
 	 */
 	private $_uses_parent = array();
-	
-	/**
-	 * @var string Class mode
-	 * @see SLB_Base::$mode
-	 */
-	var $mode = 'object';
 	
 	/*-** Methods **-*/
 	
@@ -320,6 +322,10 @@ class SLB_Theme extends SLB_Base {
  * @author Archetyped
  */
 class SLB_Themes extends SLB_Base {
+	/* Configuration */
+	
+	protected $mode = 'full';
+	
 	/* Properties */
 	
 	private $_parent = null;
@@ -344,16 +350,15 @@ class SLB_Themes extends SLB_Base {
 		
 	/* Methods */
 
-	function __construct($parent = null) {
+	public function __construct($parent = null) {
 		$this->set_parent($parent);
 		parent::__construct();
-		$this->init();
 	}
 	
 	/* Initialization */
 	
-	function register_hooks() {
-		parent::register_hooks();
+	protected function _hooks() {
+		parent::_hooks();
 		//Register themes
 		$this->util->add_action('init_themes', $this->m('init_defaults'), 1);
 		
@@ -361,10 +366,11 @@ class SLB_Themes extends SLB_Base {
 		add_action('wp_footer', $this->m('client_output'), 11);
 	}
 	
-	function init_options() {
-		$options_config = array (
+	protected function _options() {
+		$opts = array (
 			'items'	=> array (
 				'theme_default'		=> array (
+					'title'		=> __('Theme', 'simple-lightbox'),
 					'default' 	=> $this->get_default_id(),
 					'group' 	=> array('ui', 0),
 					'parent' 	=> 'option_select',
@@ -374,7 +380,7 @@ class SLB_Themes extends SLB_Base {
 			)
 		);
 		
-		parent::init_options($options_config);
+		parent::_options($opts);
 	}
 	
 	/**

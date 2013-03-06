@@ -45,7 +45,7 @@ var View = {
 	
 	viewers: {},
 	items: [],
-	content_types: {},
+	content_handlers: {},
 	groups: {},
 	template_tags: {},
 	
@@ -139,12 +139,12 @@ var View = {
 	
 	init_components: function() {
 		this.collections = {
-			'viewers':	 		this.Viewer,
-			'items':			this.Content_Item,
-			'content_types': 	this.Content_Type,
-			'groups': 			this.Group,
-			'themes': 			this.Theme,
-			'template_tags': 	this.Template_Tag
+			'viewers':	 			this.Viewer,
+			'items':				this.Content_Item,
+			'content_handlers': 	this.Content_Handler,
+			'groups': 				this.Group,
+			'themes': 				this.Theme,
+			'template_tags': 		this.Template_Tag
 		};
 		
 		this.component_defaults = [
@@ -529,36 +529,31 @@ var View = {
 		return ret;
 	},
 	
-	/* Content Type */
+	/* Content Handler */
 	
-	get_content_types: function() {
-		return this.get_components(this.Content_Type);
+	get_content_handlers: function() {
+		return this.get_components(this.Content_Handler);
 	},
 	
 	/**
-	 * Find matching content type for item
-	 * @param Content_Item item Item to find type for
-	 * @return Content_Type|null Matching content type (NULL if no matching type found) 
+	 * Find matching content handler for item
+	 * @param Content_Item|string item Item to find handler for (or ID of Handler)
+	 * @return Content_Handler|null Matching content handler (NULL if no matching handler found) 
 	 */
-	get_content_type: function(item) {
-		//Check for source URI
-		var types = this.get_content_types();
-		//Iterate through types until match found
-		var pri = Object.keys(types).sort(function(a, b){return a - b;});
-		var g, type, match;
-		for ( var p = 0; p < pri.length; p++ ) {
-			g = types[pri[p]];
-			for ( var x = 0; x < g.length; x++ ) {
-				type = g[x];
-				if ( type.match(item) ) {
-					return type;
-				}
-			}
-		}
-		return null;
+	get_content_handler: function(item) {
+		//Determine handler to retrieve
+		var type = ( this.util.is_type(item, this.Content_Item) ) ? item.get_attribute('type', '') : item.toString();
+		//Retrieve handler
+		var types = this.get_content_handlers();
+		return ( type in types ) ? types[type] : null;
 	},
 	
-	add_content_type: function(id, attributes, priority) {
+	/**
+	 * Add Content Handler
+	 * @param string id Handler ID
+	 * @param obj attributes (optional) Handler properties/methods
+	 */
+	add_content_handler: function(id, attributes) {
 		//Validate
 		if ( !this.util.is_string(id) ) {
 			return false;
@@ -566,18 +561,30 @@ var View = {
 		if ( !this.util.is_obj(attributes, false) ) {
 			attributes = {};
 		}
-		if ( !this.util.is_int(priority) ) {
-			priority = 10;
-		}
 		//Save
-		var types = this.get_components(this.Content_Type);
+		var types = this.get_components(this.Content_Handler);
 		if ( !this.util.is_obj(types, false) ) {
 			types = {};
 		}
-		if ( !(priority in types) ) {
-			types[priority] = [];
+		types[id] = new this.Content_Handler(id, attributes);
+	},
+	
+	/**
+	 * Update content handler
+	 * @param string id Handler to update
+	 * @param obj attr Variable number of attribute objects to add handlera
+	 */
+	update_content_handler: function(id, attr) {
+		if ( !this.util.is_string(id) || !this.util.is_obj(attr) ) {
+			return false;
 		}
-		types[priority].push(new this.Content_Type(id, attributes));
+		//Get existing handler
+		var h = this.get_content_handler(id);
+		if ( null == h ) {
+			return false;
+		}
+		//Add additional attributes
+		h.set_attributes(attr);
 	},
 	
 	/* Group */
@@ -2720,14 +2727,14 @@ var Group = {
 View.Group = Component.extend(Group);
 
 /**
- * Content type
+ * Content Handler
  * @param obj options Init options
  */
-var Content_Type = {
+var Content_Handler = {
 	
 	/* Configuration */
 	
-	_slug: 'content_type',
+	_slug: 'content_handler',
 	_refs: {
 		'item': 'Content_Item'
 	},
@@ -2791,7 +2798,7 @@ var Content_Type = {
 	/* Evaluation */
 		
 	/**
-	 * Check if item matches content type
+	 * Check if item matches content handler
 	 * @param object item Content_Item instance to check for type match
 	 * @return bool TRUE if type matches, FALSE otherwise 
 	 */
@@ -2849,7 +2856,7 @@ var Content_Type = {
 	}
 };
 
-View.Content_Type = Component.extend(Content_Type);
+View.Content_Handler = Component.extend(Content_Handler);
 
 /**
  * Content Item
@@ -2863,7 +2870,7 @@ var Content_Item = {
 	_refs: {
 		'viewer': 'Viewer',
 		'group': 'Group',
-		'type': 'Content_Type'
+		'type': 'Content_Handler'
 	},
 	_containers: ['group'],
 	
@@ -2948,11 +2955,11 @@ var Content_Item = {
 	
 	/**
 	 * Retrieve item output
-	 * Output generated based on content type if not previously generated
+	 * Output generated based on content handler if not previously generated
 	 * @uses get_attribute() to retrieve cached output
 	 * @uses set_attribute() to cache generated output
 	 * @uses get_type() to retrieve item type
-	 * @uses Content_Type.render() to generate item output
+	 * @uses Content_Handler.render() to generate item output
 	 * @return obj jQuery.Promise that is resolved when output is retrieved
 	 */
 	get_output: function() {
@@ -3159,34 +3166,34 @@ var Content_Item = {
 		this.group = ( this.util.is_type(g, View.Group) ) ? g : false;
 	},
 	
-	/* Content Type */
+	/* Content Handler */
 	
 	/**
 	 * Retrieve item type
-	 * @uses get_component() to retrieve saved reference to Content_Type instance
-	 * @uses View.get_content_type() to determine item content type (if necessary)
-	 * @return Content_Type|null Content Type of item (NULL no valid type exists)
+	 * @uses get_component() to retrieve saved reference to Content_Handler instance
+	 * @uses View.get_content_handler() to determine item content handler (if necessary)
+	 * @return Content_Handler|null Content Handler of item (NULL no valid type exists)
 	 */
 	get_type: function() {
 		var t = this.get_component('type', false, false, false);
 		if ( !t ) {
-			t = this.set_type(this.get_parent().get_content_type(this));
+			t = this.set_type(this.get_parent().get_content_handler(this));
 		}
 		return t;
 	},
 	
 	/**
-	 * Save content type reference
+	 * Save content handler reference
 	 * @uses set_component() to save type reference
-	 * @return Content_Type|null Saved content type (NULL if invalid)
+	 * @return Content_Handler|null Saved content handler (NULL if invalid)
 	 */
 	set_type: function(type) {
 		return this.set_component('type', type);
 	},
 	
 	/**
-	 * Check if content type exists for item
-	 * @return bool TRUE if content type exists, FALSE otherwise
+	 * Check if content handler exists for item
+	 * @return bool TRUE if content handler exists, FALSE otherwise
 	 */
 	has_type: function() {
 		var ret = !this.util.is_empty(this.get_type());
@@ -3202,7 +3209,7 @@ var Content_Item = {
 	 * @param obj options (optional) Options
 	 */
 	show: function(options) {
-		//Validate content type
+		//Validate content handler
 		if ( !this.has_type() ) {
 			return false;
 		}
@@ -4491,42 +4498,6 @@ View = SLB.View;
 View.update_refs();
 
 /*-** Registration **-*/
-
-/* Content Types */
-View.add_content_type('image', {
-	match: /^.+\.(jpg|jpeg|jpe|jfif|jif|gif|png)$/i,
-	render: function(item) {
-		var dfr = $.Deferred();
-		//Create image object
-		var img = new Image();
-		var type = this;
-		//Set load event
-		var handler = function(e) {
-			//Save Data
-			item.set_data(this);
-			//Set attributes
-			var dim = {'width': this.width, 'height': this.height};
-			item.set_attribute('dimensions', dim);
-			//Build output
-			var out = $('<img />', {'src': item.get_uri()});
-			//Resolve deferred
-			dfr.resolve(out);
-		};
-		
-		//Attach event handler
-		if ( img.addEventListener ) {
-			img.addEventListener('load', handler, false);
-		} else if ( img.attachEvent ) {
-			img.attachEvent('onload', handler);
-		} else {
-			handler(img);
-		}
-		//Load image
-		img.src = item.get_uri();
-		//Return promise
-		return dfr.promise();
-	}
-});
 
 /* Template Tags */
 /**

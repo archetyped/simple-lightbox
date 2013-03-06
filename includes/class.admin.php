@@ -9,6 +9,27 @@ require_once 'class.base.php';
  * @author Archetyped
  */
 class SLB_Admin extends SLB_Base {
+	/* Configuration */
+	
+	protected $mode = 'sub';
+
+	/* Files */
+	
+	var $scripts = array (
+		'admin'	=> array (
+			'file'		=> 'client/js/lib.admin.js',
+			'deps'		=> array('[core]'),
+			'context'	=> array( 'admin' ),
+		),
+	);
+	
+	var $styles = array (
+		'admin'	=> array (
+			'file'		=> 'client/css/admin.css',
+			'context'	=> array( 'admin' )
+		)
+	);
+
 	/* Properties */
 	
 	/**
@@ -64,17 +85,11 @@ class SLB_Admin extends SLB_Base {
 	 */
 	var $resets = array();
 
-	/* Client */
-		
-	var $styles = array(
-		'admin'		=> array (
-			'file'		=> 'css/admin.css',
-			'context'	=> array('admin')
-		)
-	);
-	
 	/* Constructor */
 	
+	/**
+	 * TODO Determine if $parent needed
+	 */	
 	function __construct(&$parent) {
 		parent::__construct();
 		//Set parent
@@ -84,8 +99,8 @@ class SLB_Admin extends SLB_Base {
 	
 	/* Init */
 	
-	function register_hooks() {
-		parent::register_hooks();
+	protected function _hooks() {
+		parent::_hooks();
 		//Init
 		add_action('admin_menu', $this->m('init_menus'), 11);
 		
@@ -295,6 +310,7 @@ class SLB_Admin extends SLB_Base {
 	 */
 	function add_page($id, $parent, $labels, $options = null, $callback = null, $capability = null) {
 		$args = func_get_args();
+		wp_enqueue_script('postbox');
 		return $this->add_view('page', $id, $args);
 	}
 	
@@ -1065,7 +1081,7 @@ class SLB_Admin_View extends SLB_Base {
 	 */
 	function get_parent() {
 		$parent = $this->parent;
-		return ( $this->is_parent_custom() ) ? add_prefix($parent) : $parent;
+		return ( $this->is_parent_custom() ) ? $this->add_prefix($parent) : $parent;
 	}
 	
 	/**
@@ -1123,8 +1139,10 @@ class SLB_Admin_View extends SLB_Base {
 				$file = $page_hooks[$parent];
 		}
 		
-		if ( empty($format) )
-			$format = '%1$s?page=%2$s';
+		if ( empty($format) ) {
+			$delim = ( strpos($file, '?') === false ) ? '?' : '&amp;';
+			$format = '%1$s' . $delim . 'page=%2$s';
+		}
 		$uri = sprintf($format, $file, $this->get_id());
 
 		return $uri;
@@ -1169,7 +1187,7 @@ class SLB_Admin_View extends SLB_Base {
 	}
 	
 	function is_options_valid() {
-		return ( is_object($this->get_options()) && $this->util->is_a($this->get_options(), $this->get_options_class()) ) ? true : false;
+		return ( is_object($this->get_options()) && $this->util->is_a($this->get_options(), $this->util->get_class('Options')) ) ? true : false;
 	}
 	
 	/* Options */
@@ -1201,10 +1219,31 @@ class SLB_Admin_View extends SLB_Base {
 		<?php
 	}
 	
-	function options_build_group_pre(&$opts, $group) {
-		echo '<h4 class="subhead">' . $group->title . '</h4>';
+	/**
+	 * Builds option groups output
+	 * @param SLB_Options $options Options instance
+	 * @param array $groups Groups to build
+	 */
+	function options_build_groups($options, $groups) {
+		//Add meta box for each group
+		$screen = get_current_screen();
+		foreach ( $groups as $gid ) {
+			$g = $options->get_group($gid);
+			if ( !count($options->get_items($gid)) ) {
+				continue;
+			}
+			add_meta_box($gid, $g->title, $this->m('options_build_group'), $screen, 'normal', 'default', array('options' => $options, 'group' => $gid));
+		}
+		//Build options
+		do_meta_boxes($screen, 'normal', null);
 	}
 	
+	function options_build_group($obj, $args) {
+		$args = $args['args'];
+		$group = $args['group'];
+		$opts = $args['options'];
+		$opts->build_group($group);
+	}
 	
 	function show_options($show_submit = true) {
 		//Build options output
@@ -1222,24 +1261,29 @@ class SLB_Admin_View extends SLB_Base {
 			'action'	=> array (
 				'build_pre'				=> array( $this->m('options_build_pre') ),
 				'build_post'			=> array ( $this->m('options_build_post') ),
-				'build_group_pre'		=> array( $this->m('options_build_group_pre'), 10, 2 )
 			)
 		);
-		//Add actions
+		//Add hooks
 		foreach ( $hooks as $type => $hook ) {
+			$m = 'add_' . $type;
 			foreach ( $hook as $tag => $args ) {
 				array_unshift($args, $tag);
-				$m = 'add_' . $type;
-				call_user_func_array($this->util->m($opts->util, $m), $args);
+				call_user_func_array($opts->util->m($m), $args);
 			}
 		}
-		//Build options
-		$opts->build($this->option_args);
-		//Remove actions
+		?>
+		<div class="metabox-holder">
+		<?php
+		//Build output
+		$opts->build(array('build_groups' => $this->m('options_build_groups')));
+		?>
+		</div>
+		<?php
+		//Remove hooks
 		foreach ( $hooks as $type => $hook ) {
+			$m = 'remove_' . $type;
 			foreach ( $hook as $tag => $args ) {
-				$m = 'remove_' . $type;
-				call_user_func($this->util->m($opts->util, $m), $tag, $args[0]);
+				call_user_func($opts->util->m($m), $tag, $args[0]);
 			}
 		}
 	}
