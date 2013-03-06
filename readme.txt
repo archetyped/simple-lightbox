@@ -2,8 +2,8 @@
 Contributors: Archetyped
 Donate link: http://mycharitywater.org/archetyped-2012-fall
 Tags: lightbox, gallery, photography, images, theme, template, style
-Requires at least: 3.5
-Tested up to: 3.5
+Requires at least: 3.5.1
+Tested up to: 3.5.1
 Stable tag: trunk
 
 The highly customizable lightbox for WordPress
@@ -14,6 +14,10 @@ Simple Lightbox is a very simple and customizable lightbox that is easy to add t
 ### BETA NOTES
 The current release is a beta version.  Please test and [provide feedback on GitHub](https://github.com/archetyped/simple-lightbox/issues).
 Main changes
+
+#### Beta 7
+* Add: Content Handler API
+* Optimize: Media caching
 
 #### Beta 6
 * Update: Use hardcoded `simple-lightbox` text domain value
