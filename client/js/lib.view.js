@@ -45,7 +45,7 @@ var View = {
 	
 	viewers: {},
 	items: [],
-	content_types: {},
+	content_handlers: {},
 	groups: {},
 	template_tags: {},
 	
@@ -155,7 +155,7 @@ var View = {
 		this.collections = {
 			'viewers':	 		this.Viewer,
 			'items':			this.Content_Item,
-			'content_types': 	this.Content_Type,
+			'content_handlers': 	this.Content_Handler,
 			'groups': 			this.Group,
 			'themes': 			this.Theme,
 			'template_tags': 	this.Template_Tag
@@ -599,21 +599,21 @@ var View = {
 		return ret;
 	},
 	
-	/* Content Type */
+	/* Content Handler */
 	
-	get_content_types: function() {
-		return this.get_components(this.Content_Type);
+	get_content_handlers: function() {
+		return this.get_components(this.Content_Handler);
 	},
 	
 	/**
-	 * Find matching content type for item
+	 * Find matching content handler for item
 	 * @param Content_Item item Item to find type for
-	 * @return Content_Type|null Matching content type (NULL if no matching type found) 
+	 * @return Content_Handler|null Matching content handler (NULL if no matching type found) 
 	 */
-	get_content_type: function(item) {
-		console.groupCollapsed('View.get_content_type');
+	get_content_handler: function(item) {
+		console.groupCollapsed('View.get_content_handler');
 		//Check for source URI
-		var types = this.get_content_types();
+		var types = this.get_content_handlers();
 		//Iterate through types until match found
 		var pri = Object.keys(types).sort(function(a, b){return a - b;});
 		console.log('Type Priorities: %o', pri);
@@ -641,8 +641,8 @@ var View = {
 		return null;
 	},
 	
-	add_content_type: function(id, attributes, priority) {
-		console.groupCollapsed('View.add_content_type');
+	add_content_handler: function(id, attributes, priority) {
+		console.groupCollapsed('View.add_content_handler');
 		//Validate
 		if ( !this.util.is_string(id) ) {
 			console.error('ID not set');
@@ -656,9 +656,9 @@ var View = {
 			priority = 10;
 		}
 		console.log('Default values set\nID: %o \nAttr: %o \nPriority: %o', id, attributes, priority);
-		console.info('Saving content type properties');
+		console.info('Saving content handler properties');
 		//Save
-		var types = this.get_components(this.Content_Type);
+		var types = this.get_components(this.Content_Handler);
 		console.log(types);
 		if ( !this.util.is_obj(types, false) ) {
 			console.log('Init types');
@@ -667,9 +667,36 @@ var View = {
 		if ( !(priority in types) ) {
 			types[priority] = [];
 		}
-		types[priority].push(new this.Content_Type(id, attributes));
-		console.log('Types: %o \nCollection: %o', types, this.get_components(this.Content_Type));
+		types[priority].push(new this.Content_Handler(id, attributes));
+		console.log('Types: %o \nCollection: %o', types, this.get_components(this.Content_Handler));
 		console.groupEnd();
+	},
+	
+	/**
+	 * Update content handler
+	 * @param string id Handler to update
+	 * @param obj attr Variable number of attribute objects to add handlera
+	 */
+	update_content_handler: function(id, attr) {
+		var model = this.get_theme_model(id);
+		var args = Array.prototype.slice.call(arguments);
+		if ( this.util.is_empty(model) ) {
+			model = this.add_model.apply(this, args);
+		} else {
+			//Process attributes
+			args.shift();
+			var attrs = [];
+			var t = this;
+			$.each(args, function(idx, arg) {
+				if ( t.util.is_obj(arg) ) {
+					attrs.push(arg);
+				}
+			});
+			//Merge attributes into model
+			attrs.unshift(model);
+			$.extend.apply($, attrs);
+		}
+		return model;
 	},
 	
 	/* Group */
@@ -3040,14 +3067,14 @@ var Group = {
 View.Group = Component.extend(Group);
 
 /**
- * Content type
+ * Content Handler
  * @param obj options Init options
  */
-var Content_Type = {
+var Content_Handler = {
 	
 	/* Configuration */
 	
-	_slug: 'content_type',
+	_slug: 'content_handler',
 	_refs: {
 		'item': 'Content_Item'
 	},
@@ -3111,12 +3138,12 @@ var Content_Type = {
 	/* Evaluation */
 		
 	/**
-	 * Check if item matches content type
+	 * Check if item matches content handler
 	 * @param object item Content_Item instance to check for type match
 	 * @return bool TRUE if type matches, FALSE otherwise 
 	 */
 	match: function(item) {
-		console.groupCollapsed('Content_Type.match');
+		console.groupCollapsed('Content_Handler.match');
 		//Validate
 		var attr = 'match';
 		var m = this.get_attribute(attr);
@@ -3158,7 +3185,7 @@ var Content_Type = {
 	 * @return obj jQuery.Promise that is resolved when item is rendered
 	 */
 	render: function(item) {
-		console.groupCollapsed('Content_Type.render');
+		console.groupCollapsed('Content_Handler.render');
 		var dfr = $.Deferred();
 		//Validate
 		var ret = this.call_attribute('render', item);
@@ -3180,7 +3207,7 @@ var Content_Type = {
 	}
 };
 
-View.Content_Type = Component.extend(Content_Type);
+View.Content_Handler = Component.extend(Content_Handler);
 
 /**
  * Content Item
@@ -3194,7 +3221,7 @@ var Content_Item = {
 	_refs: {
 		'viewer': 'Viewer',
 		'group': 'Group',
-		'type': 'Content_Type'
+		'type': 'Content_Handler'
 	},
 	_containers: ['group'],
 	
@@ -3287,11 +3314,11 @@ var Content_Item = {
 	
 	/**
 	 * Retrieve item output
-	 * Output generated based on content type if not previously generated
+	 * Output generated based on content handler if not previously generated
 	 * @uses get_attribute() to retrieve cached output
 	 * @uses set_attribute() to cache generated output
 	 * @uses get_type() to retrieve item type
-	 * @uses Content_Type.render() to generate item output
+	 * @uses Content_Handler.render() to generate item output
 	 * @return obj jQuery.Promise that is resolved when output is retrieved
 	 */
 	get_output: function() {
@@ -3519,13 +3546,13 @@ var Content_Item = {
 		console.groupEnd();
 	},
 	
-	/* Content Type */
+	/* Content Handler */
 	
 	/**
 	 * Retrieve item type
-	 * @uses get_component() to retrieve saved reference to Content_Type instance
-	 * @uses View.get_content_type() to determine item content type (if necessary)
-	 * @return Content_Type|null Content Type of item (NULL no valid type exists)
+	 * @uses get_component() to retrieve saved reference to Content_Handler instance
+	 * @uses View.get_content_handler() to determine item content handler (if necessary)
+	 * @return Content_Handler|null Content Handler of item (NULL no valid type exists)
 	 */
 	get_type: function() {
 		console.groupCollapsed('Item.get_type');
@@ -3533,7 +3560,7 @@ var Content_Item = {
 		var t = this.get_component('type', false, false, false);
 		if ( !t ) {
 			console.info('No type reference, getting type from Controller');
-			t = this.set_type(this.get_parent().get_content_type(this));
+			t = this.set_type(this.get_parent().get_content_handler(this));
 		}
 		console.info('Type: %o', t);
 		console.groupEnd();
@@ -3541,17 +3568,17 @@ var Content_Item = {
 	},
 	
 	/**
-	 * Save content type reference
+	 * Save content handler reference
 	 * @uses set_component() to save type reference
-	 * @return Content_Type|null Saved content type (NULL if invalid)
+	 * @return Content_Handler|null Saved content handler (NULL if invalid)
 	 */
 	set_type: function(type) {
 		return this.set_component('type', type);
 	},
 	
 	/**
-	 * Check if content type exists for item
-	 * @return bool TRUE if content type exists, FALSE otherwise
+	 * Check if content handler exists for item
+	 * @return bool TRUE if content handler exists, FALSE otherwise
 	 */
 	has_type: function() {
 		console.groupCollapsed('Item.has_type');
@@ -3570,7 +3597,7 @@ var Content_Item = {
 	 */
 	show: function(options) {
 		console.group('Item.show');
-		//Validate content type
+		//Validate content handler
 		if ( !this.has_type() ) {
 			console.warn('Item has invalid type');
 			console.groupEnd();
@@ -4966,46 +4993,6 @@ console.info('Updating references');
 View.update_refs();
 
 /*-** Registration **-*/
-
-/* Content Types */
-console.info('Adding default content types');
-View.add_content_type('image', {
-	match: /^.+\.(jpg|jpeg|jpe|jfif|jif|gif|png)$/i,
-	render: function(item) {
-		var dfr = $.Deferred();
-		//Create image object
-		var img = new Image();
-		var type = this;
-		//Set load event
-		var handler = function(e) {
-			console.groupCollapsed('Content_Type.image.load (Callback)');
-			//Save Data
-			item.set_data(this);
-			//Set attributes
-			var dim = {'width': this.width, 'height': this.height};
-			console.info('Setting dimensions', dim);
-			item.set_attribute('dimensions', dim);
-			//Build output
-			var out = $('<img />', {'src': item.get_uri()});
-			//Resolve deferred
-			dfr.resolve(out);
-			console.groupEnd();
-		};
-		
-		//Attach event handler
-		if ( img.addEventListener ) {
-			img.addEventListener('load', handler, false);
-		} else if ( img.attachEvent ) {
-			img.attachEvent('onload', handler);
-		} else {
-			handler(img);
-		}
-		//Load image
-		img.src = item.get_uri();
-		//Return promise
-		return dfr.promise();
-	}
-});
 
 /* Template Tags */
 console.info('Adding template tag handlers');
