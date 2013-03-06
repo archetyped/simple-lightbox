@@ -1364,7 +1364,7 @@ var Component = {
 			console.log('Attribute objects: %o', attrs);
 			//Merge attributes
 			this.attributes = $.extend.apply(null, attrs);
-			console.groupEnd()
+			console.groupEnd();
 		}
 	},
 	

@@ -730,13 +730,18 @@ class SLB_Lightbox extends SLB_Base {
 		}
 		if ( !$this->media_item_cached($uri->base) ) {
 			//Set properties
-			$i = array('type' => $type, 'source' => $uri->source, 'internal' => $internal, 'id' => null);
+			$i = array('type' => $type, 'source' => $uri->source, 'internal' => $internal, 'id' => null, '_entries' => array());
 			//ID
 			if ( is_numeric($id) && !!$id ) {
 				$i['id'] = absint($id);
 			}
 			//Cache media item
 			$this->media_items_raw[$uri->base] = (object) $i;
+		}
+		//Add URI variants
+		$entries =& $this->media_items_raw[$uri->base]->_entries;
+		if ( !in_array($uri->raw, $entries) ) {
+			$entries[] = $uri->raw;
 		}
 	}
 	
