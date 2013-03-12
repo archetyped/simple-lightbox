@@ -148,7 +148,7 @@ class SLB_Base_Collection extends SLB_Base {
 	 * @param mixed $item Item to add to collection
 	 * @return Current instance
 	 */
-	public function add($item) {
+	public function add($item, $meta = null) {
 		$this->init();
 		//Validate
 		if ( $this->item_valid($item) ) {
@@ -156,15 +156,20 @@ class SLB_Base_Collection extends SLB_Base {
 			$key = $this->get_key($item);
 			if ( !$key ) {
 				$this->items[] = $item;
+				$key = key($this->items);
 			} else {
 				$this->items[$key] = $item;
+			}
+			//Add metadata
+			if ( !!$key && is_array($meta) ) {
+				$this->add_meta($key, $meta);
 			}
 		}
 		return $this;
 	}
 	
 	/**
-	 * Remove item(s) from collection
+	 * Remove item from collection
 	 * @param int|string $item Key of item to remove
 	 * @return Current instance 
 	 */
@@ -240,7 +245,7 @@ class SLB_Base_Collection extends SLB_Base {
 			//Prepare metadata
 			$meta = ( is_string($meta_key) ) ? array($meta_key => $meta_value) : $meta_key;
 			//Reset existing meta (if necessary)
-			if ( is_array($meta_key) ) {
+			if ( is_array($meta_key) && func_num_args() > 2) {
 				$reset = func_get_arg(2);
 			}
 			if ( !!$reset ) {
