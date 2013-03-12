@@ -205,28 +205,60 @@ class SLB_Base_Collection extends SLB_Base {
 	 * @param string|int $item (optional) ID of item to retrieve
 	 * @return object|array Specified item(s)
 	 */
-	public function get($item = null) {
+	public function get($args = null) {
 		$this->init();
-		$ret = array();
-		if ( func_num_args() > 0 ) {
-			$single = false;
-			if ( !is_array($item) ) {
-				$single = true;
-				$item = array($item);
+		//Parse args
+		$args_default = array(
+			'orderby'		=> null,
+			'order'			=> 'DESC',
+			'include'		=> array(),
+			'exclude'		=> array(),
+		);
+		$r = wp_parse_args($args, $args_default);
+		
+		$items = $this->items;
+		
+		/* Sort */
+		if ( !is_null($r['orderby']) ) {
+			//Validate
+			if ( !is_array($r['orderby']) ) {
+				$r['orderby'] = array('item' => $r['orderby']);
 			}
-			foreach ( $item as $i ) {
-				if ( $this->key_valid($i) ) {
-					$ret[] = $this->items[$i];
+			//Prep
+			$metas = ( isset($r['orderby']['meta']) ) ? $this->items_meta : array();
+			//Sort
+			foreach ( $r['orderby'] as $stype => $sval ) {
+				/* Meta sorting */
+				if ( 'meta' == $stype ) {
+					//Build sorting buckets
+					$buckets = array();
+					foreach ( $metas as $item => $meta ) {
+						if ( !isset($meta[$sval]) ) {
+							continue;
+						}
+						//Create bucket
+						$idx = $meta[$sval];
+						if ( !isset($buckets[ $idx ]) ) {
+							$buckets[ $idx ] = array();
+						}
+						//Add item to bucket
+						$buckets[ $idx ][] = $item;
+					}
+					//Sort buckets
+					ksort($buckets, SORT_NUMERIC);
+					//Merge buckets
+					$pool = array();
+					foreach ( $buckets as $bucket ) {
+						$pool = array_merge($pool, $bucket);
+					}
+					//Fill with items
+					$items = array_merge( array_fill_keys($pool, null), $items);
 				}
 			}
-			//Unwrap single item
-			if ( $single ) {
-				$ret = ( 1 == count($ret) ) ? $ret[0] : null;
-			}
-		} else {
-			$ret = $this->items;
+			//Clear workers
+			unset($stype, $sval, $buckets, $pool, $item, $metas, $meta, $idx);
 		}
-		return $ret;
+		return $items;
 	}
 	
 	/* Metadata */
