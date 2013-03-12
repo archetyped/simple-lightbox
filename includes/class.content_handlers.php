@@ -15,6 +15,10 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 	
 	public $hook_prefix = 'content_handlers';
 	
+	protected $key_prop = 'get_id';
+	
+	protected $key_call = true;
+	
 	/* Properties */
 	
 	protected $request_matches = array();
@@ -34,14 +38,25 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 	 * Add content type handler
 	 * Accepts properties to create new handler OR previously-initialized handler instance
 	 * @param string $id Handler ID
-	 * @param array $props (optional) Handler properties
+	 * @param array $props Handler properties
+	 * @return object Added handler
 	 */
-	public function add($id, $props = array()) {
-		$handler = ( is_string($id) ) ? new $this->item_type($id, $props) : $id;
-		if ( $handler instanceof $this->item_type ) {
-			//Add handler to collection
-			parent::add($handler);
+	public function add($id, $props = array(), $priority = 10) {
+		if ( is_string($id) ) {
+			//Initialize new handler
+			$handler = new $this->item_type($id, $props);
+		} else {
+			//Remap parameters
+			$handler = func_get_arg(0);
+			if ( func_num_args() == 2 ) {
+				$priority = func_get_arg(1);
+			}
 		}
+		if ( !is_int($priority) ) {
+			$priority = 10;
+		}
+		//Add to collection
+		parent::add($handler, array('priority' => $priority));
 	}
 	
 	/**
