@@ -59,6 +59,37 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 		parent::add($handler, array('priority' => $priority));
 	}
 	
+	public function get() {
+		//Build priority buckets
+		$items = parent::get();
+		$metas = $this->items_meta;
+		$key = 'priority';
+		$buckets = array();
+		foreach ( $metas as $item => $meta ) {
+			if ( !isset($meta[$key]) ) {
+				continue;
+			}
+			//Create bucket
+			$idx = $meta[$key];
+			if ( !isset($buckets[ $idx ]) ) {
+				$buckets[ $idx ] = array();
+			}
+			//Add item to bucket
+			$buckets[ $idx ][] = $item;
+		}
+		//Sort buckets
+		ksort($buckets, SORT_NUMERIC);
+		//Merge buckets
+		$pool = array();
+		foreach ( $buckets as $bucket ) {
+			$pool = array_merge($pool, $bucket);
+		}
+		//Fill with items
+		$pool = array_merge( array_fill_keys($pool, null), $items);
+		//Return items
+		return $items;
+	}
+	
 	/**
 	 * Get matching handler for URI
 	 * @param string $uri URI to find match for
