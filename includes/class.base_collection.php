@@ -22,13 +22,41 @@ class SLB_Base_Collection extends SLB_Base {
 	 */
 	protected $item_type = null;
 	
+	/**
+	 * Property to use for item key
+	 * Example: A property or method of the item
+	 * @var string
+	 */
+	protected $key_prop = null;
+	
+	/**
+	 * Should $key_prop be called or retrieved?
+	 * Default: Retrieved (FALSE)
+	 * @var bool
+	 */
+	protected $key_call = false;
+	
+	/**
+	 * Items in collection unique?
+	 * Default: FALSE
+	 * @var bool
+	 */
+	protected $unique = false;
+	
 	/* Properties */
 
 	/**
 	 * Indexed array of items in collection
 	 * @var array
 	 */
-	var $items = null;
+	protected $items = null;
+	
+	/**
+	 * Item metadata
+	 * Indexed by item key
+	 * @var array
+	 */
+	protected $items_meta = array();
 	
 	/* Item Management */
 	
@@ -156,6 +184,73 @@ class SLB_Base_Collection extends SLB_Base {
 			}
 		} else {
 			$ret = $this->items;
+		}
+		return $ret;
+	}
+	
+	/* Metadata */
+	
+	/**
+	 * Add metadata for item
+	 * @param string|int $item Item key
+	 * @param string|array $meta_key Meta key to set (or array of metadata)
+	 * @param mixed $meta_value (optional) Metadata value (if key set)
+	 * @param bool $reset (optional) Whether to remove existing metadata first (Default: FALSE)
+	 * @return object Current instance
+	 */
+	protected function add_meta($item, $meta_key, $meta_value = null, $reset = false) {
+		//Validate
+		if ( $this->key_valid($item) && ( is_array($meta_key) || is_string($meta_key) ) ) {
+			//Prepare metadata
+			$meta = ( is_string($meta_key) ) ? array($meta_key => $meta_value) : $meta_key;
+			//Reset existing meta (if necessary)
+			if ( is_array($meta_key) ) {
+				$reset = func_get_arg(2);
+			}
+			if ( !!$reset ) {
+				unset($this->items_meta[$item]);
+			}
+			//Add metadata
+			if ( !isset($this->items_meta[$item]) ) {
+				$this->items_meta[$item] = array();
+			}
+			$this->items_meta[$item] = array_merge($this->items_meta[$item], $meta);
+		}
+		return $this;
+	}
+	
+	/**
+	 * Remove item metadata
+	 * @param string $item Item key
+	 * @return object Current instance
+	 */
+	protected function remove_meta($item, $meta_key = null) {
+		if ( $this->key_valid($item) && isset($this->items_meta[$item]) ) {
+			if ( is_string($meta_key) ) {
+				//Remove specific meta value
+				unset($this->items_meta[$item][$meta_key]);
+			} else {
+				//Remove all metadata
+				unset($this->items_meta[$item]);
+			}
+		}
+		return $this;
+	}
+	
+	/**
+	 * Retrieve metadata
+	 * @param string $item Item key
+	 * @param string $meta_key (optional) Meta key (All metadata retrieved if no key specified)
+	 * @return mixed|null Metadata value
+	 */
+	protected function get_meta($item, $meta_key = null) {
+		$ret = null;
+		if ( $this->key_valid($item) && isset($this->items_meta[$item]) ) {
+			if ( is_null($meta_key) ) {
+				$ret = $this->items_meta[$item];
+			} elseif ( is_string($meta_key) && isset($this->items_meta[$item][$meta_key]) ) {
+				$ret = $this->items_meta[$item][$meta_key];
+			}
 		}
 		return $ret;
 	}
