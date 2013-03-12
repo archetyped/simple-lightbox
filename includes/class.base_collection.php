@@ -100,6 +100,11 @@ class SLB_Base_Collection extends SLB_Base {
 		return $items;
 	}
 	
+	protected function item_valid($item) {
+		//Validate item type 
+		return ( empty($this->item_type) || ( $item instanceof $this->item_type ) ) ? true : false;
+	}
+	
 	/**
 	 * Validate item key
 	 * Checks collection for existence of key as well
@@ -112,17 +117,48 @@ class SLB_Base_Collection extends SLB_Base {
 	}
 	
 	/**
-	 * Add item(s) to collection
-	 * @param mixed $items Single item or array of items to add
+	 * Generate key for item (for storing in collection, etc.)
+	 * @param mixed $item Item to generate key for
+	 * @return string|null Item key (NULL if no key generated)
+	 */
+	protected function get_key($item, $check_existing = false) {
+		$ret = null;
+		if ( $this->unique || !!$check_existing ) {
+			//Check for item in collection
+			if ( $this->has($item) ) {
+				$ret = array_search($item, $this->items);
+			} elseif ( !!$this->key_prop && ( is_object($item) || is_array($item) ) ) {
+				if ( !!$this->key_call ) {
+					$cb = $this->util->m($item, $this->key_prop);
+					if ( is_callable($cb) ) {
+						$ret = call_user_func($cb);
+					}
+				} elseif ( is_array($item) && isset($item[$this->key_prop]) ) {
+					$ret = $item[$this->key_prop];
+				} elseif ( is_object($item) && isset($item->{$this->key_prop}) ) {
+					$ret = $item->{$this->key_prop};
+				}
+			}
+		}
+		return $ret;
+	}
+	
+	/**
+	 * Add item to collection
+	 * @param mixed $item Item to add to collection
 	 * @return Current instance
 	 */
-	public function add($items) {
+	public function add($item) {
 		$this->init();
 		//Validate
-		$items = $this->normalize($items);
-		//Add items to collection
-		if ( !empty($items) ) {
-			$this->items = array_merge($this->items, $items);
+		if ( $this->item_valid($item) ) {
+			//Add item to collection
+			$key = $this->get_key($item);
+			if ( !$key ) {
+				$this->items[] = $item;
+			} else {
+				$this->items[$key] = $item;
+			}
 		}
 		return $this;
 	}
