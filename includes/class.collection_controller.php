@@ -12,6 +12,8 @@ class SLB_Collection_Controller extends SLB_Base_Collection {
 	
 	protected $mode = 'sub';
 	
+	protected $unique = true;
+	
 	/* Properties */
 	
 	protected $parent = null;
