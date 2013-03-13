@@ -34,5 +34,5 @@ return {
 		//Return promise
 		return dfr.promise();
 	}
-});
+}
 })(jQuery);

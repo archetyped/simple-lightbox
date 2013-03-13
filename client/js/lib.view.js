@@ -633,20 +633,39 @@ var View = {
 			console.groupEnd();
 			return false;
 		}
+		var dfr = $.Deferred();
+		var t = this;
+		
 		if ( !this.util.is_obj(attributes, false) ) {
-			attributes = {};
+			//Check for URI (external loading)
+			if ( this.util.is_string(attributes) ) {
+				$.get(attributes).always(function(data, textStatus) {
+					eval('var r = ' + data);
+					if ( !t.util.is_obj(r) ) {
+						r = {};
+					}
+					dfr.resolve(r);
+				});
+			} else {
+				dfr.resolve({});
+			}
+		} else {
+			dfr.resolve(attributes);
 		}
-		console.info('Saving content handler properties');
-		//Save
-		var types = this.get_components(this.Content_Handler);
-		console.log(types);
-		if ( !this.util.is_obj(types, false) ) {
-			console.log('Init types');
-			types = {};
-		}
-		types[id] = new this.Content_Handler(id, attributes);
-		console.log('Types: %o \nCollection: %o', types, this.get_components(this.Content_Handler));
-		console.groupEnd();
+		
+		dfr.done(function(o) {
+			console.info('Saving content handler properties');
+			//Save
+			var types = t.get_components(t.Content_Handler);
+			console.log(types);
+			if ( !t.util.is_obj(types, false) ) {
+				console.log('Init types');
+				types = {};
+			}
+			types[id] = new t.Content_Handler(id, o);
+			console.log('Types: %o \nCollection: %o', types, t.get_components(t.Content_Handler));
+			console.groupEnd();
+		});
 	},
 	
 	/**
