@@ -1,5 +1,5 @@
 (function($) {
-SLB.View.update_content_handler('image', {
+return {
 	render: function(item) {
 		var dfr = $.Deferred();
 		//Create image object
@@ -34,5 +34,5 @@ SLB.View.update_content_handler('image', {
 		//Return promise
 		return dfr.promise();
 	}
-});
+}
 })(jQuery);

@@ -210,14 +210,19 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 		if ( !$this->has_parent() || !$this->get_parent()->is_enabled() ) {
 			return;
 		}
+		$id_fmt = 'add_handler_%s';
 		$out = array();
 		$out[] = '<!-- SLB-HDL -->' . PHP_EOL;
 		//Load matched handlers
 		foreach ( $this->request_matches as $handler ) {
 			//Define
-			$out[] = $this->util->build_script_element( $this->util->call_client_method('View.add_content_handler',  $handler->get_id()), sprintf('add_handler_%s', $handler->get_id()) );
-			//Load external file
-			$out[] = $this->util->build_ext_script_element( $handler->get_client_script('uri') );
+			$params = array(
+				sprintf("'%s'", $handler->get_id()),
+				sprintf("'%s'", $handler->get_client_script('uri')),
+			);
+			$code = $this->util->call_client_method('View.add_content_handler',  $params, false);
+			$id = sprintf($id_fmt, $handler->get_id());
+			$out[] = $this->util->build_script_element($code, $id);
 		}
 		$out[] = '<!-- /SLB-HDL -->' . PHP_EOL;
 		echo implode('', $out);
