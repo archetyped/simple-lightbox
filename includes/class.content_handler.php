@@ -112,7 +112,7 @@ class SLB_Content_Handler extends SLB_Base_Object {
 		$s = $this->get_script('client');
 		switch ( $format ) {
 			case 'path':
-				$ret = $s['path'];
+				$ret = $this->util->normalize_path(WP_PLUGIN_DIR, $s['path']);
 				break;
 			case 'uri':
 				$ret = $this->util->normalize_path(WP_PLUGIN_URL, $s['path']);
