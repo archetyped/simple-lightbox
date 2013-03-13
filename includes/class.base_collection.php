@@ -22,13 +22,41 @@ class SLB_Base_Collection extends SLB_Base {
 	 */
 	protected $item_type = null;
 	
+	/**
+	 * Property to use for item key
+	 * Example: A property or method of the item
+	 * @var string
+	 */
+	protected $key_prop = null;
+	
+	/**
+	 * Should $key_prop be called or retrieved?
+	 * Default: Retrieved (FALSE)
+	 * @var bool
+	 */
+	protected $key_call = false;
+	
+	/**
+	 * Items in collection unique?
+	 * Default: FALSE
+	 * @var bool
+	 */
+	protected $unique = false;
+	
 	/* Properties */
 
 	/**
 	 * Indexed array of items in collection
 	 * @var array
 	 */
-	var $items = null;
+	protected $items = null;
+	
+	/**
+	 * Item metadata
+	 * Indexed by item key
+	 * @var array
+	 */
+	protected $items_meta = array();
 	
 	/* Item Management */
 	
@@ -72,6 +100,11 @@ class SLB_Base_Collection extends SLB_Base {
 		return $items;
 	}
 	
+	protected function item_valid($item) {
+		//Validate item type 
+		return ( empty($this->item_type) || ( $item instanceof $this->item_type ) ) ? true : false;
+	}
+	
 	/**
 	 * Validate item key
 	 * Checks collection for existence of key as well
@@ -84,23 +117,59 @@ class SLB_Base_Collection extends SLB_Base {
 	}
 	
 	/**
-	 * Add item(s) to collection
-	 * @param mixed $items Single item or array of items to add
+	 * Generate key for item (for storing in collection, etc.)
+	 * @param mixed $item Item to generate key for
+	 * @return string|null Item key (NULL if no key generated)
+	 */
+	protected function get_key($item, $check_existing = false) {
+		$ret = null;
+		if ( $this->unique || !!$check_existing ) {
+			//Check for item in collection
+			if ( $this->has($item) ) {
+				$ret = array_search($item, $this->items);
+			} elseif ( !!$this->key_prop && ( is_object($item) || is_array($item) ) ) {
+				if ( !!$this->key_call ) {
+					$cb = $this->util->m($item, $this->key_prop);
+					if ( is_callable($cb) ) {
+						$ret = call_user_func($cb);
+					}
+				} elseif ( is_array($item) && isset($item[$this->key_prop]) ) {
+					$ret = $item[$this->key_prop];
+				} elseif ( is_object($item) && isset($item->{$this->key_prop}) ) {
+					$ret = $item->{$this->key_prop};
+				}
+			}
+		}
+		return $ret;
+	}
+	
+	/**
+	 * Add item to collection
+	 * @param mixed $item Item to add to collection
 	 * @return Current instance
 	 */
-	public function add($items) {
+	public function add($item, $meta = null) {
 		$this->init();
 		//Validate
-		$items = $this->normalize($items);
-		//Add items to collection
-		if ( !empty($items) ) {
-			$this->items = array_merge($this->items, $items);
+		if ( $this->item_valid($item) ) {
+			//Add item to collection
+			$key = $this->get_key($item);
+			if ( !$key ) {
+				$this->items[] = $item;
+				$key = key($this->items);
+			} else {
+				$this->items[$key] = $item;
+			}
+			//Add metadata
+			if ( !!$key && is_array($meta) ) {
+				$this->add_meta($key, $meta);
+			}
 		}
 		return $this;
 	}
 	
 	/**
-	 * Remove item(s) from collection
+	 * Remove item from collection
 	 * @param int|string $item Key of item to remove
 	 * @return Current instance 
 	 */
@@ -136,26 +205,125 @@ class SLB_Base_Collection extends SLB_Base {
 	 * @param string|int $item (optional) ID of item to retrieve
 	 * @return object|array Specified item(s)
 	 */
-	public function get($item = null) {
+	public function get($args = null) {
 		$this->init();
-		$ret = array();
-		if ( func_num_args() > 0 ) {
-			$single = false;
-			if ( !is_array($item) ) {
-				$single = true;
-				$item = array($item);
+		//Parse args
+		$args_default = array(
+			'orderby'		=> null,
+			'order'			=> 'DESC',
+			'include'		=> array(),
+			'exclude'		=> array(),
+		);
+		$r = wp_parse_args($args, $args_default);
+		
+		$items = $this->items;
+		
+		/* Sort */
+		if ( !is_null($r['orderby']) ) {
+			//Validate
+			if ( !is_array($r['orderby']) ) {
+				$r['orderby'] = array('item' => $r['orderby']);
 			}
-			foreach ( $item as $i ) {
-				if ( $this->key_valid($i) ) {
-					$ret[] = $this->items[$i];
+			//Prep
+			$metas = ( isset($r['orderby']['meta']) ) ? $this->items_meta : array();
+			//Sort
+			foreach ( $r['orderby'] as $stype => $sval ) {
+				/* Meta sorting */
+				if ( 'meta' == $stype ) {
+					//Build sorting buckets
+					$buckets = array();
+					foreach ( $metas as $item => $meta ) {
+						if ( !isset($meta[$sval]) ) {
+							continue;
+						}
+						//Create bucket
+						$idx = $meta[$sval];
+						if ( !isset($buckets[ $idx ]) ) {
+							$buckets[ $idx ] = array();
+						}
+						//Add item to bucket
+						$buckets[ $idx ][] = $item;
+					}
+					//Sort buckets
+					ksort($buckets, SORT_NUMERIC);
+					//Merge buckets
+					$pool = array();
+					foreach ( $buckets as $bucket ) {
+						$pool = array_merge($pool, $bucket);
+					}
+					//Fill with items
+					$items = array_merge( array_fill_keys($pool, null), $items);
 				}
 			}
-			//Unwrap single item
-			if ( $single ) {
-				$ret = ( 1 == count($ret) ) ? $ret[0] : null;
+			//Clear workers
+			unset($stype, $sval, $buckets, $pool, $item, $metas, $meta, $idx);
+		}
+		return $items;
+	}
+	
+	/* Metadata */
+	
+	/**
+	 * Add metadata for item
+	 * @param string|int $item Item key
+	 * @param string|array $meta_key Meta key to set (or array of metadata)
+	 * @param mixed $meta_value (optional) Metadata value (if key set)
+	 * @param bool $reset (optional) Whether to remove existing metadata first (Default: FALSE)
+	 * @return object Current instance
+	 */
+	protected function add_meta($item, $meta_key, $meta_value = null, $reset = false) {
+		//Validate
+		if ( $this->key_valid($item) && ( is_array($meta_key) || is_string($meta_key) ) ) {
+			//Prepare metadata
+			$meta = ( is_string($meta_key) ) ? array($meta_key => $meta_value) : $meta_key;
+			//Reset existing meta (if necessary)
+			if ( is_array($meta_key) && func_num_args() > 2) {
+				$reset = func_get_arg(2);
 			}
-		} else {
-			$ret = $this->items;
+			if ( !!$reset ) {
+				unset($this->items_meta[$item]);
+			}
+			//Add metadata
+			if ( !isset($this->items_meta[$item]) ) {
+				$this->items_meta[$item] = array();
+			}
+			$this->items_meta[$item] = array_merge($this->items_meta[$item], $meta);
+		}
+		return $this;
+	}
+	
+	/**
+	 * Remove item metadata
+	 * @param string $item Item key
+	 * @return object Current instance
+	 */
+	protected function remove_meta($item, $meta_key = null) {
+		if ( $this->key_valid($item) && isset($this->items_meta[$item]) ) {
+			if ( is_string($meta_key) ) {
+				//Remove specific meta value
+				unset($this->items_meta[$item][$meta_key]);
+			} else {
+				//Remove all metadata
+				unset($this->items_meta[$item]);
+			}
+		}
+		return $this;
+	}
+	
+	/**
+	 * Retrieve metadata
+	 * @param string $item Item key
+	 * @param string $meta_key (optional) Meta key (All metadata retrieved if no key specified)
+	 * @return mixed|null Metadata value
+	 */
+	protected function get_meta($item, $meta_key = null) {
+		$ret = null;
+		if ( $this->key_valid($item) && isset($this->items_meta[$item]) ) {
+			if ( is_null($meta_key) ) {
+				$ret = $this->items_meta[$item];
+			} elseif ( is_string($meta_key) && isset($this->items_meta[$item][$meta_key]) ) {
+				$ret = $this->items_meta[$item][$meta_key];
+			}
 		}
 		return $ret;
 	}

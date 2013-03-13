@@ -468,7 +468,8 @@ class SLB_Utilities {
 	 * Build client method call
 	 * @uses get_client_object() to generate the body of the method call
 	 * @param string $method Method name
-	 * @param mixed Parameters to pass to method (will be JSON-encoded)
+	 * @param array|string $params (optional) Parameters to pass to method
+	 * @param bool $encode (optional) JSON-encode parameters? (Default: TRUE)
 	 * @return string Method call
 	 */
 	function call_client_method($method, $params = null, $encode = true) {

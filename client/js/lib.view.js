@@ -119,7 +119,6 @@ var View = {
 		$.when.apply($, this.loading).always(function() {
 			//Set options
 			$.extend(true, t.options, options);
-			
 			//History
 			$(window).on('popstate', function(e) {
 				var state = e.originalEvent.state;
@@ -558,15 +557,34 @@ var View = {
 		if ( !this.util.is_string(id) ) {
 			return false;
 		}
+		var dfr = $.Deferred();
+		var t = this;
+		
 		if ( !this.util.is_obj(attributes, false) ) {
-			attributes = {};
+			//Check for URI (external loading)
+			if ( this.util.is_string(attributes) ) {
+				$.get(attributes).always(function(data, textStatus) {
+					eval('var r = ' + data);
+					if ( !t.util.is_obj(r) ) {
+						r = {};
+					}
+					dfr.resolve(r);
+				});
+			} else {
+				dfr.resolve({});
+			}
+		} else {
+			dfr.resolve(attributes);
 		}
-		//Save
-		var types = this.get_components(this.Content_Handler);
-		if ( !this.util.is_obj(types, false) ) {
-			types = {};
-		}
-		types[id] = new this.Content_Handler(id, attributes);
+		
+		dfr.done(function(o) {
+			//Save
+			var types = t.get_components(t.Content_Handler);
+			if ( !t.util.is_obj(types, false) ) {
+				types = {};
+			}
+			types[id] = new t.Content_Handler(id, o);
+		});
 	},
 	
 	/**
@@ -883,7 +901,6 @@ var Component = {
 	_c: function(id, attributes) {
 		//Set ID
 		this.set_id(id);
-		
 		//Save init attributes
 		this._attr_init = attributes;
 		this.register_hooks();
@@ -1467,7 +1484,6 @@ var Component = {
 				ret = this.dom_put(element, options);
 			}
 		}
-		
 		return $(ret);
 	},
 	
