@@ -68,6 +68,9 @@ class SLB_Template_Tags extends SLB_Collection_Controller {
 			'item'		=> array (
 				'client_script'	=> $this->util->get_plugin_file_path('template-tags/item/tag.item.js'),
 			),
+			'ui'		=> array (
+				'client_script'	=> $this->util->get_plugin_file_path('template-tags/ui/tag.ui.js'),
+			),
 		);
 		foreach ( $defaults as $id => $props ) {
 			$tags->add($id, $props);
