@@ -213,6 +213,7 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 		$id_fmt = 'add_handler_%s';
 		$out = array();
 		$out[] = '<!-- SLB-HDL -->' . PHP_EOL;
+		$code = array();
 		//Load matched handlers
 		foreach ( $this->request_matches as $handler ) {
 			//Define
@@ -220,10 +221,9 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 				sprintf("'%s'", $handler->get_id()),
 				sprintf("'%s'", $handler->get_client_script('uri')),
 			);
-			$code = $this->util->call_client_method('View.add_content_handler',  $params, false);
-			$id = sprintf($id_fmt, $handler->get_id());
-			$out[] = $this->util->build_script_element($code, $id);
+			$code[] = $this->util->call_client_method('View.add_content_handler',  $params, false);
 		}
+		$out[] = $this->util->build_script_element(implode('', $code), 'add_content_handlers');
 		$out[] = '<!-- /SLB-HDL -->' . PHP_EOL;
 		echo implode('', $out);
 	}
