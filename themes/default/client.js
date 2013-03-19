@@ -30,7 +30,6 @@ SLB.View.update_theme('slb_default', {
 		 * @return jQuery.Promise Resolved when transition is complete
 		 */
 		'open': function(v, dfr) {
-			console.groupCollapsed('Theme.transition.open()');
 			var t = this;
 			var d = v.dom_get(),
 				l = v.get_layout().hide(),
@@ -56,7 +55,6 @@ SLB.View.update_theme('slb_default', {
 					final();
 				}
 			});
-			console.groupEnd();
 			return dfr.promise();
 		},
 		/**
@@ -66,7 +64,6 @@ SLB.View.update_theme('slb_default', {
 		 * @return jQuery.Promise Resolved when transition is complete
 		 */
 		'close': function(v, dfr) {
-			console.groupCollapsed('Theme.transition.close()');
 			var l = v.get_layout(),
 				c = l.find('.slb_content');
 			var t = this;
@@ -94,7 +91,6 @@ SLB.View.update_theme('slb_default', {
 				l.css('opacity', 0);
 				reset();
 			}
-			console.groupEnd();
 			return dfr.promise();
 		},
 		/**
@@ -104,9 +100,7 @@ SLB.View.update_theme('slb_default', {
 		 * @return jQuery.Promise Resolved when transition is complete
 		 */
 		'load': function(v, dfr) {
-			console.groupCollapsed('Theme.transition.load()');
 			v.get_layout().find('.slb_loading').show();
-			console.groupEnd();
 			if ( window.outerWidth > 480 ) {
 				return v.get_layout().fadeIn().promise()
 			} else {
@@ -122,7 +116,6 @@ SLB.View.update_theme('slb_default', {
 		 * @return jQuery.Promise Resolved when transition is complete
 		 */
 		'unload': function(v, dfr) {
-			console.groupCollapsed('Theme.transition.unload()');
 			var l = v.get_layout(),
 				det = l.find('.slb_details'),
 				cont = l.find('.slb_content .slb_template_tag');
@@ -139,7 +132,6 @@ SLB.View.update_theme('slb_default', {
 			$.when(det.promise(), cont.promise()).done(function() {
 				dfr.resolve();
 			});
-			console.groupEnd();
 			return dfr.promise();
 		},
 		/**
@@ -149,7 +141,6 @@ SLB.View.update_theme('slb_default', {
 		 * @return jQuery.Promise Resolved when transition is complete
 		 */
 		'complete': function(v, dfr) {
-			console.group('Theme.transition.complete()');
 			//Elements
 			var l = v.get_layout(),
 				loader = l.find('.slb_loading'),
@@ -165,7 +156,6 @@ SLB.View.update_theme('slb_default', {
 				//Show detail tags (container still hidden)
 				det.find('.slb_template_tag').show();
 				var pos = { 'top': $(document).scrollTop() + ( $(window).height() / 2 ) - ( this.get_dimensions().height / 2 ) };
-				console.info('Pos (Top): %o \nScrollTop: %o \nWindow Height: %o \nLayout Height: %o', pos.top, $(document).scrollTop(), $(window).height(), this.get_dimensions().height);
 				pos.top = pos.top || 0;
 				//Resize container
 				pos = l.animate(pos).promise();
@@ -191,8 +181,6 @@ SLB.View.update_theme('slb_default', {
 				det.height('');
 				dfr.resolve();
 			}
-			
-			console.groupEnd();
 			return dfr.promise();
 		}
 	},
