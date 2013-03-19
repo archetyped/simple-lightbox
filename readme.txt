@@ -15,6 +15,11 @@ Simple Lightbox is a very simple and customizable lightbox that is easy to add t
 The current release is a beta version.  Please test and [provide feedback on GitHub](https://github.com/archetyped/simple-lightbox/issues).
 Main changes
 
+#### Beta 7.3
+* Add: Template Tag API
+* Optimize: Load all content handlers in single `script` element
+* Optimize: Inline documentation
+
 #### Beta 7.2
 * Add: Prioritized Content Handler evaluation
 * Optimize: Content Handler loading in client (AJAX-based)
