@@ -765,25 +765,37 @@ var View = {
 	/**
 	 * Add Theme Tag Handler to Theme prototype
 	 * @param string id Unique ID
-	 * @param obj attrs (optional) Default tag attributes/values
-	 * @return Template_Tag_Handler Tag Handler instance
+	 * @param obj attrs (optional) Default tag attributes/values (or URI to attributes definition)
 	 */
-	add_template_tag_handler: function(id, attrs, add) {
+	add_template_tag_handler: function(id, attributes) {
 		//Validate
-		if ( !this.util.is_bool(add) ) {
-			add = true;
-		}
 		if ( !this.util.is_string(id) ) {
-			add = false;
+			return false;
 		}
-		//Create new instance
-		var handler = new this.Template_Tag_Handler(id, attrs);
-		if ( add ) {
-			//Add to collection in Template_Tag prototype
-			this.get_template_tag_handlers()[handler.get_id()] = handler;
+		var dfr = $.Deferred();
+		var t = this;
+		
+		if ( !this.util.is_obj(attributes, false) ) {
+			//Check for URI (external loading)
+			if ( this.util.is_string(attributes) ) {
+				$.get(attributes).always(function(data, textStatus) {
+					eval('var r = ' + data);
+					if ( !t.util.is_obj(r) ) {
+						r = {};
+					}
+					dfr.resolve(r);
+				});
+			} else {
+				dfr.resolve({});
+			}
+		} else {
+			dfr.resolve(attributes);
 		}
-		//Return instance
-		return handler;
+		
+		dfr.done(function(o) {
+			//Add handler
+			t.get_template_tag_handlers()[id] = new t.Template_Tag_Handler(id, o);
+		});
 	},
 	
 	/**
@@ -800,7 +812,13 @@ var View = {
 	 * @return Template_Tag_Handler Tag Handler instance (new instance for invalid ID)
 	 */
 	get_template_tag_handler: function(id) {
-		return ( this.util.is_string(id) && ( id in this.get_template_tag_handlers() ) ) ? this.get_template_tag_handlers()[id] : this.add_template_tag_handler(id, {}, false);
+		var handlers = this.get_template_tag_handlers();
+		//Retrieve existing handler
+		if ( this.util.is_string(id) && ( id in handlers ) ) {
+			return handlers[id];
+		}
+		//Default: Return empty handler
+		return new this.Template_Tag_Handler(id, {});
 	}
 };
 
@@ -4512,137 +4530,4 @@ View.Template_Tag_Handler = Component.extend(Template_Tag_Handler);
 SLB.attach('View', View);
 View = SLB.View;
 View.update_refs();
-
-/*-** Registration **-*/
-
-/* Template Tags */
-/**
- * Item data tag
- */
-View.add_template_tag_handler('item', {
-	render: function(item, tag) {
-		var dfr = $.Deferred();
-		var m = 'get_' + tag.get_prop();
-		var ret = ( this.util.is_method(item, m) ) ? item[m]() : item.get_attribute(tag.get_prop(), '');
-		if ( this.util.is_promise(ret) ) {
-			ret.done(function(output) {
-				dfr.resolve(output);
-			});
-		} else {
-			dfr.resolve(ret);
-		}
-		return dfr.promise();
-	}
-});
-
-/**
- * UI tag
- */
-View.add_template_tag_handler('ui', {
-	init: function(item, tag, v) {
-		//Add event handlers
-		v.on('events-complete', function(ev, v) {
-			//Register event handlers
-
-			/* Close */
-			
-			var close = function() {
-				return v.close();
-			};
-			//Close button
-			v.get_theme().dom_get_tag('ui', 'close').click(close);
-			
-			/* Navigation */
-			
-			var nav_next = function() {
-				v.item_next();
-			};
-			
-			var nav_prev = function() {
-				v.item_prev();
-			};
-			
-			v.get_theme().dom_get_tag('ui', 'nav_next').click(nav_next);
-			v.get_theme().dom_get_tag('ui', 'nav_prev').click(nav_prev);
-			
-			/* Slideshow */
-			
-			var slideshow_control = function() {
-				v.slideshow_toggle();
-			};
-			
-			v.get_theme().dom_get_tag('ui', 'slideshow_control').click(slideshow_control);
-		});
-		
-		v.on('slideshow-toggle', function(ev, v) {
-			//Update slideshow control tag
-			var tags = v.get_theme().get_tags('ui', 'slideshow_control');
-			if ( tags.length ) {
-				for ( var x = 0; x < tags.length; x++ ) {
-					tags[x].render(v.get_item()).done(function(r) {
-						r.tag.dom_get().html(r.output);
-					});
-				}
-			}
-		});
-	},
-	render: function(item, tag) {
-		//Initialize event handlers (once per viewer)
-		var v = item.get_viewer();
-		var st = ['events-init', tag.get_ns(), tag.get_name()].join('_');
-		var fmt = function(output) {
-			//return '<a href="#" title="%s">%s</a>'.sprintf(output, output);
-			return output;
-		};
-		if ( !v.get_status(st) ) {
-			v.set_status(st);
-			this.call_attribute('init', item, tag, v);
-		}
-		//Process content
-		var dfr = $.Deferred();
-		var ret = this.handle_prop(tag.get_prop(), item, tag);
-		if ( this.util.is_promise(ret) ) {
-			ret.done(function(output) {
-				dfr.resolve(fmt(output));
-			});
-		} else {
-			dfr.resolve(fmt(ret));
-		}
-		return dfr.promise();
-	},
-	props: {
-		'slideshow_control': function(item, tag) {
-			//Get slideshow status
-			var prop = ( item.get_viewer().slideshow_active() ) ? 'slideshow_stop' : 'slideshow_start';
-			return item.get_viewer().get_label(prop);
-		},
-		'group_status': function(item, tag) {
-			//Handle single items
-			if ( item.get_group().is_single() ) {
-				return '';
-			}
-			//Handle groups with multiple items
-			var out = item.get_viewer().get_label('group_status');
-			var key,
-				ph,
-				delim = '%',
-				handlers = {
-				current: function() {
-					return item.get_group(true).get_pos() + 1;
-				},
-				total: function() {
-					return item.get_group().get_size();
-				}
-			};
-			//Parse placeholders
-			for ( key in handlers ) {
-				ph = key.wrap(delim);
-				if ( out.indexOf(ph) != -1 ) {
-					out = out.replace(ph, handlers[key]());
-				}
-			}
-			return out;
-		}
-	}
-});
 })(jQuery);
