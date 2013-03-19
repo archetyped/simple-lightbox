@@ -3,6 +3,7 @@
 require_once 'includes/class.base.php';
 require_once 'includes/class.themes.php';
 require_once 'includes/class.content_handlers.php';
+require_once 'includes/class.template_tags.php';
 
 /**
  * Model (Core functionality)
@@ -51,6 +52,12 @@ class SLB_Lightbox extends SLB_Base {
 	 * @var SLB_Content_Handlers
 	 */
 	var $handlers = null;
+	
+	/**
+	 * Template tags
+	 * @var SLB_Template_Tags
+	 */
+	var $template_tags = null;
 
 	/**
 	 * Properties for media attachments in current request
@@ -100,6 +107,9 @@ class SLB_Lightbox extends SLB_Base {
 		//Init instances
 		$this->fields = new SLB_Fields();
 		$this->themes = new SLB_Themes($this);
+		if ( !is_admin() ) {
+			$this->template_tags = new SLB_Template_Tags($this);
+		}
 	}
 	
 	/* Init */
