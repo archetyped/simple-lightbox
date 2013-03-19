@@ -146,6 +146,7 @@ class SLB_Base_Collection extends SLB_Base {
 	/**
 	 * Add item to collection
 	 * @param mixed $item Item to add to collection
+	 * @param array $meta (optional) Item metadata
 	 * @return Current instance
 	 */
 	public function add($item, $meta = null) {
