@@ -51,10 +51,14 @@ class SLB_Base_Object extends SLB_Base {
 	
 	/**
 	 * Constructor
+	 * @param string $id Unique ID for content type
+	 * @param array $props (optional) Type properties (optional because props can be set post-init)
 	 */
-	public function __construct($id) {
+	public function __construct($id, $props = null) {
 		parent::__construct();
-		$this->set_id($id);
+		$this
+			->set_id($id)
+			->set_props($props);
 	}
 	
 	/**
@@ -84,6 +88,23 @@ class SLB_Base_Object extends SLB_Base {
 		$id = ( is_string($id) ) ? trim($id) : '';
 		if ( !empty($id) ) {
 			$this->id = $id;
+		}
+		return $this;
+	}
+	
+	/**
+	 * Set type properties
+	 * @param array $props Type properties to set
+	 */
+	protected function set_props($props) {
+		if ( is_array($props) && !empty($props) ) {
+			foreach ( $props as $key => $val ) {
+				//Check for setter method
+				$m = 'set_' . $key;
+				if ( method_exists($this, $m) ) {
+					$this->{$m}($val);
+				}
+			}
 		}
 		return $this;
 	}
