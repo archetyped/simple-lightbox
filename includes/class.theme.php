@@ -36,6 +36,27 @@ class SLB_Theme extends SLB_Component {
 		return $ret;
 	}
 	
+	/* Style */
+	
+	/**
+	 * Set Theme style path
+	 * @see `add_style()`
+	 */
+	public function set_client_script($src, $deps = array()) {
+		if ( is_array($src) ) {
+			list($src, $deps) = func_get_arg(0);
+		}
+		return $this->add_style('client', $src, $deps);
+	}
+	
+	/**
+	 * Get Theme style path
+	 * @see `get_style()`
+	 */
+	public function get_client_style($format = null) {
+		return $this->get_style('client', $format);
+	}
+	
 	/* Templates */
 	
 	/**
