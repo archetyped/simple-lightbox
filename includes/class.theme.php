@@ -2,9 +2,9 @@
 require_once 'class.base_object.php';
 
 /**
- * Content Handler
+ * Theme
  * @package Simple Lightbox
- * @subpackage Content Handler
+ * @subpackage Themes
  * @author Archetyped
  */
 class SLB_Theme extends SLB_Base_Object {
