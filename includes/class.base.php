@@ -59,6 +59,12 @@ class SLB_Base {
 	
 	protected $shared = array('options', 'admin');
 	
+	/**
+	 * Capabilities
+	 * @var array
+	 */
+	protected $caps = null;
+	
 	protected $_init = false;
 	
 	private static $_init_passed = false;
@@ -453,16 +459,15 @@ class SLB_Base {
 	/*-** Capabilities **-*/
 	
 	protected function can($cap) {
-		static $caps = null;
-		if ( is_null($caps) ) {
+		if ( is_null($this->caps) ) {
 			//Build capabilities based on instance properties
-			$caps = array(
+			$this->caps = array(
 				'init'			=> ( 'object' != $this->mode ) ? true : false,
 				'singleton'		=> ( !!$this->model ) ? true : false,
 				'control'		=> ( 'sub' == $this->mode || 'object' == $this->mode ) ? false : true,
 			);
 		}
-		return ( isset($caps[$cap]) ) ? $caps[$cap] : false;
+		return ( isset($this->caps[$cap]) ) ? $this->caps[$cap] : false;
 	}
 	
 	/*-** Globals **-*/
