@@ -167,7 +167,7 @@ class SLB_Base_Object extends SLB_Base {
 				$deps = array();
 			}
 			//Init file group
-			if ( !is_array($this->files[$type]) ) {
+			if ( !isset($this->files[$type]) || !is_array($this->files[$type]) ) {
 				$this->files[$type] = array();
 			}
 			//Add file to group
