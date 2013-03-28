@@ -28,7 +28,7 @@ class SLB_Themes extends SLB_Collection_Controller {
 	protected function _hooks() {
 		parent::_hooks();
 		//Register themes
-		$this->util->add_action('init', $this->m('init_defaults'));
+		$this->util->add_action('init', $this->m('init_defaults'), 1);
 		
 		//Client output
 		add_action('wp_footer', $this->m('client_output'), 11);
@@ -89,9 +89,9 @@ class SLB_Themes extends SLB_Collection_Controller {
 		//Prepare parent
 		if ( isset($props['parent']) && !($props['parent'] instanceof $this->item_type) ) {
 			$pid = $props['parent'];
-			$parent = $this->get($pid);
-			if ( isset($parent[$pid]) ) {
-				$props['parent'] = $parent[$pid];
+			$items = $this->get();
+			if ( isset($items[$pid]) ) {
+				$props['parent'] = $items[$pid];
 			}
 		}
 		$o = ( is_string($id) ) ? new $this->item_type($id, $props) : $id;
