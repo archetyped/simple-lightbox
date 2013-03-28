@@ -167,7 +167,7 @@ class SLB_Base_Object extends SLB_Base {
 				$deps = array();
 			}
 			//Init file group
-			if ( !is_array($this->files[$type]) ) {
+			if ( !isset($this->files[$type]) || !is_array($this->files[$type]) ) {
 				$this->files[$type] = array();
 			}
 			//Add file to group
@@ -197,11 +197,29 @@ class SLB_Base_Object extends SLB_Base {
 	 * Retrieve file
 	 * @param string $type Group to retrieve file from
 	 * @param string $handle
+	 * @param string $format (optional) Format of return value (Default: array)
 	 * @return array|null File properties (Default: NULL)
 	 */
-	protected function get_file($type, $handle) {
+	protected function get_file($type, $handle, $format = null) {
+		//Get files
 		$files = $this->get_files($type);
-		return ( is_string($type) && isset($files[$handle]) ) ? $files[$handle] : null;
+		//Get specified file
+		$ret = ( is_string($type) && isset($files[$handle]) ) ? $files[$handle] : null;
+		//Format return value
+		if ( !empty($ret) && !!$format ) {
+			switch ( $format ) {
+				case 'path':
+					$ret = $this->util->normalize_path(WP_PLUGIN_DIR, $ret['path']);
+					break;
+				case 'uri':
+					$ret = $this->util->normalize_path(WP_PLUGIN_URL, $ret['path']);
+					break;
+				case 'object':
+					$ret = (object) $ret;
+					break;
+			}
+		}
+		return $ret;
 	}
 	
 	/**
@@ -225,10 +243,11 @@ class SLB_Base_Object extends SLB_Base {
 	/**
 	 * Retrieve stylesheet file
 	 * @param string $handle Name of stylesheet
+	 * @param string $format (optional) Format of return value (@see `get_file()`)
 	 * @return array|null File properties (Default: NULL)
 	 */
-	public function get_style($handle) {
-		return $this->get_file('styles', $handle);
+	public function get_style($handle, $format = null) {
+		return $this->get_file('styles', $handle, $format);
 	}
 	
 	/**
@@ -252,10 +271,11 @@ class SLB_Base_Object extends SLB_Base {
 	/**
 	 * Retrieve script file
 	 * @param string $handle Name of script
+	 * @param string $format (optional) Format of return value (@see `get_file()`)
 	 * @return array|null File properties (Default: NULL)
 	 */
-	public function get_script($handle) {
-		return $this->get_file('scripts', $handle);
+	public function get_script($handle, $format = null) {
+		return $this->get_file('scripts', $handle, $format);
 	}
 	
 }

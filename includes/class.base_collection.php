@@ -203,7 +203,7 @@ class SLB_Base_Collection extends SLB_Base {
 	/**
 	 * Retrieve item(s) from collection
 	 * If no items specified, entire collection returned
-	 * @param string|int $item (optional) ID of item to retrieve
+	 * @param array $args (optional) Query arguments
 	 * @return object|array Specified item(s)
 	 */
 	public function get($args = null) {
