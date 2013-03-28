@@ -42,7 +42,7 @@ class SLB_Theme extends SLB_Component {
 	 * Set Theme style path
 	 * @see `add_style()`
 	 */
-	public function set_client_script($src, $deps = array()) {
+	public function set_client_style($src, $deps = array()) {
 		if ( is_array($src) ) {
 			list($src, $deps) = func_get_arg(0);
 		}
