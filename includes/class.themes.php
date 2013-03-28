@@ -59,14 +59,14 @@ class SLB_Themes extends SLB_Collection_Controller {
 		$defaults = array (
 			$this->get_default_id()		=> array (
 				'name'			=> 'Default (Light)',
-				'layout'		=> 'themes/default/layout.html',
-				'client_script'	=> 'themes/default/client.js',
-				'client_style'	=> 'themes/default/style.css',
+				'layout'		=> $this->util->get_plugin_file_path('themes/default/layout.html'),
+				'client_script'	=> $this->util->get_plugin_file_path('themes/default/client.js'),
+				'client_style'	=> $this->util->get_plugin_file_path('themes/default/style.css'),
 			),
-			$this->add_prefix('dark')	=> array (
+			$this->add_prefix('black')	=> array (
 				'name'			=> 'Default (Dark)',
 				'parent'		=> $this->get_default_id(),
-				'client_style'	=> 'themes/black/style.css',
+				'client_style'	=> $this->util->get_plugin_file_path('themes/black/style.css'),
 			),
 		);
 		
@@ -86,6 +86,14 @@ class SLB_Themes extends SLB_Collection_Controller {
 	 * @return object Current instance
 	 */
 	public function add($id, $props = array()) {
+		//Prepare parent
+		if ( isset($props['parent']) && !($props['parent'] instanceof $this->item_type) ) {
+			$pid = $props['parent'];
+			$parent = $this->get($pid);
+			if ( isset($parent[$pid]) ) {
+				$props['parent'] = $parent[$pid];
+			}
+		}
 		$o = ( is_string($id) ) ? new $this->item_type($id, $props) : $id;
 		//Add to collection
 		return parent::add($o);
