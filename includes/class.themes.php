@@ -75,6 +75,22 @@ class SLB_Themes extends SLB_Collection_Controller {
 		}
 	}
 
+	/* Collection management */
+	
+	/**
+	 * Add theme
+	 * Accepts properties to create new theme or previously-created theme instance
+	 * @uses parent::add()
+	 * @param string|object $id Theme ID (or Theme object)
+	 * @param array $props Theme properties
+	 * @return object Current instance
+	 */
+	public function add($id, $props = array()) {
+		$o = ( is_string($id) ) ? new $this->item_type($id, $props) : $id;
+		//Add to collection
+		return parent::add($o);
+	}
+
 	/* Helpers */
 	
 	/**
@@ -83,7 +99,7 @@ class SLB_Themes extends SLB_Collection_Controller {
 	 * @return string Default theme ID
 	 */
 	public function get_default_id() {
-		if ( !!$this->id_default ) {
+		if ( !$this->id_default ) {
 			$this->id_default = $this->add_prefix('default');
 		}
 		return $this->id_default;

@@ -10,7 +10,7 @@ require_once 'class.base_collection.php';
 class SLB_Collection_Controller extends SLB_Base_Collection {
 	/* Configuration */
 	
-	protected $mode = 'sub';
+	protected $mode = 'full';
 	
 	protected $unique = true;
 	
