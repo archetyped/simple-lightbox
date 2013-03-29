@@ -1,5 +1,5 @@
 (function($) {
-SLB.View.update_theme('slb_default', {
+return {
 	/* Helpers */
 	'zoom_set': function() {
 		//Set viewport properties
@@ -208,5 +208,5 @@ SLB.View.update_theme('slb_default', {
 		}
 		return m;
 	}
-});
+};
 })(jQuery);

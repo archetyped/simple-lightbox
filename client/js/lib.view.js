@@ -564,7 +564,10 @@ var View = {
 			//Check for URI (external loading)
 			if ( this.util.is_string(attributes) ) {
 				$.get(attributes).always(function(data, textStatus) {
-					eval('var r = ' + data);
+					var r = null;
+					try {
+						eval('r = ' + data);
+					} catch (e) {}
 					if ( !t.util.is_obj(r) ) {
 						r = {};
 					}
@@ -698,19 +701,59 @@ var View = {
 			model.parent = this.get_theme_model(model.parent);
 		}
 		
-		//Fetch layout
-		var prop_uri = 'layout_uri';
-		if ( prop_uri in model && this.util.is_string(model[prop_uri]) ) {
-			$.get(model[prop_uri]).always(function(data) {
+		/* Process attributes */
+		
+		//Layout
+		var prop_layout = 'layout_uri';
+		var dfr_layout = $.Deferred();
+		if ( prop_layout in model && this.util.is_string(model[prop_layout]) ) {
+			$.get(model[prop_layout]).always(function(data) {
 				//Set layout (raw) attribute
 				if ( t.util.is_string(data) ) {
 					model['layout_raw'] = data;
 				}
-				dfr.resolve();
+				dfr_layout.resolve();
 			});
 		} else {
-			dfr.resolve();
+			dfr_layout.resolve();
 		}
+		
+		//Attributes (external)
+		var prop_script = 'client_script';
+		var dfr_script = $.Deferred();
+		if ( prop_script in model && this.util.is_string(model[prop_script]) ) {
+			//Retrieve client script
+			$.get(model[prop_script]).always(function(data) {
+				var r = null;
+				try {
+					eval('r = ' + data);
+				} catch (e) {}
+				if ( t.util.is_obj(r) ) {
+					//Add attributes to model
+					$.extend(model, r);
+				}
+				dfr_script.resolve();
+			});
+		} else {
+			dfr_script.resolve();
+		}
+		
+		//Styles
+		var prop_style = 'client_style';
+		if ( prop_style in model && this.util.is_string(model[prop_style]) ) {
+			//Add stylesheet to document
+			$('<link />', {
+				'id': 'theme_style_' + model.id,
+				'href': model[prop_style],
+				'type': 'text/css',
+				'rel': 'stylesheet'
+			}).appendTo('body');
+		}
+		
+		//Complete loading when all components loaded
+		$.when(dfr_layout, dfr_script).always(function() {
+			dfr.resolve();
+		});
 		//Add theme model
 		this.Theme.prototype._models[id] = model;
 		return model;
@@ -778,8 +821,11 @@ var View = {
 		if ( !this.util.is_obj(attributes, false) ) {
 			//Check for URI (external loading)
 			if ( this.util.is_string(attributes) ) {
-				$.get(attributes).always(function(data, textStatus) {
-					eval('var r = ' + data);
+				$.get(attributes).always(function(data) {
+					var r = null;
+					try {
+						eval('r = ' + data);
+					} catch (e) {}
 					if ( !t.util.is_obj(r) ) {
 						r = {};
 					}

@@ -49,12 +49,9 @@ class SLB_Template_Tags extends SLB_Collection_Controller {
 	 * @return object Current instance
 	 */
 	public function add($id, $props = array()) {
-		if ( is_string($id) ) {
-			//Initialize new handler
-			$tag = new $this->item_type($id, $props);
-		}
+		$o = ( is_string($id) ) ? new $this->item_type($id, $props) : $id;
 		//Add to collection
-		return parent::add($tag);
+		return parent::add($o);
 	}
 	
 	/* Defaults */
