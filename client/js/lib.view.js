@@ -640,7 +640,10 @@ var View = {
 			//Check for URI (external loading)
 			if ( this.util.is_string(attributes) ) {
 				$.get(attributes).always(function(data, textStatus) {
-					eval('var r = ' + data);
+					var r = null;
+					try {
+						eval('r = ' + data);
+					} catch (e) {}
 					if ( !t.util.is_obj(r) ) {
 						r = {};
 					}
@@ -813,7 +816,10 @@ var View = {
 		if ( prop_script in model && this.util.is_string(model[prop_script]) ) {
 			//Retrieve client script
 			$.get(model[prop_script]).always(function(data) {
-				eval('var r = ' + data);
+				var r = null;
+				try {
+					eval('r = ' + data);
+				} catch (e) {}
 				if ( t.util.is_obj(r) ) {
 					//Add attributes to model
 					$.extend(model, r);
@@ -912,7 +918,10 @@ var View = {
 			//Check for URI (external loading)
 			if ( this.util.is_string(attributes) ) {
 				$.get(attributes).always(function(data) {
-					eval('var r = ' + data);
+					var r = null;
+					try {
+						eval('r = ' + data);
+					} catch (e) {}
 					if ( !t.util.is_obj(r) ) {
 						r = {};
 					}
