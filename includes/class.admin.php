@@ -1,6 +1,6 @@
 <?php
-
 require_once 'class.base.php';
+require_once 'class.base_object.php';
 
 /**
  * Admin functionality
@@ -696,7 +696,7 @@ class SLB_Admin extends SLB_Base {
  * @subpackage Admin
  * @author Archetyped
  */
-class SLB_Admin_View extends SLB_Base {
+class SLB_Admin_View extends SLB_Base_Object {
 	/* Properties */
 	
 	/**
@@ -799,7 +799,7 @@ class SLB_Admin_View extends SLB_Base {
 	/* Init */
 	
 	function __construct($id, $labels, $options = null, $callback = null, $capability = null, $icon = null) {
-		parent::__construct();
+		parent::__construct($id);
 		
 		$this->init_required();
 		$this->set_id($id);
@@ -837,18 +837,6 @@ class SLB_Admin_View extends SLB_Base {
 	 */
 	function get_id_raw() {
 		return $this->get_id(false);
-	}
-	
-	/**
-	 * Set ID
-	 * @param string ID
-	 */
-	function set_id($id) {
-		if ( is_scalar($id) ) {
-			$this->id = trim(strval($id));
-			return true;
-		}
-		return false;
 	}
 	
 	/**
