@@ -123,15 +123,6 @@ class SLB_Lightbox extends SLB_Base {
 
 		/* Admin */
 		add_action('admin_menu', $this->m('admin_menus'));
-		//Init lightbox admin
-		// add_action('admin_init', $this->m('admin_settings'));
-		// //Reset Settings
-		// add_action('admin_action_' . $this->add_prefix('reset'), $this->m('admin_reset'));
-		// add_action('admin_notices', $this->m('admin_notices'));
-		// //Plugin listing
-		// add_filter('plugin_action_links_' . $this->util->get_plugin_base_name(), $this->m('admin_plugin_action_links'), 10, 4);
-		// add_action('in_plugin_update_message-' . $this->util->get_plugin_base_name(), $this->m('admin_plugin_update_message'), 10, 2);
-		// add_filter('site_transient_update_plugins', $this->m('admin_plugin_update_transient'));
 		
 		/* Client-side */
 		
