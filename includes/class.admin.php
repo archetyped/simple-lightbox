@@ -862,10 +862,11 @@ class SLB_Admin_View extends SLB_Base_Object {
 	/**
 	 * Set text labels
 	 * @param array|string $labels
+	 * @return obj Current instance
 	 */
 	function set_labels($labels) {
 		if ( empty($labels) )
-			return false;
+			return this;
 		//Single string
 		if ( is_string($labels) ) {
 			$labels = array ( $labels );
@@ -879,6 +880,7 @@ class SLB_Admin_View extends SLB_Base_Object {
 			}
 			$this->labels = array_merge($this->labels, $labels);
 		}
+		return $this;
 	}
 	
 	/**
@@ -886,12 +888,14 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 * @uses this->set_labels()
 	 * @param string $type Label type to set
 	 * @param string $value Label value
+	 * @return obj Current instance
 	 */
 	function set_label($type, $value) {
 		if ( is_string($type) && is_string($value) ) {
 			$label = array( $type => $value );
 			$this->set_labels($label);
 		}
+		return $this;
 	}
 	
 	/**
@@ -917,10 +921,11 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 *  > If array, Options instance and specific groups are specified
 	 *   > 0: Options instance
 	 * 	 > 1: Group(s)
+	 * @return obj Current instance
 	 */
 	function set_options($options) {
 		if ( empty($options) )
-			return false;
+			return $this;
 		
 		$groups = null;
 		
@@ -941,15 +946,17 @@ class SLB_Admin_View extends SLB_Base_Object {
 			//Save option groups for valid options
 			$this->set_option_groups($groups);
 		}
+		return $this;
 	}
 	
 	/**
 	 * Set option groups
 	 * @param string|array $groups Specified group(s)
+	 * @return obj Current instance
 	 */
 	function set_option_groups($groups) {
 		if ( empty($groups) )
-			return false;
+			return $this;
 		
 		//Validate data
 		if ( !is_array($groups) ) {
@@ -961,6 +968,7 @@ class SLB_Admin_View extends SLB_Base_Object {
 		if ( is_array($groups) ) {
 			$this->option_groups = $groups;
 		}
+		return $this;
 	}
 	
 	/**
@@ -976,6 +984,7 @@ class SLB_Admin_View extends SLB_Base_Object {
 	/**
 	 * Save message
 	 * @param string $text Message text
+	 * @return obj Current instance
 	 */
 	function set_message($text) {
 		$msgs =& $this->get_messages();
@@ -983,6 +992,7 @@ class SLB_Admin_View extends SLB_Base_Object {
 		if ( empty($msgs) && !empty($text) )
 			$this->util->add_filter('admin_messages', $this->m('do_messages'));
 		$msgs[] = $text;
+		return $this;
 	}
 	
 	/**
@@ -1000,7 +1010,7 @@ class SLB_Admin_View extends SLB_Base_Object {
 	
 	/**
 	 * Retrieve view callback
-	 * @return callback Callback
+	 * @return callback Callback (Default: standard handler method)
 	 */
 	function get_callback() {
 		return ( $this->has_callback() ) ? $this->callback : $this->m('handle');
@@ -1009,16 +1019,24 @@ class SLB_Admin_View extends SLB_Base_Object {
 	/**
 	 * Set callback function for building item
 	 * @param callback $callback Callback function to use
+	 * @return obj Current instance
 	 */
 	function set_callback($callback) {
-		if ( is_callable($callback) )
-			$this->callback = $callback;
+		$this->callback = ( is_callable($callback) ) ? $callback : null;
+		return $this;
 	}
 	
+	/**
+	 * Check if callback set
+	 * @return bool TRUE if callback is set
+	 */
 	function has_callback() {
 		return ( !empty($this->callback) ) ? true : false;
 	}
 	
+	/**
+	 * Run callback
+	 */
 	function do_callback() {
 		call_user_func($this->get_callback());
 	}
@@ -1034,19 +1052,23 @@ class SLB_Admin_View extends SLB_Base_Object {
 	/**
 	 * Set capability for access control
 	 * @param string $capability Capability
+	 * @return obj Current instance
 	 */
 	function set_capability($capability) {
 		if ( is_string($capability) && !empty($capability) )
 			$this->capability = $capability;
+		return $this;
 	}
 	
 	/**
 	 * Set icon
 	 * @param string $icon Icon URI
+	 * @return obj Current instance
 	 */
 	function set_icon($icon) {
 		if ( !empty($icon) && is_string($icon) )
 			$this->icon = $icon;
+		return $this;
 	}
 	
 	function get_hookname() {
@@ -1056,10 +1078,12 @@ class SLB_Admin_View extends SLB_Base_Object {
 	/**
 	 * Set hookname
 	 * @param string $hookname Hookname value
+	 * @return obj Current instance
 	 */
 	function set_hookname($hookname) {
 		if ( !empty($hookname) && is_string($hookname) )
 			$this->hookname = $hookname;
+		return $this;
 	}
 	
 	/**
@@ -1075,6 +1099,7 @@ class SLB_Admin_View extends SLB_Base_Object {
 	/**
 	 * Set parent for view
 	 * @param string $parent Parent ID
+	 * @return obj Current instance
 	 */
 	function set_parent($parent) {
 		if ( $this->parent_required ) {
@@ -1083,24 +1108,28 @@ class SLB_Admin_View extends SLB_Base_Object {
 		} else {
 			$this->parent = null;
 		}
+		return $this;
 	}
 		
 	/**
 	 * Specify whether parent is a custom view or a WP view
 	 * @param bool $custom (optional) TRUE if custom, FALSE if WP
+	 * @return obj Current instance
 	 */
 	function set_parent_custom($custom = true) {
 		if ( $this->parent_required ) {
 			$this->parent_custom = !!$custom;
 		}
+		return $this;
 	}
 	
 	/**
 	 * Set parent as WP view
 	 * @uses this->set_parent_custom()
+	 * @return obj Current instance
 	 */
 	function set_parent_wp() {
-		$this->set_parent_custom(false);
+		return $this->set_parent_custom(false);
 	}
 	
 	/**
@@ -1355,9 +1384,14 @@ class SLB_Admin_Menu extends SLB_Admin_View {
 	
 	/* Getters/Setters */
 	
+	/**
+	 * Set menu position
+	 * @return obj Current instance
+	 */
 	function set_position($position) {
 		if ( is_int($position) )
 			$this->position = $position;
+		return $this;
 	}
 	
 	/* Handlers */
