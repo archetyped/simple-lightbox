@@ -104,7 +104,7 @@ class SLB_Base {
 	 * Options
 	 * @var SLB_Options
 	 */
-	var $options = null;
+	protected $options = null;
 	
 	/**
 	 * Admin
