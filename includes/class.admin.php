@@ -709,8 +709,8 @@ class SLB_Admin extends SLB_Base {
 }
 
 /**
- * Admin View Base functionality
- * Core functionality for Menus/Pages/Sections 
+ * Admin View Base
+ * Core functionality Admin UI components 
  * @package Simple Lightbox
  * @subpackage Admin
  * @author Archetyped
@@ -1380,7 +1380,8 @@ class SLB_Admin_View extends SLB_Base_Object {
 }
 
 /**
- * Admin Menu functionality
+ * Admin Menu
+ * Menus are top-level views in the Admin UI
  * @package Simple Lightbox
  * @subpackage Admin
  * @author Archetyped
@@ -1432,7 +1433,8 @@ class SLB_Admin_Menu extends SLB_Admin_View {
 }
 
 /**
- * Admin Page functionality
+ * Admin Page
+ * Pages are part of a Menu
  * @package Simple Lightbox
  * @subpackage Admin
  * @author Archetyped
@@ -1482,7 +1484,8 @@ class SLB_Admin_Page extends SLB_Admin_View {
 }
 
 /**
- * Admin Section functionality
+ * Admin Section
+ * Sections are part of a Page
  * @package Simple Lightbox
  * @subpackage Admin
  * @author Archetyped
@@ -1533,6 +1536,13 @@ class SLB_Admin_Section extends SLB_Admin_View {
 	public function options_build_post() {}
 }
 
+/**
+ * Reset functionality
+ * Used for adding options reset links to plugin listing, etc.
+ * @package Simple Lightbox
+ * @subpackage Admin
+ * @author Archetyped
+ */
 class SLB_Admin_Reset extends SLB_Admin_View {
 	/* Properties */
 	
