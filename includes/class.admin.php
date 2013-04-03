@@ -812,16 +812,16 @@ class SLB_Admin_View extends SLB_Base_Object {
 	
 	/* Init */
 	
-	function __construct($id, $labels, $options = null, $callback = null, $capability = null, $icon = null) {
-		parent::__construct($id);
-		
+	public function __construct($id, $labels, $options = null, $callback = null, $capability = null, $icon = null) {
+		$props = array(
+			'labels'		=> $labels,
+			'options'		=> $options,
+			'callback'		=> $callback,
+			'capability'	=> $capability,
+			'icon'			=> $icon,
+		);
+		parent::__construct($id, $props);
 		$this->init_required();
-		$this->set_id($id);
-		$this->set_labels($labels);
-		$this->set_options($options);
-		$this->set_callback($callback);
-		$this->set_capability($capability);
-		$this->set_icon($icon);
 	}
 	
 	function init_required() {
