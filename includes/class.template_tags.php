@@ -63,10 +63,10 @@ class SLB_Template_Tags extends SLB_Collection_Controller {
 	public function init_defaults($tags) {
 		$defaults = array (
 			'item'		=> array (
-				'client_script'	=> $this->util->get_plugin_file_path('template-tags/item/tag.item.js'),
+				'client_script'	=> $this->util->get_file_url('template-tags/item/tag.item.js'),
 			),
 			'ui'		=> array (
-				'client_script'	=> $this->util->get_plugin_file_path('template-tags/ui/tag.ui.js'),
+				'client_script'	=> $this->util->get_file_url('template-tags/ui/tag.ui.js'),
 			),
 		);
 		foreach ( $defaults as $id => $props ) {
