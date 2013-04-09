@@ -8,14 +8,18 @@ return {
 			vp = $('<meta name="viewport" />').appendTo('head');
 		}
 		var att = 'content';
+		//Save existing `content` attribute
 		this.set_attribute('vp_' + att, vp.attr(att), false);
-		vp.attr(att, 'width=device-width; initial-scale=1.0; maximum-scale=1.0; user-scalable=0;');
+		//Set new `content` attribute
+		vp.attr(att, 'width=device-width, initial-scale=1.0');
 	},
 	
 	'zoom_unset': function() {
 		var att = 'content';
+		//Retrieve saved `content` attribute
 		var att_val = this.get_attribute('vp_' + att, '', false);
 		var vp = $('meta[name=viewport]');
+		//Restore `content` attribute
 		vp.attr(att, att_val);
 	},
 	
@@ -37,24 +41,30 @@ return {
 				o = v.get_overlay().hide();
 			var pos = {'top' : ''};
 			var final = function() {
-				t.call_attribute('zoom_set');
-				l.css(pos);
-				dfr.resolve();
+				//Show overlay
+				o.fadeIn(function() {
+					t.call_attribute('zoom_set');
+					l.css(pos);
+					dfr.resolve();
+				});
 			};
 			//Clean UI
 			d.find('.slb_content').css({width: '', height: ''}).find('.slb_template_tag').hide();
 			d.find('.slb_details').height(0);
 			//Show viewer DOM
 			d.show(function() {
-				if ( window.outerWidth > 480 ) {
+				if ( window.outerWidth > 480 ) { /* Standard */
 					//Center vertically
-					pos.top = ( $(document).scrollTop() + $(window).height() / 2 ) - ( l.height() / 2 );
-					o.fadeIn(function() {
-						final();
-					});
-				} else {
-					final();
+					var top_scr = $(document).scrollTop();
+					pos.top = ( top_scr + $(window).height() / 2 ) - ( l.height() / 2 );
+					if ( pos.top < top_scr ) {
+						pos.top = top_scr;
+					}
+				} else { /* Small screen */
+					//Position at top
+					pos.top = $(document).scrollTop();
 				}
+				final();
 			});
 			console.groupEnd();
 			return dfr.promise();
@@ -78,7 +88,7 @@ return {
 				l.css('opacity', '');
 				dfr.resolve();
 			}
-			if ( v.animation_enabled() && window.outerWidth > 480 ) {
+			if ( v.animation_enabled() && window.outerWidth > 480 ) { /* Standard */
 				var lanim = {opacity: 0, top: $(document).scrollTop() + ( $(window).height() / 2 )},
 					canim = {width: 0, height: 0};
 				//Shrink & fade out viewer
@@ -164,7 +174,11 @@ return {
 				var dims = this.get_item_dimensions();
 				//Show detail tags (container still hidden)
 				det.find('.slb_template_tag').show();
-				var pos = { 'top': $(document).scrollTop() + ( $(window).height() / 2 ) - ( this.get_dimensions().height / 2 ) };
+				var top_scr = $(document).scrollTop();
+				var pos = { 'top': top_scr + ( $(window).height() / 2 ) - ( this.get_dimensions().height / 2 ) };
+				if ( pos.top < top_scr ) {
+					pos.top = top_scr;
+				}
 				console.info('Pos (Top): %o \nScrollTop: %o \nWindow Height: %o \nLayout Height: %o', pos.top, $(document).scrollTop(), $(window).height(), this.get_dimensions().height);
 				pos.top = pos.top || 0;
 				//Resize container
