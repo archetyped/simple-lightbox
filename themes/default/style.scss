@@ -269,10 +269,7 @@
 			@include vsizing;
 			.slb_viewer_layout {
 				@include vsizing;
-				top: 0 !important;
 				display: block;
-				position: fixed;
-				overflow: auto;
 			}
 			.slb_container {
 				@include vsizing;
