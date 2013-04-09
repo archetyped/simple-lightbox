@@ -68,7 +68,7 @@ class SLB_Component extends SLB_Base_Object {
 	/**
 	 * Set client script file
 	 * @see Base_Object::add_script()
-	 * @param string $src File path
+	 * @param string $src Script URI
 	 * @param array $deps (optional) File dependencies
 	 */
 	public function set_client_script($src, $deps = array()) {
