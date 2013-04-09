@@ -157,7 +157,7 @@ class SLB_Base_Object extends SLB_Base {
 	 * Add file
 	 * @param string $type Group to add file to
 	 * @param string $handle Name for resource
-	 * @param string $src Path to the file from WP's plugins directory. Example: 'plugin-name/css/style.css'
+	 * @param string $src File URI
 	 * @return object Current instance
 	 */
 	protected function add_file($type, $handle, $src, $deps = array()) {
@@ -171,7 +171,7 @@ class SLB_Base_Object extends SLB_Base {
 				$this->files[$type] = array();
 			}
 			//Add file to group
-			$this->files[$type][$handle] = array('handle' => $handle, 'path' => $src, 'deps' => $deps); 
+			$this->files[$type][$handle] = array('handle' => $handle, 'uri' => $src, 'deps' => $deps); 
 		}
 		return $this;
 	}
@@ -208,11 +208,8 @@ class SLB_Base_Object extends SLB_Base {
 		//Format return value
 		if ( !empty($ret) && !!$format ) {
 			switch ( $format ) {
-				case 'path':
-					$ret = $this->util->normalize_path(WP_PLUGIN_DIR, $ret['path']);
-					break;
 				case 'uri':
-					$ret = $this->util->normalize_path(WP_PLUGIN_URL, $ret['path']);
+					$ret = $ret['uri'];
 					break;
 				case 'object':
 					$ret = (object) $ret;
@@ -225,7 +222,7 @@ class SLB_Base_Object extends SLB_Base {
 	/**
 	 * Add stylesheet
 	 * @param string $handle Name of the stylesheet
-	 * @param string $src Path to stylesheet from WP's plugins directory. Example: 'plugin-name/css/style.css'
+	 * @param string $src Stylesheet URI
 	 * @return object Current instance
 	 */
 	public function add_style($handle, $src, $deps = array()) {
@@ -253,7 +250,7 @@ class SLB_Base_Object extends SLB_Base {
 	/**
 	 * Add script
 	 * @param string $handle Name of the script
-	 * @param string $src Path to script from WP's plugins directory. Example: 'plugin-name/js/client.js'
+	 * @param string $src Script URI
 	 * @return object Current instance
 	 */
 	public function add_script($handle, $src, $deps = array()) {

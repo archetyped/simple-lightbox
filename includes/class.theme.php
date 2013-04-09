@@ -63,7 +63,7 @@ class SLB_Theme extends SLB_Component {
 	 * Add template file
 	 * @see `add_file()`
 	 * @param string $handle Template handle
-	 * @param string $src Template path
+	 * @param string $src Template URI
 	 * @return obj Current instance
 	 */
 	protected function add_template($handle, $src) {
@@ -75,7 +75,7 @@ class SLB_Theme extends SLB_Component {
 	 * @see `get_file()`
 	 * @param string $handle Template handle
 	 * @param string $format (optional) Return value format
-	 * @return mixed Template file
+	 * @return mixed Template file (Default: array of file properties @see `Base_Object::add_file()`)
 	 */
 	protected function get_template($handle, $format = null) {
 		return $this->get_file('template', $handle, $format);
@@ -86,7 +86,7 @@ class SLB_Theme extends SLB_Component {
 	/**
 	 * Set theme layout
 	 * @uses `add_template()`
-	 * @param string $src File path
+	 * @param string $src Layout file URI
 	 * @return Current instance
 	 */
 	public function set_layout($src) {
