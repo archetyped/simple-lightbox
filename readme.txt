@@ -15,21 +15,22 @@ Simple Lightbox is a very simple and customizable lightbox that is easy to add t
 The current release is a beta version.  Please test and [provide feedback on GitHub](https://github.com/archetyped/simple-lightbox/issues).
 Main changes
 
-#### Beta 7.4
-* Optimize: Refactor Theme API
+#### Release Candidate 1
+* Fix: Locked viewport for mobile devices (Zooming Zephyr)
+* Fix: Group navigation (Larry the Navigator)
+* Optimize: Audit label text for i18n
+* Update: Files in Component APIs (Template Tag, Content Handler, Theme) now expect URIs
+* Update: Implement Sass for admin styles
 
-#### Beta 7.3
+#### Beta 7
 * Add: Template Tag API
+* Add: Content Handler API
+* Add: Prioritized Content Handler evaluation
+* Optimize: Refactor Theme API
 * Optimize: Load all content handlers in single `script` element
 * Optimize: Inline documentation
-
-#### Beta 7.2
-* Add: Prioritized Content Handler evaluation
 * Optimize: Content Handler loading in client (AJAX-based)
 * Optimize: Base classes (Collection, Collection_Controller)
-
-#### Beta 7.1
-* Add: Content Handler API
 * Optimize: Media caching
 
 #### Beta 6
