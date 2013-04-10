@@ -2220,7 +2220,7 @@ class SLB_Fields extends SLB_Field_Collection {
 
 		//Base
 		$base = new SLB_Field_Type('base');
-		$base->set_description('Default Element');
+		$base->set_description(__('Default Element', 'simple-lightbox'));
 		$base->set_property('tag', 'span');
 		$base->set_property('class', '', 'attr');
 		$base->set_layout('form_attr', '{tag} name="{field_name}" id="{field_id}" {properties ref_base="root" group="attr"}');
@@ -2232,7 +2232,7 @@ class SLB_Fields extends SLB_Field_Collection {
 		//Base closed
 		$base_closed = new SLB_Field_Type('base_closed');
 		$base_closed->set_parent('base');
-		$base_closed->set_description('Default Element (Closed Tag)');
+		$base_closed->set_description(__('Default Element (Closed Tag)', 'simple-lightbox'));
 		$base_closed->set_layout('form_start', '<{tag} id="{field_id}" name="{field_name}" {properties ref_base="root" group="attr"}>');
 		$base_closed->set_layout('form_end', '</{tag}>');
 		$base_closed->set_layout('form', '{form_start ref_base="layout"}{data}{form_end ref_base="layout"}');
@@ -2240,7 +2240,7 @@ class SLB_Fields extends SLB_Field_Collection {
 
 		//Input
 		$input = new SLB_Field_Type('input', 'base');
-		$input->set_description('Default Input Element');
+		$input->set_description(__('Default Input Element', 'simple-lightbox'));
 		$input->set_property('tag', 'input');
 		$input->set_property('type', 'text', 'attr');
 		$input->set_property('value', '{data}', 'attr');
@@ -2248,7 +2248,7 @@ class SLB_Fields extends SLB_Field_Collection {
 
 		//Text input
 		$text = new SLB_Field_Type('text', 'input');
-		$text->set_description('Text Box');
+		$text->set_description(__('Text Box', 'simple-lightbox'));
 		$text->set_property('size', 15, 'attr');
 		$text->set_property('label');
 		$text->set_layout('form', '{label ref_base="layout"} {inherit}');
@@ -2279,13 +2279,13 @@ class SLB_Fields extends SLB_Field_Collection {
 		//Hidden
 		$hidden = new SLB_Field_Type('hidden');
 		$hidden->set_parent('input');
-		$hidden->set_description('Hidden Field');
+		$hidden->set_description(__('Hidden Field', 'simple-lightbox'));
 		$hidden->set_property('type', 'hidden');
 		$this->add($hidden);
 
 		//Select
 		$select = new SLB_Field_Type('select', 'base_closed');
-		$select->set_description('Select tag');
+		$select->set_description(__('Select tag', 'simple-lightbox'));
 		$select->set_property('tag', 'select');
 		$select->set_property('tag_option', 'option');
 		$select->set_property('options', array());
@@ -2297,7 +2297,7 @@ class SLB_Fields extends SLB_Field_Collection {
 		
 		//Span
 		$span = new SLB_Field_Type('span', 'base_closed');
-		$span->set_description('Inline wrapper');
+		$span->set_description(__('Inline wrapper', 'simple-lightbox'));
 		$span->set_property('tag', 'span');
 		$span->set_property('value', 'Hello there!');
 		$this->add($span);

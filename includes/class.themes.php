@@ -58,15 +58,15 @@ class SLB_Themes extends SLB_Collection_Controller {
 	function init_defaults($themes) {
 		$defaults = array (
 			$this->get_default_id()		=> array (
-				'name'			=> 'Default (Light)',
-				'layout'		=> $this->util->get_plugin_file_path('themes/default/layout.html'),
-				'client_script'	=> $this->util->get_plugin_file_path('themes/default/client.js'),
-				'client_style'	=> $this->util->get_plugin_file_path('themes/default/style.css'),
+				'name'			=> __('Default (Light)', 'simple-lightbox'),
+				'layout'		=> $this->util->get_file_url('themes/default/layout.html'),
+				'client_script'	=> $this->util->get_file_url('themes/default/client.js'),
+				'client_style'	=> $this->util->get_file_url('themes/default/style.css'),
 			),
 			$this->add_prefix('black')	=> array (
-				'name'			=> 'Default (Dark)',
+				'name'			=> __('Default (Dark)', 'simple-lightbox'),
 				'parent'		=> $this->get_default_id(),
-				'client_style'	=> $this->util->get_plugin_file_path('themes/black/style.css'),
+				'client_style'	=> $this->util->get_file_url('themes/black/style.css'),
 			),
 		);
 		

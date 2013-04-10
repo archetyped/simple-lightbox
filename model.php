@@ -238,13 +238,7 @@ class SLB_Lightbox extends SLB_Base {
 			'header'		=> __('Lightbox Settings', 'simple-lightbox'),
 			'plugin_action'	=> __('Settings', 'simple-lightbox')
 		);
-		/*
-		$menu_labels = $options_labels;
-		$menu_labels['plugin_action'] = 'Menu Link';
-		$section_labels = $options_labels;
-		$section_labels['plugin_action'] = 'Section Link';
-		$this->admin->add_menu('menu', $menu_labels);
-		*/
+		
 		$labels_reset = array (
 			'title'			=> __('Reset', 'simple-lightbox'),
 			'confirm'		=> __('Are you sure you want to reset settings?', 'simple-lightbox'),

@@ -940,7 +940,7 @@ var Component = {
 	 * > Key: string Event type
 	 * > Value: array Handlers
 	 */
-	_events: {},
+	_events: null,
 	
 	/**
 	 * Status management
@@ -948,7 +948,7 @@ var Component = {
 	 * > Key: Status ID
 	 * > Value: Status value
 	 */
-	_status: {},
+	_status: null,
 	
 	/* Public */
 	
@@ -993,8 +993,8 @@ var Component = {
 	 */
 	get_status: function(id, raw) {
 		var ret = false;
-		if ( this.util.is_obj(this._status, id) ) {
-			ret = ( this.util.is_bool(raw) && raw ) ? this._status[id] : !!this._status[id];
+		if ( this.util.in_obj(this._status, id) ) {
+			ret = ( !!raw ) ? this._status[id] : !!this._status[id];
 		}
 		return ret;
 	},
@@ -1010,6 +1010,10 @@ var Component = {
 		if ( this.util.is_string(id) ) {
 			if ( !this.util.is_set(val) ) {
 				val = true;
+			}
+			//Initialize property
+			if ( !this.util.is_obj(this._status, false) ) {
+				this._status = {};
 			}
 			//Set status
 			this._status[id] = val;
@@ -1671,10 +1675,11 @@ var Component = {
 		}
 		//Build options
 		options = $.extend({}, options_std, options);
-		//Setup event
+		//Initialize events bucket
 		if ( !this.util.is_obj(this._events, false) ) {
 			this._events = {};
 		}
+		//Setup event
 		var es = this._events;
 		if ( !( event in es ) || !this.util.is_obj(es[event], false) || !!options.clear ) {
 			es[event] = [];
@@ -1827,12 +1832,13 @@ var Viewer = {
 	/* Init */
 	
 	register_hooks: function() {
+		var t = this;
 		this
 			.on(['item-prev', 'item-next'], function() {
-				this.trigger('item-change');
+				t.trigger('item-change');
 			})
 			.on(['close', 'item-change'], function() {
-				this.unlock();
+				t.unlock();
 			});
 	},
 	
@@ -2561,10 +2567,11 @@ var Viewer = {
 		var v = this;
 		var ev = 'item-next';
 		var st = ['events', 'viewer', ev].join('_');
+		//Setup event handler
 		if ( !g.get_status(st) ) {
 			g.set_status(st);
-			g.on(ev, function() {
-				v.trigger(ev);
+			g.on(ev, function(e) {
+				v.trigger(e.type);
 			});
 		}
 		g.show_next();
@@ -2642,8 +2649,9 @@ var Group = {
 	/* Init */
 	
 	register_hooks: function() {
+		var t = this;
 		this.on(['item-prev', 'item-next'], function() {
-			this.trigger('item-change');
+			t.trigger('item-change');
 		});
 	},
 	
@@ -3223,7 +3231,7 @@ var Content_Item = {
 			g = this.set_component(prop, new View.Group());
 			set_current = true;
 		}
-		if ( this.util.is_bool(set_current) && set_current ) {
+		if ( !!set_current ) {
 			g.set_current(this);
 		}
 		return g;
