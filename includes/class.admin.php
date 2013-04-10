@@ -44,9 +44,9 @@ class SLB_Admin extends SLB_Base {
 	 * @var array
 	 */
 	var $messages = array(
-		'reset'			=> 'The settings have been reset',
-		'beta'			=> '<strong class="%1$s">Notice:</strong> This update is a <strong class="%1$s">Beta version</strong>. It is highly recommended that you test the update on a test server before updating the plugin on a production server.',
-		'access_denied'	=> 'You do not have sufficient permissions'
+		'reset'			=> __('The settings have been reset', 'simple-lightbox'),
+		'beta'			=> __('<strong class="%1$s">Notice:</strong> This update is a <strong class="%1$s">Beta version</strong>. It is highly recommended that you test the update on a test server before updating the plugin on a production server.', 'simple-lightbox'),
+		'access_denied'	=> __('You do not have sufficient permissions', 'simple-lightbox')
 	);
 	
 	/* Views */
@@ -154,7 +154,7 @@ class SLB_Admin extends SLB_Base {
 			?>
 			<div id="<?php echo esc_attr($mid); ?>" class="updated fade">
 				<p>
-					<?php esc_html_e($msg, 'simple-lightbox');?>
+					<?php echo esc_html($msg);?>
 				</p>
 			</div>
 			<?php
@@ -1376,7 +1376,7 @@ class SLB_Admin_Menu extends SLB_Admin_View {
 	
 	function handle() {
 		if ( !current_user_can($this->get_capability()) )
-			wp_die('Access Denied');
+			wp_die(__('Access Denied', 'simple-lightbox'));
 		?>
 		<div class="wrap">
 			<h2><?php esc_html_e( $this->get_label('header') ); ?></h2>
@@ -1425,7 +1425,7 @@ class SLB_Admin_Page extends SLB_Admin_View {
 	 */
 	function handle() {
 		if ( !current_user_can($this->get_capability()) )
-			wp_die('Access Denied');
+			wp_die(__('Access Denied', 'simple-lightbox'));
 		?>
 		<div class="wrap">
 			<?php $this->show_icon(); ?>
@@ -1513,7 +1513,7 @@ class SLB_Admin_Reset extends SLB_Admin_View {
 	function handle() {
 		//Validate user
 		if ( ! current_user_can('activate_plugins') || ! check_admin_referer($this->get_id()) )
-			wp_die('Access Denied');
+			wp_die(__('Access Denied', 'simple-lightbox'));
 
 		//Reset settings
 		if ( $this->is_options_valid() )
