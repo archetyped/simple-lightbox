@@ -3,7 +3,7 @@
 Plugin Name: Simple Lightbox
 Plugin URI: http://archetyped.happyfox.com/
 Description: Customizable Lightbox for WordPress
-Version: 2.0b7dev (BETA)
+Version: 2.0RC1 (BETA)
 Author: Archetyped
 Author URI: http://archetyped.com
 */
