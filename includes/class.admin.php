@@ -43,11 +43,7 @@ class SLB_Admin extends SLB_Base {
 	 * Messages
 	 * @var array
 	 */
-	var $messages = array(
-		'reset'			=> 'The settings have been reset',
-		'beta'			=> '<strong class="%1$s">Notice:</strong> This update is a <strong class="%1$s">Beta version</strong>. It is highly recommended that you test the update on a test server before updating the plugin on a production server.',
-		'access_denied'	=> 'You do not have sufficient permissions',
-	);
+	var $messages = array();
 	
 	/* Views */
 	
@@ -665,15 +661,34 @@ class SLB_Admin extends SLB_Base {
 	
 	/**
 	* Retrieve stored messages
-	* @uses this->messages
 	* @param string $msg_id Message ID
 	* @return string Message text
 	*/
 	function get_message($msg_id) {
 		$msg = '';
-		if ( is_string($msg_id) && !empty($msg_id) && isset($this->messages[$msg_id]) )
-			$msg = $this->messages[$msg_id];
+		$msgs = $this->get_messages();
+		if ( is_string($msg_id) && isset($msgs[$msg_id]) ) {
+			$msg = $msgs[$msg_id];
+		}
 		return $msg;
+	}
+	
+	/**
+	 * Retrieve all messages
+	 * Initializes messages if necessary
+	 * @uses $messages
+	 * @return array Messages
+	 */
+	function get_messages() {
+		if ( empty($this->messages) ) {
+			//Initialize messages if necessary
+			$this->messages = array(
+				'reset'			=> __('The settings have been reset', 'simple-lightbox'),
+				'beta'			=> __('<strong class="%1$s">Notice:</strong> This update is a <strong class="%1$s">Beta version</strong>. It is highly recommended that you test the update on a test server before updating the plugin on a production server.', 'simple-lightbox'),
+				'access_denied'	=> __('You do not have sufficient permissions', 'simple-lightbox'),
+			);
+		}
+		return $this->messages;
 	}
 	
 	/**
