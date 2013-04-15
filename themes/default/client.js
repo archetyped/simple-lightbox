@@ -2,16 +2,46 @@
 return {
 	/* Helpers */
 	'zoom_set': function() {
+		var t = this;
 		//Set viewport properties
 		var vp = $('meta[name=viewport]');
 		if ( !vp.length ) {
 			vp = $('<meta name="viewport" />').appendTo('head');
 		}
 		var att = 'content';
-		//Save existing `content` attribute
-		this.set_attribute('vp_' + att, vp.attr(att), false);
-		//Set new `content` attribute
-		vp.attr(att, 'width=device-width, initial-scale=1.0');
+		//Save existing viewport settings
+		var settings =  vp.attr(att);
+		this.set_attribute('vp_' + att, settings, false);
+		//Extract and Merge settings with defaults
+		var sep = ','
+		settings = ( settings.length ) ? settings.split(sep) : [];
+		var _settings = {
+			'width': 'device-width',
+			'initial-scale': '1.0'
+		}
+		$.each(settings, function(idx, val) {
+			var sep = '=';
+			var pos = val.indexOf(sep);
+			if ( -1 !== pos  ) {
+				var setting = {
+					'key': $.trim(val.substring(0, pos)),
+					'data': $.trim(val.substring(pos + 1))
+				}
+				//Add setting
+				if ( !t.util.in_obj(_settings, setting.key) ) {
+					_settings[setting.key] = setting.data;
+				}
+			}
+		});
+		//Update settings
+		settings =  [];
+		$.each(_settings, function(key, val) {
+			settings.push(key + '=' + val);
+		});
+		settings = settings.join(sep);
+		
+		//Set new viewport settings
+		vp.attr(att, settings);
 	},
 	
 	'zoom_unset': function() {
