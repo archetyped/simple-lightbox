@@ -685,7 +685,7 @@ class SLB_Admin extends SLB_Base {
 			$this->messages = array(
 				'reset'			=> __('The settings have been reset', 'simple-lightbox'),
 				'beta'			=> __('<strong class="%1$s">Notice:</strong> This update is a <strong class="%1$s">Beta version</strong>. It is highly recommended that you test the update on a test server before updating the plugin on a production server.', 'simple-lightbox'),
-				'access_denied'	=> __('You do not have sufficient permissions', 'simple-lightbox'),
+				'access_denied'	=> __('Access Denied', 'simple-lightbox'),
 			);
 		}
 		return $this->messages;
