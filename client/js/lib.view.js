@@ -67,11 +67,7 @@ var View = {
 	
 	/* Options */
 	options: {
-		validate_links: false,
 		ui_animate: true,
-		ui_enabled_desc: true,
-		ui_enabled_caption: true,
-		ui_caption_src: true,
 		slideshow_enabled: true,
 		slideshow_autostart: false,
 		slideshow_duration: '6'

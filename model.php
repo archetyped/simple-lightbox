@@ -22,16 +22,13 @@ class SLB_Lightbox extends SLB_Base {
 		'core'			=> array (
 			'file'		=> 'client/js/lib.core.js',
 			'deps'		=> 'jquery',
+			'in_footer'	=> true,
 		),
 		'view'			=> array (
 			'file'		=> 'client/js/lib.view.js',
 			'deps'		=> array('jquery', '[core]'),
 			'context'	=> array( array('public', '[is_enabled]') ),
-		),
-		'test'			=> array (
-			'file'		=> 'client/js/lib.test.js',
-			'deps'		=> array('jquery', '[core]'),
-			'context'	=> array( array('public', '[xvv]') ),
+			'in_footer'	=> true,
 		),
 	);
 
@@ -123,21 +120,12 @@ class SLB_Lightbox extends SLB_Base {
 
 		/* Admin */
 		add_action('admin_menu', $this->m('admin_menus'));
-		//Init lightbox admin
-		// add_action('admin_init', $this->m('admin_settings'));
-		// //Reset Settings
-		// add_action('admin_action_' . $this->add_prefix('reset'), $this->m('admin_reset'));
-		// add_action('admin_notices', $this->m('admin_notices'));
-		// //Plugin listing
-		// add_filter('plugin_action_links_' . $this->util->get_plugin_base_name(), $this->m('admin_plugin_action_links'), 10, 4);
-		// add_action('in_plugin_update_message-' . $this->util->get_plugin_base_name(), $this->m('admin_plugin_update_message'), 10, 2);
-		// add_filter('site_transient_update_plugins', $this->m('admin_plugin_update_transient'));
 		
 		/* Client-side */
 		
 		//Init lightbox
-		$priority = 99;
-		add_action('wp_footer', $this->m('client_init'), 11);
+		$priority = $this->util->priority('low');
+		add_action('wp_footer', $this->m('client_init'), $this->util->priority('client_footer_output'));
 		add_action('wp_footer', $this->m('client_footer'), $priority);
 		//Link activation
 		add_filter('the_content', $this->m('activate_links'), $priority);
@@ -169,16 +157,15 @@ class SLB_Lightbox extends SLB_Base {
 				'enabled_page'				=> array('title' => __('Enable on Pages', 'simple-lightbox'), 'default' => true, 'group' => array('activation', 40)),
 				'enabled_archive'			=> array('title' => __('Enable on Archive Pages (tags, categories, etc.)', 'simple-lightbox'), 'default' => true, 'group' => array('activation', 50)),
 				'enabled_widget'			=> array('title' => __('Enable for Widgets', 'simple-lightbox'), 'default' => false, 'group' => array('activation', 60)),
-				'validate_links'			=> array('title' => __('Validate links', 'simple-lightbox'), 'default' => false, 'group' => array('activation', 80), 'in_client' => true),
-				'group_links'				=> array('title' => __('Group image links (for displaying as a slideshow)', 'simple-lightbox'), 'default' => true, 'group' => array('grouping', 10)),
-				'group_post'				=> array('title' => __('Group image links by Post (e.g. on pages with multiple posts)', 'simple-lightbox'), 'default' => true, 'group' => array('grouping', 20)),
-				'group_gallery'				=> array('title' => __('Group gallery links separately', 'simple-lightbox'), 'default' => false, 'group' => array('grouping', 30)),
-				'group_widget'				=> array('title' => __('Group widget links separately', 'simple-lightbox'), 'default' => false, 'group' => array('grouping', 40)),
+				'group_links'				=> array('title' => __('Group items (for displaying as a slideshow)', 'simple-lightbox'), 'default' => true, 'group' => array('grouping', 10)),
+				'group_post'				=> array('title' => __('Group items by Post (e.g. on pages with multiple posts)', 'simple-lightbox'), 'default' => true, 'group' => array('grouping', 20)),
+				'group_gallery'				=> array('title' => __('Group gallery items separately', 'simple-lightbox'), 'default' => false, 'group' => array('grouping', 30)),
+				'group_widget'				=> array('title' => __('Group widget items separately', 'simple-lightbox'), 'default' => false, 'group' => array('grouping', 40)),
 				'ui_autofit'				=> array('title' => __('Resize lightbox to fit in window', 'simple-lightbox'), 'default' => true, 'group' => array('ui', 10), 'in_client' => true),
 				'ui_animate'				=> array('title' => __('Enable animations', 'simple-lightbox'), 'default' => true, 'group' => array('ui', 20), 'in_client' => true),
 				'slideshow_autostart'		=> array('title' => __('Start Slideshow Automatically', 'simple-lightbox'), 'default' => true, 'group' => array('ui', 30), 'in_client' => true),
 				'slideshow_duration'		=> array('title' => __('Slide Duration (Seconds)', 'simple-lightbox'), 'default' => '6', 'attr' => array('size' => 3, 'maxlength' => 3), 'group' => array('ui', 40), 'in_client' => true),
-				'group_loop'				=> array('title' => __('Loop through images', 'simple-lightbox'),'default' => true, 'group' => array('ui', 50), 'in_client' => true),
+				'group_loop'				=> array('title' => __('Loop through items', 'simple-lightbox'),'default' => true, 'group' => array('ui', 50), 'in_client' => true),
 				'ui_overlay_opacity'		=> array('title' => __('Overlay Opacity (0 - 1)', 'simple-lightbox'), 'default' => '0.8', 'attr' => array('size' => 3, 'maxlength' => 3), 'group' => array('ui', 60), 'in_client' => true),
 				'txt_loading'				=> array('title' => __('Loading indicator', 'simple-lightbox'), 'default' => 'Loading', 'group' => array('labels', 20)),
 				'txt_close'					=> array('title' => __('Close button', 'simple-lightbox'), 'default' => 'Close', 'group' => array('labels', 10)),
@@ -194,14 +181,15 @@ class SLB_Lightbox extends SLB_Base {
 				'header_strings'			=> null,
 				'header_ui'					=> null,
 				'activate_attachments'		=> null,
+				'validate_links'			=> null,
 				'enabled_compat'			=> null,
 				'enabled_single'			=> array('enabled_post', 'enabled_page'),
-				'enabled_caption'			=> 'ui_enabled_caption',
-				'enabled_desc'				=> 'ui_enabled_desc',
+				'enabled_caption'			=> null,
+				'enabled_desc'				=> null,
 				'ui_enabled_caption'		=> null,
 				'ui_caption_src'			=> null,
 				'ui_enabled_desc'			=> null,
-				'caption_src'				=> 'ui_caption_src',
+				'caption_src'				=> null,
 				'animate'					=> 'ui_animate',
 				'overlay_opacity'			=> 'ui_overlay_opacity',
 				'loop'						=> 'group_loop',
@@ -242,7 +230,7 @@ class SLB_Lightbox extends SLB_Base {
 		$labels_reset = array (
 			'title'			=> __('Reset', 'simple-lightbox'),
 			'confirm'		=> __('Are you sure you want to reset settings?', 'simple-lightbox'),
-			'success'		=> __('Settings Reset', 'simple-lightbox'),
+			'success'		=> __('Settings have been reset', 'simple-lightbox'),
 			'failure'		=> __('Settings were not reset', 'simple-lightbox')
 		);
 		

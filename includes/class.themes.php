@@ -31,7 +31,7 @@ class SLB_Themes extends SLB_Collection_Controller {
 		$this->util->add_action('init', $this->m('init_defaults'), 1);
 		
 		//Client output
-		add_action('wp_footer', $this->m('client_output'), 11);
+		add_action('wp_footer', $this->m('client_output'), $this->util->priority('client_footer_output'));
 	}
 	
 	protected function _options() {

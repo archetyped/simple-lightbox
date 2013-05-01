@@ -1,9 +1,9 @@
 <?php 
 /* 
 Plugin Name: Simple Lightbox
-Plugin URI: http://archetyped.happyfox.com/
-Description: Customizable Lightbox for WordPress
-Version: 2.0RC1 (BETA)
+Plugin URI: http://archetyped.com/lab/slb-2-0rc2/
+Description: The highly customizable lightbox for WordPress
+Version: 2.0RC2 (BETA)
 Author: Archetyped
 Author URI: http://archetyped.com
 */

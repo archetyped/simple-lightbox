@@ -22,7 +22,7 @@ class SLB_Utilities {
 	 * Default plugin headers
 	 * @var array
 	 */
-	var $plugin_headers = array (
+	private $plugin_headers = array (
 		'Name'			=> 'Plugin Name',
 		'PluginURI'		=> 'Plugin URI',
 		'Version'		=> 'Version',
@@ -32,6 +32,18 @@ class SLB_Utilities {
 		'TextDomain'	=> 'Text Domain',
 		'DomainPath'	=> 'Domain Path',
 		'Network'		=> 'Network',
+	);
+	
+	
+	/**
+	 * Standard hook priorities
+	 * @var array
+	 */
+	private $priorities = array (
+		'high'							=> 1,
+		'low'							=> 99,
+		'safe'							=> 15,
+		'client_footer_output'			=> 25,
 	);
 	
 	/* Constructors */
@@ -153,6 +165,21 @@ class SLB_Utilities {
 	function get_db_prefix() {
 		global $wpdb;
 		return $wpdb->prefix . $this->get_prefix('_');
+	}
+	
+	/*-** Priority **-*/
+	
+	/**
+	 * Retrieve standard priority
+	 * @var string $id Priority ID to retrieve
+	 * @return int Priority
+	 */
+	public function priority($id = null) {
+		$pri = 10;
+		if ( !is_null($id) && array_key_exists($id, $this->priorities) ) {
+			$pri = $this->priorities[$id];
+		}
+		return $pri;
 	}
 	
 	/* Wrapped Values */
