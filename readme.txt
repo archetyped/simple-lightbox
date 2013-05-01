@@ -1,6 +1,6 @@
 === Simple Lightbox ===
 Contributors: Archetyped
-Donate link: http://mycharitywater.org/archetyped-2012-fall
+Donate link: http://archetyped.com/tools/simple-lightbox/
 License: GPLv2
 Tags: lightbox, gallery, photography, images, theme, template, style
 Requires at least: 3.5
@@ -13,65 +13,13 @@ The highly customizable lightbox for WordPress
 Simple Lightbox is a very simple and customizable lightbox that is easy to add to your WordPress website.
 
 ### BETA NOTES
-The current release is a beta version.  Please test and [provide feedback on GitHub](https://github.com/archetyped/simple-lightbox/issues).
+The current release is a **release candidate**.  Please test and [provide feedback on GitHub](https://github.com/archetyped/simple-lightbox/wiki/Reporting-Issues).
 Main changes
 
 #### Release Candidate 2
 * Optimize: Load client output in footer
 * Optimize: Responsive viewport handling less aggressive
 * Update: New POT file for translations
-
-#### Release Candidate 1
-* Fix: Locked viewport for mobile devices (Zooming Zephyr)
-* Fix: Group navigation (Larry the Navigator)
-* Optimize: Audit label text for i18n
-* Update: Files in Component APIs (Template Tag, Content Handler, Theme) now expect URIs
-* Update: Implement Sass for admin styles
-
-#### Beta 7
-* Add: Template Tag API
-* Add: Content Handler API
-* Add: Prioritized Content Handler evaluation
-* Optimize: Refactor Theme API
-* Optimize: Load all content handlers in single `script` element
-* Optimize: Inline documentation
-* Optimize: Content Handler loading in client (AJAX-based)
-* Optimize: Base classes (Collection, Collection_Controller)
-* Optimize: Media caching
-
-#### Beta 6
-* Update: Use hardcoded `simple-lightbox` text domain value
-* Fix: Wrong property name for item's description content (Descriptive Syd)
-* Fix: Legacy group name overflows to following items
-* Fix: Error when animation disabled (Animation Low-down)
-* Fix: Inconsistent automatic resizing (Robbing the cache)
-* Optimize: Theme Margin/Offset calculations
-* Optimize: JPEG file extension support (Julian's JPEGs)
-* Optimize: Remove unused options (Phantom Options on the Brinke)
-* Optimize: Group handling
-* Optimize: Legacy attributes handling
-* Optimize: `get_title()` output
-* Add: `caption` property
-
-#### Beta 5
-* Update: Public beta released
-
-#### Beta 4
-* Optimize: Responsive (mobile) layout for default theme
-* Optimize: Automatic backwards-compatibility with legacy links
-* Optimize: Link activation
-* Update: SLB requires WordPress 3.5
-
-#### Beta 3
-* Update: Completely redesigned & fully responsive default themes
-* Fix: Image links loaded via AJAX are not displayed in a lightbox (Ren&eacute; &amp; Geert's Infinite Playlist)
-
-#### Beta 2
-* Fix: Custom text labels not used (Lid&eacute;n's Hidin' Labels)
-* Fix: Incorrect automatic resizing for ungrouped items (Erik the Resizer) 
-
-#### Beta 1
-* Update: Everything
 
 #### Features
 Options for customizing the lightbox behavior are located in the **Appearance > Lightbox** admin menu (or just click the **Settings** link below the plugin's name when viewing the list of installed plugins)
@@ -108,7 +56,7 @@ No upgrade notices
 
 == Frequently Asked Questions ==
 
-Post your questions and comments on [Simple Lightbox's official page](http://archetyped.com/tools/simple-lightbox/)
+Get more information on [Simple Lightbox's official page](http://archetyped.com/tools/simple-lightbox/)
 
 == Screenshots ==
 
@@ -118,59 +66,12 @@ Post your questions and comments on [Simple Lightbox's official page](http://arc
 == Changelog ==
 
 ### 2.0 (BETA NOTICE)
-The current release is a beta version.  Please test and [provide feedback on GitHub](https://github.com/archetyped/simple-lightbox/issues).
+The current release is a **release candidate**.  Please test and [provide feedback on GitHub](https://github.com/archetyped/simple-lightbox/wiki/Reporting-Issues).
 
-#### Release Candidate 1
-* Fix: Locked viewport for mobile devices (Zooming Zephyr)
-* Fix: Group navigation (Larry the Navigator)
-* Optimize: Audit label text for i18n
-* Update: Files in Component APIs (Template Tag, Content Handler, Theme) now expect URIs
-* Update: Implement Sass for admin styles
-
-#### Beta 7
-* Add: Template Tag API
-* Add: Content Handler API
-* Add: Prioritized Content Handler evaluation
-* Optimize: Refactor Theme API
-* Optimize: Load all content handlers in single `script` element
-* Optimize: Inline documentation
-* Optimize: Content Handler loading in client (AJAX-based)
-* Optimize: Base classes (Collection, Collection_Controller)
-* Optimize: Media caching
-
-#### Beta 6
-* Update: Use hardcoded `simple-lightbox` text domain value
-* Fix: Wrong property name for item's description content (Descriptive Syd)
-* Fix: Legacy group name overflows to following items
-* Fix: Error when animation disabled (Animation Low-down)
-* Fix: Inconsistent automatic resizing (Robbing the cache)
-* Optimize: Theme Margin/Offset calculations
-* Optimize: JPEG file extension support (Julian's JPEGs)
-* Optimize: Remove unused options (Phantom Options on the Brinke)
-* Optimize: Group handling
-* Optimize: Legacy attributes handling
-* Optimize: `get_title()` output
-* Add: `caption` property
-
-#### Beta 5
-* Update: Public beta released
-
-#### Beta 4
-* Optimize: Responsive (mobile) layout for default theme
-* Optimize: Automatic backwards-compatibility with legacy links
-* Optimize: Link activation
-* Update: SLB requires WordPress 3.5
-
-#### Beta 3
-* Update: Completely redesigned & fully responsive default themes
-* Fix: Image links loaded via AJAX are not displayed in a lightbox (Ren&eacute; &amp; Geert's Infinite Playlist)
-
-#### Beta 2
-* Fix: Custom text labels not used (Lid&eacute;n's Hidin' Labels)
-* Fix: Incorrect automatic resizing for ungrouped items (Erik the Resizer) 
-
-#### Beta 1
-* Update: Everything
+= 2.0 Release Candidate 2 =
+* Optimize: Load client output in footer
+* Optimize: Responsive viewport handling less aggressive
+* Update: New POT file for translations
 
 = 1.6 =
 * Add: Widget support
