@@ -35,7 +35,7 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 		parent::_hooks();
 		$this->util->add_action('init', $this->m('init_defaults'));
 		
-		add_action('wp_footer', $this->m('client_output'), 11);
+		add_action('wp_footer', $this->m('client_output'), $this->util->priority('client_footer_output'));
 	}
 	
 	/* Collection Management */

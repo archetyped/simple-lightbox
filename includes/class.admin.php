@@ -20,6 +20,7 @@ class SLB_Admin extends SLB_Base {
 			'file'		=> 'client/js/lib.admin.js',
 			'deps'		=> array('[core]'),
 			'context'	=> array( 'admin' ),
+			'in_footer'	=> true,
 		),
 	);
 	
