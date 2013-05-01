@@ -16,6 +16,11 @@ Simple Lightbox is a very simple and customizable lightbox that is easy to add t
 The current release is a beta version.  Please test and [provide feedback on GitHub](https://github.com/archetyped/simple-lightbox/issues).
 Main changes
 
+#### Release Candidate 2
+* Optimize: Load client output in footer
+* Optimize: Responsive viewport handling less aggressive
+* Update: New POT file for translations
+
 #### Release Candidate 1
 * Fix: Locked viewport for mobile devices (Zooming Zephyr)
 * Fix: Group navigation (Larry the Navigator)
