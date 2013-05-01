@@ -22,16 +22,13 @@ class SLB_Lightbox extends SLB_Base {
 		'core'			=> array (
 			'file'		=> 'client/js/lib.core.js',
 			'deps'		=> 'jquery',
+			'in_footer'	=> true,
 		),
 		'view'			=> array (
 			'file'		=> 'client/js/lib.view.js',
 			'deps'		=> array('jquery', '[core]'),
 			'context'	=> array( array('public', '[is_enabled]') ),
-		),
-		'test'			=> array (
-			'file'		=> 'client/js/lib.test.js',
-			'deps'		=> array('jquery', '[core]'),
-			'context'	=> array( array('public', '[xvv]') ),
+			'in_footer'	=> true,
 		),
 	);
 
@@ -127,8 +124,8 @@ class SLB_Lightbox extends SLB_Base {
 		/* Client-side */
 		
 		//Init lightbox
-		$priority = 99;
-		add_action('wp_footer', $this->m('client_init'), 11);
+		$priority = $this->util->priority('low');
+		add_action('wp_footer', $this->m('client_init'), $this->util->priority('client_footer_output'));
 		add_action('wp_footer', $this->m('client_footer'), $priority);
 		//Link activation
 		add_filter('the_content', $this->m('activate_links'), $priority);

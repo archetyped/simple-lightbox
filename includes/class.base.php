@@ -178,7 +178,7 @@ class SLB_Base {
 		}
 		
 		//Context
-		add_action( ( is_admin() ) ? 'admin_head' : 'wp_head',  $this->util->m('set_client_context') );
+		add_action( ( is_admin() ) ? 'admin_print_footer_scripts' : 'wp_footer', $this->util->m('set_client_context'), $this->util->priority('client_footer_output') );
 	}
 	
 	/**
@@ -276,7 +276,7 @@ class SLB_Base {
 	
 	/**
 	 * Register client files
-	 * @see self::enqueue_client_files() for actual loading of files based on context
+	 * @see enqueue_client_files() for actual loading of files based on context
 	 * @uses `init` Action hook for execution
 	 * @return void
 	 */
