@@ -3,12 +3,12 @@
 Plugin Name: Simple Lightbox
 Plugin URI: http://archetyped.com/lab/slb-2-0rc2/
 Description: The highly customizable lightbox for WordPress
-Version: 2.0RC2 (BETA)
+Version: 2.0RC2.1 (BETA)
 Author: Archetyped
 Author URI: http://archetyped.com
 */
 /* 
-Copyright 2011 Solomon Marchessault (sol@archetyped.com)
+Copyright 2013 Solomon Marchessault (sol@archetyped.com)
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License

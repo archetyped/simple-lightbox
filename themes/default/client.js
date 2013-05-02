@@ -14,7 +14,7 @@ return {
 		this.set_attribute('vp_' + att, settings, false);
 		//Extract and Merge settings with defaults
 		var sep = ','
-		settings = ( settings.length ) ? settings.split(sep) : [];
+		settings = ( this.util.is_string(settings) ) ? settings.split(sep) : [];
 		var _settings = {
 			'width': 'device-width',
 			'initial-scale': '1.0'

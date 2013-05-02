@@ -68,6 +68,9 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 ### 2.0 (BETA NOTICE)
 The current release is a **release candidate**.  Please test and [provide feedback on GitHub](https://github.com/archetyped/simple-lightbox/wiki/Reporting-Issues).
 
+= 2.0 Release Candidate 2.1 =
+* Fix: Undefined value when viewport element does not exist
+
 = 2.0 Release Candidate 2 =
 * Optimize: Load client output in footer
 * Optimize: Responsive viewport handling less aggressive
