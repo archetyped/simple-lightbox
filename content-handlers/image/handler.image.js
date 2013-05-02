@@ -7,18 +7,15 @@ return {
 		var type = this;
 		//Set load event
 		var handler = function(e) {
-			console.groupCollapsed('Content_Type.image.load (Callback)');
 			//Save Data
 			item.set_data(this);
 			//Set attributes
 			var dim = {'width': this.width, 'height': this.height};
-			console.info('Setting dimensions', dim);
 			item.set_attribute('dimensions', dim);
 			//Build output
 			var out = $('<img />', {'src': item.get_uri()});
 			//Resolve deferred
 			dfr.resolve(out);
-			console.groupEnd();
 		};
 		
 		//Attach event handler
