@@ -113,7 +113,7 @@ return {
 			};
 			//Parse placeholders
 			for ( key in handlers ) {
-				ph = key.wrap(delim);
+				ph = delim + key + delim;
 				if ( out.indexOf(ph) != -1 ) {
 					out = out.replace(ph, handlers[key]());
 				}

@@ -208,23 +208,6 @@ if ( !String.sprintf ) {
 	}
 }
 
-if ( !String.wrap ) {
-	/**
-	 * Wrap string with another string
-	 */
-	String.prototype.wrap = function(val) {
-		var t = typeof val;
-		if ( ['undefined','object','array'].indexOf(t) != -1 ) {
-			return this;
-		}
-		val = val.toString();
-		if ( !val.length ) {
-			return this;
-		}
-		return [val, this, val].join('');
-	}
-}
-
 /**
  * Extendible class
  * Adapted from John Resig
