@@ -188,7 +188,7 @@ class SLB_Themes extends SLB_Collection_Controller {
 			$code[] = $this->util->call_client_method('View.add_theme', $params, false);
 		}
 
-		$out[] = $this->util->build_script_element(implode('', $code), 'add_themes');
+		$out[] = $this->util->build_script_element(implode('', $code), 'add_themes', true, true);
 		$out[] = '<!-- /SLB-THM -->' . PHP_EOL;
 		echo implode('', $out);
 	}

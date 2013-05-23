@@ -1608,6 +1608,14 @@ class SLB_Utilities {
 		return $this->build_html_element(array('tag' => 'link', 'wrap' => false, 'attributes' => $attributes));
 	}
 	
+	/**
+	 * Build client-side script element
+	 * 
+	 * @param string $content Script content
+	 * @param string $id (optional) Element ID
+	 * @param bool $wrap_jquery (optional) Wrap commands in jQuery? (Default: Yes)
+	 * @param bool $wait_doc_ready (optional) Wait until document is fully loaded before executing commands? (Default: No)
+	 */
 	function build_script_element($content = '', $id = '', $wrap_jquery = true, $wait_doc_ready = false) {
 		//Stop processing invalid content
 		if ( is_array($content) && !empty($content) ) {

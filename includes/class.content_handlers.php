@@ -223,7 +223,7 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 			);
 			$code[] = $this->util->call_client_method('View.add_content_handler',  $params, false);
 		}
-		$out[] = $this->util->build_script_element(implode('', $code), 'add_content_handlers');
+		$out[] = $this->util->build_script_element(implode('', $code), 'add_content_handlers', true, true);
 		$out[] = '<!-- /SLB-HDL -->' . PHP_EOL;
 		echo implode('', $out);
 	}
