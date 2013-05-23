@@ -462,33 +462,51 @@ class SLB_Utilities {
 		if ( !is_string($obj) || empty($obj) )
 			$obj = null;
 		//Default data
-		if ( is_array($data) )
+		if ( is_array($data) ) {
 			$data = (object)$data;
+		}
 		//Build expression
 		if ( empty($data) || ( empty($obj) && is_scalar($data) ) ) {
 			$ret = '';
 		} else {
-			$ret = array();
-			//Validate object(s) being extended
 			$c_obj = $this->get_client_object($obj);
-			$sep = '.';
-			$c_obj = trim($c_obj, $sep);
-			//Start with full object
-			$objs = array($c_obj);
-			$offset = 0;
-			$len = strlen($c_obj);
-			//Add segments to array (in reverse)
-			while ( ( $pos = strrpos($c_obj, $sep, $offset) ) && $pos !== false ) {
-				$objs[] = substr($c_obj, 0, $pos);
-				$offset = $pos - $len - 1;
-			}
-			
-			$condition = 'if ( ' . implode(' && ', array_reverse($objs)) . ' ) ';
-			$ret = $condition . '$.extend(' . $c_obj . ', ' . json_encode($data) . ');';
+			$ret = $this->validate_client_object($obj, sprintf('{$.extend(%1$s, %2$s);}', $c_obj, json_encode($data)) );
 			if ( $out )
 				echo $this->build_script_element($ret);
 		}
 		return $ret;
+	}
+
+	/**
+	 * Validate client object $obj before running command $cmd
+	 * 
+	 * @param string $obj Full object name
+	 * @param string $cmd (optional) Command to wrap in validation
+	 * @return string Command wrapped in validation block
+	 * If no command is specified the validation conditions are returned
+	 */
+	public function validate_client_object($obj, $cmd = null) {
+		//Build condition
+		$sep = '.';
+		$obj = trim( $this->get_client_object($obj) , $sep);
+		$offset = 0;
+		$len = strlen($obj);
+		$pos = $len;
+		$fmt = '(typeof %s != \'undefined\')';
+		$objs = array();
+		//Add segments to array (in reverse)
+		do {
+			$objs[] = sprintf($fmt, substr($obj, 0, $pos));
+			$offset = $pos - $len - 1;
+		} while ( $offset < $len && ( $pos = strrpos($obj, $sep, $offset) ) && $pos !== false );
+		//Format condition
+		$condition = implode(' && ', array_reverse($objs));
+		
+		//Wrap command in validation
+		if ( is_string($cmd) && !empty($cmd) ) {
+			$condition = sprintf('if ( %1$s ) { %2$s }', $condition, $cmd);
+		}
+		return $condition;
 	}
 	
 	/**
@@ -503,9 +521,8 @@ class SLB_Utilities {
 		if ( !is_string($method) || empty($method) ) {
 			return '';
 		}
-		if ( !is_bool($encode) ) {
-			$encode = true;
-		}
+		$encode = !!$encode;
+		
 		//Build parameters
 		if ( !is_null($params) ) {
 			if ( $encode ) {
