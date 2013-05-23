@@ -515,13 +515,16 @@ class SLB_Utilities {
 	 * @param string $method Method name
 	 * @param array|string $params (optional) Parameters to pass to method
 	 * @param bool $encode (optional) JSON-encode parameters? (Default: TRUE)
+	 * @param bool $validate (optional) Validate method before calling it?
 	 * @return string Method call
 	 */
-	function call_client_method($method, $params = null, $encode = true) {
+	function call_client_method($method, $params = null, $encode = true, $validate = true) {
+		$ret = '';
 		if ( !is_string($method) || empty($method) ) {
-			return '';
+			return $ret;
 		}
 		$encode = !!$encode;
+		$validate = !!$validate;
 		
 		//Build parameters
 		if ( !is_null($params) ) {
@@ -534,7 +537,11 @@ class SLB_Utilities {
 		if ( !is_string($params) ) {
 			$params = '';	
 		}
-		return sprintf('%s(%s);', $this->get_client_object($method), $params);
+		$ret = sprintf('%s(%s);', $this->get_client_object($method), $params);
+		if ( $validate ) {
+			$ret = $this->validate_client_object($method, $ret);
+		}
+		return $ret;
 	}
 	
 	/*-** WP **-*/
