@@ -1752,10 +1752,13 @@ var Component = {
 		}
 		console.log('Setup content');
 		//Setup content
-		if ( !this.util.is_empty(content) && !this.util.is_obj(content) && !this.util.is_type(content, jQuery) ) {
-			$.extend(options, content);
-		} else {
-			options.content = content;
+		if ( !this.util.is_empty(content) ) {
+			if ( this.util.is_type(content, jQuery, false) || this.util.is_string(content, false) ) {
+				options.content = content;
+			}
+			else if ( this.util.is_obj(content, false) ) {
+				$.extend(options, content);
+			}
 		}
 		var attrs = $.extend({}, options);
 		console.log('Element Attributes');
@@ -2583,15 +2586,14 @@ var Viewer = {
 	get_overlay: function() {
 		console.groupCollapsed('Viewer.get_overlay');
 		var o = null;
+		var v = this;
 		console.log('Enabled: %o', this.overlay_enabled());
 		if ( this.overlay_enabled() ) {
 			o = this.dom_get('overlay', true, {
 				'put_success': function() {
-					$(this).hide();
+					$(this).hide().css('opacity', v.get_attribute('overlay_opacity'));
 				}
 			});
-		} else {
-			console.warn('Problem with overlay');
 		}
 		console.groupEnd();
 		return $(o);
