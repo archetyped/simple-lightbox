@@ -491,7 +491,7 @@ var View = {
 		};
 		
 		//Get activated links
-		var sel = 'a[href][%s="%s"]'.sprintf(this.util.get_attribute('active'), 1);
+		var sel = this.util.format('a[href][%s="%s"]', this.util.get_attribute('active'), 1);
 		console.log('Selector: %o \nItems: %o', sel, $(sel));
 		//Add event handler
 		$(document).on('click', sel, handler);
@@ -1773,7 +1773,7 @@ var Component = {
 		r = $(this.dom_get_selector(element), d);
 		//Create element (if necessary)
 		if ( !r.length ) {
-			r = $('<%s />'.sprintf(options.tag), attrs).appendTo(d);
+			r = $(this.util.format('<%s />', options.tag), attrs).appendTo(d);
 			console.log('Adding element: %o \nDOM: %o \nElement: %o', options, d, r);
 			if ( r.length && this.util.is_method(options, 'put_success') ) {
 				options['put_success'].call(r, r);
@@ -2949,7 +2949,7 @@ var Group = {
 		console.groupCollapsed('Group.get_selector');
 		if ( this.util.is_empty(this.selector) ) {
 			//Build selector
-			this.selector = 'a[%s="%s"]'.sprintf(this.dom_get_attribute(), this.get_id());
+			this.selector = this.util.format('a[%s="%s"]', this.dom_get_attribute(), this.get_id());
 			console.info('Selector: %o', this.selector);
 		}
 		console.groupEnd();
@@ -3259,7 +3259,7 @@ var Content_Handler = {
 			//String format
 			if ( this.util.is_string(ret) ) {
 				console.log('Processing string format');
-				ret = ret.sprintf(item.get_uri());
+				ret = this.util.format(ret, item.get_uri());
 			}
 			//Resolve deferred immediately
 			dfr.resolve(ret);
@@ -4076,7 +4076,7 @@ var Theme = {
 			def = {};
 		}
 		//Manage cache
-		var attr_cache = '%s_cache'.sprintf(attr); 
+		var attr_cache = this.util.format('%s_cache', attr); 
 		var cache = this.get_attribute(attr_cache, {}, false);
 		var status = '_status';
 		var item = this.get_viewer().get_item();
@@ -4134,7 +4134,7 @@ var Theme = {
 			return null;
 		}
 		//Find default handler
-		attr = 'get_%s_default'.sprintf(attr);
+		attr = this.util.format('get_%s_default', attr);
 		if ( this.util.in_obj(this, attr) ) {
 			attr = this[attr];
 			if ( this.util.is_func(attr) ) {
@@ -4642,7 +4642,7 @@ var Template = {
 		console.log('Tag: %o', tag);
 		var attr = this.get_tag_attribute();
 		console.log('Attribute: %o', attr);
-		return '<span %s="%s"></span>'.sprintf(attr, escape(tag)); 
+		return this.util.format('<span %s="%s"></span>', attr, escape(tag)); 
 	},
 	
 	get_tag_attribute: function() {

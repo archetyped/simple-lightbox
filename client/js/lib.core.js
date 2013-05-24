@@ -6,72 +6,6 @@
 
 (function($) {
 
-/* Prototypes */
-
-//String
-
-if ( !String.trim ) {
-	/**
-	 * Trim whitespace from head/tail of string
-	 * @return string Trimmed string
-	 */
-	String.prototype.trim = function() {
-		return this.replace(/^\s+|\s+$/g,"");
-	};
-}
-if ( !String.ltrim ) {
-	/**
-	 * Trim whitespace from head of string
-	 * @return string Trimmed string
-	 */
-	String.prototype.ltrim = function() {
-		return this.replace(/^\s+/,"");
-	};
-}
-if ( !String.rtrim ) {
-	/**
-	 * Trim whitespace from tail of string
-	 * @return string Trimmed string
-	 */
-	String.prototype.rtrim = function() {
-		return this.replace(/\s+$/,"");
-	};
-}
-
-if ( !String.sprintf ) {
-	/**
-	 * Return formatted string
-	 */
-	String.prototype.sprintf = function() {
-		var params = [],
-			ph = '%s';
-		if (arguments.length < 1) {
-			return this;
-		}
-		var format = this.toString();
-		if ( arguments.length >= 1 ) {
-			params = Array.prototype.slice.call(arguments);
-		}
-		//Replace placeholders in string with parameters
-		if ( format.indexOf(ph) != -1 ) {
-			//Replace all placeholders at once if single parameter set
-			if ( params.length == 1 ) {
-				format = format.replace(ph, params[0].toString());
-			} else {
-				var idx = 0,
-					pos = 0;
-				while ( ( pos = format.indexOf(ph) ) && idx < params.length ) {
-					format = format.substr(0, pos) + params[idx].toString() + format.substr(pos + ph.length);
-					idx++;
-				}
-				//Remove any remaining placeholders
-				format = format.replace(ph, '');
-			}
-		}
-		return format;
-	}
-}
-
 /**
  * Extendible class
  * Adapted from John Resig
@@ -518,6 +452,41 @@ var Base = {
 		 */
 		validate: function(val, def) {
 			return ( this.is_type(val, def, true) ) ? val : def;
+		},
+		
+		/**
+		 * Return formatted string
+		 */
+		format: function(fmt, val) {
+			if ( !this.is_string(fmt) ) {
+				return '';
+			}
+			var params = [],
+				ph = '%s';
+			//Stop processing if no replacement values specified or format string contains no placeholders
+			if ( arguments.length < 2 || fmt.indexOf(ph) == -1 ) {
+				return fmt;
+			}
+			//Get replacement values
+			params = Array.prototype.slice.call(arguments, 1);
+			
+			//Replace placeholders in string with parameters
+			
+			//Replace all placeholders at once if single parameter set
+			if ( params.length == 1 ) {
+				fmt = fmt.replace(ph, params[0].toString());
+			} else {
+				var idx = 0,
+					len = params.length,
+					pos = 0;
+				while ( ( pos = fmt.indexOf(ph) ) && idx < len ) {
+					fmt = fmt.substr(0, pos) + params[idx].toString() + fmt.substr(pos + ph.length);
+					idx++;
+				}
+				//Remove any remaining placeholders
+				fmt = fmt.replace(ph, '');
+			}
+			return fmt;
 		},
 		
 		/**
