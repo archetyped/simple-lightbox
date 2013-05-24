@@ -4008,7 +4008,7 @@ var Theme = {
 			}
 			//Select first theme model if specified model is invalid
 			if ( !this.util.in_obj(models, id) ) {
-				id = Object.keys(models)[0];
+				id = $.map(models, function(v, key) { return key; })[0];
 			}
 			ret = models[id];
 		}
