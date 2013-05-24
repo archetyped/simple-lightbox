@@ -49,101 +49,6 @@ if (!Object.keys) {
   })()
 };
 
-//Array
-if (!Array.prototype.indexOf) {
-    Array.prototype.indexOf = function (searchElement /*, fromIndex */ ) {
-        "use strict";
-        if (this == null) {
-            throw new TypeError();
-        }
-        var t = Object(this);
-        var len = t.length >>> 0;
-        if (len === 0) {
-            return -1;
-        }
-        var n = 0;
-        if (arguments.length > 1) {
-            n = Number(arguments[1]);
-            if (n != n) { // shortcut for verifying if it's NaN
-                n = 0;
-            } else if (n != 0 && n != Infinity && n != -Infinity) {
-                n = (n > 0 || -1) * Math.floor(Math.abs(n));
-            }
-        }
-        if (n >= len) {
-            return -1;
-        }
-        var k = n >= 0 ? n : Math.max(len - Math.abs(n), 0);
-        for (; k < len; k++) {
-            if (k in t && t[k] === searchElement) {
-                return k;
-            }
-        }
-        return -1;
-    }
-}
-
-
-if ( !Array.prototype.compare ) {
-	/**
-	 * Compares another array with this array
-	 * @param array arr Array to compare this array with
-	 * @return bool Whether arrays are equal or not
-	 */
-	Array.prototype.compare = function(arr) {
-		if (typeof arr == 'object' && this.length == arr.length) {
-			for (var x = 0; x < this.length; x++) {
-				//Nested array check
-				if (this[x].compare && !this.compare(arr[x])) {
-					return false;
-				}
-				if (this[x] !== arr[x])
-					return false;
-			}
-			return true;
-		}
-		return false;
-	};
-}
-
-if ( !Array.prototype.intersect ) {
-	/**
-	 * Find common elements of 2 arrays
-	 * @param array arr Array to compare with this array
-	 * @return array Elements common to both arrays
-	 */
-	Array.prototype.intersect = function(arr) {
-		var ret = [];
-		if ( this == arr ) {
-			return arr;
-		}
-		if ( !$.isArray(arr) || !arr.length || !this.length ) {
-			return ret;
-		}
-		//Compare elements in arrays
-		var a1;
-		var a2;
-		var val;
-		if ( this.length < arr.length ) {
-			a1 = this;
-			a2 = arr;
-		} else {
-			a1 = arr;
-			a2 = this;
-		}
-
-		for ( var x = 0; x < a1.length; x++ ) {
-			//Add mutual elements into intersection array
-			val = a1[x];
-			if ( a2.indexOf(val) != -1 && ret.indexOf(val) == -1 )
-				ret.push(val);
-		}
-		
-		//Return intersection results
-		return ret;
-	};
-}
-
 //String
 
 if ( !String.trim ) {
@@ -501,8 +406,9 @@ var Base = {
 			//Validate context
 			if ( typeof ctx == 'string' )
 				ctx = [ctx];
-			if ( $.isArray(ctx) && this.get_context().intersect(ctx).length )
+			if ( $.isArray(ctx) && this.arr_intersect(this.get_context(), ctx).length ) {
 				ret = true;
+			}
 			return ret;
 		},
 		
@@ -681,6 +587,67 @@ var Base = {
 					}
 				}
 			}
+			return ret;
+		},
+		
+		/**
+		 * Get index of element in array
+		 * @param array arr Array to search
+		 * @param obj elem Element to search for
+		 * @return int Index of element in array (-1 if element not in array)
+		 */
+		arr_indexOf: function (arr, elem) {
+			var ret = -1;
+			if ( !this.is_array(arr) ) {
+				return ret;
+			}
+	        if ( Array.indexOf ) {
+	        	return arr.indexOf(elem);
+	        }
+	        var len = arr.length;
+			for ( var x = 0; x < len; x++ ) {
+				if ( arr[x] == elem ) {
+					ret = x;
+					break;
+				}
+			}
+	        return ret;
+	   },
+		
+		/**
+		 * Find common elements of 2 arrays
+		 * @param array arr1 First array
+		 * @param array arr2 Second array
+		 * @return array Elements common to both arrays
+		 */
+		arr_intersect: function(arr1, arr2) {
+			var ret = [];
+			if ( arr1 == arr2 ) {
+				return arr2;
+			}
+			if ( !$.isArray(arr2) || !arr2.length || !arr1.length ) {
+				return ret;
+			}
+			//Compare elements in arrays
+			var a1;
+			var a2;
+			var val;
+			if ( arr1.length < arr2.length ) {
+				a1 = arr1;
+				a2 = arr2;
+			} else {
+				a1 = arr2;
+				a2 = arr1;
+			}
+	
+			for ( var x = 0; x < a1.length; x++ ) {
+				//Add mutual elements into intersection array
+				val = a1[x];
+				if ( a2.indexOf(val) != -1 && ret.indexOf(val) == -1 )
+					ret.push(val);
+			}
+			
+			//Return intersection results
 			return ret;
 		}
 	}

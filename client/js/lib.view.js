@@ -586,7 +586,7 @@ var View = {
 		var prop = 'items';
 		var items = this.get_items();
 		//Check if item exists in collection
-		ret = items.indexOf(item);
+		ret = this.util.arr_indexOf(items, item);
 		//Cache item
 		if ( -1 == ret ) {
 			ret = items.push(item) - 1;
@@ -4095,7 +4095,7 @@ var Theme = {
 			};
 		}
 		//Retrieve cached values
-		var pos = cache[status].index.indexOf(item);
+		var pos = this.util.arr_indexOf(cache[status].index, item);
 		if ( pos != -1 && pos in cache ) {
 			console.info('Retrieving cached data: %o \n%o', pos, cache[pos]);
 			meas = cache[pos];
