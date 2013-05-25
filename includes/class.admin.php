@@ -27,7 +27,7 @@ class SLB_Admin extends SLB_Base {
 	var $styles = array (
 		'admin'	=> array (
 			'file'		=> 'client/css/admin.css',
-			'context'	=> array( 'admin' )
+			'context'	=> array( 'admin_page_slb_options', 'admin_page_plugins' )
 		)
 	);
 
