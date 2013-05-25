@@ -473,7 +473,7 @@ class SLB_Utilities {
 			$c_obj = $this->get_client_object($obj);
 			$ret = $this->validate_client_object($obj, sprintf('{$.extend(%1$s, %2$s);}', $c_obj, json_encode($data)) );
 			if ( $out )
-				echo $this->build_script_element($ret);
+				echo $this->build_script_element($ret, 'context', true, true);
 		}
 		return $ret;
 	}
