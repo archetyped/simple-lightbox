@@ -22,6 +22,7 @@ class SLB_Lightbox extends SLB_Base {
 		'core'			=> array (
 			'file'		=> 'client/js/lib.core.js',
 			'deps'		=> 'jquery',
+			'enqueue'	=> false,
 			'in_footer'	=> true,
 		),
 		'view'			=> array (

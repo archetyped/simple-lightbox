@@ -290,7 +290,8 @@ class SLB_Utilities {
 				'file'		=> null,
 				'deps' 		=> array(),
 				'callback'	=> null,
-				'context'	=> array()
+				'context'	=> array(),
+				'enqueue'	=> true,
 			);
 			switch ( $type ) {
 				case 'styles':
