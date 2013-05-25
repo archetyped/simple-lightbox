@@ -3459,36 +3459,48 @@ var Content_Item = {
 		return ret;
 	},
 	
+	/**
+	 * Retrieve item title
+	 */
 	get_title: function() {
-		//Check saved attributes
-		var props = ['caption', 'title'];
+		var prop = 'title';
+		var prop_cached = prop + '_cached';
+		//Check for cached value
+		if ( this.has_attribute(prop_cached) ) {
+			return this.get_attribute(prop_cached, '');
+		}
+		
 		var title = '';
-		for ( var x = 0; x < props.length; x++ ) {
-			title = this.get_attribute(props[x]);
-			if ( this.util.is_string(title) ) {
-				return title;
+		var sel_cap = '.wp-caption-text';
+		//Generate title from DOM values
+		var dom = this.dom_get();
+		
+		//Standalone link
+		if ( dom.length && !this.in_gallery() ) {
+			//Link title
+			title = dom.attr(prop);
+			
+			//Caption
+			if ( !title ) {
+				title = dom.siblings(sel_cap).html();
 			}
 		}
 		
-		//Generate title from item metadata
-		var prop = 'title';
-		var dom = this.dom_get();
-		
-		//Caption
-		if ( dom.length ) {
-			var sel = '.wp-caption-text';
-			title = ( this.in_gallery('wp') ) ? dom.parent().siblings(sel).html() : dom.siblings(sel).html(); 
-		
-			//Image title
-			if ( !title ) {
-				var img = dom.find('img').first();
-				title = $(img).attr('title') || $(img).attr('alt');
+		//Saved attributes
+		if ( !title ) {
+			var props = ['caption', 'title'];
+			for ( var x = 0; x < props.length; x++ ) {
+				title = this.get_attribute(props[x], '');
+				if ( !this.util.is_empty(title) ) {
+					break;
+				}
 			}
-			
-			//DOM element title
-			if ( !title ) {
-				title = dom.attr(prop);
-			}
+		}
+		
+		//Fallbacks
+		if ( !title && dom.length ) {
+			//Alt attribute
+			title = dom.find('img').first().attr('alt');
 			
 			//Element text
 			if ( !title ) {
@@ -3497,12 +3509,13 @@ var Content_Item = {
 		}
 		
 		//Validate
-		if ( !this.util.is_string(title) ) {
+		if ( !this.util.is_string(title, false) ) {
 			title = '';
 		}
 		
+		//Cache retrieved value
+		this.set_attribute(prop_cached, title);
 		//Return value
-		this.set_attribute(prop, title);
 		return title;
 	},
 	
@@ -3524,22 +3537,43 @@ var Content_Item = {
 	},
 	
 	/**
-	 * Check if current link is part of a gallery
-	 * @param obj item
-	 * @param string gType Gallery type to check for
-	 * @return bool TRUE if link is part of a gallery (FALSE otherwise)
+	 * Determine gallery type
+	 * @return string|null Gallery type ID (NULL if item not in gallery)
 	 */
-	in_gallery: function(gType) {
-		var ret = false;
-		var galls = {
+	gallery_type: function() {
+		var ret = null;
+		var types = {
 			'wp': '.gallery-icon',
-			'ng': '.ngg-gallery-thumbnail'
+			'ngg': '.ngg-gallery-thumbnail'
 		};
 		
-		if ( typeof gType == 'undefined' || !(gType in galls) ) {
-			gType = 'wp';
+		var dom = this.dom_get();
+		for ( var type in types ) {
+			if ( dom.parent(types[type]).length > 0 ) {
+				ret = type;
+				break;
+			}
 		}
-		return ( this.dom_get().parent(galls[gType]).length > 0 ) ? true : false ;
+		return ret;
+	},
+	
+	/**
+	 * Check if current link is part of a gallery
+	 * @param string gType (optional) Gallery type to check for
+	 * @return bool TRUE if link is part of (specified) gallery (FALSE otherwise)
+	 */
+	in_gallery: function(gType) {
+		var type = this.gallery_type();
+		//No gallery
+		if ( null == type ) {
+			return false;
+		}
+		//Boolean check
+		if ( !this.util.is_string(gType) ) {
+			return true;
+		}
+		//Check for specific gallery type
+		return ( gType == type ) ? true : false;
 	},
 	
 	/*-** Component References **-*/
