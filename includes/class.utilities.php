@@ -290,7 +290,8 @@ class SLB_Utilities {
 				'file'		=> null,
 				'deps' 		=> array(),
 				'callback'	=> null,
-				'context'	=> array()
+				'context'	=> array(),
+				'enqueue'	=> true,
 			);
 			switch ( $type ) {
 				case 'styles':
@@ -843,6 +844,12 @@ class SLB_Utilities {
 				global $pagenow;
 				$pg = $this->strip_file_extension($pagenow);
 				$ctx[] = $this->build_context('page', $pg);
+				//Query String
+				parse_str($_SERVER['QUERY_STRING'], $qv);
+				if ( isset($qv['page']) ) {
+					$ctx[] = $this->build_context('page', $qv['page']);
+				}
+				//Action
 				if ( !empty($action) ) {
 					$ctx[] = $this->build_context('page', $pg, 'action', $action);
 					$ctx[] = $this->build_context('post-type', $post_type, 'action', $action);
