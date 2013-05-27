@@ -7,7 +7,7 @@
 
 (function ($) {
 
-if ( !SLB || !SLB.attach ) {
+if ( typeof SLB == 'undefined' || !SLB.attach ) {
 	return false;
 }
 
