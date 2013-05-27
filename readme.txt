@@ -3,8 +3,8 @@ Contributors: Archetyped
 Donate link: http://archetyped.com/tools/simple-lightbox/
 License: GPLv2
 Tags: lightbox, gallery, photography, images, theme, template, style
-Requires at least: 3.5
-Tested up to: 3.5
+Requires at least: 3.5.1
+Tested up to: 3.5.1
 Stable tag: trunk
 
 The highly customizable lightbox for WordPress
@@ -16,10 +16,16 @@ Simple Lightbox is a very simple and customizable lightbox that is easy to add t
 The current release is a **release candidate**.  Please test and [provide feedback on GitHub](https://github.com/archetyped/simple-lightbox/wiki/Reporting-Issues).
 Main changes
 
-#### Release Candidate 2
-* Optimize: Load client output in footer
-* Optimize: Responsive viewport handling less aggressive
-* Update: New POT file for translations
+#### Release Candidate 3
+* Optimize: Refined Lightbox caption precedence
+* Optimize: Increase width of navigation hit targets
+* Optimize: Client-side validation and loading
+* Optimize: Refined Admin JS loading
+* Optimize: Removed custom JS prototype methods
+* Fix: **Kevin's Theory of Relativity** -- Theme HTTPS Compatibility
+* Fix: **Prototype Anilator** -- Prototype library compatibility
+* Fix: **Lucy's in the Sky (without Gravity)** -- Gravity Forms compatibility
+* Fix: **Unseen Zephyr** -- User-defined overlay opacity
 
 #### Features
 Options for customizing the lightbox behavior are located in the **Appearance > Lightbox** admin menu (or just click the **Settings** link below the plugin's name when viewing the list of installed plugins)
@@ -67,6 +73,17 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 
 ### 2.0 (BETA NOTICE)
 The current release is a **release candidate**.  Please test and [provide feedback on GitHub](https://github.com/archetyped/simple-lightbox/wiki/Reporting-Issues).
+
+= 2.0 Release Candidate 3 =
+* Optimize: Refined Lightbox caption precedence
+* Optimize: Increase width of navigation hit targets
+* Optimize: Client-side validation and loading
+* Optimize: Refined Admin JS loading
+* Optimize: Removed custom JS prototype methods
+* Fix: **Kevin's Theory of Relativity** -- Theme HTTPS Compatibility
+* Fix: **Prototype Anilator** -- Prototype library compatibility
+* Fix: **Lucy's in the Sky (without Gravity)** -- Gravity Forms compatibility
+* Fix: **Unseen Zephyr** -- User-defined overlay opacity
 
 = 2.0 Release Candidate 2.1 =
 * Fix: Undefined value when viewport element does not exist
