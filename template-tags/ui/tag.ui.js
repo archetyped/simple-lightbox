@@ -52,7 +52,6 @@ return {
 		var v = item.get_viewer();
 		var st = ['events-init', tag.get_ns(), tag.get_name()].join('_');
 		var fmt = function(output) {
-			//return '<a href="#" title="%s">%s</a>'.sprintf(output, output);
 			return output;
 		};
 		if ( !v.get_status(st) ) {
@@ -97,7 +96,7 @@ return {
 			};
 			//Parse placeholders
 			for ( key in handlers ) {
-				ph = key.wrap(delim);
+				ph = delim + key + delim;
 				if ( out.indexOf(ph) != -1 ) {
 					out = out.replace(ph, handlers[key]());
 				}

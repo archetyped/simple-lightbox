@@ -22,6 +22,7 @@ class SLB_Lightbox extends SLB_Base {
 		'core'			=> array (
 			'file'		=> 'client/js/lib.core.js',
 			'deps'		=> 'jquery',
+			'enqueue'	=> false,
 			'in_footer'	=> true,
 		),
 		'view'			=> array (
@@ -698,7 +699,7 @@ class SLB_Lightbox extends SLB_Base {
 			$client_out[] = $this->util->extend_client_object($obj, $this->media_items);
 		}
 		if ( !empty($client_out) ) {
-			echo $this->util->build_script_element($client_out, 'footer');	
+			echo $this->util->build_script_element($client_out, 'footer', true, true);
 		}
 		echo PHP_EOL . '<!-- /SLB-M -->' . PHP_EOL;
 	}

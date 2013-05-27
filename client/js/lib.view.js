@@ -7,7 +7,7 @@
 
 (function ($) {
 
-if ( !SLB || !SLB.attach ) {
+if ( typeof SLB == 'undefined' || !SLB.attach ) {
 	return false;
 }
 
@@ -435,7 +435,7 @@ var View = {
 		};
 		
 		//Get activated links
-		var sel = 'a[href][%s="%s"]'.sprintf(this.util.get_attribute('active'), 1);
+		var sel = this.util.format('a[href][%s="%s"]', this.util.get_attribute('active'), 1);
 		//Add event handler
 		$(document).on('click', sel, handler);
 	},
@@ -515,7 +515,7 @@ var View = {
 		var prop = 'items';
 		var items = this.get_items();
 		//Check if item exists in collection
-		ret = items.indexOf(item);
+		ret = this.util.arr_indexOf(items, item);
 		//Cache item
 		if ( -1 == ret ) {
 			ret = items.push(item) - 1;
@@ -1580,10 +1580,13 @@ var Component = {
 			'class': this.add_ns(element)
 		}
 		//Setup content
-		if ( !this.util.is_empty(content) && !this.util.is_obj(content) && !this.util.is_type(content, jQuery) ) {
-			$.extend(options, content);
-		} else {
-			options.content = content;
+		if ( !this.util.is_empty(content) ) {
+			if ( this.util.is_type(content, jQuery, false) || this.util.is_string(content, false) ) {
+				options.content = content;
+			}
+			else if ( this.util.is_obj(content, false) ) {
+				$.extend(options, content);
+			}
 		}
 		var attrs = $.extend({}, options);
 		for ( var x = 0; x < strip.length; x++ ) {
@@ -1594,7 +1597,7 @@ var Component = {
 		r = $(this.dom_get_selector(element), d);
 		//Create element (if necessary)
 		if ( !r.length ) {
-			r = $('<%s />'.sprintf(options.tag), attrs).appendTo(d);
+			r = $(this.util.format('<%s />', options.tag), attrs).appendTo(d);
 			if ( r.length && this.util.is_method(options, 'put_success') ) {
 				options['put_success'].call(r, r);
 			}
@@ -2321,13 +2324,13 @@ var Viewer = {
 	 */
 	get_overlay: function() {
 		var o = null;
+		var v = this;
 		if ( this.overlay_enabled() ) {
 			o = this.dom_get('overlay', true, {
 				'put_success': function() {
-					$(this).hide();
+					$(this).hide().css('opacity', v.get_attribute('overlay_opacity'));
 				}
 			});
-		} else {
 		}
 		return $(o);
 	},
@@ -2660,7 +2663,7 @@ var Group = {
 	get_selector: function() {
 		if ( this.util.is_empty(this.selector) ) {
 			//Build selector
-			this.selector = 'a[%s="%s"]'.sprintf(this.dom_get_attribute(), this.get_id());
+			this.selector = this.util.format('a[%s="%s"]', this.dom_get_attribute(), this.get_id());
 		}
 		return this.selector;
 	},
@@ -2931,7 +2934,7 @@ var Content_Handler = {
 		} else {
 			//String format
 			if ( this.util.is_string(ret) ) {
-				ret = ret.sprintf(item.get_uri());
+				ret = this.util.format(ret, item.get_uri());
 			}
 			//Resolve deferred immediately
 			dfr.resolve(ret);
@@ -3108,36 +3111,48 @@ var Content_Item = {
 		return ret;
 	},
 	
+	/**
+	 * Retrieve item title
+	 */
 	get_title: function() {
-		//Check saved attributes
-		var props = ['caption', 'title'];
+		var prop = 'title';
+		var prop_cached = prop + '_cached';
+		//Check for cached value
+		if ( this.has_attribute(prop_cached) ) {
+			return this.get_attribute(prop_cached, '');
+		}
+		
 		var title = '';
-		for ( var x = 0; x < props.length; x++ ) {
-			title = this.get_attribute(props[x]);
-			if ( this.util.is_string(title) ) {
-				return title;
+		var sel_cap = '.wp-caption-text';
+		//Generate title from DOM values
+		var dom = this.dom_get();
+		
+		//Standalone link
+		if ( dom.length && !this.in_gallery() ) {
+			//Link title
+			title = dom.attr(prop);
+			
+			//Caption
+			if ( !title ) {
+				title = dom.siblings(sel_cap).html();
 			}
 		}
 		
-		//Generate title from item metadata
-		var prop = 'title';
-		var dom = this.dom_get();
-		
-		//Caption
-		if ( dom.length ) {
-			var sel = '.wp-caption-text';
-			title = ( this.in_gallery('wp') ) ? dom.parent().siblings(sel).html() : dom.siblings(sel).html(); 
-		
-			//Image title
-			if ( !title ) {
-				var img = dom.find('img').first();
-				title = $(img).attr('title') || $(img).attr('alt');
+		//Saved attributes
+		if ( !title ) {
+			var props = ['caption', 'title'];
+			for ( var x = 0; x < props.length; x++ ) {
+				title = this.get_attribute(props[x], '');
+				if ( !this.util.is_empty(title) ) {
+					break;
+				}
 			}
-			
-			//DOM element title
-			if ( !title ) {
-				title = dom.attr(prop);
-			}
+		}
+		
+		//Fallbacks
+		if ( !title && dom.length ) {
+			//Alt attribute
+			title = dom.find('img').first().attr('alt');
 			
 			//Element text
 			if ( !title ) {
@@ -3146,12 +3161,13 @@ var Content_Item = {
 		}
 		
 		//Validate
-		if ( !this.util.is_string(title) ) {
+		if ( !this.util.is_string(title, false) ) {
 			title = '';
 		}
 		
+		//Cache retrieved value
+		this.set_attribute(prop_cached, title);
 		//Return value
-		this.set_attribute(prop, title);
 		return title;
 	},
 	
@@ -3173,22 +3189,43 @@ var Content_Item = {
 	},
 	
 	/**
-	 * Check if current link is part of a gallery
-	 * @param obj item
-	 * @param string gType Gallery type to check for
-	 * @return bool TRUE if link is part of a gallery (FALSE otherwise)
+	 * Determine gallery type
+	 * @return string|null Gallery type ID (NULL if item not in gallery)
 	 */
-	in_gallery: function(gType) {
-		var ret = false;
-		var galls = {
+	gallery_type: function() {
+		var ret = null;
+		var types = {
 			'wp': '.gallery-icon',
-			'ng': '.ngg-gallery-thumbnail'
+			'ngg': '.ngg-gallery-thumbnail'
 		};
 		
-		if ( typeof gType == 'undefined' || !(gType in galls) ) {
-			gType = 'wp';
+		var dom = this.dom_get();
+		for ( var type in types ) {
+			if ( dom.parent(types[type]).length > 0 ) {
+				ret = type;
+				break;
+			}
 		}
-		return ( this.dom_get().parent(galls[gType]).length > 0 ) ? true : false ;
+		return ret;
+	},
+	
+	/**
+	 * Check if current link is part of a gallery
+	 * @param string gType (optional) Gallery type to check for
+	 * @return bool TRUE if link is part of (specified) gallery (FALSE otherwise)
+	 */
+	in_gallery: function(gType) {
+		var type = this.gallery_type();
+		//No gallery
+		if ( null == type ) {
+			return false;
+		}
+		//Boolean check
+		if ( !this.util.is_string(gType) ) {
+			return true;
+		}
+		//Check for specific gallery type
+		return ( gType == type ) ? true : false;
 	},
 	
 	/*-** Component References **-*/
@@ -3627,7 +3664,7 @@ var Theme = {
 			}
 			//Select first theme model if specified model is invalid
 			if ( !this.util.in_obj(models, id) ) {
-				id = Object.keys(models)[0];
+				id = $.map(models, function(v, key) { return key; })[0];
 			}
 			ret = models[id];
 		}
@@ -3693,7 +3730,7 @@ var Theme = {
 			def = {};
 		}
 		//Manage cache
-		var attr_cache = '%s_cache'.sprintf(attr); 
+		var attr_cache = this.util.format('%s_cache', attr); 
 		var cache = this.get_attribute(attr_cache, {}, false);
 		var status = '_status';
 		var item = this.get_viewer().get_item();
@@ -3711,7 +3748,7 @@ var Theme = {
 			};
 		}
 		//Retrieve cached values
-		var pos = cache[status].index.indexOf(item);
+		var pos = this.util.arr_indexOf(cache[status].index, item);
 		if ( pos != -1 && pos in cache ) {
 			meas = cache[pos];
 		}
@@ -3745,7 +3782,7 @@ var Theme = {
 			return null;
 		}
 		//Find default handler
-		attr = 'get_%s_default'.sprintf(attr);
+		attr = this.util.format('get_%s_default', attr);
 		if ( this.util.in_obj(this, attr) ) {
 			attr = this[attr];
 			if ( this.util.is_func(attr) ) {
@@ -4196,7 +4233,7 @@ var Template = {
 	get_tag_container: function(tag) {
 		//Build element
 		var attr = this.get_tag_attribute();
-		return '<span %s="%s"></span>'.sprintf(attr, escape(tag)); 
+		return this.util.format('<span %s="%s"></span>', attr, escape(tag)); 
 	},
 	
 	get_tag_attribute: function() {

@@ -96,7 +96,7 @@ class SLB_Template_Tags extends SLB_Collection_Controller {
 			);
 			$code[] = $this->util->call_client_method('View.add_template_tag_handler',  $params, false);
 		}
-		$out[] = $this->util->build_script_element(implode('', $code), 'add_template_tags');
+		$out[] = $this->util->build_script_element(implode('', $code), 'add_template_tags', true, true);
 		$out[] = '<!-- /SLB-TPTG -->' . PHP_EOL;
 		echo implode('', $out);
 	}

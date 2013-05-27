@@ -290,7 +290,8 @@ class SLB_Utilities {
 				'file'		=> null,
 				'deps' 		=> array(),
 				'callback'	=> null,
-				'context'	=> array()
+				'context'	=> array(),
+				'enqueue'	=> true,
 			);
 			switch ( $type ) {
 				case 'styles':
@@ -462,33 +463,51 @@ class SLB_Utilities {
 		if ( !is_string($obj) || empty($obj) )
 			$obj = null;
 		//Default data
-		if ( is_array($data) )
+		if ( is_array($data) ) {
 			$data = (object)$data;
+		}
 		//Build expression
 		if ( empty($data) || ( empty($obj) && is_scalar($data) ) ) {
 			$ret = '';
 		} else {
-			$ret = array();
-			//Validate object(s) being extended
 			$c_obj = $this->get_client_object($obj);
-			$sep = '.';
-			$c_obj = trim($c_obj, $sep);
-			//Start with full object
-			$objs = array($c_obj);
-			$offset = 0;
-			$len = strlen($c_obj);
-			//Add segments to array (in reverse)
-			while ( ( $pos = strrpos($c_obj, $sep, $offset) ) && $pos !== false ) {
-				$objs[] = substr($c_obj, 0, $pos);
-				$offset = $pos - $len - 1;
-			}
-			
-			$condition = 'if ( ' . implode(' && ', array_reverse($objs)) . ' ) ';
-			$ret = $condition . '$.extend(' . $c_obj . ', ' . json_encode($data) . ');';
+			$ret = $this->validate_client_object($obj, sprintf('{$.extend(%1$s, %2$s);}', $c_obj, json_encode($data)) );
 			if ( $out )
-				echo $this->build_script_element($ret);
+				echo $this->build_script_element($ret, 'context', true, true);
 		}
 		return $ret;
+	}
+
+	/**
+	 * Validate client object $obj before running command $cmd
+	 * 
+	 * @param string $obj Full object name
+	 * @param string $cmd (optional) Command to wrap in validation
+	 * @return string Command wrapped in validation block
+	 * If no command is specified the validation conditions are returned
+	 */
+	public function validate_client_object($obj, $cmd = null) {
+		//Build condition
+		$sep = '.';
+		$obj = trim( $this->get_client_object($obj) , $sep);
+		$offset = 0;
+		$len = strlen($obj);
+		$pos = $len;
+		$fmt = '(typeof %s != \'undefined\')';
+		$objs = array();
+		//Add segments to array (in reverse)
+		do {
+			$objs[] = sprintf($fmt, substr($obj, 0, $pos));
+			$offset = $pos - $len - 1;
+		} while ( $offset < $len && ( $pos = strrpos($obj, $sep, $offset) ) && $pos !== false );
+		//Format condition
+		$condition = implode(' && ', array_reverse($objs));
+		
+		//Wrap command in validation
+		if ( is_string($cmd) && !empty($cmd) ) {
+			$condition = sprintf('if ( %1$s ) { %2$s }', $condition, $cmd);
+		}
+		return $condition;
 	}
 	
 	/**
@@ -497,15 +516,17 @@ class SLB_Utilities {
 	 * @param string $method Method name
 	 * @param array|string $params (optional) Parameters to pass to method
 	 * @param bool $encode (optional) JSON-encode parameters? (Default: TRUE)
+	 * @param bool $validate (optional) Validate method before calling it?
 	 * @return string Method call
 	 */
-	function call_client_method($method, $params = null, $encode = true) {
+	function call_client_method($method, $params = null, $encode = true, $validate = true) {
+		$ret = '';
 		if ( !is_string($method) || empty($method) ) {
-			return '';
+			return $ret;
 		}
-		if ( !is_bool($encode) ) {
-			$encode = true;
-		}
+		$encode = !!$encode;
+		$validate = !!$validate;
+		
 		//Build parameters
 		if ( !is_null($params) ) {
 			if ( $encode ) {
@@ -517,7 +538,11 @@ class SLB_Utilities {
 		if ( !is_string($params) ) {
 			$params = '';	
 		}
-		return sprintf('%s(%s);', $this->get_client_object($method), $params);
+		$ret = sprintf('%s(%s);', $this->get_client_object($method), $params);
+		if ( $validate ) {
+			$ret = $this->validate_client_object($method, $ret);
+		}
+		return $ret;
 	}
 	
 	/*-** WP **-*/
@@ -819,6 +844,12 @@ class SLB_Utilities {
 				global $pagenow;
 				$pg = $this->strip_file_extension($pagenow);
 				$ctx[] = $this->build_context('page', $pg);
+				//Query String
+				parse_str($_SERVER['QUERY_STRING'], $qv);
+				if ( isset($qv['page']) ) {
+					$ctx[] = $this->build_context('page', $qv['page']);
+				}
+				//Action
 				if ( !empty($action) ) {
 					$ctx[] = $this->build_context('page', $pg, 'action', $action);
 					$ctx[] = $this->build_context('post-type', $post_type, 'action', $action);
@@ -1584,6 +1615,14 @@ class SLB_Utilities {
 		return $this->build_html_element(array('tag' => 'link', 'wrap' => false, 'attributes' => $attributes));
 	}
 	
+	/**
+	 * Build client-side script element
+	 * 
+	 * @param string $content Script content
+	 * @param string $id (optional) Element ID
+	 * @param bool $wrap_jquery (optional) Wrap commands in jQuery? (Default: Yes)
+	 * @param bool $wait_doc_ready (optional) Wait until document is fully loaded before executing commands? (Default: No)
+	 */
 	function build_script_element($content = '', $id = '', $wrap_jquery = true, $wait_doc_ready = false) {
 		//Stop processing invalid content
 		if ( is_array($content) && !empty($content) ) {

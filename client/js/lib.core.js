@@ -6,225 +6,6 @@
 
 (function($) {
 
-/* Prototypes */
-
-//Object
-
-if (!Object.keys) {
-  /**
-   * Retrieve object's keys
-   * Usage: Object.keys(object_variable);
-   * @return array Object's keys
-   */
-  Object.keys = (function () {
-    var hasOwnProperty = Object.prototype.hasOwnProperty,
-        hasDontEnumBug = !({toString: null}).propertyIsEnumerable('toString'),
-        dontEnums = [
-          'toString',
-          'toLocaleString',
-          'valueOf',
-          'hasOwnProperty',
-          'isPrototypeOf',
-          'propertyIsEnumerable',
-          'constructor'
-        ],
-        dontEnumsLength = dontEnums.length
-
-    return function (obj) {
-      if (typeof obj !== 'object' && typeof obj !== 'function' || obj === null) throw new TypeError('Object.keys called on non-object')
-
-      var result = []
-
-      for (var prop in obj) {
-        if (hasOwnProperty.call(obj, prop)) result.push(prop)
-      }
-
-      if (hasDontEnumBug) {
-        for (var i=0; i < dontEnumsLength; i++) {
-          if (hasOwnProperty.call(obj, dontEnums[i])) result.push(dontEnums[i])
-        }
-      }
-      return result
-    }
-  })()
-};
-
-//Array
-if (!Array.prototype.indexOf) {
-    Array.prototype.indexOf = function (searchElement /*, fromIndex */ ) {
-        "use strict";
-        if (this == null) {
-            throw new TypeError();
-        }
-        var t = Object(this);
-        var len = t.length >>> 0;
-        if (len === 0) {
-            return -1;
-        }
-        var n = 0;
-        if (arguments.length > 1) {
-            n = Number(arguments[1]);
-            if (n != n) { // shortcut for verifying if it's NaN
-                n = 0;
-            } else if (n != 0 && n != Infinity && n != -Infinity) {
-                n = (n > 0 || -1) * Math.floor(Math.abs(n));
-            }
-        }
-        if (n >= len) {
-            return -1;
-        }
-        var k = n >= 0 ? n : Math.max(len - Math.abs(n), 0);
-        for (; k < len; k++) {
-            if (k in t && t[k] === searchElement) {
-                return k;
-            }
-        }
-        return -1;
-    }
-}
-
-
-if ( !Array.prototype.compare ) {
-	/**
-	 * Compares another array with this array
-	 * @param array arr Array to compare this array with
-	 * @return bool Whether arrays are equal or not
-	 */
-	Array.prototype.compare = function(arr) {
-		if (typeof arr == 'object' && this.length == arr.length) {
-			for (var x = 0; x < this.length; x++) {
-				//Nested array check
-				if (this[x].compare && !this.compare(arr[x])) {
-					return false;
-				}
-				if (this[x] !== arr[x])
-					return false;
-			}
-			return true;
-		}
-		return false;
-	};
-}
-
-if ( !Array.prototype.intersect ) {
-	/**
-	 * Find common elements of 2 arrays
-	 * @param array arr Array to compare with this array
-	 * @return array Elements common to both arrays
-	 */
-	Array.prototype.intersect = function(arr) {
-		var ret = [];
-		if ( this == arr ) {
-			return arr;
-		}
-		if ( !$.isArray(arr) || !arr.length || !this.length ) {
-			return ret;
-		}
-		//Compare elements in arrays
-		var a1;
-		var a2;
-		var val;
-		if ( this.length < arr.length ) {
-			a1 = this;
-			a2 = arr;
-		} else {
-			a1 = arr;
-			a2 = this;
-		}
-
-		for ( var x = 0; x < a1.length; x++ ) {
-			//Add mutual elements into intersection array
-			val = a1[x];
-			if ( a2.indexOf(val) != -1 && ret.indexOf(val) == -1 )
-				ret.push(val);
-		}
-		
-		//Return intersection results
-		return ret;
-	};
-}
-
-//String
-
-if ( !String.trim ) {
-	/**
-	 * Trim whitespace from head/tail of string
-	 * @return string Trimmed string
-	 */
-	String.prototype.trim = function() {
-		return this.replace(/^\s+|\s+$/g,"");
-	};
-}
-if ( !String.ltrim ) {
-	/**
-	 * Trim whitespace from head of string
-	 * @return string Trimmed string
-	 */
-	String.prototype.ltrim = function() {
-		return this.replace(/^\s+/,"");
-	};
-}
-if ( !String.rtrim ) {
-	/**
-	 * Trim whitespace from tail of string
-	 * @return string Trimmed string
-	 */
-	String.prototype.rtrim = function() {
-		return this.replace(/\s+$/,"");
-	};
-}
-
-if ( !String.sprintf ) {
-	/**
-	 * Return formatted string
-	 */
-	String.prototype.sprintf = function() {
-		var params = [],
-			ph = '%s';
-		if (arguments.length < 1) {
-			return this;
-		}
-		var format = this.toString();
-		if ( arguments.length >= 1 ) {
-			params = Array.prototype.slice.call(arguments);
-		}
-		//Replace placeholders in string with parameters
-		if ( format.indexOf(ph) != -1 ) {
-			//Replace all placeholders at once if single parameter set
-			if ( params.length == 1 ) {
-				format = format.replace(ph, params[0].toString());
-			} else {
-				var idx = 0,
-					pos = 0;
-				while ( ( pos = format.indexOf(ph) ) && idx < params.length ) {
-					format = format.substr(0, pos) + params[idx].toString() + format.substr(pos + ph.length);
-					idx++;
-				}
-				//Remove any remaining placeholders
-				format = format.replace(ph, '');
-			}
-		}
-		return format;
-	}
-}
-
-if ( !String.wrap ) {
-	/**
-	 * Wrap string with another string
-	 */
-	String.prototype.wrap = function(val) {
-		var t = typeof val;
-		if ( ['undefined','object','array'].indexOf(t) != -1 ) {
-			return this;
-		}
-		val = val.toString();
-		if ( !val.length ) {
-			return this;
-		}
-		return [val, this, val].join('');
-	}
-}
-
 /**
  * Extendible class
  * Adapted from John Resig
@@ -518,8 +299,9 @@ var Base = {
 			//Validate context
 			if ( typeof ctx == 'string' )
 				ctx = [ctx];
-			if ( $.isArray(ctx) && this.get_context().intersect(ctx).length )
+			if ( $.isArray(ctx) && this.arr_intersect(this.get_context(), ctx).length ) {
 				ret = true;
+			}
 			return ret;
 		},
 		
@@ -632,7 +414,7 @@ var Base = {
 							break;
 						case this.obj:
 							//Only evaluate literal objects
-							ret = ( $.isPlainObject(value) && !Object.keys(value).length );
+							ret = ( $.isPlainObject(value) && !$.map(value, function(v, key) { return key; }).length );
 							break;
 						case this.num:
 							ret = ( value === 0 );
@@ -673,6 +455,41 @@ var Base = {
 		},
 		
 		/**
+		 * Return formatted string
+		 */
+		format: function(fmt, val) {
+			if ( !this.is_string(fmt) ) {
+				return '';
+			}
+			var params = [],
+				ph = '%s';
+			//Stop processing if no replacement values specified or format string contains no placeholders
+			if ( arguments.length < 2 || fmt.indexOf(ph) == -1 ) {
+				return fmt;
+			}
+			//Get replacement values
+			params = Array.prototype.slice.call(arguments, 1);
+			
+			//Replace placeholders in string with parameters
+			
+			//Replace all placeholders at once if single parameter set
+			if ( params.length == 1 ) {
+				fmt = fmt.replace(ph, params[0].toString());
+			} else {
+				var idx = 0,
+					len = params.length,
+					pos = 0;
+				while ( ( pos = fmt.indexOf(ph) ) && idx < len ) {
+					fmt = fmt.substr(0, pos) + params[idx].toString() + fmt.substr(pos + ph.length);
+					idx++;
+				}
+				//Remove any remaining placeholders
+				fmt = fmt.replace(ph, '');
+			}
+			return fmt;
+		},
+		
+		/**
 		 * Checks if key(s) exist in an object
 		 * @param object obj Object to check
 		 * @param string|array key Key(s) to check for in object
@@ -698,6 +515,67 @@ var Base = {
 					}
 				}
 			}
+			return ret;
+		},
+		
+		/**
+		 * Get index of element in array
+		 * @param array arr Array to search
+		 * @param obj elem Element to search for
+		 * @return int Index of element in array (-1 if element not in array)
+		 */
+		arr_indexOf: function (arr, elem) {
+			var ret = -1;
+			if ( !this.is_array(arr) ) {
+				return ret;
+			}
+	        if ( Array.indexOf ) {
+	        	return arr.indexOf(elem);
+	        }
+	        var len = arr.length;
+			for ( var x = 0; x < len; x++ ) {
+				if ( arr[x] == elem ) {
+					ret = x;
+					break;
+				}
+			}
+	        return ret;
+	   },
+		
+		/**
+		 * Find common elements of 2 arrays
+		 * @param array arr1 First array
+		 * @param array arr2 Second array
+		 * @return array Elements common to both arrays
+		 */
+		arr_intersect: function(arr1, arr2) {
+			var ret = [];
+			if ( arr1 == arr2 ) {
+				return arr2;
+			}
+			if ( !$.isArray(arr2) || !arr2.length || !arr1.length ) {
+				return ret;
+			}
+			//Compare elements in arrays
+			var a1;
+			var a2;
+			var val;
+			if ( arr1.length < arr2.length ) {
+				a1 = arr1;
+				a2 = arr2;
+			} else {
+				a1 = arr2;
+				a2 = arr1;
+			}
+	
+			for ( var x = 0; x < a1.length; x++ ) {
+				//Add mutual elements into intersection array
+				val = a1[x];
+				if ( a2.indexOf(val) != -1 && ret.indexOf(val) == -1 )
+					ret.push(val);
+			}
+			
+			//Return intersection results
 			return ret;
 		}
 	}

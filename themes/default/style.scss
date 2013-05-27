@@ -25,7 +25,7 @@
 	min-height: $height; 
 }
 
-@import url(http://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+@import url('//fonts.googleapis.com/css?family=Yanone+Kaffeesatz');
 
 #slb_viewer_wrap {
 	.slb_theme_slb_default {
@@ -164,7 +164,7 @@
 			position: absolute;
 			top: 20%;
 			height: 71%;
-			width: 80px;
+			width: 45%;
 			margin-left: 4px;
 			background-repeat: no-repeat;
 			text-indent: -2000em;

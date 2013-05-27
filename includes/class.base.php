@@ -315,13 +315,19 @@ class SLB_Base {
 		//Enqueue files
 		foreach ( $this->client_files as $type => $files ) {
 			$func = $this->get_client_files_handler($type, 'enqueue');
-			if ( !$func )
+			if ( !$func ) {
 				continue;
+			}
 			foreach ( $files as $f ) {
+				//Skip shadow files
+				if ( !$f->enqueue ) {
+					continue;
+				}
 				$load = true;
 				//Global Callback
-				if ( is_callable($f->callback) && !call_user_func($f->callback) )
+				if ( is_callable($f->callback) && !call_user_func($f->callback) ) {
 					$load = false;
+				}
 				//Context
 				if ( $load && !empty($f->context) ) {
 					//Reset $load before evaluating context

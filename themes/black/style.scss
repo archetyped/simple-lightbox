@@ -1,6 +1,11 @@
 #slb_viewer_wrap {
 	.slb_theme_slb_black {
 		
+		a,
+		a:hover {
+			color: #fff;
+		}
+		
 		.slb_loading {
 			background-image: url('images/loading.gif');
 		}
