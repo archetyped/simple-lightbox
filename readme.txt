@@ -3,8 +3,8 @@ Contributors: Archetyped
 Donate link: http://archetyped.com/tools/simple-lightbox/
 License: GPLv2
 Tags: lightbox, gallery, photography, images, theme, template, style
-Requires at least: 3.5.1
-Tested up to: 3.5.1
+Requires at least: 3.6
+Tested up to: 3.6
 Stable tag: trunk
 
 The highly customizable lightbox for WordPress
