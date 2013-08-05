@@ -12,13 +12,14 @@ return {
 		//Save existing viewport settings
 		var settings =  vp.attr(att);
 		this.set_attribute('vp_' + att, settings, false);
-		//Extract and Merge settings with defaults
+		//Extract existings settings
 		var sep = ','
 		settings = ( this.util.is_string(settings) ) ? settings.split(sep) : [];
 		var _settings = {
 			'width': 'device-width',
 			'initial-scale': '1.0'
-		}
+		};
+		//Merge existing settings
 		$.each(settings, function(idx, val) {
 			var sep = '=';
 			var pos = val.indexOf(sep);
@@ -33,7 +34,7 @@ return {
 				}
 			}
 		});
-		//Update settings
+		//Build settings string
 		settings =  [];
 		$.each(_settings, function(key, val) {
 			settings.push(key + '=' + val);
@@ -41,7 +42,10 @@ return {
 		settings = settings.join(sep);
 		
 		//Set new viewport settings
+		var scrT = $(document).scrollTop();
 		vp.attr(att, settings);
+		//Restore scrolltop value
+		$(document).scrollTop(scrT);
 	},
 	
 	'zoom_unset': function() {
