@@ -2250,6 +2250,21 @@ var Viewer = {
 		console.info('Queue item: %o', item);
 		this.item_queued = item;
 		var fin_set = 'show_deferred';
+		//Validate theme
+		var vt = 'theme_valid';
+		var valid = true;
+		if ( !this.has_attribute(vt)) {
+			valid = this.set_attribute(vt, ( this.get_theme() && this.get_theme().get_template().get_layout(false) ) );
+		} else {
+			valid = this.get_attribute(vt, true);
+		}
+		
+		if ( !valid ) {
+			this.close();
+			console.warn('Invalid theme');
+			console.groupEnd();
+			return false;
+		}
 		var v = this;
 		var fin = function() {
 			console.group('Viewer.show.load');
@@ -2258,7 +2273,7 @@ var Viewer = {
 			//Reset callback flag (for new lock)
 			v.set_status(fin_set, false);
 			//Validate request
-			if ( !v.set_item(v.item_queued) || !v.get_theme() ) {
+			if ( !v.set_item(v.item_queued) ) {
 				console.warn('Invalid request');
 				console.groupEnd();
 				v.close();
@@ -3724,6 +3739,7 @@ var Content_Item = {
 		console.info('Viewer retrieved: %o', v);
 		//Load item
 		var ret = v.show(this);
+		console.info('Result: %o', ret);
 		console.groupEnd();
 		return ret;
 	},
