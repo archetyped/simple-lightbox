@@ -56,8 +56,8 @@
     top: 0;
     left: 0;
     z-index: 1;
+    min-height: 105%;
     min-width: 100%;
-    min-height: 100%;
     background-color: #151410;
     opacity: 0.8; }
   #slb_viewer_wrap .slb_theme_slb_default .slb_container {
