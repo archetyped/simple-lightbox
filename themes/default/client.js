@@ -1,62 +1,5 @@
 (function($) {
 return {
-	/* Helpers */
-	'zoom_set': function() {
-		var t = this;
-		//Set viewport properties
-		var vp = $('meta[name=viewport]');
-		if ( !vp.length ) {
-			vp = $('<meta name="viewport" />').appendTo('head');
-		}
-		var att = 'content';
-		//Save existing viewport settings
-		var settings =  vp.attr(att);
-		this.set_attribute('vp_' + att, settings, false);
-		//Extract existings settings
-		var sep = ','
-		settings = ( this.util.is_string(settings) ) ? settings.split(sep) : [];
-		var _settings = {
-			'width': 'device-width',
-			'initial-scale': '1.0'
-		};
-		//Merge existing settings
-		$.each(settings, function(idx, val) {
-			var sep = '=';
-			var pos = val.indexOf(sep);
-			if ( -1 !== pos  ) {
-				var setting = {
-					'key': $.trim(val.substring(0, pos)),
-					'data': $.trim(val.substring(pos + 1))
-				}
-				//Add setting
-				if ( !t.util.in_obj(_settings, setting.key) ) {
-					_settings[setting.key] = setting.data;
-				}
-			}
-		});
-		//Build settings string
-		settings =  [];
-		$.each(_settings, function(key, val) {
-			settings.push(key + '=' + val);
-		});
-		settings = settings.join(sep);
-		
-		//Set new viewport settings
-		var scrT = $(document).scrollTop();
-		vp.attr(att, settings);
-		//Restore scrolltop value
-		$(document).scrollTop(scrT);
-	},
-	
-	'zoom_unset': function() {
-		var att = 'content';
-		//Retrieve saved `content` attribute
-		var att_val = this.get_attribute('vp_' + att, '', false);
-		var vp = $('meta[name=viewport]');
-		//Restore `content` attribute
-		vp.attr(att, att_val);
-	},
-	
 	/**
 	 * State transition handlers
 	 */
@@ -77,7 +20,6 @@ return {
 			var final = function() {
 				//Show overlay
 				o.fadeIn(function() {
-					t.call_attribute('zoom_set');
 					l.css(pos);
 					dfr.resolve();
 				});
@@ -116,8 +58,6 @@ return {
 			var t = this;
 			var reset = function() {
 				//Reset state
-				t.call_attribute('zoom_unset');
-				
 				c.width('').height('');
 				l.css('opacity', '');
 				dfr.resolve();
