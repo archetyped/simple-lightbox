@@ -3050,7 +3050,9 @@ var Group = {
 		var pos = this.get_pos(item);
 		if ( pos != -1 ) {
 			pos = ( pos + 1 < this.get_size() ) ? pos + 1 : 0;
-			next = this.get_item(pos);
+			if ( 0 != pos || item.get_viewer().get_attribute('loop') ) {
+				next = this.get_item(pos);
+			}
 		}
 		console.log('Position in Group: %o \nItem: %o', pos, next);
 		console.groupEnd();
@@ -3071,7 +3073,7 @@ var Group = {
 		}
 		var prev = null;
 		var pos = this.get_pos(item);
-		if ( pos != -1 ) {
+		if ( pos != -1 && ( 0 != pos || item.get_viewer().get_attribute('loop') ) ) {
 			if ( pos == 0 ) {
 				pos = this.get_size();
 			}
@@ -3087,7 +3089,15 @@ var Group = {
 		console.groupCollapsed('Group.show_next');
 		if ( this.get_size() > 1 ) {
 			//Retrieve item
-			var i = this.get_parent().get_item(this.get_next(item));
+			var next = this.get_next(item);
+			if ( !next ) {
+				console.log('No items, close viewer: %o', next);
+				if ( !this.util.is_type(item, View.Content_Item) ) {
+					item = this.get_current();
+				}
+				item.get_viewer().close();
+			}
+			var i = this.get_parent().get_item(next);
 			//Update current item
 			this.set_current(i);
 			//Show item
@@ -3102,7 +3112,14 @@ var Group = {
 		console.groupCollapsed('Group.show_prev');
 		if ( this.get_size() > 1 ) {
 			//Retrieve item
-			var i = this.get_parent().get_item(this.get_prev(item));
+			var prev = this.get_prev(item);
+			if ( !prev ) {
+				if ( !this.util.is_type(item, View.Content_Item) ) {
+					item = this.get_current();
+				}
+				item.get_viewer().close();
+			}
+			var i = this.get_parent().get_item(prev);
 			//Update current item
 			this.set_current(i);
 			//Show item
