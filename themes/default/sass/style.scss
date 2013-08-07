@@ -105,7 +105,7 @@
 		}
 		
 		.slb_loading {
-			background: url('images/loading.gif') center center no-repeat;
+			background: url('../images/loading.gif') center center no-repeat;
 			position: absolute;
 			left: 0%;
 			top: 0;
@@ -146,16 +146,16 @@
 			}
 			
 			.slb_slideshow .slb_template_tag {
-				background: url('images/ui_slideshow_play.png') 0 0 no-repeat;
+				background: url('../images/ui_slideshow_play.png') 0 0 no-repeat;
 			}
 			
 			.slb_close .slb_template_tag {
-				background: url('images/ui_close.png') 0 0 no-repeat;
+				background: url('../images/ui_close.png') 0 0 no-repeat;
 			}
 		}
 		
 		&.slideshow_active .slb_controls .slb_slideshow .slb_template_tag {
-			background: url('images/ui_slideshow_pause.png') 0 0 no-repeat;
+			background: url('../images/ui_slideshow_pause.png') 0 0 no-repeat;
 		}
 		
 		/* Navigation */
@@ -172,13 +172,13 @@
 		}
 		
 		.slb_prev .slb_template_tag {
-			background-image: url('images/nav_prev.png');
+			background-image: url('../images/nav_prev.png');
 			background-position: left $ui_nav_pos;
 		}
 		
 		.slb_next .slb_template_tag {
 			right: 4px;
-			background-image: url('images/nav_next.png');
+			background-image: url('../images/nav_next.png');
 			background-position: right $ui_nav_pos;
 		}
 		

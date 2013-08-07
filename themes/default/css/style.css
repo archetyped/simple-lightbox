@@ -89,7 +89,7 @@
 }
 /* line 107, ../sass/style.scss */
 #slb_viewer_wrap .slb_theme_slb_default .slb_loading {
-  background: url("images/loading.gif") center center no-repeat;
+  background: url("../images/loading.gif") center center no-repeat;
   position: absolute;
   left: 0%;
   top: 0;
@@ -130,15 +130,15 @@
 }
 /* line 148, ../sass/style.scss */
 #slb_viewer_wrap .slb_theme_slb_default .slb_controls .slb_slideshow .slb_template_tag {
-  background: url("images/ui_slideshow_play.png") 0 0 no-repeat;
+  background: url("../images/ui_slideshow_play.png") 0 0 no-repeat;
 }
 /* line 152, ../sass/style.scss */
 #slb_viewer_wrap .slb_theme_slb_default .slb_controls .slb_close .slb_template_tag {
-  background: url("images/ui_close.png") 0 0 no-repeat;
+  background: url("../images/ui_close.png") 0 0 no-repeat;
 }
 /* line 157, ../sass/style.scss */
 #slb_viewer_wrap .slb_theme_slb_default.slideshow_active .slb_controls .slb_slideshow .slb_template_tag {
-  background: url("images/ui_slideshow_pause.png") 0 0 no-repeat;
+  background: url("../images/ui_slideshow_pause.png") 0 0 no-repeat;
 }
 /* line 163, ../sass/style.scss */
 #slb_viewer_wrap .slb_theme_slb_default .slb_prev .slb_template_tag, #slb_viewer_wrap .slb_theme_slb_default .slb_next .slb_template_tag {
@@ -153,13 +153,13 @@
 }
 /* line 174, ../sass/style.scss */
 #slb_viewer_wrap .slb_theme_slb_default .slb_prev .slb_template_tag {
-  background-image: url("images/nav_prev.png");
+  background-image: url("../images/nav_prev.png");
   background-position: left 45%;
 }
 /* line 179, ../sass/style.scss */
 #slb_viewer_wrap .slb_theme_slb_default .slb_next .slb_template_tag {
   right: 4px;
-  background-image: url("images/nav_next.png");
+  background-image: url("../images/nav_next.png");
   background-position: right 45%;
 }
 /* line 188, ../sass/style.scss */
