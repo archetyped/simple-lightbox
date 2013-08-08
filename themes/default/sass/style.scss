@@ -1,31 +1,18 @@
+//Imports
+
+@import "compass";
+@import url('//fonts.googleapis.com/css?family=Yanone+Kaffeesatz');
+
 //Mixins
 
-@mixin box-shadow($shadows...) {
-	-webkit-box-shadow: $shadows;
-	-moz-box-shadow: $shadows;
-	box-shadow: $shadows;
-}
-
-@mixin box-sizing($mode:border-box) {
-	-webkit-box-sizing: $mode;
-	-moz-box-sizing: $mode;
-	box-sizing: $mode;
-}
-
 @mixin box-sizing-border {
-	@include box-sizing;
-}
-
-@mixin outline($color: red, $width: 1px, $style: solid) {
-	border: $width $style $color;
+	@include box-sizing(border-box);
 }
 
 @mixin min-dims($width: 200px, $height: 200px) {
 	min-width: $width;
 	min-height: $height; 
 }
-
-@import url('//fonts.googleapis.com/css?family=Yanone+Kaffeesatz');
 
 #slb_viewer_wrap {
 	.slb_theme_slb_default {
@@ -90,7 +77,7 @@
 			min-height: 105%;
 			min-width: 100%;
 			background-color: #151410;
-			opacity: 0.8;
+			@include opacity(0.8);
 		}
 		
 		.slb_container {
@@ -138,11 +125,11 @@
 				float: right;
 				margin-left: 2px;
 				text-indent: -2000em;
-				opacity: .5;
+				@include opacity(.5);
 			}
 			
 			.slb_template_tag_ui:hover {
-				opacity: .8;
+				@include opacity(.8);
 			}
 			
 			.slb_slideshow .slb_template_tag {
@@ -168,7 +155,7 @@
 			margin-left: 4px;
 			background-repeat: no-repeat;
 			text-indent: -2000em;
-			opacity: .5;
+			@include opacity(.5);
 		}
 		
 		.slb_prev .slb_template_tag {
@@ -185,7 +172,7 @@
 		.slb_prev, .slb_next {
 			.slb_template_tag {
 				@extend %ui_nav;
-				&:hover { opacity: 1; }
+				&:hover { @include opacity(1); }
 			}
 		}
 		
@@ -255,7 +242,7 @@
 			}
 			
 			.slb_template_tag_ui {
-				opacity: 0;
+				@include opacity(0);
 			}
 		}
 		

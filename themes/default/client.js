@@ -29,15 +29,17 @@ return {
 			d.find('.slb_details').height(0);
 			//Show viewer DOM
 			d.show(function() {
-				if ( window.outerWidth > 480 ) { /* Standard */
+				if ( document.documentElement.clientWidth > 480 ) {
+					/* Standard */
 					//Center vertically
 					var top_scr = $(document).scrollTop();
 					pos.top = ( top_scr + $(window).height() / 2 ) - ( l.height() / 2 );
 					if ( pos.top < top_scr ) {
 						pos.top = top_scr;
 					}
-				} else { /* Small screen */
+				} else {
 					//Position at top
+					/* Small screen */
 					pos.top = $(document).scrollTop();
 				}
 				final();
@@ -62,7 +64,7 @@ return {
 				l.css('opacity', '');
 				dfr.resolve();
 			}
-			if ( v.animation_enabled() && window.outerWidth > 480 ) { /* Standard */
+			if ( v.animation_enabled() && document.documentElement.clientWidth > 480 ) { /* Standard */
 				var lanim = {opacity: 0, top: $(document).scrollTop() + ( $(window).height() / 2 )},
 					canim = {width: 0, height: 0};
 				//Shrink & fade out viewer
@@ -91,7 +93,7 @@ return {
 			console.groupCollapsed('Theme.transition.load()');
 			v.get_layout().find('.slb_loading').show();
 			console.groupEnd();
-			if ( window.outerWidth > 480 ) {
+			if ( document.documentElement.clientWidth > 480 ) {
 				return v.get_layout().fadeIn().promise()
 			} else {
 				v.get_layout().show();
@@ -111,7 +113,7 @@ return {
 				det = l.find('.slb_details'),
 				cont = l.find('.slb_content .slb_template_tag');
 			var props = {height: 0};
-			if ( window.outerWidth > 480 ) {
+			if ( document.documentElement.clientWidth > 480 ) {
 				//Hide details
 				det.animate(props, 'slow');
 				//Hide content
@@ -143,7 +145,7 @@ return {
 				c_tag = c.find('.slb_template_tag'),
 				c_tag_cont = c.find('.slb_template_tag_item_content');
 			//Transition
-			if ( window.outerWidth > 480 ) {
+			if ( document.documentElement.clientWidth > 480 ) {
 				//Resize viewer to fit item
 				var dims = this.get_item_dimensions();
 				//Show detail tags (container still hidden)
@@ -190,7 +192,7 @@ return {
 	 */
 	'offset': function() {
 		var dims = {'width': 0, 'height': 0};
-		if ( window.outerWidth > 480 ) {
+		if ( document.documentElement.clientWidth > 480 ) {
 			var d = this.get_viewer().get_layout().find('.slb_details');
 			d.find('.slb_template_tag').show();
 			$.extend(dims, {'width': 32, 'height': d.find('.slb_data').outerHeight()})
@@ -203,7 +205,7 @@ return {
 	 */
 	'margin': function() {
 		var m = {'height': 0, 'width': 0};
-		if ( window.outerWidth > 480 ) {
+		if ( document.documentElement.clientWidth > 480 ) {
 			$.extend(m, {'height': 50, 'width': 20});
 		}
 		return m;
