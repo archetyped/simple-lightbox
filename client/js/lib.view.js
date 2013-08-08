@@ -586,7 +586,7 @@ var View = {
 		var prop = 'items';
 		var items = this.get_items();
 		//Check if item exists in collection
-		ret = this.util.arr_indexOf(items, item);
+		ret = $.inArray(item, items);
 		//Cache item
 		if ( -1 == ret ) {
 			ret = items.push(item) - 1;
@@ -3378,7 +3378,7 @@ var Content_Item = {
 						var ret = assets[key];
 						if ( t.util.is_string(raw) ) {
 							var e = '_entries';
-							if ( !( e in ret ) || ret[e].indexOf(raw) == -1 ) {
+							if ( !( e in ret ) || -1 == $.inArray(raw, ret[e]) ) {
 								console.warn('No match for raw key found: %o / %o', key, raw);
 								console.dir(ret[e]);
 								ret = {};
@@ -4162,7 +4162,7 @@ var Theme = {
 			};
 		}
 		//Retrieve cached values
-		var pos = this.util.arr_indexOf(cache[status].index, item);
+		var pos = $.inArray(item, cache[status].index);
 		if ( pos != -1 && pos in cache ) {
 			console.info('Retrieving cached data: %o \n%o', pos, cache[pos]);
 			meas = cache[pos];
