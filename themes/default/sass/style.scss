@@ -246,8 +246,10 @@
 			}
 		}
 		
-		/* Media */
-		@media only screen and (max-device-width: 480px), only screen and (max-width: 480px) {
+		//Media
+		
+		//Small screen
+		@media screen and (max-width: 480px) {
 			@mixin vsizing {
 				min-height: 100%;
 				min-width: 320px;
@@ -290,4 +292,3 @@
 		}
 	}
 }
-
