@@ -515,7 +515,7 @@ var View = {
 		var prop = 'items';
 		var items = this.get_items();
 		//Check if item exists in collection
-		ret = this.util.arr_indexOf(items, item);
+		ret = $.inArray(item, items);
 		//Cache item
 		if ( -1 == ret ) {
 			ret = items.push(item) - 1;
@@ -2038,6 +2038,19 @@ var Viewer = {
 	show: function(item) {
 		this.item_queued = item;
 		var fin_set = 'show_deferred';
+		//Validate theme
+		var vt = 'theme_valid';
+		var valid = true;
+		if ( !this.has_attribute(vt)) {
+			valid = this.set_attribute(vt, ( this.get_theme() && this.get_theme().get_template().get_layout(false) ) );
+		} else {
+			valid = this.get_attribute(vt, true);
+		}
+		
+		if ( !valid ) {
+			this.close();
+			return false;
+		}
 		var v = this;
 		var fin = function() {
 			//Lock viewer
@@ -2045,7 +2058,7 @@ var Viewer = {
 			//Reset callback flag (for new lock)
 			v.set_status(fin_set, false);
 			//Validate request
-			if ( !v.set_item(v.item_queued) || !v.get_theme() ) {
+			if ( !v.set_item(v.item_queued) ) {
 				v.close();
 				return false;
 			}
@@ -2747,7 +2760,9 @@ var Group = {
 		var pos = this.get_pos(item);
 		if ( pos != -1 ) {
 			pos = ( pos + 1 < this.get_size() ) ? pos + 1 : 0;
-			next = this.get_item(pos);
+			if ( 0 != pos || item.get_viewer().get_attribute('loop') ) {
+				next = this.get_item(pos);
+			}
 		}
 		return next;
 	},
@@ -2762,7 +2777,7 @@ var Group = {
 		}
 		var prev = null;
 		var pos = this.get_pos(item);
-		if ( pos != -1 ) {
+		if ( pos != -1 && ( 0 != pos || item.get_viewer().get_attribute('loop') ) ) {
 			if ( pos == 0 ) {
 				pos = this.get_size();
 			}
@@ -2775,7 +2790,14 @@ var Group = {
 	show_next: function(item) {
 		if ( this.get_size() > 1 ) {
 			//Retrieve item
-			var i = this.get_parent().get_item(this.get_next(item));
+			var next = this.get_next(item);
+			if ( !next ) {
+				if ( !this.util.is_type(item, View.Content_Item) ) {
+					item = this.get_current();
+				}
+				item.get_viewer().close();
+			}
+			var i = this.get_parent().get_item(next);
 			//Update current item
 			this.set_current(i);
 			//Show item
@@ -2788,7 +2810,14 @@ var Group = {
 	show_prev: function(item) {
 		if ( this.get_size() > 1 ) {
 			//Retrieve item
-			var i = this.get_parent().get_item(this.get_prev(item));
+			var prev = this.get_prev(item);
+			if ( !prev ) {
+				if ( !this.util.is_type(item, View.Content_Item) ) {
+					item = this.get_current();
+				}
+				item.get_viewer().close();
+			}
+			var i = this.get_parent().get_item(prev);
 			//Update current item
 			this.set_current(i);
 			//Show item
@@ -3017,7 +3046,7 @@ var Content_Item = {
 						var ret = assets[key];
 						if ( t.util.is_string(raw) ) {
 							var e = '_entries';
-							if ( !( e in ret ) || ret[e].indexOf(raw) == -1 ) {
+							if ( !( e in ret ) || -1 == $.inArray(raw, ret[e]) ) {
 								ret = {};
 							}
 						}
@@ -3748,7 +3777,7 @@ var Theme = {
 			};
 		}
 		//Retrieve cached values
-		var pos = this.util.arr_indexOf(cache[status].index, item);
+		var pos = $.inArray(item, cache[status].index);
 		if ( pos != -1 && pos in cache ) {
 			meas = cache[pos];
 		}

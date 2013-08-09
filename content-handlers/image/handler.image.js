@@ -8,9 +8,9 @@ return {
 		//Set load event
 		var handler = function(e) {
 			//Save Data
-			item.set_data(this);
+			item.set_data(img);
 			//Set attributes
-			var dim = {'width': this.width, 'height': this.height};
+			var dim = {'width': img.width, 'height': img.height};
 			item.set_attribute('dimensions', dim);
 			//Build output
 			var out = $('<img />', {'src': item.get_uri()});
@@ -19,13 +19,7 @@ return {
 		};
 		
 		//Attach event handler
-		if ( img.addEventListener ) {
-			img.addEventListener('load', handler, false);
-		} else if ( img.attachEvent ) {
-			img.attachEvent('onload', handler);
-		} else {
-			handler(img);
-		}
+		$(img).on('load', function(e) { handler(e); });
 		//Load image
 		img.src = item.get_uri();
 		//Return promise

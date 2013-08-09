@@ -1,0 +1,33 @@
+/* line 5, ../sass/style.scss */
+#slb_viewer_wrap .slb_theme_slb_black a,
+#slb_viewer_wrap .slb_theme_slb_black a:hover {
+  color: #fff;
+}
+/* line 9, ../sass/style.scss */
+#slb_viewer_wrap .slb_theme_slb_black .slb_loading {
+  background-image: url("../images/loading.gif");
+}
+/* line 13, ../sass/style.scss */
+#slb_viewer_wrap .slb_theme_slb_black .slb_container {
+  background-color: #151515;
+}
+/* line 17, ../sass/style.scss */
+#slb_viewer_wrap .slb_theme_slb_black .slb_prev a {
+  background-image: url("../images/nav_prev.png");
+}
+/* line 21, ../sass/style.scss */
+#slb_viewer_wrap .slb_theme_slb_black .slb_next a {
+  background-image: url("../images/nav_next.png");
+}
+/* line 25, ../sass/style.scss */
+#slb_viewer_wrap .slb_theme_slb_black .slb_data_title {
+  color: #e3e3e3;
+}
+/* line 29, ../sass/style.scss */
+#slb_viewer_wrap .slb_theme_slb_black .slb_data_desc {
+  color: #cecece;
+}
+/* line 33, ../sass/style.scss */
+#slb_viewer_wrap .slb_theme_slb_black .slb_group_status {
+  color: #999;
+}

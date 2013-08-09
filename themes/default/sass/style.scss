@@ -1,0 +1,294 @@
+//Imports
+
+@import "compass";
+@import url('//fonts.googleapis.com/css?family=Yanone+Kaffeesatz');
+
+//Mixins
+
+@mixin box-sizing-border {
+	@include box-sizing(border-box);
+}
+
+@mixin min-dims($width: 200px, $height: 200px) {
+	min-width: $width;
+	min-height: $height; 
+}
+
+#slb_viewer_wrap {
+	.slb_theme_slb_default {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		z-index: 99999;
+		text-align: center;
+		line-height: 0;
+		color:#000;
+		font: {
+			family: arial, verdana, sans-serif;
+			size: 12px;
+		}
+		
+		/* Reset */
+		* {
+			margin: 0;
+			padding: 0;
+			line-height: 1.4em;
+			text-align: left;
+			vertical-align: baseline;
+			white-space: normal;
+			outline: none;
+			border: 0px;
+			background: none;
+			opacity: 1;
+			width: auto;
+			height: auto;
+			position: static;
+			float: none;
+			clear: none;
+		}
+		
+		/* General */
+		a,
+		a:hover {
+			border-bottom:none;
+			color:#000;
+			text-decoration:underline;
+		}
+		
+		a img {
+			border: none;
+		}
+		
+		.slb_viewer_layout {
+			@include box-sizing-border;
+			z-index: 2;
+			position: absolute;
+			top: 20px; 
+			width: 100%;
+			text-align: center;
+		}
+		
+		.slb_viewer_overlay {
+			position: fixed;
+			top: 0;
+			left: 0;
+			z-index: 1;
+			min-height: 105%;
+			min-width: 100%;
+			background-color: #151410;
+			@include opacity(0.8);
+		}
+		
+		.slb_container {
+			@include box-sizing-border;
+			@include box-shadow(0 0 64px -40px #fcfcfc);
+			position: relative;
+			display: inline-block;
+			background-color: #fff;
+			margin: 0 auto;
+			border-radius: 5px;
+			padding: 16px;
+		}
+		
+		.slb_loading {
+			background: url('../images/loading.gif') center center no-repeat;
+			position: absolute;
+			left: 0%;
+			top: 0;
+			width: 100%;
+			height: 100%;
+			min-width: 31px;
+			min-height: 31px;
+			text-align: center;
+			text-indent: -2000em;
+			line-height: 0;
+			display: none;
+		}
+		
+		.slb_template_tag_ui {
+			cursor: pointer;
+			transition: opacity .5s;
+		}
+		
+		/* UI */
+		.slb_controls {
+			position: absolute;
+			top: 8px;
+			right: 8px;
+			width: 75%;
+			text-align: right;
+			
+			.slb_template_tag_ui {
+				width: 25px;
+				height: 25px;
+				float: right;
+				margin-left: 2px;
+				text-indent: -2000em;
+				@include opacity(.5);
+			}
+			
+			.slb_template_tag_ui:hover {
+				@include opacity(.8);
+			}
+			
+			.slb_slideshow .slb_template_tag {
+				background: url('../images/ui_slideshow_play.png') 0 0 no-repeat;
+			}
+			
+			.slb_close .slb_template_tag {
+				background: url('../images/ui_close.png') 0 0 no-repeat;
+			}
+		}
+		
+		&.slideshow_active .slb_controls .slb_slideshow .slb_template_tag {
+			background: url('../images/ui_slideshow_pause.png') 0 0 no-repeat;
+		}
+		
+		/* Navigation */
+		$ui_nav_pos: 45%;
+		%ui_nav {
+			position: absolute;
+			top: 20%;
+			height: 71%;
+			width: 45%;
+			margin-left: 4px;
+			background-repeat: no-repeat;
+			text-indent: -2000em;
+			@include opacity(.5);
+		}
+		
+		.slb_prev .slb_template_tag {
+			background-image: url('../images/nav_prev.png');
+			background-position: left $ui_nav_pos;
+		}
+		
+		.slb_next .slb_template_tag {
+			right: 4px;
+			background-image: url('../images/nav_next.png');
+			background-position: right $ui_nav_pos;
+		}
+		
+		.slb_prev, .slb_next {
+			.slb_template_tag {
+				@extend %ui_nav;
+				&:hover { @include opacity(1); }
+			}
+		}
+		
+		/* Content */
+		.slb_content {
+			@include min-dims;
+			position: relative;
+		}
+		
+		.slb_details {
+			margin: 0 auto;
+			line-height: 1.4em;
+			text-align: left;
+			overflow: hidden;
+			position: relative;
+			.inner {
+				display: table;
+				width: 100%;
+			}
+			.slb_data {
+				display: table-caption;
+				caption-side: bottom;
+			}
+		}
+		
+		.slb_template_tag_item_content * {
+			width: 100%;
+			height: 100%;
+		}
+		
+		/* Title */
+		$title-size: 23px;
+		
+		.slb_data_title {
+			font-family: 'Yanone Kaffeesatz', sans-serif;
+			font-size: $title-size;
+		}
+		
+		.slb_group_status {
+			@extend .slb_data_title;
+			color: #777;
+			font-style: italic;
+			font-size: $title-size * .8;
+		}
+		
+		.slb_data_desc {
+			display: block;
+			margin-top: 0.5em;
+		}
+		
+		/* Single */
+		&.item_single {
+			.slb_group_status,
+			.slb_nav,
+			.slb_slideshow {
+				display: none;
+			}
+		}
+		/* Loading */
+		&.loading {
+			.slb_loading {
+				display: block;
+			}
+			.slb_details,
+			.slb_template_tag {
+				//display: none;
+			}
+			
+			.slb_template_tag_ui {
+				@include opacity(0);
+			}
+		}
+		
+		//Media
+		
+		//Small screen
+		@media screen and (max-width: 480px) {
+			@mixin vsizing {
+				min-height: 100%;
+				min-width: 320px;
+				width: 100%;
+			}
+			@include vsizing;
+			.slb_viewer_layout {
+				@include vsizing;
+				display: block;
+			}
+			.slb_container {
+				@include vsizing;
+				@include box-sizing-border;
+				@include box-shadow(none);
+				max-width: 100%;
+				border-radius: 0;
+				margin: 0;
+				padding: 5px;
+				position: absolute;
+				top: 0;
+				left: 0;
+				.slb_content  {
+					img, iframe, object, .slb_inner {
+						max-width: 100%;
+					}
+					img {
+						height: auto;
+					}
+				}
+			}
+			.slb_controls {
+				top: 3px;
+				right: 3px;
+			}
+			
+			%ui_nav {
+				top: 17%;
+				height: 79%;
+			}
+		}
+	}
+}

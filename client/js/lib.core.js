@@ -519,30 +519,6 @@ var Base = {
 		},
 		
 		/**
-		 * Get index of element in array
-		 * @param array arr Array to search
-		 * @param obj elem Element to search for
-		 * @return int Index of element in array (-1 if element not in array)
-		 */
-		arr_indexOf: function (arr, elem) {
-			var ret = -1;
-			if ( !this.is_array(arr) ) {
-				return ret;
-			}
-	        if ( Array.indexOf ) {
-	        	return arr.indexOf(elem);
-	        }
-	        var len = arr.length;
-			for ( var x = 0; x < len; x++ ) {
-				if ( arr[x] == elem ) {
-					ret = x;
-					break;
-				}
-			}
-	        return ret;
-	   },
-		
-		/**
 		 * Find common elements of 2 arrays
 		 * @param array arr1 First array
 		 * @param array arr2 Second array
