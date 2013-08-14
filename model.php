@@ -1,10 +1,5 @@
 <?php 
 
-require_once 'includes/class.base.php';
-require_once 'includes/class.themes.php';
-require_once 'includes/class.content_handlers.php';
-require_once 'includes/class.template_tags.php';
-
 /**
  * Model (Core functionality)
  * @package Simple Lightbox

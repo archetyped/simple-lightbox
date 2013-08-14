@@ -1,5 +1,4 @@
 <?php
-require_once 'class.component.php';
 
 /**
  * Theme

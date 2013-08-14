@@ -1,9 +1,5 @@
 <?php
 
-require_once 'class.utilities.php';
-require_once 'class.options.php';
-require_once 'class.admin.php';
-
 /**
  * @package Simple Lightbox
  * @subpackage Base

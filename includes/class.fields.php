@@ -1,7 +1,5 @@
 <?php
 
-require_once 'class.base.php';
-
 /**
  * Fields - Base class
  * Core properties/methods for fields

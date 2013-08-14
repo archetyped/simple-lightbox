@@ -1,7 +1,5 @@
 <?php
 
-require_once 'class.base.php';
-
 /**
  * Admin functionality
  * @package Simple Lightbox

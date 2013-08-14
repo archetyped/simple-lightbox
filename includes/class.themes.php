@@ -1,6 +1,4 @@
 <?php
-require_once 'class.collection_controller.php';
-require_once 'class.theme.php';
 
 /**
  * Themes Collection
