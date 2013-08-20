@@ -27,6 +27,15 @@ class SLB_Admin_Page extends SLB_Admin_View {
 		echo screen_icon();
 	}
 	
+	/**
+	 * Add content to page
+	 * @uses parent::add_content()
+	 * @return object Page instance reference
+	 */
+	public function add_content($id, $title, $callback, $context = 'primary', $priority = 'default', $callback_args = null) {
+		return parent::add_content($id, $title, $callback, $context, $priority, $callback_args);
+	}
+	
 	/* Handlers */
 	
 	/**

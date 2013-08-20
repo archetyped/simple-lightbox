@@ -298,10 +298,10 @@ class SLB_Admin extends SLB_Base {
 	 * Add admin page
 	 * @uses this->pages
 	 * @param string $id Page ID (unique)
+	 * @param string $parent Menu ID to add page to
 	 * @param string|array $labels Text labels (Associative array for multiple labels)
 	 * 	> menu: Menu title
 	 * 	> header: Page header
-	 * @param string $menu Menu ID to add page to
 	 * @param obj|array $options (optional) Options object (Use array to define options object & specific group(s))
 	 * 	> Array Example: array($options, 'group_1') or array($options, array('group_1', 'group_3'))
 	 * @param callback $callback (optional) Callback for custom page building

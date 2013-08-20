@@ -78,6 +78,13 @@ class SLB_Admin_View extends SLB_Base_Object {
 	protected $hookname = null;
 	
 	/**
+	 * Raw content parameters
+	 * Stores pre-rendered content parameters
+	 * @var array
+	 */
+	protected $content_raw = array();
+	
+	/**
 	 * Messages to be displayed
 	 * Indexed Array
 	 * @var array
@@ -103,6 +110,10 @@ class SLB_Admin_View extends SLB_Base_Object {
 	
 	/* Init */
 	
+	/**
+	 * Constructor
+	 * @return obj Current instance
+	 */
 	public function __construct($id, $labels, $options = null, $callback = null, $capability = null, $icon = null) {
 		$props = array(
 			'labels'		=> $labels,
@@ -113,6 +124,7 @@ class SLB_Admin_View extends SLB_Base_Object {
 		);
 		parent::__construct($id, $props);
 		$this->init_required();
+		return $this;
 	}
 	
 	protected function init_required() {
@@ -210,6 +222,19 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 */
 	public function has_label($type) {
 		return ( isset($this->labels[$type]) );
+	}
+	
+	/**
+	 * Add content to view
+	 * Child classes define method functionality
+	 * @return obj Current View instance
+	 */
+	public function add_content() {
+		//Save parameters
+		$args = func_get_args();
+		$this->content_raw[] = $args;
+		//Return instance reference
+		return $this;
 	}
 	
 	/**
