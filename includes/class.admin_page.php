@@ -53,7 +53,7 @@ class SLB_Admin_Page extends SLB_Admin_View {
 			<?php $this->show_icon(); ?>
 			<h2><?php esc_html_e( $this->get_label('header') ); ?></h2>
 			<?php
-			$this->show_options();
+			$this->render_content();
 			?>
 		</div>
 		<?php

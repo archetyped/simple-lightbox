@@ -80,9 +80,16 @@ class SLB_Admin_View extends SLB_Base_Object {
 	/**
 	 * Raw content parameters
 	 * Stores pre-rendered content parameters
+	 * Items stored by ID (key)
 	 * @var array
 	 */
 	protected $content_raw = array();
+	
+	/**
+	 * Parsed content parameters
+	 * @var array
+	 */
+	protected $content = array();
 	
 	/**
 	 * Messages to be displayed
@@ -224,18 +231,43 @@ class SLB_Admin_View extends SLB_Base_Object {
 		return ( isset($this->labels[$type]) );
 	}
 	
+	/* Content */
+	
 	/**
-	 * Add content to view
+	 * Add content block to view
 	 * Child classes define method functionality
+	 * @param string $id Content block ID
 	 * @return obj Current View instance
 	 */
-	public function add_content() {
+	public function add_content($id) {
 		//Save parameters
 		$args = func_get_args();
-		$this->content_raw[] = $args;
+		$this->content_raw[$id] = $args;
 		//Return instance reference
 		return $this;
 	}
+	
+	/**
+	 * Check if content has been added to view
+	 * @return bool TRUE if content added
+	 */
+	protected function has_content() {
+		return !empty($this->content_raw);
+	}
+	
+	/**
+	 * Render content blocks
+	 * @param string $context (optional) Context to render
+	 */
+	protected function render_content($context = 'default') {
+		$out = '';
+		if ( !$this->has_content() ) {
+			return $out;
+		}
+		dbg_print_message('Content (Raw)', $this->content_raw);
+	}
+	
+	/* Options */
 	
 	/**
 	 * Retrieve instance options
