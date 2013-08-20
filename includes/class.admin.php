@@ -244,7 +244,7 @@ class SLB_Admin extends SLB_Base {
 	 * @param string $type View type
 	 * @param string $id Unique view ID
 	 * @param array $args Arguments to pass to view constructor
-	 * @return int|bool View ID (FALSE if view was not properly initialized)
+	 * @return Admin_View|bool View instance (FALSE if view was not properly initialized)
 	 */
 	protected function add_view($type, $id, $args) {
 		//Validate request
@@ -259,8 +259,8 @@ class SLB_Admin extends SLB_Base {
 			$this->{$collection}[$id] =& $view;
 		else 
 			$id = false;
-		unset($view, $r);
-		return $id;
+		unset($r);
+		return $view;
 	}
 	
 	/**
@@ -285,7 +285,7 @@ class SLB_Admin extends SLB_Base {
 	 * @param string $id Menu ID
 	 * @param string|array $labels Text labels
 	 * @param int $pos (optional) Menu position in navigation (index order)
-	 * @return string Menu ID
+	 * @return Admin_Menu Menu instance
 	 */
 	public function add_menu($id, $labels, $position = null) {
 		$args = array ( $id, $labels, null, null, null, $position );
@@ -306,7 +306,7 @@ class SLB_Admin extends SLB_Base {
 	 * 	> Array Example: array($options, 'group_1') or array($options, array('group_1', 'group_3'))
 	 * @param callback $callback (optional) Callback for custom page building
 	 * @param string $capability (optional) Custom capability for accessing page
-	 * @return string Page ID
+	 * @return Admin_Page Page instance
 	 */
 	public function add_page($id, $parent, $labels, $options = null, $callback = null, $capability = null) {
 		$args = func_get_args();
@@ -328,16 +328,19 @@ class SLB_Admin extends SLB_Base {
 	 * 	> Array Example: array($options, 'group_1') or array($options, array('group_1', 'group_3'))
 	 * @param callback $callback (optional) Callback for custom page building
 	 * @param string $capability (optional) Custom capability for accessing page
-	 * @return string Page ID
+	 * @return Admin_Page Page instance
 	 */
 	public function add_wp_page($id, $parent, $labels, $options = null, $callback = null, $capability = null) {
 		//Add page
-		$pid = $this->add_page($id, $parent, $labels, $options, $callback, $capability);
+		/**
+		 * @var SLB_Admin_Page
+		 */
+		$pg = $this->add_page($id, $parent, $labels, $options, $callback, $capability);
 		//Set parent as WP
-		if ( $pid ) {
-			$this->pages[$pid]->set_parent_wp();
+		if ( $pg ) {
+			$pg->set_parent_wp();
 		}
-		return $pid;
+		return $pg;
 	}
 	
 	/**
@@ -350,11 +353,10 @@ class SLB_Admin extends SLB_Base {
 	 * 	> Array Example: array($options, 'group_1') or array($options, array('group_1', 'group_3'))
 	 * @param callback $callback (optional) Callback for custom page building
 	 * @param string $capability (optional) Custom capability for accessing page
-	 * @return string Page ID
+	 * @return Admin_Page Page instance
 	 */
 	public function add_dashboard_page($id, $labels, $options = null, $callback = null, $capability = null) {
-		$id = $this->add_wp_page($id, 'dashboard', $labels, $options, $callback, $capability);
-		return $id;
+		return $this->add_wp_page($id, 'dashboard', $labels, $options, $callback, $capability);
 	}
 
 	/**
@@ -370,8 +372,7 @@ class SLB_Admin extends SLB_Base {
 	 * @return string Page ID
 	 */
 	public function add_comments_page($id, $labels, $options = null, $callback = null, $capability = null) {
-		$id = $this->add_wp_page($id, 'comments', $labels, $options, $callback, $capability);
-		return $id;
+		return $this->add_wp_page($id, 'comments', $labels, $options, $callback, $capability);
 	}
 	
 	/**
@@ -387,8 +388,7 @@ class SLB_Admin extends SLB_Base {
 	 * @return string Page ID
 	 */
 	public function add_links_page($id, $labels, $options = null, $callback = null, $capability = null) {
-		$id = $this->add_wp_page($id, 'links', $labels, $options, $callback, $capability);
-		return $id;
+		return $this->add_wp_page($id, 'links', $labels, $options, $callback, $capability);
 	}
 
 	
@@ -405,8 +405,7 @@ class SLB_Admin extends SLB_Base {
 	 * @return string Page ID
 	 */
 	public function add_posts_page($id, $labels, $options = null, $callback = null, $capability = null) {
-		$id = $this->add_wp_page($id, 'posts', $labels, $options, $callback, $capability);
-		return $id;
+		return $this->add_wp_page($id, 'posts', $labels, $options, $callback, $capability);
 	}
 	
 	/**
@@ -422,8 +421,7 @@ class SLB_Admin extends SLB_Base {
 	 * @return string Page ID
 	 */
 	public function add_pages_page($id, $labels, $options = null, $callback = null, $capability = null) {
-		$id = $this->add_wp_page($id, 'pages', $labels, $options, $callback, $capability);
-		return $id;
+		return $this->add_wp_page($id, 'pages', $labels, $options, $callback, $capability);
 	}
 	
 	/**
@@ -439,8 +437,7 @@ class SLB_Admin extends SLB_Base {
 	 * @return string Page ID
 	 */
 	public function add_media_page($id, $labels, $options = null, $callback = null, $capability = null) {
-		$id = $this->add_wp_page($id, 'media', $labels, $options, $callback, $capability);
-		return $id;
+		return $this->add_wp_page($id, 'media', $labels, $options, $callback, $capability);
 	}
 	
 	/**
@@ -456,8 +453,7 @@ class SLB_Admin extends SLB_Base {
 	 * @return string Page ID
 	 */
 	public function add_theme_page($id, $labels, $options = null, $callback = null, $capability = null) {
-		$id = $this->add_wp_page($id, 'theme', $labels, $options, $callback, $capability);
-		return $id;
+		return $this->add_wp_page($id, 'theme', $labels, $options, $callback, $capability);
 	}
 	
 	/**
@@ -473,8 +469,7 @@ class SLB_Admin extends SLB_Base {
 	 * @return string Page ID
 	 */
 	public function add_plugins_page($id, $labels, $options = null, $callback = null, $capability = null) {
-		$id = $this->add_wp_page($id, 'plugins', $labels, $options, $callback, $capability);
-		return $id;
+		return $this->add_wp_page($id, 'plugins', $labels, $options, $callback, $capability);
 	}
 	
 	/**
@@ -490,8 +485,7 @@ class SLB_Admin extends SLB_Base {
 	 * @return string Page ID
 	 */
 	public function add_options_page($id, $labels, $options = null, $callback = null, $capability = null) {
-		$id = $this->add_wp_page($id, 'options', $labels, $options, $callback, $capability);
-		return $id;
+		return $this->add_wp_page($id, 'options', $labels, $options, $callback, $capability);
 	}
 	
 	/**
@@ -507,8 +501,7 @@ class SLB_Admin extends SLB_Base {
 	 * @return string Page ID
 	 */
 	public function add_management_page($id, $labels, $options = null, $callback = null, $capability = null) {
-		$id = $this->add_wp_page($id, 'management', $labels, $options, $callback, $capability);
-		return $id;
+		return $this->add_wp_page($id, 'management', $labels, $options, $callback, $capability);
 	}
 	
 	/**
@@ -523,8 +516,7 @@ class SLB_Admin extends SLB_Base {
 	 * @return string Page ID
 	 */
 	public function add_users_page($id, $labels, $options = null, $callback = null, $capability = null) {
-		$id = $this->add_wp_page($id, 'users', $labels, $options, $callback, $capability);
-		return $id;
+		return $this->add_wp_page($id, 'users', $labels, $options, $callback, $capability);
 	}
 	
 	/* Section */
