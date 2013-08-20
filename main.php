@@ -30,13 +30,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  * @param string $classname Class to load
  */
 function slb_autoload($classname) {
-	$prefix = 'SLB_';
+	$prefix = 'slb_';
+	$cls = strtolower($classname);
 	//Remove prefix
-	if ( 0 !== strpos($classname, $prefix) ) {
+	if ( 0 !== strpos($cls, $prefix) ) {
 		return false;
 	}
 	//Format class for filename
-	$fn = 'class.' . strtolower( substr($classname, strlen($prefix)) ) . '.php';
+	$fn = 'class.' . substr($cls, strlen($prefix)) . '.php';
 	//Build path
 	$path = dirname(__FILE__) . '/' . "includes/" . $fn;
 	//Load file
