@@ -33,7 +33,68 @@ class SLB_Admin_Page extends SLB_Admin_View {
 	 * @return object Page instance reference
 	 */
 	public function add_content($id, $title, $callback, $context = 'primary', $priority = 'default', $callback_args = null) {
-		return parent::add_content($id, $title, $callback, $context, $priority, $callback_args);
+		return parent::add_content($id, array(
+			'id'			=> $id,
+			'title'			=> $title,
+			'callback'		=> $callback,
+			'context'		=> $context,
+			'priority'		=> $priority,
+			'callback_args'	=> $callback_args
+			)
+		);
+	}
+	
+	/**
+	 * Parse content by parameters
+	 * Sets content value
+	 */
+	protected function parse_content() {
+		//Get raw content
+		$raw = $this->get_content(false);
+		//Group by context
+		$content = array();
+		foreach ( $raw as $c ) {
+			//Add new context
+			if ( !isset($content[$c->context]) ) {
+				$content[$c->context] = array();
+			}
+			//Add item to context
+			$content[$c->context][] = $c;
+		}
+		return $content;
+	}
+	
+	/**
+	 * Render content blocks
+	 * @param string $context (optional) Context to render
+	 */
+	protected function render_content($context = 'primary') {
+		//Get content
+		$content = $this->get_content();
+		//Check for context
+		if ( !isset($content[$context]) ) {
+			return false;
+		}
+		$content = $content[$context];
+		$out = '';
+		//Render content
+		?>
+		<div class="metabox-holder">
+		<?php
+		//Add meta boxes
+		$screen = get_current_screen();
+		foreach ( $content as $c ) {
+			//Callback
+			if ( is_callable($c->callback) ) {
+				$callback = $c->callback;
+				add_meta_box($c->id, $c->title, $c->callback, $screen, $context, $c->priority, $c->callback_args);
+			}
+		}
+		//Output meta boxes
+		do_meta_boxes($screen, $context, null);
+		?>
+		</div>
+		<?php
 	}
 	
 	/* Handlers */
@@ -52,9 +113,16 @@ class SLB_Admin_Page extends SLB_Admin_View {
 		<div class="wrap">
 			<?php $this->show_icon(); ?>
 			<h2><?php esc_html_e( $this->get_label('header') ); ?></h2>
+			<div class="content_primary">
 			<?php
-			$this->render_content();
+			$this->render_content('primary');
 			?>
+			</div>
+			<div class="content_secondary">
+			<?php
+			$this->render_content('secondary');
+			?>
+			</div>
 		</div>
 		<?php
 	}
