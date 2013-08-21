@@ -237,14 +237,43 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 * Add content block to view
 	 * Child classes define method functionality
 	 * @param string $id Content block ID
+	 * @param array $args Content arguments (Defined by child class), converted to an object
 	 * @return obj Current View instance
 	 */
-	public function add_content($id) {
+	public function add_content($id, $args) {
 		//Save parameters
-		$args = func_get_args();
-		$this->content_raw[$id] = $args;
+		$this->content_raw[$id] = (object) $args;
+		//Clear parsed content
+		$this->content = array();
 		//Return instance reference
 		return $this;
+	}
+	
+	/**
+	 * Retrieve content
+	 */
+	protected function get_content($parsed = true) {
+		$content = $this->content_raw;
+		if ( $parsed ) {
+			//Return previously parsed content
+			if ( !empty($this->content) ) {
+				$content = $this->content;
+			}
+			elseif ( !empty($this->content_raw) ) {
+				//Parse content before returning
+				$content = $this->content = $this->parse_content();
+			}
+		}
+		return $content;
+	}
+	
+	/**
+	 * Parse content
+	 * Child classes define functionality
+	 * @return array Parsed content
+	 */
+	protected function parse_content() {
+		return $this->get_content(false);
 	}
 	
 	/**
@@ -252,19 +281,14 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 * @return bool TRUE if content added
 	 */
 	protected function has_content() {
-		return !empty($this->content_raw);
+		$raw = $this->get_content(false);
+		return !empty($raw);
 	}
 	
 	/**
-	 * Render content blocks
-	 * @param string $context (optional) Context to render
+	 * Render content
 	 */
 	protected function render_content($context = 'default') {
-		$out = '';
-		if ( !$this->has_content() ) {
-			return $out;
-		}
-		dbg_print_message('Content (Raw)', $this->content_raw);
 	}
 	
 	/* Options */
