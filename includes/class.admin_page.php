@@ -79,7 +79,7 @@ class SLB_Admin_Page extends SLB_Admin_View {
 		$out = '';
 		//Render content
 		?>
-		<div class="metabox-holder">
+		<div class="content-wrap">
 		<?php
 		//Add meta boxes
 		$screen = get_current_screen();
@@ -110,19 +110,22 @@ class SLB_Admin_Page extends SLB_Admin_View {
 		if ( !current_user_can($this->get_capability()) )
 			wp_die(__('Access Denied', 'simple-lightbox'));
 		?>
-		<div class="wrap">
+		<div class="wrap slb">
 			<?php $this->show_icon(); ?>
 			<h2><?php esc_html_e( $this->get_label('header') ); ?></h2>
-			<div class="content_primary">
-			<?php
-			$this->render_content('primary');
-			?>
+			<div class="metabox-holder columns-2">
+				<div class="content-primary postbox-container">
+					<?php
+					$this->render_content('primary');
+					?>
+				</div>
+				<div class="content-secondary postbox-container">
+					<?php
+					$this->render_content('secondary');
+					?>
+				</div>
 			</div>
-			<div class="content_secondary">
-			<?php
-			$this->render_content('secondary');
-			?>
-			</div>
+			<br class="clear" />
 		</div>
 		<?php
 	}
