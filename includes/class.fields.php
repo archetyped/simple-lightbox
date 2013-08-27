@@ -2159,6 +2159,35 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	}
 	
 	/**
+	 * Set build variable
+	 * @param string $key Variable name
+	 * @param mixed $val Variable value 
+	 */
+	function set_build_var($key, $val) {
+		$this->build_vars[$key] = $val;
+	}
+	
+	/**
+	 * Retrieve build variable
+	 * @param string $key Variable name
+	 * @param mixed $default Value if variable is not set
+	 * @return mixed Variable value
+	 */
+	function get_build_var($key, $default = null) {
+		return ( array_key_exists($key, $this->build_vars) ) ? $this->build_vars[$key] : $default;
+	}
+	
+	/**
+	 * Delete build variable
+	 * @param string $key Variable name to delete
+	 */
+	function delete_build_var($key) {
+		if ( array_key_exists($key, $this->build_vars) ) {
+			unset($this->build_vars[$key]);
+		}
+	}
+	
+	/**
 	 * Parses build variables prior to use
 	 * @uses this->reset_build_vars() to reset build variables for each request
 	 * @param array $build_vars Variables to use for current request
