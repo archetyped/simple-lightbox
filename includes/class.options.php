@@ -479,6 +479,35 @@ class SLB_Options extends SLB_Field_Collection {
 	}
 	
 	/**
+	 * Set build variable
+	 * @param string $key Variable name
+	 * @param mixed $val Variable value 
+	 */
+	function set_build_var($key, $val) {
+		$this->build_vars[$key] = $val;
+	}
+	
+	/**
+	 * Retrieve build variable
+	 * @param string $key Variable name
+	 * @param mixed $default Value if variable is not set
+	 * @return mixed Variable value
+	 */
+	function get_build_var($key, $default = null) {
+		return ( array_key_exists($key, $this->build_vars) ) ? $this->build_vars[$key] : $default;
+	}
+	
+	/**
+	 * Delete build variable
+	 * @param string $key Variable name to delete
+	 */
+	function delete_build_var($key) {
+		if ( array_key_exists($key, $this->build_vars) ) {
+			unset($this->build_vars[$key]);
+		}
+	}
+	
+	/**
 	 * Build array of option values for client output
 	 * @return array Associative array of options
 	 */
@@ -495,19 +524,56 @@ class SLB_Options extends SLB_Field_Collection {
 	
 	/* Admin */
 	
+	/**
+	 * Handles output building for options on admin pages
+	 * @param obj $opts Options instance
+	 * @param obj $page Admin Page instance
+	 * @param obj $state Admin Page state properties
+	 */
 	public function admin_page_render_content($opts, $page, $state) {
-		if ( $this->util->is_a($opts, 'Options')) {
-			//Build groups
-			$this->admin_build_groups($page, $state);
+		if ( $opts === $this ) {
+			//Set build variables and callbacks
+			$this->set_build_var('admin_page', $page);
+			$this->set_build_var('admin_state', $state);
+			$hooks = array (
+				'filter'	=> array (
+					'parse_build_vars'		=> array( $this->m('admin_parse_build_vars'), 10, 2 )
+				),
+				'action'	=> array (
+					'build_pre'				=> array( $this->m('admin_build_pre') ),
+				)
+			);
+			//Add hooks
+			foreach ( $hooks as $type => $hook ) {
+				$m = 'add_' . $type;
+				foreach ( $hook as $tag => $args ) {
+					array_unshift($args, $tag);
+					call_user_func_array($this->util->m($m), $args);
+				}
+			}
+			
+			//Build output
+			$this->build(array('build_groups' => $this->m('admin_build_groups')));
+			
+			//Remove hooks
+			foreach ( $hooks as $type => $hook ) {
+				$m = 'remove_' . $type;
+				foreach ( $hook as $tag => $args ) {
+					call_user_func($this->util->m($m), $tag, $args[0]);
+				}
+			}
+			//Clear custom build vars
+			$this->delete_build_var('admin_page');
+			$this->delete_build_var('admin_state');
 		}
 	}
 
 	/**
 	 * Builds option groups output
-	 * @param obj $page Admin page instance
-	 * @param obj $state Current rendering state
 	 */
-	public function admin_build_groups($page, $state) {
+	public function admin_build_groups() {
+		$page = $this->get_build_var('admin_page');
+		$state = $this->get_build_var('admin_state');
 		//Iterate through groups
 		foreach ( $this->get_groups() as $g ) {
 			//Make sure group is not empty
@@ -527,9 +593,31 @@ class SLB_Options extends SLB_Field_Collection {
 	public function admin_build_group($obj, $box) {
 		$a = $box['args'];
 		$group = $a['group'];
-		echo "Build [$group] output";
-		/*
 		$this->build_group($group);
-		*/
+	}
+	
+	/**
+	 * Parse build vars
+	 * @uses `options_parse_build_vars` filter hook
+	 */
+	public function admin_parse_build_vars($vars, $opts) {
+		//Handle form submission
+		if ( isset($_REQUEST[$opts->get_id('formatted')]) ) {
+			$vars['validate_pre'] = $vars['save_pre'] = true;
+		}
+		return $vars;
+	}
+
+	/**
+	 * Actions to perform before building options
+	 */
+	public function admin_build_pre(&$opts) {
+		//Build form output
+		/*
+		$form_id = $this->add_prefix('admin_form_' . $this->get_id_raw());
+		?>
+		<form id="<?php esc_attr_e($form_id); ?>" name="<?php esc_attr_e($form_id); ?>" action="" method="post">
+		<?php
+		 */
 	}
 }

@@ -598,30 +598,8 @@ class SLB_Admin_View extends SLB_Base_Object {
 	/* Options */
 	
 	/**
-	 * Parse options build vars
-	 * @uses `options_parse_build_vars` filter hook
-	 */
-	public function options_parse_build_vars($vars, $opts) {
-		//Handle form submission
-		if ( isset($_REQUEST[$opts->get_id('formatted')]) ) {
-			$vars['validate_pre'] = $vars['save_pre'] = true;
-		}
-		return $vars;
-	}
-	
-	/**
-	 * Actions to perform before building options
-	 */
-	public function options_build_pre(&$opts) {
-		//Build form output
-		$form_id = $this->add_prefix('admin_form_' . $this->get_id_raw());
-		?>
-		<form id="<?php esc_attr_e($form_id); ?>" name="<?php esc_attr_e($form_id); ?>" action="" method="post">
-		<?php
-	}
-	
-	/**
 	 * Actions to perform after building options
+	 * @deprecated
 	 */
 	public function options_build_post(&$opts)	{
 		submit_button();
@@ -630,82 +608,6 @@ class SLB_Admin_View extends SLB_Base_Object {
 		<?php
 	}
 	
-	/**
-	 * Builds option groups output
-	 * @param SLB_Options $options Options instance
-	 * @param array $groups Groups to build
-	 * @deprecated
-	 */
-	public function options_build_groups($options, $groups) {
-		//Add meta box for each group
-		$screen = get_current_screen();
-		foreach ( $groups as $gid ) {
-			$g = $options->get_group($gid);
-			if ( !count($options->get_items($gid)) ) {
-				continue;
-			}
-			add_meta_box($gid, $g->title, $this->m('options_build_group'), $screen, 'normal', 'default', array('options' => $options, 'group' => $gid));
-		}
-		//Build options
-		do_meta_boxes($screen, 'normal', null);
-	}
-	
-	/**
-	 * @deprecated
-	 */
-	public function options_build_group($obj, $args) {
-		$args = $args['args'];
-		$group = $args['group'];
-		$opts = $args['options'];
-		$opts->build_group($group);
-	}
-	
-	/**
-	 * @deprecated
-	 */
-	protected function show_options($show_submit = true) {
-		//Build options output
-		if ( !$this->is_options_valid() ) {
-			return false;
-		}
-		/**
-		 * @var SLB_Options
-		 */
-		$opts =& $this->get_options();
-		$hooks = array (
-			'filter'	=> array (
-				'parse_build_vars'		=> array( $this->m('options_parse_build_vars'), 10, 2 )
-			),
-			'action'	=> array (
-				'build_pre'				=> array( $this->m('options_build_pre') ),
-				'build_post'			=> array ( $this->m('options_build_post') ),
-			)
-		);
-		//Add hooks
-		foreach ( $hooks as $type => $hook ) {
-			$m = 'add_' . $type;
-			foreach ( $hook as $tag => $args ) {
-				array_unshift($args, $tag);
-				call_user_func_array($opts->util->m($m), $args);
-			}
-		}
-		?>
-		<div class="metabox-holder">
-		<?php
-		//Build output
-		$opts->build(array('build_groups' => $this->m('options_build_groups')));
-		?>
-		</div>
-		<?php
-		//Remove hooks
-		foreach ( $hooks as $type => $hook ) {
-			$m = 'remove_' . $type;
-			foreach ( $hook as $tag => $args ) {
-				call_user_func($opts->util->m($m), $tag, $args[0]);
-			}
-		}
-	}
-
 	/* UI Elements */
 	
 	/**
