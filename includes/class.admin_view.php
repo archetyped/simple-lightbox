@@ -78,6 +78,20 @@ class SLB_Admin_View extends SLB_Base_Object {
 	protected $hookname = null;
 	
 	/**
+	 * Raw content parameters
+	 * Stores pre-rendered content parameters
+	 * Items stored by ID (key)
+	 * @var array
+	 */
+	protected $content_raw = array();
+	
+	/**
+	 * Parsed content parameters
+	 * @var array
+	 */
+	protected $content = array();
+	
+	/**
 	 * Messages to be displayed
 	 * Indexed Array
 	 * @var array
@@ -103,6 +117,10 @@ class SLB_Admin_View extends SLB_Base_Object {
 	
 	/* Init */
 	
+	/**
+	 * Constructor
+	 * @return obj Current instance
+	 */
 	public function __construct($id, $labels, $options = null, $callback = null, $capability = null, $icon = null) {
 		$props = array(
 			'labels'		=> $labels,
@@ -113,6 +131,7 @@ class SLB_Admin_View extends SLB_Base_Object {
 		);
 		parent::__construct($id, $props);
 		$this->init_required();
+		return $this;
 	}
 	
 	protected function init_required() {
@@ -211,6 +230,68 @@ class SLB_Admin_View extends SLB_Base_Object {
 	public function has_label($type) {
 		return ( isset($this->labels[$type]) );
 	}
+	
+	/* Content */
+	
+	/**
+	 * Add content block to view
+	 * Child classes define method functionality
+	 * @param string $id Content block ID
+	 * @param array $args Content arguments (Defined by child class), converted to an object
+	 * @return obj Current View instance
+	 */
+	public function add_content($id, $args) {
+		//Save parameters
+		$this->content_raw[$id] = (object) $args;
+		//Clear parsed content
+		$this->content = array();
+		//Return instance reference
+		return $this;
+	}
+	
+	/**
+	 * Retrieve content
+	 */
+	protected function get_content($parsed = true) {
+		$content = $this->content_raw;
+		if ( $parsed ) {
+			//Return previously parsed content
+			if ( !empty($this->content) ) {
+				$content = $this->content;
+			}
+			elseif ( !empty($this->content_raw) ) {
+				//Parse content before returning
+				$content = $this->content = $this->parse_content();
+			}
+		}
+		return $content;
+	}
+	
+	/**
+	 * Parse content
+	 * Child classes define functionality
+	 * @return array Parsed content
+	 */
+	protected function parse_content() {
+		return $this->get_content(false);
+	}
+	
+	/**
+	 * Check if content has been added to view
+	 * @return bool TRUE if content added
+	 */
+	protected function has_content() {
+		$raw = $this->get_content(false);
+		return !empty($raw);
+	}
+	
+	/**
+	 * Render content
+	 */
+	protected function render_content($context = 'default') {
+	}
+	
+	/* Options */
 	
 	/**
 	 * Retrieve instance options
@@ -517,156 +598,13 @@ class SLB_Admin_View extends SLB_Base_Object {
 	/* Options */
 	
 	/**
-	 * Parse options build vars
-	 * @uses `options_parse_build_vars` filter hook
-	 */
-	public function options_parse_build_vars($vars, $opts) {
-		//Handle form submission
-		if ( isset($_REQUEST[$opts->get_id('formatted')]) ) {
-			$vars['validate_pre'] = $vars['save_pre'] = true;
-		}
-		return $vars;
-	}
-	
-	/**
-	 * Actions to perform before building options
-	 */
-	public function options_build_pre(&$opts) {
-		//Build form output
-		$form_id = $this->add_prefix('admin_form_' . $this->get_id_raw());
-		?>
-		<form id="<?php esc_attr_e($form_id); ?>" name="<?php esc_attr_e($form_id); ?>" action="" method="post">
-		<?php
-	}
-	
-	/**
 	 * Actions to perform after building options
+	 * @deprecated
 	 */
 	public function options_build_post(&$opts)	{
 		submit_button();
 		?>
 		</form>
 		<?php
-	}
-	
-	/**
-	 * Builds option groups output
-	 * @param SLB_Options $options Options instance
-	 * @param array $groups Groups to build
-	 */
-	public function options_build_groups($options, $groups) {
-		//Add meta box for each group
-		$screen = get_current_screen();
-		foreach ( $groups as $gid ) {
-			$g = $options->get_group($gid);
-			if ( !count($options->get_items($gid)) ) {
-				continue;
-			}
-			add_meta_box($gid, $g->title, $this->m('options_build_group'), $screen, 'normal', 'default', array('options' => $options, 'group' => $gid));
-		}
-		//Build options
-		do_meta_boxes($screen, 'normal', null);
-	}
-	
-	public function options_build_group($obj, $args) {
-		$args = $args['args'];
-		$group = $args['group'];
-		$opts = $args['options'];
-		$opts->build_group($group);
-	}
-	
-	protected function show_options($show_submit = true) {
-		//Build options output
-		if ( !$this->is_options_valid() ) {
-			return false;
-		}
-		/**
-		 * @var SLB_Options
-		 */
-		$opts =& $this->get_options();
-		$hooks = array (
-			'filter'	=> array (
-				'parse_build_vars'		=> array( $this->m('options_parse_build_vars'), 10, 2 )
-			),
-			'action'	=> array (
-				'build_pre'				=> array( $this->m('options_build_pre') ),
-				'build_post'			=> array ( $this->m('options_build_post') ),
-			)
-		);
-		//Add hooks
-		foreach ( $hooks as $type => $hook ) {
-			$m = 'add_' . $type;
-			foreach ( $hook as $tag => $args ) {
-				array_unshift($args, $tag);
-				call_user_func_array($opts->util->m($m), $args);
-			}
-		}
-		?>
-		<div class="metabox-holder">
-		<?php
-		//Build output
-		$opts->build(array('build_groups' => $this->m('options_build_groups')));
-		?>
-		</div>
-		<?php
-		//Remove hooks
-		foreach ( $hooks as $type => $hook ) {
-			$m = 'remove_' . $type;
-			foreach ( $hook as $tag => $args ) {
-				call_user_func($opts->util->m($m), $tag, $args[0]);
-			}
-		}
-	}
-
-	/* UI Elements */
-	
-	/**
-	 * Build submit button element
-	 * @param string $text (optional) Button text
-	 * @param string $id (optional) Button ID (prefixed on output)
-	 * @param object $parent (optional) Page/Section object that contains button
-	 * @return object Button properties (id, output)
-	 */
-	protected function get_button_submit($text = null, $id = null, $parent = null) {
-		//Format values
-		if ( !is_string($text) || empty($text) )
-			$text = __('Save Changes');
-		if ( is_object($parent) && isset($parent->id) )
-			$parent = $parent->id . '_';
-		else
-			$parent = '';
-		if ( !is_string($id) || empty($id) )
-			$id = 'submit';
-		$id = $this->add_prefix($parent . $id);
-		//Build HTML
-		$out = $this->util->build_html_element(array(
-			'tag'			=> 'input',
-			'wrap'			=> false,
-			'attributes'	=> array(
-				'type'	=> 'submit',
-				'class'	=> 'button-primary',
-				'id'	=> $id,
-				'name'	=> $id,
-				'value'	=> $text
-			)
-		));
-		$out = '<p class="submit">' . $out . '</p>';
-		$ret = new stdClass;
-		$ret->id = $id;
-		$ret->output = $out;
-		return $ret;
-	}
-	
-	/**
-	 * Output submit button element
-	 * @param string $text (optional) Button text
-	 * @param string $id (optional) Button ID (prefixed on output)
-	 * @param object $parent (optional) Page/Section object that contains button
-	 * @return object Button properties (id, output)
-	 */
-	protected function button_submit($text = null, $id = null, $parent = null) {
-		$btn = $this->get_button_submit($text, $id, $parent);
-		echo $btn->output;
-		return $btn;
 	}
 }
