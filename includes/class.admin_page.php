@@ -12,6 +12,8 @@ class SLB_Admin_Page extends SLB_Admin_View {
 	
 	protected $parent_required = true;
 	
+	public $hook_prefix = 'admin_page';
+	
 	/* Init */
 	
 	public function __construct($id, $parent, $labels, $options = null, $callback = null, $capability = null, $icon = null) {
