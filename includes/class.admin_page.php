@@ -124,7 +124,7 @@ class SLB_Admin_Page extends SLB_Admin_View {
 	 * @param string $feature Feature to check for
 	 * @return bool TRUE if feature required
 	 */
-	private function _is_require($feature) {
+	private function _is_required($feature) {
 		return ( isset($this->_required[$feature]) ) ? true : false;
 	}
 	
@@ -141,8 +141,8 @@ class SLB_Admin_Page extends SLB_Admin_View {
 	 * Check if form submission is required
 	 * @return bool TRUE if form submission required
 	 */
-	private function is_require_form() {
-		return $this->_is_require('form_submit');
+	private function is_required_form() {
+		return $this->_is_required('form_submit');
 	}
 	
 	/* Handlers */
@@ -163,7 +163,7 @@ class SLB_Admin_Page extends SLB_Admin_View {
 			<h2><?php esc_html_e( $this->get_label('header') ); ?></h2>
 			<?php
 				//Form submission support
-				if ( $this->is_require_form() ) {
+				if ( $this->is_required_form() ) {
 					//Build form output
 					$form_id = $this->add_prefix('admin_form_' . $this->get_id_raw());
 					?>
@@ -186,7 +186,7 @@ class SLB_Admin_Page extends SLB_Admin_View {
 			<br class="clear" />
 			<?php
 				//Form submission support
-				if ( $this->is_require_form() ) {
+				if ( $this->is_required_form() ) {
 					submit_button();
 					?>
 					</form>
