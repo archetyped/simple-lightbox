@@ -90,7 +90,10 @@ class SLB_Admin_Page extends SLB_Admin_View {
 			//Callback
 			if ( is_callable($c->callback) ) {
 				$callback = $c->callback;
-				add_meta_box($c->id, $c->title, $c->callback, $screen, $context, $c->priority, $c->callback_args);
+				add_meta_box($c->id, $c->title, $c->callback, $c->screen, $c->context, $c->priority, $c->callback_args);
+			} else {
+				//Let handlers build output
+				$this->util->do_action('render_content', $c->callback, $this, $c);
 			}
 		}
 		//Output meta boxes
