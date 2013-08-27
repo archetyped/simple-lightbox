@@ -58,6 +58,8 @@ class SLB_Options extends SLB_Field_Collection {
 		add_action($this->add_prefix('fields_registered'), $this->m('set_parents'));
 		//Building
 		$this->util->add_action('build_init', $this->m('build_init'));
+		//Admin
+		add_action($this->add_prefix('admin_page_render_content'), $this->m('admin_page_render_content'), 10, 3);
 	}
 	
 	/* Legacy/Migration */
@@ -489,5 +491,45 @@ class SLB_Options extends SLB_Field_Collection {
 			$out[$option->get_id()] = $option->get_data('default');
 		}
 		return $out;
+	}
+	
+	/* Admin */
+	
+	public function admin_page_render_content($opts, $page, $state) {
+		if ( $this->util->is_a($opts, 'Options')) {
+			//Build groups
+			$this->admin_build_groups($page, $state);
+		}
+	}
+
+	/**
+	 * Builds option groups output
+	 * @param obj $page Admin page instance
+	 * @param obj $state Current rendering state
+	 */
+	public function admin_build_groups($page, $state) {
+		//Iterate through groups
+		foreach ( $this->get_groups() as $g ) {
+			//Make sure group is not empty
+			if ( !count($this->get_items($g->id)) ) {
+				continue;
+			}
+			//Add meta box for each group
+			add_meta_box($g->id, $g->title, $this->m('admin_build_group'), $state->screen, $state->context, $state->priority, array('group' => $g->id, 'page' => $page));
+		}
+	}
+	
+	/**
+	 * Group output handler for admin pages
+	 * @param obj $obj Object passed by `do_meta_boxes()` call (Default: NULL)
+	 * @param array $box Meta box properties
+	 */
+	public function admin_build_group($obj, $box) {
+		$a = $box['args'];
+		$group = $a['group'];
+		echo "Build [$group] output";
+		/*
+		$this->build_group($group);
+		*/
 	}
 }

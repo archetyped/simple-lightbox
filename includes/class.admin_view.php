@@ -634,6 +634,7 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 * Builds option groups output
 	 * @param SLB_Options $options Options instance
 	 * @param array $groups Groups to build
+	 * @deprecated
 	 */
 	public function options_build_groups($options, $groups) {
 		//Add meta box for each group
@@ -649,6 +650,9 @@ class SLB_Admin_View extends SLB_Base_Object {
 		do_meta_boxes($screen, 'normal', null);
 	}
 	
+	/**
+	 * @deprecated
+	 */
 	public function options_build_group($obj, $args) {
 		$args = $args['args'];
 		$group = $args['group'];
@@ -656,6 +660,9 @@ class SLB_Admin_View extends SLB_Base_Object {
 		$opts->build_group($group);
 	}
 	
+	/**
+	 * @deprecated
+	 */
 	protected function show_options($show_submit = true) {
 		//Build options output
 		if ( !$this->is_options_valid() ) {
