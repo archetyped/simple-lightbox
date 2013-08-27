@@ -231,8 +231,6 @@ class SLB_Admin extends SLB_Base {
 		$section;
 		foreach ( $this->sections as $section ) {
 			add_settings_section($section->get_id(), $section->get_title(), $section->get_callback(), $section->get_parent());
-			if ( $section->is_options_valid() )
-				register_setting($section->get_parent(), $section->get_id(), $section->get_options()->m('validate'));
 		}
  	}
 

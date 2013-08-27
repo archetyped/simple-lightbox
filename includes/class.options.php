@@ -60,6 +60,7 @@ class SLB_Options extends SLB_Field_Collection {
 		$this->util->add_action('build_init', $this->m('build_init'));
 		//Admin
 		add_action($this->add_prefix('admin_page_render_content'), $this->m('admin_page_render_content'), 10, 3);
+		add_filter($this->add_prefix('admin_reset_trigger'), $this->m('admin_reset_trigger'), 10, 3);
 	}
 	
 	/* Legacy/Migration */
@@ -574,5 +575,22 @@ class SLB_Options extends SLB_Field_Collection {
 			$vars['validate_pre'] = $vars['save_pre'] = true;
 		}
 		return $vars;
+	}
+
+	/**
+	 * Admin reset handler
+	 * @param bool $res Current result
+	 * @param obj $opts Options instance
+	 * @param obj $reset Admin Reset instance
+	 */
+	public function admin_reset_trigger($res, $opts, $reset) {
+		//Only process matching options instance
+		if ( $opts === $this ) {
+			//Reset options
+			$this->reset();
+			//Set result
+			$res = true;
+		}
+		return $res;
 	}
 }

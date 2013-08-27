@@ -289,7 +289,7 @@ class SLB_Admin_View extends SLB_Base_Object {
 		$msgs =& $this->get_messages();
 		$text = trim($text);
 		if ( empty($msgs) && !empty($text) )
-			$this->util->add_filter('admin_messages', $this->m('do_messages'));
+			add_filter($this->add_prefix('admin_messages'), $this->m('do_messages'));
 		$msgs[] = $text;
 		return $this;
 	}

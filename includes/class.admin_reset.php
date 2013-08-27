@@ -10,14 +10,23 @@
 class SLB_Admin_Reset extends SLB_Admin_View {
 	/* Properties */
 	
-	protected $required = array ( 'options' => 'object' );
-	
 	protected $parent_required = false;
+	
+	public $hook_prefix = 'admin_reset';
 	
 	/* Init */
 	
+	/**
+	 * Init
+	 * @param string $id ID
+	 * @param array $labels Labels
+	 * @param obj $options Options instance
+	 */
 	function __construct($id, $labels, $options) {
-		parent::__construct($id, $labels, $options);
+		parent::__construct($id, $labels);
+		//Default options instance
+		$this->add_content('options', $options);
+		return $this;
 	}
 	
 	/* Handlers */
@@ -31,13 +40,25 @@ class SLB_Admin_Reset extends SLB_Admin_View {
 		//Validate user
 		if ( ! current_user_can('activate_plugins') || ! check_admin_referer($this->get_id()) )
 			wp_die(__('Access Denied', 'simple-lightbox'));
-
-		//Reset settings
-		if ( $this->is_options_valid() )
-			$this->get_options()->reset(true);
+		
+		//Get data
+		$content = $this->get_content();
+		
+		$success = true;
+		
+		//Iterate through data
+		foreach ( $content as $c ) {
+			//Trigger reset
+			$res = $this->util->apply_filters('trigger', $success, $c->data, $this);
+			//Set result
+			if ( !!$success ) {
+				$success = $res;
+			}
+		}
 		
 		//Set Status Message
-		$this->set_message($this->get_label('success'));
+		$lbl = ( $success ) ? 'success' : 'failure';
+		$this->set_message($this->get_label($lbl));
 		
 		/*
 		//Redirect user
@@ -76,4 +97,12 @@ class SLB_Admin_Reset extends SLB_Admin_View {
 		);
 	}
 	
+	/* Content */
+	
+	/**
+	 * Save options
+	 */
+	public function add_content($id, $data) {
+		return parent::add_content($id, array('data' => $data));
+	}
 }
