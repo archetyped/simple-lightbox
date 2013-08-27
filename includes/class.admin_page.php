@@ -14,6 +14,11 @@ class SLB_Admin_Page extends SLB_Admin_View {
 	
 	public $hook_prefix = 'admin_page';
 	
+	/**
+	 * Required features/elements
+	 */
+	private $_required = array();
+	
 	/* Init */
 	
 	public function __construct($id, $parent, $labels, $options = null, $callback = null, $capability = null, $icon = null) {
