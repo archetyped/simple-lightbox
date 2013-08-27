@@ -510,9 +510,6 @@ class SLB_Options extends SLB_Field_Collection {
 				'filter'	=> array (
 					'parse_build_vars'		=> array( $this->m('admin_parse_build_vars'), 10, 2 )
 				),
-				'action'	=> array (
-					'build_pre'				=> array( $this->m('admin_build_pre') ),
-				)
 			);
 			//Add hooks
 			foreach ( $hooks as $type => $hook ) {
@@ -577,18 +574,5 @@ class SLB_Options extends SLB_Field_Collection {
 			$vars['validate_pre'] = $vars['save_pre'] = true;
 		}
 		return $vars;
-	}
-
-	/**
-	 * Actions to perform before building options
-	 */
-	public function admin_build_pre(&$opts) {
-		//Build form output
-		/*
-		$form_id = $this->add_prefix('admin_form_' . $this->get_id_raw());
-		?>
-		<form id="<?php esc_attr_e($form_id); ?>" name="<?php esc_attr_e($form_id); ?>" action="" method="post">
-		<?php
-		 */
 	}
 }
