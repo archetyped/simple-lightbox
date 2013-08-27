@@ -86,6 +86,7 @@ class SLB_Admin_Page extends SLB_Admin_View {
 		//Add meta boxes
 		$screen = get_current_screen();
 		foreach ( $content as $c ) {
+			$c->screen = $screen;
 			//Callback
 			if ( is_callable($c->callback) ) {
 				$callback = $c->callback;
