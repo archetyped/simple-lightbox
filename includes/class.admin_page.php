@@ -21,9 +21,9 @@ class SLB_Admin_Page extends SLB_Admin_View {
 	
 	/* Init */
 	
-	public function __construct($id, $parent, $labels, $options = null, $callback = null, $capability = null, $icon = null) {
+	public function __construct($id, $parent, $labels, $callback = null, $capability = null, $icon = null) {
 		//Default
-		parent::__construct($id, $labels, $options, $callback, $capability, $icon);
+		parent::__construct($id, $labels, $callback, $capability, $icon);
 		//Class specific
 		$this->set_parent($parent);
 	}
@@ -149,7 +149,7 @@ class SLB_Admin_Page extends SLB_Admin_View {
 	
 	/**
 	 * Default Page handler
-	 * Builds options form UI for page
+	 * Builds content blocks
 	 * @see this->init_menus() Set as callback for custom admin pages
 	 * @uses current_user_can() to check if user has access to current page
 	 * @uses wp_die() to end execution when user does not have permission to access page

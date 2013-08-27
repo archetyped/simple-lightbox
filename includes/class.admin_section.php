@@ -15,9 +15,9 @@ class SLB_Admin_Section extends SLB_Admin_View {
 	
 	/* Init */
 	
-	public function __construct($id, $parent, $labels, $options = null, $callback = null, $capability = null) {
+	public function __construct($id, $parent, $labels, $callback = null, $capability = null) {
 		//Default
-		parent::__construct($id, $labels, $options, $callback, $capability);
+		parent::__construct($id, $labels, $callback, $capability);
 		//Class specific
 		$this->set_parent($parent);
 	}
@@ -37,18 +37,4 @@ class SLB_Admin_Section extends SLB_Admin_View {
 	public function get_title() {
 		return '<div id="' . $this->get_id() . '" class="' . $this->add_prefix('section_head') . '">' . $this->get_label('title') . '</div>';
 	}
-	
-	/* Handlers */
-	
-	public function handle() {
-		$this->show_options(false);
-	}
-	
-	public function options_parse_build_vars($vars, $opts) {
-		return $vars;
-	}
-	
-	public function options_build_pre() {}
-	
-	public function options_build_post() {}
 }

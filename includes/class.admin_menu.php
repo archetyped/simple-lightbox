@@ -18,9 +18,9 @@ class SLB_Admin_Menu extends SLB_Admin_View {
 	
 	/* Init */
 	
-	public function __construct($id, $labels, $options = null, $callback = null, $capability = null, $icon = null, $position = null) {
+	public function __construct($id, $labels, $callback = null, $capability = null, $icon = null, $position = null) {
 		//Default
-		parent::__construct($id, $labels, $options, $callback, $capability, $icon);
+		parent::__construct($id, $labels, $callback, $capability, $icon);
 		//Class specific
 		$this->set_position($position);
 	}
@@ -35,20 +35,5 @@ class SLB_Admin_Menu extends SLB_Admin_View {
 		if ( is_int($position) )
 			$this->position = $position;
 		return $this;
-	}
-	
-	/* Handlers */
-	
-	public function handle() {
-		if ( !current_user_can($this->get_capability()) )
-			wp_die(__('Access Denied', 'simple-lightbox'));
-		?>
-		<div class="wrap">
-			<h2><?php esc_html_e( $this->get_label('header') ); ?></h2>
-			<?php
-			$this->show_options();
-			?>
-		</div>
-		<?php
 	}
 }

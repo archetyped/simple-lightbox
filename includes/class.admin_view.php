@@ -17,25 +17,6 @@ class SLB_Admin_View extends SLB_Base_Object {
 	protected $labels = array();
 	
 	/**
-	 * Options object to use
-	 * @var SLB_Options
-	 */
-	protected $options = null;
-	
-	/**
-	 * Option groups to use
-	 * If empty, use entire options object
-	 * @var array
-	 */
-	protected $option_groups = array();
-	
-	/**
-	 * Option building arguments
-	 * @var array
-	 */
-	protected $option_args = array();
-	
-	/**
 	 * Function to handle building UI
 	 * @var callback
 	 */
@@ -121,10 +102,9 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 * Constructor
 	 * @return obj Current instance
 	 */
-	public function __construct($id, $labels, $options = null, $callback = null, $capability = null, $icon = null) {
+	public function __construct($id, $labels, $callback = null, $capability = null, $icon = null) {
 		$props = array(
 			'labels'		=> $labels,
-			'options'		=> $options,
 			'callback'		=> $callback,
 			'capability'	=> $capability,
 			'icon'			=> $icon,
@@ -288,74 +268,7 @@ class SLB_Admin_View extends SLB_Base_Object {
 	/**
 	 * Render content
 	 */
-	protected function render_content($context = 'default') {
-	}
-	
-	/* Options */
-	
-	/**
-	 * Retrieve instance options
-	 * @return SLB_Options Options instance
-	 */
-	public function &get_options() {
-		return $this->options;
-	}
-	
-	/**
-	 * Set options object
-	 * @param obj|array $options Options instance
-	 *  > If array, Options instance and specific groups are specified
-	 *   > 0: Options instance
-	 * 	 > 1: Group(s)
-	 * @return obj Current instance
-	 */
-	public function set_options($options) {
-		if ( empty($options) )
-			return $this;
-		
-		$groups = null;
-		
-		if ( is_array($options) ) {
-			$options = array_values($options);
-			//Set option groups
-			if ( isset($options[1]) ) {
-				$groups = $options[1];
-			}
-			//Set options object
-			$options =& $options[0];
-		}
-		
-		if ( $this->util->is_a($options, 'Options') ) {
-			//Save options
-			$this->options =& $options;
-			
-			//Save option groups for valid options
-			$this->set_option_groups($groups);
-		}
-		return $this;
-	}
-	
-	/**
-	 * Set option groups
-	 * @param string|array $groups Specified group(s)
-	 * @return obj Current instance
-	 */
-	public function set_option_groups($groups) {
-		if ( empty($groups) )
-			return $this;
-		
-		//Validate data
-		if ( !is_array($groups) ) {
-			if ( is_scalar($groups) ) {
-				$groups = array(strval($groups));
-			}
-		}
-		
-		if ( is_array($groups) ) {
-			$this->option_groups = $groups;
-		}
-		return $this;
-	}
+	protected function render_content($context = 'default') {}
 	
 	/**
 	 * Retrieve view messages
@@ -590,21 +503,4 @@ class SLB_Admin_View extends SLB_Base_Object {
 		return ( $this->is_child() && !$this->parent_custom ) ? true : false;
 	}
 	
-	public function is_options_valid() {
-		$opts = $this->get_options();
-		return ( is_object($opts) && $this->util->is_a($opts, $this->util->get_class('Options')) ) ? true : false;
-	}
-	
-	/* Options */
-	
-	/**
-	 * Actions to perform after building options
-	 * @deprecated
-	 */
-	public function options_build_post(&$opts)	{
-		submit_button();
-		?>
-		</form>
-		<?php
-	}
 }
