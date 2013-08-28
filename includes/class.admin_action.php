@@ -73,7 +73,7 @@ class SLB_Admin_Action extends SLB_Admin_View {
 		return array (
 			'action'					=> $this->add_prefix('admin'),
 			$this->add_prefix('type')	=> 'view',
-			$this->add_prefix('group')	=> 'reset',
+			$this->add_prefix('group')	=> 'action',
 			$this->add_prefix('obj')	=> $this->get_id_raw()
 		);
 	}

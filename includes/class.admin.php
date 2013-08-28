@@ -599,7 +599,23 @@ class SLB_Admin extends SLB_Base {
 				}
 			}
 			
+			/* Get action links */
+			$type = 'title';
+			foreach ( $this->actions as $a ) {
+				if ( !$a->has_label($type) )
+					continue;
+				$id = 'action_' . $a->get_id();
+				$acts[] = (object) array (
+					'id'			=> $id,
+					'label'			=> $a->get_label($type),
+					'uri'			=> $a->get_uri(),
+					'attributes'	=> $a->get_link_attr()
+				);
+			}
+			unset($a);
+			
 			/* Get reset links */
+			/*
 			$type = 'title';
 			foreach ( $this->resets as $reset )	 {
 				if ( !$reset->has_label($type) )
@@ -612,6 +628,7 @@ class SLB_Admin extends SLB_Base {
 					'attributes'	=> $reset->get_link_attr()
 				);
 			}
+			*/
 			
 			//Add links
 			$links = array();

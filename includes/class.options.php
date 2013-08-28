@@ -60,7 +60,7 @@ class SLB_Options extends SLB_Field_Collection {
 		$this->util->add_action('build_init', $this->m('build_init'));
 		//Admin
 		add_action($this->add_prefix('admin_page_render_content'), $this->m('admin_page_render_content'), 10, 3);
-		add_filter($this->add_prefix('admin_reset_trigger'), $this->m('admin_reset_trigger'), 10, 3);
+		add_filter($this->add_prefix('admin_action_reset'), $this->m('admin_action_reset'), 10, 3);
 	}
 	
 	/* Legacy/Migration */
@@ -583,7 +583,7 @@ class SLB_Options extends SLB_Field_Collection {
 	 * @param obj $opts Options instance
 	 * @param obj $reset Admin Reset instance
 	 */
-	public function admin_reset_trigger($res, $opts, $reset) {
+	public function admin_action_reset($res, $opts, $reset) {
 		//Only process matching options instance
 		if ( $opts === $this ) {
 			//Reset options
