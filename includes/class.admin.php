@@ -78,6 +78,13 @@ class SLB_Admin extends SLB_Base {
 	protected $sections = array();
 	
 	/**
+	 * Actions
+	 * Index Array
+	 * @var array
+	 */
+	protected $actions = array();
+	
+	/**
 	 * Reset options
 	 * Indexed Array
 	 * @var array
@@ -248,8 +255,9 @@ class SLB_Admin extends SLB_Base {
 		//Validate request
 		$class = $this->add_prefix('admin_' . $type);
 		$collection = $type . 's';
-		if ( !class_exists($class) || !property_exists($this, $collection) || !is_array($this->{$collection}) )
+		if ( !class_exists($class) || !property_exists($this, $collection) || !is_array($this->{$collection}) ) {
 			return false;
+		}
 		//Create new instance
 		$r = new ReflectionClass($class);
 		$view =& $r->newInstanceArgs($args);
@@ -259,6 +267,23 @@ class SLB_Admin extends SLB_Base {
 			$id = false;
 		unset($r);
 		return $view;
+	}
+	
+	/**
+	 * Add plugin action link
+	 * @uses `add_view()` to init/attach action instance
+	 * @param string $id Action ID
+	 * @param array $labels Text for action
+	 * > title 		- Link text (also title attribute value)
+	 * > confirm 	- Confirmation message
+	 * > success 	- Success message
+	 * > failure 	- Failure message
+	 * @param array $data Additional data for action
+	 * @return obj Action instance
+	 */
+	public function add_action($id, $labels, $data = null) {
+		$args = func_get_args();
+		return $this->add_view('action', $id, $args);
 	}
 	
 	/**
