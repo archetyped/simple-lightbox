@@ -83,13 +83,6 @@ class SLB_Admin extends SLB_Base {
 	 * @var array
 	 */
 	protected $actions = array();
-	
-	/**
-	 * Reset options
-	 * Indexed Array
-	 * @var array
-	 */
-	protected $resets = array();
 
 	/* Constructor */
 	
@@ -107,7 +100,7 @@ class SLB_Admin extends SLB_Base {
 		//Init
 		add_action('admin_menu', $this->m('init_menus'), 11);
 		
-		//Reset Settings
+		//Plugin actions
 		add_action('admin_action_' . $this->add_prefix('admin'), $this->m('handle_action'));
 		
 		//Notices
@@ -284,21 +277,6 @@ class SLB_Admin extends SLB_Base {
 	public function add_action($id, $labels, $data = null) {
 		$args = func_get_args();
 		return $this->add_view('action', $id, $args);
-	}
-	
-	/**
-	 * Add reset option to plugin action links
-	 * @param string $id Unique ID
-	 * @param array $labels Text for reset instance
-	 * > title - Link text (also title attribute value)
-	 * > confirm - Confirmation message
-	 * > success - Success message
-	 * > failure - Failure message
-	 * @param SLB_Options|array $options Options instance (or instance + specific groups)
-	 */
-	public function add_reset($id, $labels, $options) {
-		$args = func_get_args();
-		return $this->add_view('reset', $id, $args);
 	}
 	
 	/*-** Menus **-*/
@@ -613,22 +591,6 @@ class SLB_Admin extends SLB_Base {
 				);
 			}
 			unset($a);
-			
-			/* Get reset links */
-			/*
-			$type = 'title';
-			foreach ( $this->resets as $reset )	 {
-				if ( !$reset->has_label($type) )
-					continue;
-				$id = 'reset_' . $reset->get_id();
-				$acts[] = (object) array (
-					'id'	=> $id,
-					'label'	=> $reset->get_label($type),
-					'uri'	=> $reset->get_uri(),
-					'attributes'	=> $reset->get_link_attr()
-				);
-			}
-			*/
 			
 			//Add links
 			$links = array();

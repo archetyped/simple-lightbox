@@ -236,7 +236,7 @@ class SLB_Lightbox extends SLB_Base {
 			->add_content('pri1', 'Primary Module', $this->m('theme_page_callback_pri'))
 			->add_content('options', 'Options', $this->options)
 			->add_content('sec1', 'Secondary Module', $this->m('theme_page_callback_sec'), 'secondary');
-		$this->admin->add_reset('reset', $labels_reset, $this->options);
+		$this->admin->add_action('reset', $labels_reset, $this->options);
 	}
 	
 	public function theme_page_callback_pri() {

@@ -36,7 +36,7 @@ class SLB_Admin_Action extends SLB_Admin_View {
 	
 	/**
 	 * Default handler
-	 * Resets plugin settings
+	 * Handles action
 	 * @return string Status message (success, fail, etc.)
 	 */
 	public function handle() {
@@ -52,7 +52,7 @@ class SLB_Admin_Action extends SLB_Admin_View {
 		//Iterate through data
 		$hook = $this->util->get_hook($this->get_id_raw());
 		foreach ( $content as $c ) {
-			//Trigger reset
+			//Trigger action
 			$res = apply_filters($hook, $success, $c->data, $this);
 			//Set result
 			if ( !!$success ) {
