@@ -6,9 +6,10 @@ Description: The highly customizable lightbox for WordPress
 Version: dev (BETA)
 Author: Archetyped
 Author URI: http://archetyped.com
+Support URI: https://github.com/archetyped/simple-lightbox/wiki/Reporting-Issues
 */
-/* 
-Copyright 2013 Solomon Marchessault (sol@archetyped.com)
+/*
+Copyright 2013 Sol Marchessault (sol@archetyped.com)
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
