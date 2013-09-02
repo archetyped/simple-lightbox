@@ -108,6 +108,7 @@ class SLB_Admin extends SLB_Base {
 		
 		//Plugin listing
 		add_filter('plugin_action_links_' . $this->util->get_plugin_base_name(), $this->m('plugin_action_links'), 10, 4);
+		add_filter('plugin_row_meta', $this->m('plugin_row_meta'), 10, 4);
 		add_action('in_plugin_update_message-' . $this->util->get_plugin_base_name(), $this->m('plugin_update_message'), 10, 2);
 		add_filter('site_transient_update_plugins', $this->m('plugin_update_transient'));
 	}
@@ -602,6 +603,27 @@ class SLB_Admin extends SLB_Base {
 			$actions = array_merge($links, $actions);
 		}
 		return $actions;
+	}
+
+	/**
+	 * Update plugin listings metadata
+	 * @param array $plugin_meta Plugin metadata
+	 * @param string $plugin_file Plugin file
+	 * @param array $plugin_data Plugin Data
+	 * @param string $status Plugin status
+	 * @return array Updated plugin metadata
+	 */
+	public function plugin_row_meta($plugin_meta, $plugin_file, $plugin_data, $status) {
+		if ( $plugin_file == $this->util->get_plugin_base_name() ) {
+			//Add metadata
+			//Support
+			$t = __('Get Support', 'simple-lightbox');
+			$l = $this->util->get_plugin_info('SupportURI');
+			if ( !empty($l) ) {
+				$plugin_meta[] = '<a href="' . $l . '" title="' . esc_attr($t) . '">' . $t . '</a>';
+			}
+		}
+		return $plugin_meta;
 	}
 	
 	/*-** START: Refactor **-*/
