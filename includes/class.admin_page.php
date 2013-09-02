@@ -37,6 +37,12 @@ class SLB_Admin_Page extends SLB_Admin_View {
 	/**
 	 * Add content to page
 	 * @uses parent::add_content()
+	 * @param string $id Module ID
+	 * @param string $title Module title
+	 * @param mixed $callback Callback method or other data for building module UI
+	 * @param string $context (optional) Context to add module to (Default: primary)
+	 * @param string $priority (optional) Controls module ordering (Default: default)
+	 * @param array $callback_args (optional) Additional data to pass callback (Default: NULL)
 	 * @return object Page instance reference
 	 */
 	public function add_content($id, $title, $callback, $context = 'primary', $priority = 'default', $callback_args = null) {
