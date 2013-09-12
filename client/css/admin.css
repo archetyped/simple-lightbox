@@ -1,8 +1,1 @@
-.slb_section_head { display: block; padding: 2em 0 0; }
-
-.slb_option_item .block { display: inline-block; }
-.slb_option_item label.title { width: 200px; padding: 10px; }
-.slb_option_item .input { font-size: 11px; line-height: 20px; margin-bottom: 9px; padding: 8px 10px; }
-.slb_option_item .input select { min-width: 12em; }
-
-.slb_notice { color: #f00; font-weight: bold; }
+.slb_section_head{display:block;padding:2em 0 0}.slb_option_item .block{display:inline-block}.slb_option_item label.title{width:200px;padding:10px}.slb_option_item .input{font-size:11px;line-height:20px;margin-bottom:9px;padding:8px 10px}.slb_option_item .input select{min-width:12em}.slb_notice{color:#f00;font-weight:bold}
