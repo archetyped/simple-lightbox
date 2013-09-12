@@ -1,5 +1,4 @@
 <?php
-require_once 'class.base_collection.php';
 
 /**
  * Collection Controller

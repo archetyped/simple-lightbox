@@ -1,5 +1,4 @@
 <?php
-require_once 'class.fields.php';
 
 /**
  * Option object
