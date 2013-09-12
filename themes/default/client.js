@@ -11,7 +11,6 @@ return {
 		 * @return jQuery.Promise Resolved when transition is complete
 		 */
 		'open': function(v, dfr) {
-			console.groupCollapsed('Theme.transition.open()');
 			var t = this;
 			var d = v.dom_get(),
 				l = v.get_layout().hide(),
@@ -44,7 +43,6 @@ return {
 				}
 				final();
 			});
-			console.groupEnd();
 			return dfr.promise();
 		},
 		/**
@@ -54,7 +52,6 @@ return {
 		 * @return jQuery.Promise Resolved when transition is complete
 		 */
 		'close': function(v, dfr) {
-			console.groupCollapsed('Theme.transition.close()');
 			var l = v.get_layout(),
 				c = l.find('.slb_content');
 			var t = this;
@@ -80,7 +77,6 @@ return {
 				l.css('opacity', 0);
 				reset();
 			}
-			console.groupEnd();
 			return dfr.promise();
 		},
 		/**
@@ -90,9 +86,7 @@ return {
 		 * @return jQuery.Promise Resolved when transition is complete
 		 */
 		'load': function(v, dfr) {
-			console.groupCollapsed('Theme.transition.load()');
 			v.get_layout().find('.slb_loading').show();
-			console.groupEnd();
 			if ( document.documentElement.clientWidth > 480 ) {
 				return v.get_layout().fadeIn().promise()
 			} else {
@@ -108,7 +102,6 @@ return {
 		 * @return jQuery.Promise Resolved when transition is complete
 		 */
 		'unload': function(v, dfr) {
-			console.groupCollapsed('Theme.transition.unload()');
 			var l = v.get_layout(),
 				det = l.find('.slb_details'),
 				cont = l.find('.slb_content .slb_template_tag');
@@ -125,7 +118,6 @@ return {
 			$.when(det.promise(), cont.promise()).done(function() {
 				dfr.resolve();
 			});
-			console.groupEnd();
 			return dfr.promise();
 		},
 		/**
@@ -135,7 +127,6 @@ return {
 		 * @return jQuery.Promise Resolved when transition is complete
 		 */
 		'complete': function(v, dfr) {
-			console.group('Theme.transition.complete()');
 			//Elements
 			var l = v.get_layout(),
 				loader = l.find('.slb_loading'),
@@ -155,7 +146,6 @@ return {
 				if ( pos.top < top_scr ) {
 					pos.top = top_scr;
 				}
-				console.info('Pos (Top): %o \nScrollTop: %o \nWindow Height: %o \nLayout Height: %o', pos.top, $(document).scrollTop(), $(window).height(), this.get_dimensions().height);
 				pos.top = pos.top || 0;
 				//Resize container
 				pos = l.animate(pos).promise();
@@ -181,8 +171,6 @@ return {
 				det.height('');
 				dfr.resolve();
 			}
-			
-			console.groupEnd();
 			return dfr.promise();
 		}
 	},

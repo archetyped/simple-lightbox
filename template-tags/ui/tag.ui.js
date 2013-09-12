@@ -1,10 +1,8 @@
 (function($) {
 return {
 	init: function(item, tag, v) {
-		console.groupCollapsed('Template_Tag_Handler (UI).init: %o', tag.get_prop());
 		//Add event handlers
 		v.on('events-complete', function(ev, v) {
-			console.info('Event Handler: Template_Tag_Handler(UI).complete');
 			//Register event handlers
 
 			/* Close */
@@ -18,17 +16,11 @@ return {
 			/* Navigation */
 			
 			var nav_next = function() {
-				console.info('Viewer.event.nav_next');
-				console.groupCollapsed('Tag.UI.nav_next');
 				v.item_next();
-				console.groupEnd();
 			};
 			
 			var nav_prev = function() {
-				console.info('Viewer.event.nav_prev');
-				console.groupCollapsed('Tag.UI.nav_prev');
 				v.item_prev();
-				console.groupEnd();
 			};
 			
 			v.get_theme().dom_get_tag('ui', 'nav_next').click(nav_next);
@@ -37,17 +29,13 @@ return {
 			/* Slideshow */
 			
 			var slideshow_control = function() {
-				console.info('Viewer.event.slideshow_control');
-				console.groupCollapsed('Tag.UI.slideshow_control');
 				v.slideshow_toggle();
-				console.groupEnd();
 			};
 			
 			v.get_theme().dom_get_tag('ui', 'slideshow_control').click(slideshow_control);
 		});
 		
 		v.on('slideshow-toggle', function(ev, v) {
-			console.group('Tag.UI.slideshow-toggle');
 			//Update slideshow control tag
 			var tags = v.get_theme().get_tags('ui', 'slideshow_control');
 			if ( tags.length ) {
@@ -57,12 +45,9 @@ return {
 					});
 				}
 			}
-			console.groupEnd();
 		});
-		console.groupEnd();
 	},
 	render: function(item, tag) {
-		console.groupCollapsed('Template_Tag_Handler (UI).render: %o', tag.get_prop());
 		//Initialize event handlers (once per viewer)
 		var v = item.get_viewer();
 		var st = ['events-init', tag.get_ns(), tag.get_name()].join('_');
@@ -83,7 +68,6 @@ return {
 		} else {
 			dfr.resolve(fmt(ret));
 		}
-		console.groupEnd();
 		return dfr.promise();
 	},
 	props: {
