@@ -1,10 +1,10 @@
 === Simple Lightbox ===
 Contributors: Archetyped
-Donate link: http://archetyped.com/tools/simple-lightbox/
+Donate link: http://gum.co/slb-donate
 License: GPLv2
 Tags: lightbox, gallery, photography, images, theme, template, style
 Requires at least: 3.6
-Tested up to: 3.6
+Tested up to: 3.6.1
 Stable tag: trunk
 
 The highly customizable lightbox for WordPress
@@ -12,33 +12,22 @@ The highly customizable lightbox for WordPress
 == Description ==
 Simple Lightbox is a very simple and customizable lightbox that is easy to add to your WordPress website.
 
-### BETA NOTES
-The current release is a **release candidate**.  Please test and [provide feedback on GitHub](https://github.com/archetyped/simple-lightbox/wiki/Reporting-Issues).
-Main changes
-
-#### Release Candidate 4
-* Optimize: Improved support for legacy IE versions (v8 and lower)
-* Optimize: SLB theme's responsive layout now adheres to responsiveness of WP theme
-* Optimize: Improved responsive theme compatibility on mobile devices
-* Optimize: Improved theme validation
-* Optimize: Reorganize theme assets
-
 #### Features
 Options for customizing the lightbox behavior are located in the **Appearance > Lightbox** admin menu (or just click the **Settings** link below the plugin's name when viewing the list of installed plugins)
 
-* **Supports links in Widgets (New!)**
-* **Supports Image Attachment links**
-* **Display image metadata (caption, description, etc.) in lightbox**
 * Automatically activate links (no manual coding required)
+* Automatically resize lightbox to fit in window
+* Customize lightbox with **themes**
+* Mobile-optimized responsive themes included
+* Customizable lightbox animations
+* Infinitely customizable with **add-ons**
+* Supports WordPress **image attachment** links
+* Supports links in **widgets**
 * Keyboard Navigation
-* Link Validation (optional)
-* User-customizable skin (template) support
+* Display media metadata (caption, description, etc.) in lightbox
 * Enable Lightbox depending on Page Type (Home, Pages, Archive, etc.)
 * Group image links (play as a slideshow)
-* Group image links by Post (e.g. separate slideshow for each post on home page)
-* UI/Animation Customization
-* Slideshow Customization
-* Backwards-compatibility with legacy lightbox links
+* Group image links by Post (separate slideshow for each post on page)
 
 #### Usage
 1. Insert links to images/image attachments into your posts/pages
@@ -63,38 +52,21 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 == Screenshots ==
 
 1. Lightbox Customization Options
-2. Customized UI Text
+2. Light Theme
+3. Dark Theme
 
 == Changelog ==
 
-### 2.0 (BETA NOTICE)
-The current release is a **release candidate**.  Please test and [provide feedback on GitHub](https://github.com/archetyped/simple-lightbox/wiki/Reporting-Issues).
-
-= 2.0 Release Candidate 4 =
-* Optimize: Improved support for legacy IE versions (v8 and lower)
-* Optimize: SLB theme's responsive layout now adheres to responsiveness of WP theme
-* Optimize: Improved responsive theme compatibility on mobile devices
-* Optimize: Improved theme validation
-* Optimize: Reorganize theme assets
-
-= 2.0 Release Candidate 3 =
-* Optimize: Refined Lightbox caption precedence
-* Optimize: Increase width of navigation hit targets
-* Optimize: Client-side validation and loading
-* Optimize: Refined Admin JS loading
-* Optimize: Removed custom JS prototype methods
-* Fix: **Kevin's Theory of Relativity** -- Theme HTTPS Compatibility
-* Fix: **Prototype Anilator** -- Prototype library compatibility
-* Fix: **Lucy's in the Sky (without Gravity)** -- Gravity Forms compatibility
-* Fix: **Unseen Zephyr** -- User-defined overlay opacity
-
-= 2.0 Release Candidate 2.1 =
-* Fix: Undefined value when viewport element does not exist
-
-= 2.0 Release Candidate 2 =
-* Optimize: Load client output in footer
-* Optimize: Responsive viewport handling less aggressive
-* Update: New POT file for translations
+= 2.0 =
+* Completely rewritten lightbox code
+* Add: Automatically resize lightbox to fit window
+* Add: APIs for third-party add-ons
+* Add: Flexible theme support
+* Add: Flexible content handler support
+* Add: Mobile-optimized responsive themes (2)
+* Optimize: PHP class autoloading
+* Optimize: Improved performance and compatibility
+* Optimize: Full internationalization support
 
 = 1.6 =
 * Add: Widget support
