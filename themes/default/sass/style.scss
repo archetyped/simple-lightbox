@@ -3,15 +3,17 @@
 @import "compass";
 @import url('//fonts.googleapis.com/css?family=Yanone+Kaffeesatz');
 
+//Variables
+
+$nav_width: 25px;
+$nav_height: 33px;
+$ui_controls_width: 25px;
+$ui_controls_height: 25px; 
+
 //Mixins
 
 @mixin box-sizing-border {
 	@include box-sizing(border-box);
-}
-
-@mixin min-dims($width: 200px, $height: 200px) {
-	min-width: $width;
-	min-height: $height; 
 }
 
 #slb_viewer_wrap {
@@ -120,8 +122,8 @@
 			text-align: right;
 			
 			.slb_template_tag_ui {
-				width: 25px;
-				height: 25px;
+				width: $ui_controls_width;
+				height: $ui_controls_height;
 				float: right;
 				margin-left: 2px;
 				text-indent: -2000em;
@@ -152,6 +154,8 @@
 			top: 20%;
 			height: 71%;
 			width: 45%;
+			min-width: $nav_width;
+			min-height: $nav_height;
 			margin-left: 4px;
 			background-repeat: no-repeat;
 			text-indent: -2000em;
@@ -178,7 +182,8 @@
 		
 		/* Content */
 		.slb_content {
-			@include min-dims;
+			min-height: $nav_height + $ui_controls_height;
+			min-width: $nav_width * 2;
 			position: relative;
 		}
 		
