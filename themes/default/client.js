@@ -27,7 +27,7 @@ return {
 			d.find('.slb_content').css({width: '', height: ''}).find('.slb_template_tag').hide();
 			d.find('.slb_details').height(0);
 			//Show viewer DOM
-			d.show(function() {
+			d.show({'always': function() {
 				if ( document.documentElement.clientWidth > 480 ) {
 					/* Standard */
 					//Center vertically
@@ -42,7 +42,7 @@ return {
 					pos.top = $(document).scrollTop();
 				}
 				final();
-			});
+			}});
 			return dfr.promise();
 		},
 		/**
