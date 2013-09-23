@@ -125,6 +125,7 @@ class SLB_Lightbox extends SLB_Base {
 		add_action('wp_footer', $this->m('client_footer'), $priority);
 		//Link activation
 		add_filter('the_content', $this->m('activate_links'), $priority);
+		add_filter('get_post_galleries', $this->m('activate_galleries'), $priority);
 		//Gallery wrapping
 		add_filter('the_content', $this->m('gallery_wrap'), 1);
 		add_filter('the_content', $this->m('gallery_unwrap'), $priority + 1);
@@ -258,6 +259,39 @@ class SLB_Lightbox extends SLB_Base {
 			}
 		}
 		return $ret;
+	}
+	
+	/**
+	 * Activates galleries extracted from post
+	 * @see get_post_galleries()
+	 * @param array $galleries A list of galleries in post
+	 * @return A list of galleries with links activated
+	 */
+	function activate_galleries($galleries) {
+		//Validate
+		if ( !$this->is_enabled() || empty($galleries) ) {
+			return $galleries;
+		}
+		//Check galleries for HTML output
+		$gallery = reset($galleries);
+		if ( is_array($gallery) ) {
+			return $galleries;
+		}
+		
+		//Activate galleries
+		$group = ( $this->options->get_bool('group_gallery') ) ? true : null;
+		foreach ( $galleries as $key => $val ) {
+			if ( !is_null($group) ) {
+				$group = 'gallery_' . $key;
+			}
+			//Activate links in gallery
+			$gallery = $this->process_links($val, $group);
+			
+			//Save modified gallery
+			$galleries[$key] = $gallery;
+		}
+		
+		return $galleries;
 	}
 	
 	/**
