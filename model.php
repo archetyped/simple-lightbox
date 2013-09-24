@@ -218,21 +218,41 @@ class SLB_Lightbox extends SLB_Base {
 	 * @uses this->admin->add_theme_page
 	 */
 	function admin_menus() {
-		$options_labels = array(
+		//Build options page
+		$lbls_opts = array(
 			'menu'			=> __('Lightbox', 'simple-lightbox'),
 			'header'		=> __('Lightbox Settings', 'simple-lightbox'),
 			'plugin_action'	=> __('Settings', 'simple-lightbox')
 		);
 		
-		$labels_reset = array (
+		$pg_opts = $this->admin->add_theme_page('options', $lbls_opts)
+			->require_form()
+			->add_content('options', 'Options', $this->options);
+			
+		//Add Support information
+		$support = $this->util->get_plugin_info('SupportURI');
+		if ( !empty($support) ) {
+			$pg_opts->add_content('support', __('Support', 'simple-lightbox'), $this->m('theme_page_callback_support'), 'secondary');
+		}
+		
+		//Add Actions
+		$lbls_reset = array (
 			'title'			=> __('Reset', 'simple-lightbox'),
 			'confirm'		=> __('Are you sure you want to reset settings?', 'simple-lightbox'),
 			'success'		=> __('Settings have been reset', 'simple-lightbox'),
 			'failure'		=> __('Settings were not reset', 'simple-lightbox')
 		);
+		$this->admin->add_action('reset', $lbls_reset, $this->options);
+	}
+	
+	public function theme_page_callback_support() {
+		echo '<p>';
+		_e("Getting support is easy!  Whether you're experiencing an issue or just have a feature request, click the link below to get support right now!", 'simple-lightbox');
+		echo '</p>';
 		
-		$this->admin->add_theme_page('options', $options_labels, $this->options);
-		$this->admin->add_reset('reset', $labels_reset, $this->options);
+		$lnk_txt = __('Get Support', 'simple-lightbox');
+		$lnk_uri = $this->util->get_plugin_info('SupportURI');
+		printf('<a href="%s" title="%s" target="_blank">%s</a>', $lnk_uri, esc_attr($lnk_txt), $lnk_txt);
 	}
 
 	/*-** Functionality **-*/

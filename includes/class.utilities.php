@@ -25,6 +25,7 @@ class SLB_Utilities {
 	private $plugin_headers = array (
 		'Name'			=> 'Plugin Name',
 		'PluginURI'		=> 'Plugin URI',
+		'SupportURI'	=> 'Support URI',
 		'Version'		=> 'Version',
 		'Description'	=> 'Description',
 		'Author'		=> 'Author',

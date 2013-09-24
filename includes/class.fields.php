@@ -1496,8 +1496,9 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	
 	/**
 	 * Associative array of groups in collection
-	 * Key: Group name
+	 * Key: Group ID
 	 * Value: object of group properties
+	 *  > id
 	 *  > title
 	 *  > description string Group description
 	 *  > items array Items in group
@@ -1890,7 +1891,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 			$grp->description = $p['description'];
 			$grp->priority = $p['priority'];
 		} else {
-			$this->groups[$id] =& $this->create_group($p['title'], $p['description'], $p['priority']);
+			$this->groups[$id] =& $this->create_group($id, $p['title'], $p['description'], $p['priority']);
 		}
 		//Add items to group (if supplied)
 		if ( !empty($items) && is_array($items) ) {
@@ -1917,11 +1918,13 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	 * @param int $priority (optional) Group priority (e.g. used to sort groups during output)
 	 * @return object Group object
 	 */
-	function &create_group($title = '', $description = '', $priority = 10) {
+	function &create_group($id = '', $title = '', $description = '', $priority = 10) {
 		//Create new group object
 		$group = new stdClass();
 		/* Set group properties */
-		
+		//Set ID
+		$id = ( is_scalar($id) ) ? trim($id) : '';
+		$group->id = $id;
 		//Set Title
 		$title = ( is_scalar($title) ) ? trim($title) : '';
 		$group->title = $title;
@@ -2153,6 +2156,35 @@ class SLB_Field_Collection extends SLB_Field_Base {
 		$this->build_groups();
 		//Post-build output
 		$this->util->do_action_ref_array('build_post', array(&$this));
+	}
+	
+	/**
+	 * Set build variable
+	 * @param string $key Variable name
+	 * @param mixed $val Variable value 
+	 */
+	function set_build_var($key, $val) {
+		$this->build_vars[$key] = $val;
+	}
+	
+	/**
+	 * Retrieve build variable
+	 * @param string $key Variable name
+	 * @param mixed $default Value if variable is not set
+	 * @return mixed Variable value
+	 */
+	function get_build_var($key, $default = null) {
+		return ( array_key_exists($key, $this->build_vars) ) ? $this->build_vars[$key] : $default;
+	}
+	
+	/**
+	 * Delete build variable
+	 * @param string $key Variable name to delete
+	 */
+	function delete_build_var($key) {
+		if ( array_key_exists($key, $this->build_vars) ) {
+			unset($this->build_vars[$key]);
+		}
 	}
 	
 	/**
