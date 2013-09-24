@@ -224,7 +224,6 @@ class SLB_Lightbox extends SLB_Base {
 			'header'		=> __('Lightbox Settings', 'simple-lightbox'),
 			'plugin_action'	=> __('Settings', 'simple-lightbox')
 		);
-		
 		$pg_opts = $this->admin->add_theme_page('options', $lbls_opts)
 			->require_form()
 			->add_content('options', 'Options', $this->options);
@@ -245,14 +244,17 @@ class SLB_Lightbox extends SLB_Base {
 		$this->admin->add_action('reset', $lbls_reset, $this->options);
 	}
 	
+	/**
+	 * Support information
+	 */
 	public function theme_page_callback_support() {
 		echo '<p>';
-		_e("Getting support is easy!  Whether you're experiencing an issue or just have a feature request, click the link below to get support right now!", 'simple-lightbox');
+		_e("Getting support is easy!  Whether you're experiencing an issue or just have a feature request, click the button below to get support right now!", 'simple-lightbox');
 		echo '</p>';
 		
 		$lnk_txt = __('Get Support', 'simple-lightbox');
 		$lnk_uri = $this->util->get_plugin_info('SupportURI');
-		printf('<a href="%s" title="%s" target="_blank">%s</a>', $lnk_uri, esc_attr($lnk_txt), $lnk_txt);
+		printf('<a href="%s" title="%s" target="_blank" class="button">%s</a>', $lnk_uri, esc_attr($lnk_txt), $lnk_txt);
 	}
 
 	/*-** Functionality **-*/

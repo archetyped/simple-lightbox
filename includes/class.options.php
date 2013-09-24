@@ -234,30 +234,38 @@ class SLB_Options extends SLB_Field_Collection {
 	function register_fields(&$fields) {
 		//Layouts
 		$o = $this->get_field_elements();
+		$l =& $o->layout;
 		
-		$form = $o->layout->opt_pre . $o->layout->label_ref . $o->layout->field_pre . $o->layout->form . $o->layout->field_post . $o->layout->opt_post;
+		$form = implode('', array (
+			$l->opt_pre,
+			$l->label_ref,
+			$l->field_pre,
+			$l->form,
+			$l->field_post,
+			$l->opt_post
+		));
 		
 		//Text input
 		$otxt = new SLB_Field_Type('option_text', 'text');
 		$otxt->set_property('class', '{inherit} code');
 		$otxt->set_property('size', null);
 		$otxt->set_property('value', '{data context="form"}');
-		$otxt->set_layout('label', $o->layout->label);
+		$otxt->set_layout('label', $l->label);
 		$otxt->set_layout('form', $form);
 		$fields->add($otxt);
 		
 		//Checkbox
 		$ocb = new SLB_Field_Type('option_checkbox', 'checkbox');
-		$ocb->set_layout('label', $o->layout->label);
+		$ocb->set_layout('label', $l->label);
 		$ocb->set_layout('form', $form);
 		$fields->add($ocb);
 		
 		//Select
 		$othm = new SLB_Field_Type('option_select', 'select');
-		$othm->set_layout('label', $o->layout->label);
-		$othm->set_layout('form_start', $o->layout->field_pre . '{inherit}');
-		$othm->set_layout('form_end', '{inherit}' . $o->layout->field_post);
-		$othm->set_layout('form', $o->layout->opt_pre . '{inherit}' . $o->layout->opt_post);
+		$othm->set_layout('label', $l->label);
+		$othm->set_layout('form_start', $l->field_pre . '{inherit}');
+		$othm->set_layout('form_end', '{inherit}' . $l->field_post);
+		$othm->set_layout('form', $l->opt_pre . '{inherit}' . $l->opt_post);
 		$fields->add($othm);
 	}
 	
@@ -293,12 +301,10 @@ class SLB_Options extends SLB_Field_Collection {
 	 * @param array $values (optional) Option values
 	 * @return array Full options data
 	 */
-	function validate($values = null, $force_save = false) {
-		if ( empty($values) && isset($_REQUEST[$this->add_prefix('options')]) ) {
-			$values_orig = $values;
-			if ( is_string($values_orig) ) 
-				$force_save = true;
-			$values = $_REQUEST[$this->add_prefix('options')];
+	function validate($values = null) {
+		$qvar = $this->add_prefix('options');
+		if ( empty($values) && isset($_REQUEST[$qvar]) ) {
+			$values = $_REQUEST[$qvar];
 		}
 		if ( is_array($values) ) {
 			//Format data based on option type (bool, string, etc.)
@@ -308,23 +314,34 @@ class SLB_Options extends SLB_Field_Collection {
 				if ( is_bool($d) && !empty($val) )
 					$values[$id] = true;
 			}
+			
 			//Merge in additional options that are not in post data
-			//Missing options (e.g. disabled checkboxes) & defaults
-			$items =& $this->get_items();
-			foreach ( $items as $id => $opt ) {
-				//Add options that were not included in form submission
-				if ( !array_key_exists($id, $values) ) {
-					if ( is_bool($opt->get_default()) )
-						$values[$id] = false;
-					else
-						$values[$id] = $opt->get_default();
+			//Missing options (e.g. disabled checkboxes, empty fields, etc.)
+			
+			//Get groups that were output in request
+			$qvar_groups = $this->add_prefix('option_groups');
+			if ( isset($_REQUEST[$qvar_groups]) ) {
+				$groups = explode( ',', implode(',', $_REQUEST[$qvar_groups]) );
+
+				//Get group items				
+				$items = array();
+				$items_temp = null;
+				foreach ( $groups as $gid ) {
+					$items_temp = $this->get_group_items($gid);
+					$items = array_merge($items, $items_temp);
+				}
+				unset($items_temp);
+				$items = call_user_func_array('array_merge', $items);
+				foreach ( $items as $id => $opt ) {
+					//Add options that were not included in form submission
+					if ( !array_key_exists($id, $values) ) {
+						if ( is_bool($opt->get_default()) )
+							$values[$id] = false;
+						else
+							$values[$id] = $opt->get_default();
+					}
 				}
 			}
-		}
-		
-		if ( $force_save ) {
-			$this->set_data($values);
-			$values = $values_orig;
 		}
 		
 		//Return value
@@ -348,10 +365,7 @@ class SLB_Options extends SLB_Field_Collection {
 					$opt = $this->get($id);
 					if ( is_bool($opt->get_default()) )
 						$data[$id] = !!$val;
-				}/* else {
-					//Remove data that has no matching item
-					unset($data[$id]);
-				}*/
+				}
 			}
 		}
 		return $data;
@@ -498,20 +512,29 @@ class SLB_Options extends SLB_Field_Collection {
 	
 	/**
 	 * Handles output building for options on admin pages
-	 * @param obj $opts Options instance
+	 * @param obj|array $opts Options instance or Array of options instance and groups to build
 	 * @param obj $page Admin Page instance
 	 * @param obj $state Admin Page state properties
 	 */
 	public function admin_page_render_content($opts, $page, $state) {
+		$groups = null;
+		if ( is_array($opts) && count($opts) == 2 ) {
+			$groups = $opts[1];
+			$opts = $opts[0];
+		}
 		if ( $opts === $this ) {
 			//Set build variables and callbacks
 			$this->set_build_var('admin_page', $page);
 			$this->set_build_var('admin_state', $state);
+			if ( !empty($groups) ) {
+				$this->set_build_var('groups', $groups);
+			}
 			$hooks = array (
 				'filter'	=> array (
 					'parse_build_vars'		=> array( $this->m('admin_parse_build_vars'), 10, 2 )
-				),
+				)
 			);
+			
 			//Add hooks
 			foreach ( $hooks as $type => $hook ) {
 				$m = 'add_' . $type;
@@ -543,14 +566,34 @@ class SLB_Options extends SLB_Field_Collection {
 	public function admin_build_groups() {
 		$page = $this->get_build_var('admin_page');
 		$state = $this->get_build_var('admin_state');
+		$groups = $this->get_build_var('groups');
+		
+		//Get all groups
+		$groups_all = $this->get_groups();
+		$groups_built = array();
+		if ( empty($groups) ) {
+			$groups = array_keys($groups_all);
+		}
 		//Iterate through groups
-		foreach ( $this->get_groups() as $g ) {
-			//Make sure group is not empty
-			if ( !count($this->get_items($g->id)) ) {
+		foreach ( $groups as $gid ) {
+			//Validate
+			if ( !isset($groups_all[$gid]) || !count($this->get_items($g->id)) ) {
 				continue;
 			}
 			//Add meta box for each group
+			$g = $groups_all[$gid];
 			add_meta_box($g->id, $g->title, $this->m('admin_build_group'), $state->screen, $state->context, $state->priority, array('group' => $g->id, 'page' => $page));
+			$groups_built[] = $gid;
+		}
+		
+		//Define groups built
+		if ( !empty($groups_built) ) {
+			echo $this->util->build_html_element(array(
+				'tag'	=> 'input',
+				'type'	=> 'hidden',
+				'value'	=> implode(',', $groups_built),
+				'name'	=> $this->add_prefix('option_groups[]')
+			));
 		}
 	}
 	
