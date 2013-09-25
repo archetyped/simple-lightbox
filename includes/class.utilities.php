@@ -778,37 +778,7 @@ class SLB_Utilities {
 		return '_' . $this->add_prefix($text);
 	}
 	
-	/*-** Request **-*/
-	
-	/**
-	 * Checks if the currently executing file matches specified file name
-	 * @param string $filename Filename to check for
-	 * @return bool TRUE if current page matches specified filename, FALSE otherwise
-	 */
-	function is_current_file( $filename ) {
-		return ( $filename == basename( $_SERVER['SCRIPT_NAME'] ) );
-	}
-	
-	/**
-	 * Checks whether the current page is a management page
-	 * @return bool TRUE if current page is a management page, FALSE otherwise
-	 */
-	function is_admin_management_page() {
-		return ( is_admin()
-				 && ( $this->is_current_file('edit.php')
-				 	|| ( $this->is_current_file('admin.php')
-				 		&& isset($_GET['page'])
-				 		&& strpos($_GET['page'], 'cnr') === 0 )
-				 	)
-				 );
-	}
-	
 	/* Class */
-	
-	function is_a($obj, $class_name) {
-		$class = $this->add_prefix_uc($class_name);
-		return ( is_object($obj) && ($obj instanceof $class) ) ? true : false;
-	}
 	
 	/**
 	 * Retrieve name of internal class
