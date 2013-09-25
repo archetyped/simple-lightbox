@@ -463,7 +463,8 @@ class SLB_Admin extends SLB_Base {
 	 * @return obj Section instance
 	 */
 	public function add_section($id, $parent, $labels) {
-		$section = new SLB_Admin_Section($id, $parent, $labels);
+		$args = func_get_args();
+		$section = $this->add_view('section', $id, $args);
 		
 		//Add Section
 		if ( $section->is_valid() )
