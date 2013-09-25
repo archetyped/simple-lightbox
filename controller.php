@@ -126,9 +126,9 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	public function _hooks_init() {
 		if ( $this->is_enabled() ) {
+			$priority = $this->util->priority('low');
 			/* Client-side */
 			//Init lightbox
-			$priority = $this->util->priority('low');
 			add_action('wp_footer', $this->m('client_init'), $this->util->priority('client_footer_output'));
 			add_action('wp_footer', $this->m('client_footer'), $priority);
 			//Link activation
@@ -303,7 +303,7 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	function activate_galleries($galleries) {
 		//Validate
-		if ( !$this->is_enabled() || empty($galleries) ) {
+		if ( empty($galleries) ) {
 			return $galleries;
 		}
 		//Check galleries for HTML output
@@ -336,11 +336,6 @@ class SLB_Lightbox extends SLB_Base {
 	 * @return string Post content
 	 */
 	function activate_links($content) {
-		//Activate links only if enabled
-		if ( !$this->is_enabled() ) {
-			return $content;
-		}
-		
 		$groups = array();
 		$w = $this->group_get_wrapper();
 		$g_ph_f = '[%s]';
@@ -583,9 +578,6 @@ class SLB_Lightbox extends SLB_Base {
 	 * @return void
 	 */
 	function client_init() {
-		if ( ! $this->is_enabled() ) {
-			return;
-		}
 		echo PHP_EOL . '<!-- SLB -->' . PHP_EOL;
 		//Get options
 		$options = $this->options->build_client_output();
@@ -607,13 +599,7 @@ class SLB_Lightbox extends SLB_Base {
 	 * @uses `_wp_attachment_metadata` to retrieve attachment metadata
 	 */
 	function client_footer() {
-		echo '<!-- X-M -->';
-		//Stop if not enabled
-		if ( !$this->is_enabled() ) {
-			return;
-		}
 		echo '<!-- SLB-M -->' . PHP_EOL;
-		
 		$client_out = array();
 		
 		/* Load cached media */
@@ -888,8 +874,6 @@ class SLB_Lightbox extends SLB_Base {
 	 * @return string Modified post content
 	 */
 	function gallery_wrap($content) {
-		if ( !$this->is_enabled() )
-			return $content;
 		//Stop processing if option not enabled
 		if ( !$this->options->get_bool('group_gallery') )
 			return $content;
@@ -936,8 +920,6 @@ class SLB_Lightbox extends SLB_Base {
 	 * @return string Modified post content
 	 */
 	function gallery_unwrap($content) {
-		if ( !$this->is_enabled() )
-			return $content;
 		//Stop processing if option not enabled
 		if ( !$this->options->get_bool('group_gallery') )
 			return $content;
@@ -961,7 +943,7 @@ class SLB_Lightbox extends SLB_Base {
 	function sidebars_widgets($sidebars_widgets) {
 		global $wp_registered_widgets;
 		static $widgets_processed = false;
-		if ( is_admin() || empty($wp_registered_widgets) || $widgets_processed || !is_object($this->options) || !$this->is_enabled() || !$this->options->get_bool('enabled_widget') )
+		if ( is_admin() || empty($wp_registered_widgets) || $widgets_processed || !is_object($this->options) || !$this->options->get_bool('enabled_widget') )
 			return $sidebars_widgets; 
 		$widgets_processed = true;
 		//Fetch active widgets from all sidebars
