@@ -849,6 +849,9 @@ class SLB_Utilities {
 				parse_str($_SERVER['QUERY_STRING'], $qv);
 				if ( isset($qv['page']) ) {
 					$ctx[] = $this->build_context('page', $qv['page']);
+					if ( stripos($qv['page'], $this->get_prefix()) === 0 ) {
+						$ctx[] = $this->build_context('page', $this->get_prefix());
+					}
 				}
 				//Action
 				if ( !empty($action) ) {
