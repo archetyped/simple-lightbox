@@ -25,9 +25,19 @@ class SLB_Admin_Section extends SLB_Admin_View {
 	
 	/* Getters/Setters */
 	
-	public function get_uri() {
-		$file = 'options-' . $this->get_parent() . '.php';
-		return parent::get_uri($file, '%1$s#%2$s');
+	/**
+	 * Retrieve URI
+	 * @uses Admin_View::get_uri()
+	 * @param string $file (optional) Base file name
+	 * @param string $format (optional) String format
+	 * @return string Section URI
+	 */
+	public function get_uri($file = null, $format = null) {
+		if ( !is_string($file) )
+			$file = 'options-' . $this->get_parent() . '.php';
+		if ( !is_string($format) )
+			$format = '%1$s#%2$s';
+		return parent::get_uri($file, $format);
 	}
 
 	/**
@@ -36,6 +46,6 @@ class SLB_Admin_Section extends SLB_Admin_View {
 	 * @return string Title
 	 */
 	public function get_title() {
-		return '<div id="' . $this->get_id() . '" class="' . $this->add_prefix('section_head') . '">' . $this->get_label('title') . '</div>';
+		return sprintf('<div id="%1$s" class="%2$s">%3$s</div>', $this->get_id(), $this->add_prefix('section_head'), $this->get_label('title'));
 	}
 }
