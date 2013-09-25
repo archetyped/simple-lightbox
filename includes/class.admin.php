@@ -548,7 +548,7 @@ class SLB_Admin extends SLB_Base {
 			$t = __('Get Support', 'simple-lightbox');
 			$l = $this->util->get_plugin_info('SupportURI');
 			if ( !empty($l) ) {
-				$plugin_meta[] = sprintf('<a href="%s" title="%s">%s</a>', $l, esc_attr($t), $t);
+				$plugin_meta[] = $this->util->build_html_link($l, $t);
 			}
 		}
 		return $plugin_meta;
