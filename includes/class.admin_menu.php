@@ -23,6 +23,7 @@ class SLB_Admin_Menu extends SLB_Admin_View {
 		parent::__construct($id, $labels, $callback, $capability, $icon);
 		//Class specific
 		$this->set_position($position);
+		return $this;
 	}
 	
 	/* Getters/Setters */

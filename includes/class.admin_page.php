@@ -26,6 +26,7 @@ class SLB_Admin_Page extends SLB_Admin_View {
 		parent::__construct($id, $labels, $callback, $capability, $icon);
 		//Class specific
 		$this->set_parent($parent);
+		return $this;
 	}
 	
 	/* Operations */

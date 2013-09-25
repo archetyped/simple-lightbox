@@ -20,6 +20,7 @@ class SLB_Admin_Section extends SLB_Admin_View {
 		parent::__construct($id, $labels, $callback, $capability);
 		//Class specific
 		$this->set_parent($parent);
+		return $this;
 	}
 	
 	/* Getters/Setters */
