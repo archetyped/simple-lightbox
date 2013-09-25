@@ -302,7 +302,7 @@ class SLB_Options extends SLB_Field_Collection {
 	 * @return array Full options data
 	 */
 	function validate($values = null) {
-		$qvar = $this->add_prefix('options');
+		$qvar = $this->get_id('formatted');
 		if ( empty($values) && isset($_REQUEST[$qvar]) ) {
 			$values = $_REQUEST[$qvar];
 		}
@@ -319,7 +319,7 @@ class SLB_Options extends SLB_Field_Collection {
 			//Missing options (e.g. disabled checkboxes, empty fields, etc.)
 			
 			//Get groups that were output in request
-			$qvar_groups = $this->add_prefix('option_groups');
+			$qvar_groups = $qvar . '_groups';
 			if ( isset($_REQUEST[$qvar_groups]) ) {
 				$groups = explode( ',', implode(',', $_REQUEST[$qvar_groups]) );
 
@@ -592,7 +592,7 @@ class SLB_Options extends SLB_Field_Collection {
 				'tag'	=> 'input',
 				'type'	=> 'hidden',
 				'value'	=> implode(',', $groups_built),
-				'name'	=> $this->add_prefix('option_groups[]')
+				'name'	=> $this->get_id('formatted') . '_groups[]'
 			));
 		}
 	}
