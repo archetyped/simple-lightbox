@@ -116,26 +116,6 @@ class SLB_Admin_Page extends SLB_Admin_View {
 	}
 	
 	/**
-	 * Set required feature
-	 * @param string $feature Required feature
-	 */
-	private function _require($feature) {
-		if ( !isset($this->_required[$feature]) ) {
-			$this->_required[$feature] = true;
-		}
-		return $this;
-	}
-	
-	/**
-	 * Check if feature is required
-	 * @param string $feature Feature to check for
-	 * @return bool TRUE if feature required
-	 */
-	private function _is_required($feature) {
-		return ( isset($this->_required[$feature]) ) ? true : false;
-	}
-	
-	/**
 	 * Require form submission support
 	 * @return obj Page instance
 	 */

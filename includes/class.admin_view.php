@@ -86,7 +86,7 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 * > Value: Required data type
 	 * @var array
 	 */
-	protected $required = array();
+	private $required = array();
 	
 	/**
 	 * Default required properties
@@ -119,6 +119,26 @@ class SLB_Admin_View extends SLB_Base_Object {
 		//Check for parent requirement
 		if ( $this->parent_required )
 			$this->required['parent'] = 'string';
+	}
+	
+	/**
+	 * Set required feature
+	 * @param string $feature Required feature
+	 */
+	protected function _require($feature) {
+		if ( !isset($this->_required[$feature]) ) {
+			$this->_required[$feature] = true;
+		}
+		return $this;
+	}
+	
+	/**
+	 * Check if feature is required
+	 * @param string $feature Feature to check for
+	 * @return bool TRUE if feature required
+	 */
+	protected function _is_required($feature) {
+		return ( isset($this->_required[$feature]) ) ? true : false;
 	}
 	
 	/* Property Methods */
