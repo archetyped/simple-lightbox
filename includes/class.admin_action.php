@@ -65,7 +65,11 @@ class SLB_Admin_Action extends SLB_Admin_View {
 		$this->set_message($this->get_label($lbl));
 	}
 	
-	public function get_uri() {
+	/**
+	 * Get URI
+	 * @see Admin_View::get_uri()
+	 */
+	public function get_uri($file = null, $format = null) {
 		return wp_nonce_url(add_query_arg($this->get_query_args(), remove_query_arg($this->get_query_args_remove(), $_SERVER['REQUEST_URI'])), $this->get_id());
 	}
 	
