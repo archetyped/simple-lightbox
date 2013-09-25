@@ -304,13 +304,10 @@ class SLB_Admin extends SLB_Base {
 	 * @param string|array $labels Text labels (Associative array for multiple labels)
 	 * 	> menu: Menu title
 	 * 	> header: Page header
-	 * @param obj|array $options (optional) Options object (Use array to define options object & specific group(s))
-	 * 	> Array Example: array($options, 'group_1') or array($options, array('group_1', 'group_3'))
-	 * @param callback $callback (optional) Callback for custom page building
 	 * @param string $capability (optional) Custom capability for accessing page
 	 * @return Admin_Page Page instance
 	 */
-	public function add_page($id, $parent, $labels, $options = null, $callback = null, $capability = null) {
+	public function add_page($id, $parent, $labels, $capability = null) {
 		$args = func_get_args();
 		wp_enqueue_script('postbox');
 		return $this->add_view('page', $id, $args);
@@ -322,22 +319,19 @@ class SLB_Admin extends SLB_Base {
 	 * Add admin page to a standard WP menu
 	 * @uses this->add_page()
 	 * @param string $id Page ID (unique)
+	 * @param string $parent Name of WP menu to add page to
 	 * @param string|array $labels Text labels (Associative array for multiple labels)
 	 * 	> menu: Menu title
 	 * 	> header: Page header
-	 * @param string $menu Name of WP menu to add page to
-	 * @param obj|array $options (optional) Options object (Use array to define options object & specific group(s))
-	 * 	> Array Example: array($options, 'group_1') or array($options, array('group_1', 'group_3'))
-	 * @param callback $callback (optional) Callback for custom page building
 	 * @param string $capability (optional) Custom capability for accessing page
 	 * @return Admin_Page Page instance
 	 */
-	public function add_wp_page($id, $parent, $labels, $options = null, $callback = null, $capability = null) {
+	public function add_wp_page($id, $parent, $labels, $capability = null) {
 		//Add page
 		/**
 		 * @var SLB_Admin_Page
 		 */
-		$pg = $this->add_page($id, $parent, $labels, $options, $callback, $capability);
+		$pg = $this->add_page($id, $parent, $labels, $capability);
 		//Set parent as WP
 		if ( $pg ) {
 			$pg->set_parent_wp();
@@ -351,14 +345,11 @@ class SLB_Admin extends SLB_Base {
 	 * @uses this->add_wp_page()
 	 * @param string $id Page ID (unique)
 	 * @param string|array $labels Text labels (Associative array for multiple labels)
-	 * @param obj|array $options (optional) Options object (Use array to define options object & specific group(s))
-	 * 	> Array Example: array($options, 'group_1') or array($options, array('group_1', 'group_3'))
-	 * @param callback $callback (optional) Callback for custom page building
 	 * @param string $capability (optional) Custom capability for accessing page
 	 * @return Admin_Page Page instance
 	 */
-	public function add_dashboard_page($id, $labels, $options = null, $callback = null, $capability = null) {
-		return $this->add_wp_page($id, 'dashboard', $labels, $options, $callback, $capability);
+	public function add_dashboard_page($id, $labels, $capability = null) {
+		return $this->add_wp_page($id, 'dashboard', $labels, $capability);
 	}
 
 	/**
@@ -367,14 +358,11 @@ class SLB_Admin extends SLB_Base {
 	 * @uses this->add_wp_page()
 	 * @param string $id Page ID (unique)
 	 * @param string|array $labels Text labels (Associative array for multiple labels)
-	 * @param obj|array $options (optional) Options object (Use array to define options object & specific group(s))
-	 * 	> Array Example: array($options, 'group_1') or array($options, array('group_1', 'group_3'))
-	 * @param callback $callback (optional) Callback for custom page building
 	 * @param string $capability (optional) Custom capability for accessing page
 	 * @return string Page ID
 	 */
-	public function add_comments_page($id, $labels, $options = null, $callback = null, $capability = null) {
-		return $this->add_wp_page($id, 'comments', $labels, $options, $callback, $capability);
+	public function add_comments_page($id, $labels, $capability = null) {
+		return $this->add_wp_page($id, 'comments', $labels, $capability);
 	}
 	
 	/**
@@ -383,14 +371,11 @@ class SLB_Admin extends SLB_Base {
 	 * @uses this->add_wp_page()
 	 * @param string $id Page ID (unique)
 	 * @param string|array $labels Text labels (Associative array for multiple labels)
-	 * @param obj|array $options (optional) Options object (Use array to define options object & specific group(s))
-	 * 	> Array Example: array($options, 'group_1') or array($options, array('group_1', 'group_3'))
-	 * @param callback $callback (optional) Callback for custom page building
 	 * @param string $capability (optional) Custom capability for accessing page
 	 * @return string Page ID
 	 */
-	public function add_links_page($id, $labels, $options = null, $callback = null, $capability = null) {
-		return $this->add_wp_page($id, 'links', $labels, $options, $callback, $capability);
+	public function add_links_page($id, $labels, $capability = null) {
+		return $this->add_wp_page($id, 'links', $labels, $capability);
 	}
 
 	
@@ -400,14 +385,11 @@ class SLB_Admin extends SLB_Base {
 	 * @uses this->add_wp_page()
 	 * @param string $id Page ID (unique)
 	 * @param string|array $labels Text labels (Associative array for multiple labels)
-	 * @param obj|array $options (optional) Options object (Use array to define options object & specific group(s))
-	 * 	> Array Example: array($options, 'group_1') or array($options, array('group_1', 'group_3'))
-	 * @param callback $callback (optional) Callback for custom page building
 	 * @param string $capability (optional) Custom capability for accessing page
 	 * @return string Page ID
 	 */
-	public function add_posts_page($id, $labels, $options = null, $callback = null, $capability = null) {
-		return $this->add_wp_page($id, 'posts', $labels, $options, $callback, $capability);
+	public function add_posts_page($id, $labels, $capability = null) {
+		return $this->add_wp_page($id, 'posts', $labels, $capability);
 	}
 	
 	/**
@@ -416,14 +398,11 @@ class SLB_Admin extends SLB_Base {
 	 * @uses this->add_wp_page()
 	 * @param string $id Page ID (unique)
 	 * @param string|array $labels Text labels (Associative array for multiple labels)
-	 * @param obj|array $options (optional) Options object (Use array to define options object & specific group(s))
-	 * 	> Array Example: array($options, 'group_1') or array($options, array('group_1', 'group_3'))
-	 * @param callback $callback (optional) Callback for custom page building
 	 * @param string $capability (optional) Custom capability for accessing page
 	 * @return string Page ID
 	 */
-	public function add_pages_page($id, $labels, $options = null, $callback = null, $capability = null) {
-		return $this->add_wp_page($id, 'pages', $labels, $options, $callback, $capability);
+	public function add_pages_page($id, $labels, $capability = null) {
+		return $this->add_wp_page($id, 'pages', $labels, $capability);
 	}
 	
 	/**
@@ -432,14 +411,11 @@ class SLB_Admin extends SLB_Base {
 	 * @uses this->add_wp_page()
 	 * @param string $id Page ID (unique)
 	 * @param string|array $labels Text labels (Associative array for multiple labels)
-	 * @param obj|array $options (optional) Options object (Use array to define options object & specific group(s))
-	 * 	> Array Example: array($options, 'group_1') or array($options, array('group_1', 'group_3'))
-	 * @param callback $callback (optional) Callback for custom page building
 	 * @param string $capability (optional) Custom capability for accessing page
 	 * @return string Page ID
 	 */
-	public function add_media_page($id, $labels, $options = null, $callback = null, $capability = null) {
-		return $this->add_wp_page($id, 'media', $labels, $options, $callback, $capability);
+	public function add_media_page($id, $labels, $capability = null) {
+		return $this->add_wp_page($id, 'media', $labels, $capability);
 	}
 	
 	/**
@@ -448,14 +424,11 @@ class SLB_Admin extends SLB_Base {
 	 * @uses this->add_wp_page()
 	 * @param string $id Page ID (unique)
 	 * @param string|array $labels Text labels (Associative array for multiple labels)
-	 * @param obj|array $options (optional) Options object (Use array to define options object & specific group(s))
-	 * 	> Array Example: array($options, 'group_1') or array($options, array('group_1', 'group_3'))
-	 * @param callback $callback (optional) Callback for custom page building
 	 * @param string $capability (optional) Custom capability for accessing page
 	 * @return string Page ID
 	 */
-	public function add_theme_page($id, $labels, $options = null, $callback = null, $capability = null) {
-		return $this->add_wp_page($id, 'theme', $labels, $options, $callback, $capability);
+	public function add_theme_page($id, $labels, $capability = null) {
+		return $this->add_wp_page($id, 'theme', $labels, $capability);
 	}
 	
 	/**
@@ -464,14 +437,11 @@ class SLB_Admin extends SLB_Base {
 	 * @uses this->add_wp_page()
 	 * @param string $id Page ID (unique)
 	 * @param string|array $labels Text labels (Associative array for multiple labels)
-	 * @param obj|array $options (optional) Options object (Use array to define options object & specific group(s))
-	 * 	> Array Example: array($options, 'group_1') or array($options, array('group_1', 'group_3'))
-	 * @param callback $callback (optional) Callback for custom page building
 	 * @param string $capability (optional) Custom capability for accessing page
 	 * @return string Page ID
 	 */
-	public function add_plugins_page($id, $labels, $options = null, $callback = null, $capability = null) {
-		return $this->add_wp_page($id, 'plugins', $labels, $options, $callback, $capability);
+	public function add_plugins_page($id, $labels, $capability = null) {
+		return $this->add_wp_page($id, 'plugins', $labels, $capability);
 	}
 	
 	/**
@@ -480,14 +450,11 @@ class SLB_Admin extends SLB_Base {
 	 * @uses this->add_wp_page()
 	 * @param string $id Page ID (unique)
 	 * @param string|array $labels Text labels (Associative array for multiple labels)
-	 * @param obj|array $options (optional) Options object (Use array to define options object & specific group(s))
-	 * 	> Array Example: array($options, 'group_1') or array($options, array('group_1', 'group_3'))
-	 * @param callback $callback (optional) Callback for custom page building
 	 * @param string $capability (optional) Custom capability for accessing page
 	 * @return string Page ID
 	 */
-	public function add_options_page($id, $labels, $options = null, $callback = null, $capability = null) {
-		return $this->add_wp_page($id, 'options', $labels, $options, $callback, $capability);
+	public function add_options_page($id, $labels, $capability = null) {
+		return $this->add_wp_page($id, 'options', $labels, $capability);
 	}
 	
 	/**
@@ -496,14 +463,11 @@ class SLB_Admin extends SLB_Base {
 	 * @uses this->add_wp_page()
 	 * @param string $id Page ID (unique)
 	 * @param string|array $labels Text labels (Associative array for multiple labels)
-	 * @param obj|array $options (optional) Options object (Use array to define options object & specific group(s))
-	 * 	> Array Example: array($options, 'group_1') or array($options, array('group_1', 'group_3'))
-	 * @param callback $callback (optional) Callback for custom page building
 	 * @param string $capability (optional) Custom capability for accessing page
 	 * @return string Page ID
 	 */
-	public function add_management_page($id, $labels, $options = null, $callback = null, $capability = null) {
-		return $this->add_wp_page($id, 'management', $labels, $options, $callback, $capability);
+	public function add_management_page($id, $labels, $capability = null) {
+		return $this->add_wp_page($id, 'management', $labels, $capability);
 	}
 	
 	/**
@@ -511,14 +475,11 @@ class SLB_Admin extends SLB_Base {
 	 * @uses this->add_wp_page()
 	 * @param string $id Page ID (unique)
 	 * @param string|array $labels Text labels (Associative array for multiple labels)
-	 * @param obj|array $options (optional) Options object (Use array to define options object & specific group(s))
-	 * 	> Array Example: array($options, 'group_1') or array($options, array('group_1', 'group_3'))
-	 * @param callback $callback (optional) Callback for custom page building
 	 * @param string $capability (optional) Custom capability for accessing page
 	 * @return string Page ID
 	 */
-	public function add_users_page($id, $labels, $options = null, $callback = null, $capability = null) {
-		return $this->add_wp_page($id, 'users', $labels, $options, $callback, $capability);
+	public function add_users_page($id, $labels, $capability = null) {
+		return $this->add_wp_page($id, 'users', $labels, $capability);
 	}
 	
 	/* Section */
@@ -529,20 +490,16 @@ class SLB_Admin extends SLB_Base {
 	 * @param string $id Unique section ID
 	 * @param string $page Page ID
 	 * @param string $labels Label text
-	 * @param obj|array $options Options object (Use array to define options object & specific group(s))
-	 * 	> Array Example: array($options, 'group_1') or array($options, array('group_1', 'group_3'))
-	 * @param callback $callback (optional) Callback for custom building
-	 * @return string Section ID
+	 * @return obj Section instance
 	 */
-	public function add_section($id, $parent, $labels, $options = null, $callback = null) {
-		$section = new SLB_Admin_Section($id, $parent, $labels, $options, $callback);
+	public function add_section($id, $parent, $labels) {
+		$section = new SLB_Admin_Section($id, $parent, $labels);
 		
 		//Add Section
 		if ( $section->is_valid() )
-			$this->sections[$id] =& $section;
-		else
-			$id = false;
-		return $id;
+			$this->sections[$id] = $section;
+		
+		return $section;
 	}
 	
 	/* Operations */
