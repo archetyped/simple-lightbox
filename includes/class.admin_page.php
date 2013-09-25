@@ -163,6 +163,7 @@ class SLB_Admin_Page extends SLB_Admin_View {
 	public function handle() {
 		if ( !current_user_can($this->get_capability()) )
 			wp_die(__('Access Denied', 'simple-lightbox'));
+		wp_enqueue_script('postbox');
 		?>
 		<div class="wrap slb">
 			<?php $this->show_icon(); ?>

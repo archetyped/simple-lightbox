@@ -90,7 +90,7 @@ class SLB_Admin extends SLB_Base {
 		parent::__construct();
 		//Set parent
 		if ( is_object($parent) )
-			$this->parent =& $parent;
+			$this->parent = $parent;
 	}
 	
 	/* Init */
@@ -161,22 +161,6 @@ class SLB_Admin extends SLB_Base {
 		}
 	}
 	
-	/**
-	 * Displays notices for admin operations
-	 * @deprecated
-	 */
-	function show_notices() {
-		if ( is_admin() && isset($_REQUEST[$this->add_prefix('action')]) ) {
-			$action = $_REQUEST[$this->add_prefix('action')];
-			$msg = null;
-			if ( $action ) {
-				$msg = $this->get_message($action);
-				if ( ! empty($msg) ) {
-					
-				}
-			}
-		}
-	}
 	/* Views */
 	
 	/**
@@ -309,7 +293,6 @@ class SLB_Admin extends SLB_Base {
 	 */
 	public function add_page($id, $parent, $labels, $callback = null, $capability = null) {
 		$args = func_get_args();
-		wp_enqueue_script('postbox');
 		return $this->add_view('page', $id, $args);
 	}
 	
