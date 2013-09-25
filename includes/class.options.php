@@ -577,7 +577,7 @@ class SLB_Options extends SLB_Field_Collection {
 		//Iterate through groups
 		foreach ( $groups as $gid ) {
 			//Validate
-			if ( !isset($groups_all[$gid]) || !count($this->get_items($g->id)) ) {
+			if ( !isset($groups_all[$gid]) || !count($this->get_items($gid)) ) {
 				continue;
 			}
 			//Add meta box for each group

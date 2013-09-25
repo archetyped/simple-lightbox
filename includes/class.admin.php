@@ -230,7 +230,7 @@ class SLB_Admin extends SLB_Base {
 		}
 		//Create new instance
 		$r = new ReflectionClass($class);
-		$view =& $r->newInstanceArgs($args);
+		$view = $r->newInstanceArgs($args);
 		if ( $view->is_valid() && !empty($collection) && property_exists($this, $collection) && is_array($this->{$collection}) )
 			$this->{$collection}[$id] =& $view;
 		unset($r);
