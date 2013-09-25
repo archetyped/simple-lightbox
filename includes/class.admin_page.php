@@ -46,7 +46,7 @@ class SLB_Admin_Page extends SLB_Admin_View {
 	 * @param array $callback_args (optional) Additional data to pass callback (Default: NULL)
 	 * @return object Page instance reference
 	 */
-	public function add_content($id, $title, $callback, $context = 'primary', $priority = 'default', $callback_args = null) {
+	public function add_content($id, $title, $callback = null, $context = 'primary', $priority = 'default', $callback_args = null) {
 		return parent::add_content($id, array(
 			'id'			=> $id,
 			'title'			=> $title,
