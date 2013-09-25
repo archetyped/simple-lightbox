@@ -170,9 +170,6 @@ class SLB_Admin extends SLB_Base {
 	 */
 	public function init_menus() {
 		//Add top level menus (when necessary)
-		/**
-		 * @var SLB_Admin_Menu
-		 */
 		$menu;
 		foreach ( $this->menus as $menu ) {
 			//Register menu
@@ -182,9 +179,6 @@ class SLB_Admin extends SLB_Base {
 			$this->menus[$menu->get_id_raw()] =& $menu;
 		}
 		
-		/**
-		 * @var SLB_Admin_Page
-		 */
 		$page;
 		//Add subpages
 		foreach ( $this->pages as $page ) {
@@ -210,9 +204,6 @@ class SLB_Admin extends SLB_Base {
 		}
 		
 		//Add sections
-		/**
-		 * @var SLB_Admin_Section
-		 */
 		$section;
 		foreach ( $this->sections as $section ) {
 			add_settings_section($section->get_id(), $section->get_title(), $section->get_callback(), $section->get_parent());
@@ -310,9 +301,6 @@ class SLB_Admin extends SLB_Base {
 	 */
 	public function add_wp_page($id, $parent, $labels, $callback = null, $capability = null) {
 		//Add page
-		/**
-		 * @var SLB_Admin_Page
-		 */
 		$pg = $this->add_page($id, $parent, $labels, $capability);
 		//Set parent as WP
 		if ( $pg ) {
