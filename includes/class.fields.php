@@ -1729,7 +1729,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	 */
 	function get($item, $safe_mode = false) {
 		if ( $this->has($item) ) {
-			if ( !is_object($item) || !is_a($item, $this->item_type) ) {
+			if ( !is_object($item) || !($item instanceof $this->item_type) ) {
 				if ( is_string($item) ) {
 					$item = trim($item);
 					$item =& $this->items[$item];
@@ -2392,7 +2392,7 @@ class SLB_Fields extends SLB_Field_Collection {
 	 */
 	function process_placeholder_default($output, $item, $placeholder, $layout, $data) {
 		//Validate parameters before processing
-		if ( empty($output) && is_a($item, 'SLB_Field_Type') && is_array($placeholder) ) {
+		if ( empty($output) && ($item instanceof SLB_Field_Type) && is_array($placeholder) ) {
 			//Build path to replacement data
 			$output = $item->get_member_value($placeholder);
 
@@ -2419,7 +2419,7 @@ class SLB_Fields extends SLB_Field_Collection {
 					}
 					$output = implode(' ', $group_out);
 				}
-			} elseif ( is_object($output) && is_a($output, $item->base_class) ) {
+			} elseif ( is_object($output) && ($output instanceof $item->base_class) ) {
 				/* Targeted property is actually a nested item */
 				//Set caller to current item
 				$output->set_caller($item);

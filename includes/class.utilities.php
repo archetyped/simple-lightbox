@@ -806,7 +806,8 @@ class SLB_Utilities {
 	/* Class */
 	
 	function is_a($obj, $class_name) {
-		return ( is_object($obj) && is_a($obj, $this->add_prefix_uc($class_name)) ) ? true : false;
+		$class = $this->add_prefix_uc($class_name);
+		return ( is_object($obj) && ($obj instanceof $class) ) ? true : false;
 	}
 	
 	/**

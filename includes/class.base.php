@@ -185,12 +185,9 @@ class SLB_Base {
 		$class = $this->util->get_class('Options');
 		$key = 'options';
 		if ( $this->shares($key) ) {
-			/**
-			 * @var SLB_Options
-			 */
 			$opts = $this->gvar($key);
 			//Setup options instance
-			if ( !is_a($opts, $class) ) {
+			if ( !($opts instanceof $class) ) {
 				$opts = $this->gvar($key, new $class());
 			}
 		} else {
@@ -215,12 +212,9 @@ class SLB_Base {
 		$class = $this->util->get_class('Admin');
 		$key = 'admin';
 		if ( $this->shares($key) ) {
-			/**
-			 * @var SLB_Admin
-			 */
 			$adm = $this->gvar($key);
 			//Setup options instance
-			if ( !is_a($adm, $class) ) {
+			if ( !($adm instanceof $class) ) {
 				$adm = $this->gvar($key, new $class($this));
 			}
 		} else {
@@ -514,7 +508,7 @@ class SLB_Base {
 	function is_options_valid($data, $check_var = true) {
 		$class = $this->util->get_class('Options');
 		$ret = ( empty($data) || !is_array($data) || !class_exists($class) ) ? false : true;
-		if ( $ret && $check_var && !is_a($this->options, $class) )
+		if ( $ret && $check_var && !($this->options instanceof $class) )
 			$ret = false;
 		return $ret;
 	}
