@@ -583,8 +583,6 @@ class SLB_Admin extends SLB_Base {
 		return $plugin_meta;
 	}
 	
-	/*-** START: Refactor **-*/
-	
 	/**
 	* Adds additional message for plugin updates
 	* @uses `in_plugin_update_message-$plugin-name` Action hook
@@ -677,6 +675,4 @@ class SLB_Admin extends SLB_Base {
 	public function set_message($id, $text) {
 		$this->messages[trim($id)] = $text;
 	}
-	/*-** END: Refactor **-*/
-
 }
