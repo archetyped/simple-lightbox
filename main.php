@@ -49,7 +49,7 @@ function slb_autoload($classname) {
 
 spl_autoload_register('slb_autoload');
 
-require_once 'model.php';
+require_once 'controller.php';
 
 $slb = new SLB_Lightbox();
 
