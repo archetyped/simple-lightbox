@@ -117,21 +117,30 @@ class SLB_Lightbox extends SLB_Base {
 		/* Admin */
 		add_action('admin_menu', $this->m('admin_menus'));
 		
-		/* Client-side */
-		
-		//Init lightbox
-		$priority = $this->util->priority('low');
-		add_action('wp_footer', $this->m('client_init'), $this->util->priority('client_footer_output'));
-		add_action('wp_footer', $this->m('client_footer'), $priority);
-		//Link activation
-		add_filter('the_content', $this->m('activate_links'), $priority);
-		add_filter('get_post_galleries', $this->m('activate_galleries'), $priority);
-		//Gallery wrapping
-		add_filter('the_content', $this->m('gallery_wrap'), 1);
-		add_filter('the_content', $this->m('gallery_unwrap'), $priority + 1);
-		
-		/* Widgets */
-		add_filter('sidebars_widgets', $this->m('sidebars_widgets'));
+		/* Init */
+		add_action('init', $this->m('_hooks_init'));
+	}
+	
+	/**
+	 * Init Hooks
+	 */
+	public function _hooks_init() {
+		if ( $this->is_enabled() ) {
+			/* Client-side */
+			//Init lightbox
+			$priority = $this->util->priority('low');
+			add_action('wp_footer', $this->m('client_init'), $this->util->priority('client_footer_output'));
+			add_action('wp_footer', $this->m('client_footer'), $priority);
+			//Link activation
+			add_filter('the_content', $this->m('activate_links'), $priority);
+			add_filter('get_post_galleries', $this->m('activate_galleries'), $priority);
+			//Gallery wrapping
+			add_filter('the_content', $this->m('gallery_wrap'), 1);
+			add_filter('the_content', $this->m('gallery_unwrap'), $priority + 1);
+			
+			/* Widgets */
+			add_filter('sidebars_widgets', $this->m('sidebars_widgets'));
+		}
 	}
 	
 	/**
@@ -263,21 +272,24 @@ class SLB_Lightbox extends SLB_Base {
 	 * Checks whether lightbox is currently enabled/disabled
 	 * @return bool TRUE if lightbox is currently enabled, FALSE otherwise
 	 */
-	function is_enabled($check_request = true) {
-		$ret = ( $this->options->get_bool('enabled') && !is_feed() ) ? true : false;
-		if ( $ret && $check_request ) {
-			$opt = '';
-			//Determine option to check
-			if ( is_home() )
-				$opt = 'home';
-			elseif ( is_singular() ) {
-				$opt = ( is_page() ) ? 'page' : 'post';
-			}
-			elseif ( is_archive() || is_search() )
-				$opt = 'archive';
-			//Check option
-			if ( !empty($opt) && ( $opt = 'enabled_' . $opt ) && $this->options->has($opt) ) {
-				$ret = $this->options->get_bool($opt);
+	function is_enabled() {
+		static $ret = null;
+		if ( is_null($ret) ) {
+			$ret = ( $this->options->get_bool('enabled') && !is_feed() ) ? true : false;
+			if ( $ret ) {
+				$opt = '';
+				//Determine option to check
+				if ( is_home() )
+					$opt = 'home';
+				elseif ( is_singular() ) {
+					$opt = ( is_page() ) ? 'page' : 'post';
+				}
+				elseif ( is_archive() || is_search() )
+					$opt = 'archive';
+				//Check sub-option
+				if ( !empty($opt) && ( $opt = 'enabled_' . $opt ) && $this->options->has($opt) ) {
+					$ret = $this->options->get_bool($opt);
+				}
 			}
 		}
 		return $ret;
