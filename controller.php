@@ -249,7 +249,7 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	public function theme_page_callback_support() {
 		echo '<p>';
-		_e("Getting support is easy!  Whether you're experiencing an issue or just have a feature request, click the button below to get support right now!", 'simple-lightbox');
+		_e("Getting support is easy!  Whether you're experiencing an issue or have a feature request, click the button below to get support right now!", 'simple-lightbox');
 		echo '</p>';
 		
 		$lnk_txt = __('Get Support', 'simple-lightbox');
