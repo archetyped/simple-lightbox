@@ -233,16 +233,15 @@ class SLB_Admin extends SLB_Base {
 		//Validate request
 		$class = $this->add_prefix('admin_' . $type);
 		$collection = $type . 's';
-		if ( !class_exists($class) || !property_exists($this, $collection) || !is_array($this->{$collection}) ) {
-			return false;
+		if ( !class_exists($class) ) {
+			$class = $this->add_prefix('admin_view');
+			$collection = null;
 		}
 		//Create new instance
 		$r = new ReflectionClass($class);
 		$view =& $r->newInstanceArgs($args);
-		if ( $view->is_valid() )
+		if ( $view->is_valid() && !empty($collection) && property_exists($this, $collection) && is_array($this->{$collection}) )
 			$this->{$collection}[$id] =& $view;
-		else 
-			$id = false;
 		unset($r);
 		return $view;
 	}
