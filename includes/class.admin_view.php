@@ -429,7 +429,8 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 * @return obj Current instance
 	 */
 	public function set_parent_wp() {
-		return $this->set_parent_custom(false);
+		$this->set_parent_custom(false);
+		return $this;
 	}
 	
 	/**
@@ -440,6 +441,8 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 * 	> Section: [parent_menu_uri]#{section_id}
 	 * 
 	 * @uses $admin_page_hooks to determine if page is child of default WP page
+	 * @param string $file (optional) Base file name
+	 * @param string $format (optional) Format string for URI
 	 * @return string Object URI 
 	 */
 	public function get_uri($file = null, $format = null) {
