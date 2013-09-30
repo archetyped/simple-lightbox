@@ -1627,7 +1627,7 @@ class SLB_Utilities {
 	function build_script_element($content = '', $id = '', $wrap_jquery = true, $wait_doc_ready = false) {
 		//Stop processing invalid content
 		if ( is_array($content) && !empty($content) ) {
-			$content = implode(PHP_EOL, $content);	
+			$content = implode(PHP_EOL, $content);
 		}
 		if ( empty($content) || !is_string($content) ) {
 			return '';

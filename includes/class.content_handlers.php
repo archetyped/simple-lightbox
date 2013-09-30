@@ -33,7 +33,7 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 		parent::_hooks();
 		$this->util->add_action('init', $this->m('init_defaults'));
 		
-		add_action('wp_footer', $this->m('client_output'), $this->util->priority('client_footer_output'));
+		$this->util->add_action('footer_script', $this->m('client_output'), $this->util->priority('client_footer_output'), 1, false);
 	}
 	
 	/* Collection Management */
@@ -202,15 +202,18 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 	
 	/**
 	 * Client output
+	 * 
+	 * @param array $commands Client script commands
+	 * @return array Modified script commands
 	 */
-	public function client_output() {
+	public function client_output($commands) {
 		//Stop if not enabled
 		if ( !$this->has_parent() || !$this->get_parent()->is_enabled() ) {
-			return;
+			return $commands;
 		}
 		$id_fmt = 'add_handler_%s';
 		$out = array();
-		$out[] = '<!-- SLB-HDL -->' . PHP_EOL;
+		$out[] = '/* Content Handlers */';
 		$code = array();
 		//Load matched handlers
 		foreach ( $this->request_matches as $handler ) {
@@ -221,8 +224,8 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 			);
 			$code[] = $this->util->call_client_method('View.add_content_handler',  $params, false);
 		}
-		$out[] = $this->util->build_script_element(implode('', $code), 'add_content_handlers', true, true);
-		$out[] = '<!-- /SLB-HDL -->' . PHP_EOL;
-		echo implode('', $out);
+		$out[] = implode('', $code);
+		$commands[] = implode(PHP_EOL, $out);
+		return $commands;
 	}
 }
