@@ -53,14 +53,14 @@ class SLB_Options extends SLB_Field_Collection {
 	protected function _hooks() {
 		parent::_hooks();
 		//Register fields
-		add_action($this->add_prefix('register_fields'), $this->m('register_fields'));
+		$this->util->add_action('register_fields', $this->m('register_fields'), 10, 1, false);
 		//Set option parents
-		add_action($this->add_prefix('fields_registered'), $this->m('set_parents'));
+		$this->util->add_action('fields_registered', $this->m('set_parents'), 10, 1, false);
 		//Building
 		$this->util->add_action('build_init', $this->m('build_init'));
 		//Admin
-		add_action($this->add_prefix('admin_page_render_content'), $this->m('admin_page_render_content'), 10, 3);
-		add_filter($this->add_prefix('admin_action_reset'), $this->m('admin_action_reset'), 10, 3);
+		$this->util->add_action('admin_page_render_content', $this->m('admin_page_render_content'), 10, 3, false);
+		$this->util->add_filter('admin_action_reset', $this->m('admin_action_reset'), 10, 3, false);
 	}
 	
 	/* Legacy/Migration */
