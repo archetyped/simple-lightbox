@@ -130,8 +130,8 @@ class SLB_Lightbox extends SLB_Base {
 			/* Client-side */
 			//Init lightbox
 			add_action('wp_footer', $this->m('client_footer'), $priority);
-			$this->util->add_action('footer', $this->m('client_init'), $this->util->priority('client_footer_output'));
-			$this->util->add_filter('footer_script', $this->m('client_script_media'));
+			$this->util->add_action('footer_script', $this->m('client_init'), 1);
+			$this->util->add_filter('footer_script', $this->m('client_script_media'), 2);
 			//Link activation
 			add_filter('the_content', $this->m('activate_links'), $priority);
 			add_filter('get_post_galleries', $this->m('activate_galleries'), $priority);
@@ -578,8 +578,7 @@ class SLB_Lightbox extends SLB_Base {
 	 * Sets options/settings to initialize lightbox functionality on page load
 	 * @return void
 	 */
-	function client_init() {
-		echo PHP_EOL . '<!-- SLB -->' . PHP_EOL;
+	function client_init($client_script) {
 		//Get options
 		$options = $this->options->build_client_output();
 		
@@ -589,8 +588,8 @@ class SLB_Lightbox extends SLB_Base {
 		}
 		
 		//Build client output
-		echo $this->util->build_script_element($this->util->call_client_method('View.init', $options), 'init', true, true);
-		echo '<!-- /SLB -->' . PHP_EOL;
+		$client_script[] = $this->util->call_client_method('View.init', $options);
+		return $client_script;
 	}
 	
 	/**
@@ -605,13 +604,13 @@ class SLB_Lightbox extends SLB_Base {
 		
 		//Build client output
 		
-		echo '<!-- SLB-M -->' . PHP_EOL;
+		echo '<!-- SLB -->' . PHP_EOL;
 		$this->util->do_action('footer');
 		$client_script = $this->util->apply_filters('footer_script', array());
 		if ( !empty($client_script) ) {
 			echo $this->util->build_script_element($client_script, 'footer', true, true);
 		}
-		echo PHP_EOL . '<!-- /SLB-M -->' . PHP_EOL;
+		echo PHP_EOL . '<!-- /SLB -->' . PHP_EOL;
 	}
 	
 	/**
