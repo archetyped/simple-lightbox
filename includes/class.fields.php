@@ -1425,10 +1425,10 @@ class SLB_Field_Type extends SLB_Field_Base {
 					//Iterate through instances of current placeholder
 					foreach ( $instances as $instance ) {
 						//Process value based on placeholder name
-						$target_property = apply_filters($this->add_prefix('process_placeholder_' . $tag), '', $this, $instance, $layout, $data);
+						$target_property = $this->util->apply_filters(array('process_placeholder_' . $tag, false), '', $this, $instance, $layout, $data);
 						//Process value using default processors (if necessary)
 						if ( '' == $target_property ) {
-							$target_property = apply_filters($this->add_prefix('process_placeholder'), $target_property, $this, $instance, $layout, $data);
+							$target_property = $this->util->apply_filters(array('process_placeholder', false), $target_property, $this, $instance, $layout, $data);
 						}
 
 						//Clear value if value not a string
@@ -2333,10 +2333,10 @@ class SLB_Fields extends SLB_Field_Collection {
 		$this->add($span);
 		
 		//Enable plugins to modify (add, remove, etc.) field types
-		do_action_ref_array($this->add_prefix('register_fields'), array(&$this));
+		$this->util->do_action_ref_array('register_fields', array(&$this), false);
 		
 		//Signal completion of field registration
-		do_action_ref_array($this->add_prefix('fields_registered'), array(&$this));
+		$this->util->do_action_ref_array('fields_registered', array(&$this), false);
 	}
 	
 	/* Placeholder handlers */
@@ -2353,10 +2353,10 @@ class SLB_Fields extends SLB_Field_Collection {
 		$this->register_placeholder('checked', $this->m('process_placeholder_checked'));
 		
 		//Allow other code to register placeholders
-		do_action_ref_array($this->add_prefix('register_field_placeholders'), array(&$this));
+		$this->util->do_action_ref_array('register_field_placeholders', array(&$this), false);
 		
 		//Signal completion of field placeholder registration
-		do_action_ref_array($this->add_prefix('field_placeholders_registered'), array(&$this));
+		$this->util->do_action_ref_array('field_placeholders_registered', array(&$this), false);
 	}
 	
 	/**
