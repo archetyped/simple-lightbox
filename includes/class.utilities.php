@@ -603,11 +603,17 @@ class SLB_Utilities {
 	 * @uses self::get_parent_property() to retrieve hook prefix
 	 * @uses self::add_prefix()
 	 * @param string $tag Base tag
+	 * @param bool|string $hook_prefix (optional) Secondary prefix to use for hook (Default: Use predefined hook name, FALSE: no secondary hook)
 	 * @return string Formatted hook
 	 */
-	function get_hook($tag) {
+	function get_hook($tag, $hook_prefix = true) {
 		//Hook prefix
-		$hook = $this->get_parent_property('hook_prefix', '');
+		$hook = '';
+		if ( is_bool($hook_prefix) && $hook_prefix ) {
+			$hook = $this->get_parent_property('hook_prefix', '');
+		} elseif ( is_string($hook_prefix) ) {
+			$hook = $hook_prefix;
+		}
 		if ( !empty($hook) )
 			$hook .= '_';
 		//Prefix
@@ -619,19 +625,27 @@ class SLB_Utilities {
 	 * Namespaces $tag
 	 * @uses self::get_hook()
 	 * @see do_action()
+	 * @param string|array $tag Action hook. If array, get hook prefix
 	 */
 	function do_action($tag, $arg = '') {
+		//Handle hook prefix
+		$hook_prefix = true;
+		if ( is_array($tag) ) {
+			$hook_prefix = $tag[1];
+			$tag = $tag[0];
+		}
 		$args = func_get_args();
-		$args[0] = $this->get_hook($tag);
+		$args[0] = $this->get_hook($tag, $hook_prefix);
 		return call_user_func_array('do_action', $args);
 	}
 	
 	/**
 	 * Run internal action passing arguments in array
 	 * @uses do_action_ref_array()
+	 * @param bool|string $hook_prefix (optional) Secondary prefix to use for hook (Default: Use predefined hook name, FALSE: no secondary hook)
 	 */
-	function do_action_ref_array($tag, $args) {
-		return do_action_ref_array($this->get_hook($tag), $args);
+	function do_action_ref_array($tag, $args, $hook_prefix = true) {
+		return do_action_ref_array($this->get_hook($tag, $hook_prefix), $args);
 	}
 	
 	/**
@@ -639,19 +653,27 @@ class SLB_Utilities {
 	 * Namespaces $tag
 	 * @uses self::get_hook()
 	 * @see apply_filters()
+	 * @param string|array $tag Action hook. If array, get hook prefix
 	 */
 	function apply_filters($tag, $value) {
+		//Handle hook prefix
+		$hook_prefix = true;
+		if ( is_array($tag) ) {
+			$hook_prefix = $tag[1];
+			$tag = $tag[0];
+		}
 		$args = func_get_args();
-		$args[0] = $this->get_hook($tag);
+		$args[0] = $this->get_hook($tag, $hook_prefix);
 		return call_user_func_array('apply_filters', $args);
 	}
 	
 	/**
 	 * Run internal filter passing arguments in array
 	 * @uses apply_filters_ref_array()
+	 * @param bool|string $hook_prefix (optional) Secondary prefix to use for hook (Default: Use predefined hook name, FALSE: no secondary hook)
 	 */
-	function apply_filters_ref_array($tag, $args) {
-		return apply_filters_ref_array($this->get_hook($tag), $args);	
+	function apply_filters_ref_array($tag, $args, $hook_prefix = true) {
+		return apply_filters_ref_array($this->get_hook($tag, $hook_prefix), $args);	
 	}
 	
 	/**
@@ -659,9 +681,10 @@ class SLB_Utilities {
 	 * Namespaces $tag
 	 * @uses self::get_hook()
 	 * @see add_action()
+	 * @param bool|string $hook_prefix (optional) Secondary prefix to use for hook (Default: Use predefined hook name, FALSE: no secondary hook)
 	 */
-	function add_action($tag, $function_to_add, $priority = 10, $accepted_args = 1) {
-		return add_action($this->get_hook($tag), $function_to_add, $priority, $accepted_args);
+	function add_action($tag, $function_to_add, $priority = 10, $accepted_args = 1, $hook_prefix = true) {
+		return add_action($this->get_hook($tag, $hook_prefix), $function_to_add, $priority, $accepted_args);
 	}
 	
 	/**
@@ -669,9 +692,10 @@ class SLB_Utilities {
 	 * Namespaces $tag
 	 * @uses self::get_hook()
 	 * @see add_filter()
+	 * @param bool|string $hook_prefix (optional) Secondary prefix to use for hook (Default: Use predefined hook name, FALSE: no secondary hook)
 	 */
-	function add_filter($tag, $function_to_add, $priority = 10, $accepted_args = 1) {
-		return add_filter($this->get_hook($tag), $function_to_add, $priority, $accepted_args);
+	function add_filter($tag, $function_to_add, $priority = 10, $accepted_args = 1, $hook_prefix = true) {
+		return add_filter($this->get_hook($tag, $hook_prefix), $function_to_add, $priority, $accepted_args);
 	}
 	
 	/**
@@ -679,9 +703,10 @@ class SLB_Utilities {
 	 * Namespaces $tag
 	 * @uses self::get_hook()
 	 * @uses remove_action()
+	 * @param bool|string $hook_prefix (optional) Secondary prefix to use for hook (Default: Use predefined hook name, FALSE: no secondary hook)
 	 */
-	function remove_action($tag, $function_to_remove, $priority = 10, $accepted_args = 1) {
-		return remove_action($this->get_hook($tag), $function_to_remove, $priority, $accepted_args);	
+	function remove_action($tag, $function_to_remove, $priority = 10, $accepted_args = 1, $hook_prefix = true) {
+		return remove_action($this->get_hook($tag, $hook_prefix), $function_to_remove, $priority, $accepted_args);	
 	}
 	
 	/**
@@ -689,9 +714,10 @@ class SLB_Utilities {
 	 * Namespaces $tag
 	 * @uses self::get_hook()
 	 * @uses remove_filter()
+	 * @param bool|string $hook_prefix (optional) Secondary prefix to use for hook (Default: Use predefined hook name, FALSE: no secondary hook)
 	 */
-	function remove_filter($tag, $function_to_remove, $priority = 10, $accepted_args = 1) {
-		return remove_filter($this->get_hook($tag), $function_to_remove, $priority, $accepted_args);
+	function remove_filter($tag, $function_to_remove, $priority = 10, $accepted_args = 1, $hook_prefix = true) {
+		return remove_filter($this->get_hook($tag, $hook_prefix), $function_to_remove, $priority, $accepted_args);
 	}
 
 	/* Meta */
