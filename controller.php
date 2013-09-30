@@ -614,12 +614,10 @@ class SLB_Lightbox extends SLB_Base {
 	}
 	
 	/**
-	 * Build client script output
+	 * Add media information to client output
 	 * 
-	 * Hooks into `footer_script` filter
-	 * 
-	 * @param array $client_script Script output
-	 * @return array Modified client script output
+	 * @param array $commands Client script commands
+	 * @return array Modified script commands
 	 */
 	function client_script_media($client_script) {
 		/* Load cached media */
