@@ -29,7 +29,7 @@ class SLB_Themes extends SLB_Collection_Controller {
 		$this->util->add_action('init', $this->m('init_defaults'), 1);
 		
 		//Client output
-		add_action('wp_footer', $this->m('client_output'), $this->util->priority('client_footer_output'));
+		$this->util->add_action('footer_script', $this->m('client_output'), $this->util->priority('client_footer_output'), 1, false);
 	}
 	
 	protected function _options() {
@@ -130,11 +130,14 @@ class SLB_Themes extends SLB_Collection_Controller {
 	
 	/**
 	 * Client output
+	 * 
+	 * @param array $commands Client script commands
+	 * @return array Modified script commands
 	 */
-	public function client_output() {
+	public function client_output($commands) {
 		//Stop if not enabled
 		if ( !$this->has_parent() || !$this->get_parent()->is_enabled() ) {
-			return;
+			return $commands;
 		}
 		
 		//Theme
@@ -149,7 +152,7 @@ class SLB_Themes extends SLB_Collection_Controller {
 		
 		$id_fmt = 'add_theme_%s';
 		$out = array();
-		$out[] = '<!-- SLB-THM -->' . PHP_EOL;
+		$out[] = '/* Themes */';
 		$code = array();
 		
 		//Build output for each theme
@@ -186,9 +189,9 @@ class SLB_Themes extends SLB_Collection_Controller {
 			$code[] = $this->util->call_client_method('View.add_theme', $params, false);
 		}
 
-		$out[] = $this->util->build_script_element(implode('', $code), 'add_themes', true, true);
-		$out[] = '<!-- /SLB-THM -->' . PHP_EOL;
-		echo implode('', $out);
+		$out[] = implode('', $code);
+		$commands[] = implode(PHP_EOL, $out);
+		return $commands;
 	}
 	
 	/* Options */
