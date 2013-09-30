@@ -129,8 +129,9 @@ class SLB_Lightbox extends SLB_Base {
 			$priority = $this->util->priority('low');
 			/* Client-side */
 			//Init lightbox
-			add_action('wp_footer', $this->m('client_init'), $this->util->priority('client_footer_output'));
 			add_action('wp_footer', $this->m('client_footer'), $priority);
+			$this->util->add_action('footer', $this->m('client_init'), $this->util->priority('client_footer_output'));
+			$this->util->add_filter('footer_script', $this->m('client_script_media'));
 			//Link activation
 			add_filter('the_content', $this->m('activate_links'), $priority);
 			add_filter('get_post_galleries', $this->m('activate_galleries'), $priority);
@@ -599,158 +600,173 @@ class SLB_Lightbox extends SLB_Base {
 	 * @uses `_wp_attachment_metadata` to retrieve attachment metadata
 	 */
 	function client_footer() {
-		echo '<!-- SLB-M -->' . PHP_EOL;
-		$client_out = array();
+		if ( !$this->has_cached_media_items() )
+			return false;
 		
-		/* Load cached media */
-		if ( $this->has_cached_media_items() ) {
-			global $wpdb;
-			
-			$this->media_items = array();
-			$props = array('id', 'type', 'description', 'title', 'source', 'caption');
-			$props = (object) array_combine($props, $props);
-			$props_map = array('description' => 'post_content', 'title' => 'post_title', 'caption' => 'post_excerpt');
-	
-			//Separate media into buckets by type
-			$m_bucket = array();
-			$m_internals = array();
-			$type = $id = null;
-			
-			$m_items = $this->media_items = $this->get_cached_media_items();
-			foreach ( $m_items as $uri => $p ) {
-				$type = $p->{$props->type};
-				//Initialize bucket (if necessary)
-				if ( !isset($m_bucket[$type]) ) {
-					$m_bucket[$type] = array();
-				}
-				//Add item to bucket
-				$m_bucket[$type][$uri] =& $m_items[$uri];
-				//Set aside internal links for additional processing
-				if ( $p->internal && !isset($m_internals[$uri]) ) {
-					$m_internals[$uri] =& $m_items[$uri];
-				}
-			}
-			unset($uri, $p);
-			
-			//Process internal links
-			if ( !empty($m_internals) ) {
-				$uris_base = array();
-				$uri_prefix = wp_upload_dir();
-				$uri_prefix = $this->util->normalize_path($uri_prefix['baseurl'], true);
-				foreach ( $m_internals as $uri => $p ) {
-					//Prepare internal links
-					if ( !$p->id && strpos($p->source, $uri_prefix) === 0 ) {
-						$uris_base[str_replace($uri_prefix, '', $p->source)] = $uri;
-					}
-				}
-				unset($uri, $p);
-				
-				//Retrieve attachment IDs
-				$uris_flat = "('" . implode("','", array_keys($uris_base)) . "')";
-				$q = $wpdb->prepare("SELECT post_id, meta_value FROM $wpdb->postmeta WHERE `meta_key` = %s AND LOWER(`meta_value`) IN $uris_flat LIMIT %d", '_wp_attached_file', count($uris_base));
-				$pids = $wpdb->get_results($q);
-				//Match IDs to URIs
-				if ( $pids ) {
-					foreach ( $pids as $pd ) {
-						$file =& $pd->meta_value;
-						if ( isset($uris_base[$file]) ) {
-							$m_internals[ $uris_base[$file] ]->{$props->id} = absint($pd->post_id);
-						}
-					}
-				}
-				//Destroy worker vars
-				unset($uris_base, $uris_flat, $q, $pids, $pd);
-			}
-			
-			//Process items with attachment IDs
-			$pids = array();
-			foreach ( $m_items as $uri => $p ) {
-				//Add post ID to query
-				if ( !!$p->id ) {
-					//Create array for ID (support multiple URIs per ID)
-					if ( !isset($pids[$p->id]) ) {
-						$pids[$p->id] = array();
-					}
-					//Add URI to ID
-					$pids[$p->id][] = $uri;
-				}
-			}
-			unset($uri, $p);
-			
-			//Retrieve attachment properties
-			if ( !empty($pids) ) {
-				$pids_flat = array_keys($pids);
-				//Retrieve attachment post data
-				$atts = get_posts(array('post_type' => 'attachment', 'include' => $pids_flat));
-				
-				//Process attachments
-				if ( $atts ) {
-					//Retrieve attachment metadata
-					$pids_flat = "('" . implode("','", $pids_flat) . "')";
-					$atts_meta = $wpdb->get_results($wpdb->prepare("SELECT `post_id`,`meta_value` FROM $wpdb->postmeta WHERE `post_id` IN $pids_flat AND `meta_key` = %s LIMIT %d", '_wp_attachment_metadata', count($atts)));
-					//Restructure metadata array by post ID
-					if ( $atts_meta ) {
-						$meta = array();
-						foreach ( $atts_meta as $att_meta ) {
-							$meta[$att_meta->post_id] = $att_meta->meta_value;
-						}
-						$atts_meta = $meta;
-						unset($meta);
-					} else {
-						$atts_meta = array();
-					}
-					$props_size = array('file', 'width', 'height');
-					$props_exclude = array('hwstring_small');
-					foreach ( $atts as $att ) {
-						//Set post data
-						$m = array();
-						//Remap post data to properties
-						foreach ( $props_map as $prop_key => $prop_source ) {
-							$m[$props->{$prop_key}] = $att->{$prop_source};
-						}
-						unset($prop_key, $prop_source);
-						
-						//Add metadata
-						if ( isset($atts_meta[$att->ID]) && ($a = unserialize($atts_meta[$att->ID])) && is_array($a) ) {
-							//Move original size into `sizes` array
-							foreach ( $props_size as $d ) {
-								if ( !isset($a[$d]) ) {
-									continue;
-								}
-								$a['sizes']['original'][$d] = $a[$d];
-								unset($a[$d]);
-							}
-	
-							//Strip extraneous metadata
-							foreach ( $props_exclude as $d ) {
-								if ( isset($a[$d]) ) {
-									unset($a[$d]);
-								}
-							}
-							
-							//Merge post data & meta data
-							$m = array_merge($a, $m);
-							//Destroy worker vars
-							unset($a, $d);
-						}
-						
-						//Save attachment data (post & meta) to original object(s)
-						foreach ( $pids[$att->ID] as $uri ) {
-							$this->media_items[$uri] = (object) array_merge( (array) $m_items[$uri], $m);
-						}
-					}
-				}
-				unset($atts, $atts_meta, $m, $a, $uri, $pids, $pids_flat);
-			}
-			
-			//Build client output
-			$obj = 'View.assets';
-			$client_out[] = $this->util->extend_client_object($obj, $this->media_items);
-		}
-		if ( !empty($client_out) ) {
-			echo $this->util->build_script_element($client_out, 'footer', true, true);
+		//Build client output
+		
+		echo '<!-- SLB-M -->' . PHP_EOL;
+		$this->util->do_action('footer');
+		$client_script = $this->util->apply_filters('footer_script', array());
+		if ( !empty($client_script) ) {
+			echo $this->util->build_script_element($client_script, 'footer', true, true);
 		}
 		echo PHP_EOL . '<!-- /SLB-M -->' . PHP_EOL;
+	}
+	
+	/**
+	 * Build client script output
+	 * 
+	 * Hooks into `footer_script` filter
+	 * 
+	 * @param array $client_script Script output
+	 * @return array Modified client script output
+	 */
+	function client_script_media($client_script) {
+		/* Load cached media */
+		global $wpdb;
+		
+		$this->media_items = array();
+		$props = array('id', 'type', 'description', 'title', 'source', 'caption');
+		$props = (object) array_combine($props, $props);
+		$props_map = array('description' => 'post_content', 'title' => 'post_title', 'caption' => 'post_excerpt');
+
+		//Separate media into buckets by type
+		$m_bucket = array();
+		$m_internals = array();
+		$type = $id = null;
+		
+		$m_items = $this->media_items = $this->get_cached_media_items();
+		foreach ( $m_items as $uri => $p ) {
+			$type = $p->{$props->type};
+			//Initialize bucket (if necessary)
+			if ( !isset($m_bucket[$type]) ) {
+				$m_bucket[$type] = array();
+			}
+			//Add item to bucket
+			$m_bucket[$type][$uri] =& $m_items[$uri];
+			//Set aside internal links for additional processing
+			if ( $p->internal && !isset($m_internals[$uri]) ) {
+				$m_internals[$uri] =& $m_items[$uri];
+			}
+		}
+		unset($uri, $p);
+		
+		//Process internal links
+		if ( !empty($m_internals) ) {
+			$uris_base = array();
+			$uri_prefix = wp_upload_dir();
+			$uri_prefix = $this->util->normalize_path($uri_prefix['baseurl'], true);
+			foreach ( $m_internals as $uri => $p ) {
+				//Prepare internal links
+				if ( !$p->id && strpos($p->source, $uri_prefix) === 0 ) {
+					$uris_base[str_replace($uri_prefix, '', $p->source)] = $uri;
+				}
+			}
+			unset($uri, $p);
+			
+			//Retrieve attachment IDs
+			$uris_flat = "('" . implode("','", array_keys($uris_base)) . "')";
+			$q = $wpdb->prepare("SELECT post_id, meta_value FROM $wpdb->postmeta WHERE `meta_key` = %s AND LOWER(`meta_value`) IN $uris_flat LIMIT %d", '_wp_attached_file', count($uris_base));
+			$pids = $wpdb->get_results($q);
+			//Match IDs to URIs
+			if ( $pids ) {
+				foreach ( $pids as $pd ) {
+					$file =& $pd->meta_value;
+					if ( isset($uris_base[$file]) ) {
+						$m_internals[ $uris_base[$file] ]->{$props->id} = absint($pd->post_id);
+					}
+				}
+			}
+			//Destroy worker vars
+			unset($uris_base, $uris_flat, $q, $pids, $pd);
+		}
+		
+		//Process items with attachment IDs
+		$pids = array();
+		foreach ( $m_items as $uri => $p ) {
+			//Add post ID to query
+			if ( !!$p->id ) {
+				//Create array for ID (support multiple URIs per ID)
+				if ( !isset($pids[$p->id]) ) {
+					$pids[$p->id] = array();
+				}
+				//Add URI to ID
+				$pids[$p->id][] = $uri;
+			}
+		}
+		unset($uri, $p);
+		
+		//Retrieve attachment properties
+		if ( !empty($pids) ) {
+			$pids_flat = array_keys($pids);
+			//Retrieve attachment post data
+			$atts = get_posts(array('post_type' => 'attachment', 'include' => $pids_flat));
+			
+			//Process attachments
+			if ( $atts ) {
+				//Retrieve attachment metadata
+				$pids_flat = "('" . implode("','", $pids_flat) . "')";
+				$atts_meta = $wpdb->get_results($wpdb->prepare("SELECT `post_id`,`meta_value` FROM $wpdb->postmeta WHERE `post_id` IN $pids_flat AND `meta_key` = %s LIMIT %d", '_wp_attachment_metadata', count($atts)));
+				//Restructure metadata array by post ID
+				if ( $atts_meta ) {
+					$meta = array();
+					foreach ( $atts_meta as $att_meta ) {
+						$meta[$att_meta->post_id] = $att_meta->meta_value;
+					}
+					$atts_meta = $meta;
+					unset($meta);
+				} else {
+					$atts_meta = array();
+				}
+				$props_size = array('file', 'width', 'height');
+				$props_exclude = array('hwstring_small');
+				foreach ( $atts as $att ) {
+					//Set post data
+					$m = array();
+					//Remap post data to properties
+					foreach ( $props_map as $prop_key => $prop_source ) {
+						$m[$props->{$prop_key}] = $att->{$prop_source};
+					}
+					unset($prop_key, $prop_source);
+					
+					//Add metadata
+					if ( isset($atts_meta[$att->ID]) && ($a = unserialize($atts_meta[$att->ID])) && is_array($a) ) {
+						//Move original size into `sizes` array
+						foreach ( $props_size as $d ) {
+							if ( !isset($a[$d]) ) {
+								continue;
+							}
+							$a['sizes']['original'][$d] = $a[$d];
+							unset($a[$d]);
+						}
+
+						//Strip extraneous metadata
+						foreach ( $props_exclude as $d ) {
+							if ( isset($a[$d]) ) {
+								unset($a[$d]);
+							}
+						}
+						
+						//Merge post data & meta data
+						$m = array_merge($a, $m);
+						//Destroy worker vars
+						unset($a, $d);
+					}
+					
+					//Save attachment data (post & meta) to original object(s)
+					foreach ( $pids[$att->ID] as $uri ) {
+						$this->media_items[$uri] = (object) array_merge( (array) $m_items[$uri], $m);
+					}
+				}
+			}
+			unset($atts, $atts_meta, $m, $a, $uri, $pids, $pids_flat);
+		}
+		
+		//Build client output
+		$obj = 'View.assets';
+		$client_script[] = $this->util->extend_client_object($obj, $this->media_items);
+		return $client_script;
 	}
 
 	/*-** Media **-*/
