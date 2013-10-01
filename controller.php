@@ -72,6 +72,15 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	private $media_items_raw = array();
 	
+	/**
+	 * Validated URIs
+	 * Caches validation of parsed URIs
+	 * > Key: URI
+	 * > Value: (bool) TRUE if valid
+	 * @var array
+	 */
+	private $validated_uris = array();
+	
 	/* Widget properties */
 	
 	/**
@@ -136,6 +145,7 @@ class SLB_Lightbox extends SLB_Base {
 			//Link activation
 			add_filter('the_content', $this->m('activate_links'), $priority);
 			add_filter('get_post_galleries', $this->m('activate_galleries'), $priority);
+			$this->util->add_filter('validate_uri_regex', $this->m('validate_uri_regex_default'), 1);
 			
 			//Gallery wrapping
 			add_filter('the_content', $this->m('gallery_wrap'), 1);
@@ -439,9 +449,8 @@ class SLB_Lightbox extends SLB_Base {
 			$uri->raw = $uri->base = $uri->source = $attrs['href'];
 			
 			//Stop processing invalid links
-			if ( empty($uri->raw) //Empty
-				|| 0 === strpos($uri->raw, '#') //Anchor
-				|| $this->has_attribute($attrs, 'active', false) //Prev-processed
+			if ( !$this->validate_uri($uri->raw)
+				|| $this->has_attribute($attrs, 'active', false) //Previously-processed
 				|| in_array($this->add_prefix('off'), $attrs_legacy) //Disabled (legacy)
 				) {
 				continue;
@@ -575,6 +584,58 @@ class SLB_Lightbox extends SLB_Base {
 			$links = array_unique($links);
 		return $links;
 	}
+	
+	/**
+	 * Validate URI
+	 * Matches specified URI against internal & external regex patterns
+	 * URI is **invalid** if it matches a regex
+	 * 
+	 * @param string $uri URI to validate
+	 * @return bool TRUE if URI is valid
+	 */
+	protected function validate_uri($uri) {
+		static $patterns = null;
+		//Previously-validated URI
+		if ( isset($this->validated_uris[$uri]) )
+			return $this->validated_uris[$uri];
+
+		$valid = true;
+		//Boilerplate validation
+		if ( empty($uri) //Empty
+			|| 0 === strpos($uri, '#') //Anchor
+			)
+			$valid = false;
+
+		//Regex matching
+		if ( $valid ) {
+			//Get patterns
+			if ( is_null($patterns) ) {
+				$patterns = $this->util->apply_filters('validate_uri_regex', array());
+			}	
+			//Iterate through patterns until match found
+			foreach ( $patterns as $pattern ) {
+				if ( 1 === preg_match($pattern, $uri) ) {
+					$valid = false;
+					break;
+				}
+			}
+		}
+		
+		//Cache
+		$this->validated_uris[$uri] = $valid;
+		return $valid;
+	}
+	
+	/**
+	 * Add URI validation regex pattern
+	 * @param 
+	 */
+	public function validate_uri_regex_default($patterns) {
+		$patterns[] = '@^https?://[^/]*(wikipedia|wikimedia)\.org/wiki/file:.*$@i';
+		return $patterns;
+	} 
+	
+	/* Client */
 	
 	/**
 	 * Sets options/settings to initialize lightbox functionality on page load
@@ -1134,7 +1195,7 @@ class SLB_Lightbox extends SLB_Base {
 		if ( $a !== false ) {
 			$ret = true;
 			//Check value
-			if ( null != $value && is_scalar($value) ) {
+			if ( !is_null($value) && is_scalar($value) ) {
 				$ret = ( $a == strval($value) ) ? true : false;
 			}
 		}
