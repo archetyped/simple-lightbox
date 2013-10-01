@@ -54,17 +54,25 @@ class SLB_Themes extends SLB_Collection_Controller {
 	 * @param SLB_Themes $themes Themes controller
 	 */
 	function init_defaults($themes) {
+		$scheme = is_ssl() ? 'https' : 'http';
 		$defaults = array (
 			$this->get_default_id()		=> array (
 				'name'			=> __('Default (Light)', 'simple-lightbox'),
 				'layout'		=> $this->util->get_file_url('themes/default/layout.html'),
-				'client_script'	=> $this->util->get_file_url('themes/default/client.js'),
-				'client_style'	=> $this->util->get_file_url('themes/default/css/style.css'),
+				'scripts'		=> array (
+					array ( 'base', $this->util->get_file_url('themes/default/client.js') )
+				),
+				'styles'		=> array (
+					array ( 'base', $this->util->get_file_url('themes/default/css/style.css') )
+				),
 			),
 			$this->add_prefix('black')	=> array (
 				'name'			=> __('Default (Dark)', 'simple-lightbox'),
 				'parent'		=> $this->get_default_id(),
-				'client_style'	=> $this->util->get_file_url('themes/black/css/style.css'),
+				'styles'		=> array (
+					array ( 'font', "$scheme://fonts.googleapis.com/css?family=Yanone+Kaffeesatz" ),
+					array ( 'base', $this->util->get_file_url('themes/black/css/style.css') )
+				)
 			),
 		);
 		
