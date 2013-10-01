@@ -127,19 +127,21 @@ class SLB_Lightbox extends SLB_Base {
 	public function _hooks_init() {
 		if ( $this->is_enabled() ) {
 			$priority = $this->util->priority('low');
-			/* Client-side */
+			
 			//Init lightbox
 			add_action('wp_footer', $this->m('client_footer'), $priority);
 			$this->util->add_action('footer_script', $this->m('client_init'), 1);
 			$this->util->add_filter('footer_script', $this->m('client_script_media'), 2);
+			
 			//Link activation
 			add_filter('the_content', $this->m('activate_links'), $priority);
 			add_filter('get_post_galleries', $this->m('activate_galleries'), $priority);
+			
 			//Gallery wrapping
 			add_filter('the_content', $this->m('gallery_wrap'), 1);
 			add_filter('the_content', $this->m('gallery_unwrap'), $priority + 1);
 			
-			/* Widgets */
+			//Widgets
 			add_filter('sidebars_widgets', $this->m('sidebars_widgets'));
 		}
 	}
@@ -420,7 +422,7 @@ class SLB_Lightbox extends SLB_Base {
 			$this->handlers = new SLB_Content_Handlers($this);
 		}
 		
-		//Iterate through links & add lightbox if necessary
+		//Iterate through and activate supported links
 		foreach ( $links as $link ) {
 			//Init vars
 			$pid = 0;
@@ -438,9 +440,9 @@ class SLB_Lightbox extends SLB_Base {
 			
 			//Stop processing invalid links
 			if ( empty($uri->raw) //Empty
-				|| 0 === strpos($uri->raw, '#') //Invalid
+				|| 0 === strpos($uri->raw, '#') //Anchor
 				|| $this->has_attribute($attrs, 'active', false) //Prev-processed
-				|| in_array($this->add_prefix('off'), $attrs_legacy) //Disabled
+				|| in_array($this->add_prefix('off'), $attrs_legacy) //Disabled (legacy)
 				) {
 				continue;
 			}
