@@ -511,10 +511,8 @@ class SLB_Lightbox extends SLB_Base {
 			if ( $this->media_item_cached($uri->base) ) {
 				$i = $this->get_cached_media_item($uri->base);
 				$type = $i->type;
-			}
-			
-			//Get handler match
-			else {
+			} else {
+				//Get handler match
 				$handler = $this->handlers->match($uri->source);
 				if ( !!$handler ) {
 					$type = $handler->get_id();
@@ -523,6 +521,8 @@ class SLB_Lightbox extends SLB_Base {
 			
 			//Stop processing if link type not valid
 			if ( !$type ) {
+				//Cache
+				$this->validated_uris[$uri->raw] = false;
 				continue;
 			}
 			
