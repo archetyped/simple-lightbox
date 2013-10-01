@@ -57,19 +57,6 @@ class SLB_Theme extends SLB_Component {
 		$this->add_assets('style', $styles);
 	}
 	
-	/* Style */
-	
-	/**
-	 * Set Theme style path
-	 * @see `add_style()`
-	 */
-	public function set_client_style($src, $deps = array()) {
-		if ( is_array($src) ) {
-			list($src, $deps) = func_get_arg(0);
-		}
-		return $this->add_style('client', $src, $deps);
-	}
-	
 	/**
 	 * Get Theme style path
 	 * @see `get_style()`
