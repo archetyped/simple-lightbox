@@ -37,24 +37,12 @@ class SLB_Theme extends SLB_Component {
 	
 	/* Assets */
 	
-	protected function add_assets($type, $assets) {
-		$m = $this->m('add_' . $type);
-		if ( !is_array($assets) || empty($assets) )
-			return false;
-		foreach ( $assets as $asset ) {
-			if ( !is_array($asset) || empty($asset) ) {
-				continue;
-			}
-			call_user_func_array($m, $asset);
-		}
-	}
-	
 	public function set_scripts($scripts) {
-		$this->add_assets('script', $scripts);
+		$this->add_files('scripts', $scripts);
 	}
 	
 	public function set_styles($styles) {
-		$this->add_assets('style', $styles);
+		$this->add_files('styles', $styles);
 	}
 	
 	/**
