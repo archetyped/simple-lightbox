@@ -35,6 +35,28 @@ class SLB_Theme extends SLB_Component {
 		return $ret;
 	}
 	
+	/* Assets */
+	
+	protected function add_assets($type, $assets) {
+		$m = $this->m('add_' . $type);
+		if ( !is_array($assets) || empty($assets) )
+			return false;
+		foreach ( $assets as $asset ) {
+			if ( !is_array($asset) || empty($asset) ) {
+				continue;
+			}
+			call_user_func_array($m, $asset);
+		}
+	}
+	
+	public function set_scripts($scripts) {
+		$this->add_assets('script', $scripts);
+	}
+	
+	public function set_styles($styles) {
+		$this->add_assets('style', $styles);
+	}
+	
 	/* Style */
 	
 	/**
