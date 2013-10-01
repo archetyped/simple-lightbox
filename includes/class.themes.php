@@ -63,6 +63,7 @@ class SLB_Themes extends SLB_Collection_Controller {
 					array ( 'base', $this->util->get_file_url('themes/default/client.js') )
 				),
 				'styles'		=> array (
+					array ( 'font', "$scheme://fonts.googleapis.com/css?family=Yanone+Kaffeesatz" ),
 					array ( 'base', $this->util->get_file_url('themes/default/css/style.css') )
 				),
 			),
@@ -70,7 +71,6 @@ class SLB_Themes extends SLB_Collection_Controller {
 				'name'			=> __('Default (Dark)', 'simple-lightbox'),
 				'parent'		=> $this->get_default_id(),
 				'styles'		=> array (
-					array ( 'font', "$scheme://fonts.googleapis.com/css?family=Yanone+Kaffeesatz" ),
 					array ( 'base', $this->util->get_file_url('themes/black/css/style.css') )
 				)
 			),
