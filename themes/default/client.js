@@ -1,7 +1,10 @@
 (function($) {
-return {
+$(document).ready(function() {
+if ( typeof SLB == 'undefined' || typeof SLB.View == 'undefined' || typeof SLB.View.extend_theme == 'undefined' )
+	return false;
+SLB.View.extend_theme('slb_default', {
 	/**
-	 * State transition handlers
+	 * Define transition handlers
 	 */
 	'transition': {
 		/**
@@ -198,5 +201,6 @@ return {
 		}
 		return m;
 	}
-};
+});
+});
 })(jQuery);
