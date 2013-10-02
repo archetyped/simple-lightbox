@@ -138,7 +138,7 @@ class SLB_Lightbox extends SLB_Base {
 			$priority = $this->util->priority('low');
 			
 			//Init lightbox
-			add_action('wp_footer', $this->m('client_footer'), $priority);
+			add_action('wp_footer', $this->m('client_footer'));
 			$this->util->add_action('footer_script', $this->m('client_init'), 1);
 			$this->util->add_filter('footer_script', $this->m('client_script_media'), 2);
 			
@@ -668,11 +668,11 @@ class SLB_Lightbox extends SLB_Base {
 		//Build client output
 		
 		echo '<!-- SLB -->' . PHP_EOL;
-		$this->util->do_action('footer');
 		$client_script = $this->util->apply_filters('footer_script', array());
 		if ( !empty($client_script) ) {
 			echo $this->util->build_script_element($client_script, 'footer', true, true);
 		}
+		$this->util->do_action('footer');
 		echo PHP_EOL . '<!-- /SLB -->' . PHP_EOL;
 	}
 	
