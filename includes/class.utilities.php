@@ -100,29 +100,41 @@ class SLB_Utilities {
 	
 	/**
 	 * Check if a string is prefixed
-	 * @param string $text Text to check for prefix
+	 * @param string|array $text Text to check for prefix
 	 * @param string $sep (optional) Separator used
 	 */
 	function has_prefix($text, $sep = null) {
+		if ( empty($text) )
+			return false;
+		if ( !is_array($text) )
+			$text = array($text);
+		$text = array_values($text);
+		$text = $text[0];
 		return ( !empty($text) && stripos($text, $this->get_prefix($sep)) === 0 );
 	}
 	
 	/**
 	 * Prepend plugin prefix to some text
-	 * @param string $text Text to add to prefix
+	 * @param string|array $text Text to add to prefix
 	 * @param string $sep (optional) Text used to separate prefix and text
 	 * @param bool $once (optional) Whether to add prefix to text that already contains a prefix or not
 	 * @return string Text with prefix prepended
 	 */
 	function add_prefix($text, $sep = '_', $once = true) {
-		if ( $once && $this->has_prefix($text, $sep) )
-			return $text;
-		return $this->get_prefix($sep) . $text;
+		//Normalize data type (array)
+		if ( empty($text) )
+			$text = array('');
+		if ( !is_array($text) )
+			$text = array($text);
+		//Add prefix (if necessary)
+		if ( !$once || ( $once && !$this->has_prefix($text, $sep) ) )
+			array_unshift($text, $this->get_prefix());
+		return implode($sep, $text);
 	}
 	
 	/**
 	 * Prepend uppercased plugin prefix to some text
-	 * @param string $text Text to add to prefix
+	 * @param string|array $text Text to add to prefix
 	 * @param string $sep (optional) Text used to separate prefix and text
 	 * @param bool $once (optional) Whether to add prefix to text that already contains a prefix or not
 	 * @return string Text with prefix prepended
