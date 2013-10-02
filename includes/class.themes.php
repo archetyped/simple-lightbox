@@ -28,8 +28,10 @@ class SLB_Themes extends SLB_Collection_Controller {
 		//Register themes
 		$this->util->add_action('init', $this->m('init_defaults'), 1);
 		
+		$this->util->add_action('footer', $this->m('client_output'), 1, 0, false);
+		
 		//Client output
-		$this->util->add_action('footer_script', $this->m('client_output'), $this->util->priority('client_footer_output'), 1, false);
+		$this->util->add_filter('footer_script', $this->m('client_output_script'), $this->util->priority('client_footer_output'), 1, false);
 	}
 	
 	protected function _options() {
@@ -60,7 +62,7 @@ class SLB_Themes extends SLB_Collection_Controller {
 				'name'			=> __('Default (Light)', 'simple-lightbox'),
 				'layout'		=> $this->util->get_file_url('themes/default/layout.html'),
 				'scripts'		=> array (
-					array ( 'base', $this->util->get_file_url('themes/default/client.js') )
+					array ( 'base', $this->util->get_file_url('themes/default/client.js') ),
 				),
 				'styles'		=> array (
 					array ( 'font', "$scheme://fonts.googleapis.com/css?family=Yanone+Kaffeesatz" ),
@@ -137,17 +139,29 @@ class SLB_Themes extends SLB_Collection_Controller {
 	/* Output */
 	
 	/**
-	 * Client output
+	 * Build client output
+	 */
+	public function client_output() {
+		//Process active theme
+		$thm = $this->get_selected();
+		
+		//Get theme ancestors
+		$thms = array_reverse($thm->get_ancestors());
+		$thms[] = $thm;
+		
+		foreach ( $thms as $thm ) {
+			//Load files
+			$thm->enqueue_client_files();
+		}
+	}
+	
+	/**
+	 * Client output script
 	 * 
 	 * @param array $commands Client script commands
 	 * @return array Modified script commands
 	 */
-	public function client_output($commands) {
-		//Stop if not enabled
-		if ( !$this->has_parent() || !$this->get_parent()->is_enabled() ) {
-			return $commands;
-		}
-		
+	public function client_output_script($commands) {
 		//Theme
 		/**
 		 * @var SLB_Theme
