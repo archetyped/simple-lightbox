@@ -714,40 +714,8 @@ var View = {
 			dfr_layout.resolve();
 		}
 		
-		//Attributes (external)
-		var prop_script = 'client_script';
-		var dfr_script = $.Deferred();
-		if ( prop_script in model && this.util.is_string(model[prop_script]) ) {
-			//Retrieve client script
-			$.get(model[prop_script]).always(function(data) {
-				var r = null;
-				try {
-					eval('r = ' + data);
-				} catch (e) {}
-				if ( t.util.is_obj(r) ) {
-					//Add attributes to model
-					$.extend(model, r);
-				}
-				dfr_script.resolve();
-			});
-		} else {
-			dfr_script.resolve();
-		}
-		
-		//Styles
-		var prop_style = 'client_style';
-		if ( prop_style in model && this.util.is_string(model[prop_style]) ) {
-			//Add stylesheet to document
-			$('<link />', {
-				'id': 'theme_style_' + model.id,
-				'href': model[prop_style],
-				'type': 'text/css',
-				'rel': 'stylesheet'
-			}).appendTo('body');
-		}
-		
 		//Complete loading when all components loaded
-		$.when(dfr_layout, dfr_script).always(function() {
+		$.when(dfr_layout).always(function() {
 			dfr.resolve();
 		});
 		//Add theme model
@@ -756,29 +724,26 @@ var View = {
 	},
 	
 	/**
-	 * Update theme model
+	 * Extend theme model
 	 * @param string id Theme to update
-	 * @param obj attr Variable number of attribute objects to add to model
+	 * @param obj attr Attributes to add to theme model
+	 * @return obj Theme model
 	 */
-	update_theme: function(id, attr) {
+	extend_theme: function(id, attr) {
+		//Validate
+		if ( !this.util.is_string(id) || !this.util.is_obj(attr) )
+			return false;
+		//Retrieve model
 		var model = this.get_theme_model(id);
-		var args = Array.prototype.slice.call(arguments);
+		//Fallback: Create new theme
 		if ( this.util.is_empty(model) ) {
-			model = this.add_model.apply(this, args);
-		} else {
-			//Process attributes
-			args.shift();
-			var attrs = [];
-			var t = this;
-			$.each(args, function(idx, arg) {
-				if ( t.util.is_obj(arg) ) {
-					attrs.push(arg);
-				}
-			});
-			//Merge attributes into model
-			attrs.unshift(model);
-			$.extend.apply($, attrs);
+			var args = Array.prototype.slice.call(arguments);
+			model = this.add_theme.apply(this, args);
+			return model;
 		}
+		
+		//Merge attributes into model
+		$.extend(model, attr);
 		return model;
 	},
 	
