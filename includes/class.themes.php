@@ -57,10 +57,22 @@ class SLB_Themes extends SLB_Collection_Controller {
 	 */
 	function init_defaults($themes) {
 		$scheme = is_ssl() ? 'https' : 'http';
+		$baseline = $this->add_prefix('baseline');
 		$defaults = array (
+			$baseline					=> array (
+				'name'			=> __('Baseline', 'simple-lightbox'),
+				'shadow'		=> true,
+				'layout'		=> $this->util->get_file_url('themes/baseline/layout.html'),
+				'scripts'		=> array (
+					array ( 'base', $this->util->get_file_url('themes/baseline/client.js') ),
+				),
+				'styles'		=> array (
+					array ( 'base', $this->util->get_file_url('themes/baseline/css/style.css') )
+				),
+			),
 			$this->get_default_id()		=> array (
 				'name'			=> __('Default (Light)', 'simple-lightbox'),
-				'layout'		=> $this->util->get_file_url('themes/default/layout.html'),
+				'parent'		=> $baseline,
 				'scripts'		=> array (
 					array ( 'base', $this->util->get_file_url('themes/default/client.js') ),
 				),
