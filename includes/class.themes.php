@@ -163,9 +163,6 @@ class SLB_Themes extends SLB_Collection_Controller {
 	 */
 	public function client_output_script($commands) {
 		//Theme
-		/**
-		 * @var SLB_Theme
-		 */
 		$thm = $this->get_selected();
 
 		//Process theme ancestors
@@ -193,16 +190,6 @@ class SLB_Themes extends SLB_Collection_Controller {
 			$uri = $thm->get_layout('uri');
 			if ( !empty($uri) ) {
 				$thm_props['layout_uri'] = $uri;
-			}
-			//Script
-			$script = $thm->get_client_script('uri');
-			if ( !empty($script) ) {
-				$thm_props['client_script'] = $script;
-			}
-			//Style
-			$style = $thm->get_client_style('uri');
-			if ( !empty($style) ) {
-				$thm_props['client_style'] = $style;
 			}
 			//Add properties to parameters
 			$params[] = json_encode($thm_props);
