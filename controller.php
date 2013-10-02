@@ -1195,8 +1195,14 @@ class SLB_Lightbox extends SLB_Base {
 		if ( $a !== false ) {
 			$ret = true;
 			//Check value
-			if ( !is_null($value) && is_scalar($value) ) {
-				$ret = ( $a == strval($value) ) ? true : false;
+			if ( !is_null($value) ) {
+				if ( is_string($value) ) {
+					$ret = ( $a == strval($value) ) ? true : false;
+				} elseif ( is_bool($value) ) {
+					$ret = ( !!$a == $value ) ? true : false;
+				} else {
+					$ret = false;
+				}
 			}
 		}
 		return $ret;
