@@ -57,10 +57,22 @@ class SLB_Themes extends SLB_Collection_Controller {
 	 */
 	function init_defaults($themes) {
 		$scheme = is_ssl() ? 'https' : 'http';
+		$baseline = $this->add_prefix('baseline');
 		$defaults = array (
+			$baseline					=> array (
+				'name'			=> __('Baseline', 'simple-lightbox'),
+				'public'		=> false,
+				'layout'		=> $this->util->get_file_url('themes/baseline/layout.html'),
+				'scripts'		=> array (
+					array ( 'base', $this->util->get_file_url('themes/baseline/client.js') ),
+				),
+				'styles'		=> array (
+					array ( 'base', $this->util->get_file_url('themes/baseline/css/style.css') )
+				),
+			),
 			$this->get_default_id()		=> array (
 				'name'			=> __('Default (Light)', 'simple-lightbox'),
-				'layout'		=> $this->util->get_file_url('themes/default/layout.html'),
+				'parent'		=> $baseline,
 				'scripts'		=> array (
 					array ( 'base', $this->util->get_file_url('themes/default/client.js') ),
 				),
@@ -97,7 +109,7 @@ class SLB_Themes extends SLB_Collection_Controller {
 		//Prepare parent
 		if ( isset($props['parent']) && !($props['parent'] instanceof $this->item_type) ) {
 			$pid = $props['parent'];
-			$items = $this->get();
+			$items = $this->get(array('include_private' => true));
 			if ( isset($items[$pid]) ) {
 				$props['parent'] = $items[$pid];
 			}
@@ -105,6 +117,46 @@ class SLB_Themes extends SLB_Collection_Controller {
 		$o = ( is_string($id) ) ? new $this->item_type($id, $props) : $id;
 		//Add to collection
 		return parent::add($o);
+	}
+	
+	/**
+	 * Get themes
+	 * @param array $args (optional) Arguments
+	 * @return array Themes
+	 */
+	public function get($args = null) {
+		//Normalize arguments
+		$args_default = array(
+			'include_public'	=> true,
+			'include_private'	=> false,
+		);
+		$r = wp_parse_args($args, $args_default);
+		$r['include_public'] = !!$r['include_public'];
+		$r['include_private'] = !!$r['include_private'];
+		
+		$items = parent::get($args);
+		
+		if ( empty($items) )
+			return $items;
+		
+		/* Process custom arguments */
+
+		//Filter
+		$items_exclude = array();
+		//Identify excluded themes
+		$filter_props = array('include_public' => true, 'include_private' => false);
+		foreach ( $filter_props as $filter_prop => $filter_value ) {
+			if ( !$r[ $filter_prop ] ) {
+				foreach ( $items as $id => $item ) {
+					if ( $item->get_public() == $filter_value ) {
+						$items_exclude[] = $id;
+					}
+				}
+			}
+		}
+		//Filter themes from collection
+		$items = array_diff_key($items, array_fill_keys($items_exclude, null));
+		return $items;
 	}
 
 	/* Helpers */

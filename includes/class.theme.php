@@ -11,6 +11,12 @@ class SLB_Theme extends SLB_Component {
 	
 	protected $props_required = array('name');
 	
+	/**
+	 * Public flag
+	 * @var bool
+	 */
+	protected $public = true;
+	
 	/* Get/Set */
 	
 	/**
@@ -33,6 +39,22 @@ class SLB_Theme extends SLB_Component {
 			$thm = $par;
 		}
 		return $ret;
+	}
+	
+	/**
+	 * Set public flag
+	 * @param bool $public
+	 */
+	public function set_public($public) {
+		$this->public = !!$public;
+	}
+	
+	/**
+	 * Get privacy state
+	 * @return bool
+	 */
+	public function get_public() {
+		return !!$this->public;
 	}
 	
 	/* Assets */
