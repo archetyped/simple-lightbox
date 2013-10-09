@@ -68,8 +68,8 @@ SLB.View.extend_theme('slb_default', {
 				var lanim = {opacity: 0, top: $(document).scrollTop() + ( $(window).height() / 2 )},
 					canim = {width: 0, height: 0};
 				//Shrink & fade out viewer
-				var pos = l.animate(lanim).promise();
-				var size = ( $.isEmptyObject(canim) ) ? true : c.animate(canim).promise();
+				var pos = l.animate(lanim, 'fast').promise();
+				var size = ( $.isEmptyObject(canim) ) ? true : c.animate(canim, 'fast').promise();
 				$.when(pos, size).done(function() {
 					//Fade out overlay
 					v.get_overlay().fadeOut(function() {
@@ -111,9 +111,9 @@ SLB.View.extend_theme('slb_default', {
 			var props = {height: 0};
 			if ( document.documentElement.clientWidth > 480 ) {
 				//Hide details
-				det.animate(props, 'slow');
+				det.css(props);
 				//Hide content
-				cont.fadeOut();
+				cont.hide();
 			} else {
 				det.css(props);
 				cont.hide();
@@ -151,8 +151,8 @@ SLB.View.extend_theme('slb_default', {
 				}
 				pos.top = pos.top || 0;
 				//Resize container
-				pos = l.animate(pos).promise();
-				dims = c.animate(dims).promise();
+				pos = l.animate(pos, 'fast').promise();
+				dims = c.animate(dims, 'fast').promise();
 				$.when(pos, dims).done(function() {
 					//Hide loading indicator
 					loader.fadeOut('fast', function() {
