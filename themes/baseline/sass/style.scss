@@ -4,11 +4,6 @@
 
 //Variables
 
-$nav_width: 25px;
-$nav_height: 33px;
-$ui_controls_width: 25px;
-$ui_controls_height: 25px; 
-
 //Mixins
 
 @mixin box-sizing-border {
@@ -59,7 +54,6 @@ $ui_controls_height: 25px;
 			@include box-sizing-border;
 			z-index: 2;
 			position: absolute;
-			top: 20px; 
 			width: 100%;
 			text-align: center;
 		}
@@ -93,7 +87,6 @@ $ui_controls_height: 25px;
 			min-width: 31px;
 			min-height: 31px;
 			text-align: center;
-			text-indent: -2000em;
 			line-height: 0;
 			display: none;
 		}
@@ -104,59 +97,27 @@ $ui_controls_height: 25px;
 		
 		/* UI */
 		
-		/* Navigation */
-		%ui_nav {
-			position: absolute;
-			top: 0px;
-			height: 90%;
-			width: 45%;
-			min-width: $nav_width;
-			min-height: $nav_height;
-			margin-left: 4px;
-			text-indent: -2000em;
-		}
-		
-		.slb_next .slb_template_tag {
-			right: 4px;
-		}
-		
-		.slb_prev, .slb_next {
-			.slb_template_tag {
-				@extend %ui_nav;
-			}
-		}
-		
 		/* Content */
 		.slb_content {
-			min-height: $nav_height + $ui_controls_height;
-			min-width: $nav_width * 2;
 			position: relative;
 		}
 		
 		.slb_details {
 			margin: 0 auto;
-			line-height: 1.4em;
 			text-align: left;
-			overflow: hidden;
-			position: relative;
+			
 			.inner {
 				display: table;
 				width: 100%;
 			}
 			.slb_data {
 				display: table-caption;
-				caption-side: bottom;
 			}
 		}
 		
-		.slb_template_tag_item_content * {
+		.slb_template_tag_item_content > * {
 			width: 100%;
 			height: 100%;
-		}
-		
-		.slb_data_desc {
-			display: block;
-			margin-top: 0.5em;
 		}
 		
 		/* Single */
@@ -209,11 +170,6 @@ $ui_controls_height: 25px;
 						height: auto;
 					}
 				}
-			}
-			
-			%ui_nav {
-				top: 17%;
-				height: 79%;
 			}
 		}
 	}
