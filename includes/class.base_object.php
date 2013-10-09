@@ -234,6 +234,9 @@ class SLB_Base_Object extends SLB_Base {
 				case 'object':
 					$ret = (object) $ret;
 					break;
+				case 'contents':
+					$ret = file_get_contents($ret['uri']);
+					break;
 			}
 		}
 		return $ret;
