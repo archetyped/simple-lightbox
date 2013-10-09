@@ -1,22 +1,22 @@
 <div class="slb_container">
 	<div class="slb_content">
 		{{item.content}}
-		<span class="slb_nav">
-			<div class="slb_prev">
+		<div class="slb_nav">
+			<span class="slb_prev">
 				{{ui.nav_prev}}
-			</div>
-			<div class="slb_next">
+			</span>
+			<span class="slb_next">
 				{{ui.nav_next}}
-			</div>
-		</span>
-		<span class="slb_controls">
-			<div class="slb_close">
+			</span>
+		</div>
+		<div class="slb_controls">
+			<span class="slb_close">
 				{{ui.close}}
-			</div>
-			<div class="slb_slideshow">
+			</span>
+			<span class="slb_slideshow">
 				{{ui.slideshow_control}}
-			</div>
-		</span>
+			</span>
+		</div>
 		<div class="slb_loading">
 			{{ui.loading}}
 		</div>
@@ -31,10 +31,18 @@
 					<span class="slb_group_status">
 						{{ui.group_status}}
 					</span>
-					<span class="slb_data_desc">
+					<div class="slb_data_desc">
 						{{item.description}}
-					</span>
+					</div>
 				</div>
+			</div>
+			<div class="slb_nav">
+				<span class="slb_prev">
+					{{ui.nav_prev}}
+				</span>
+				<span class="slb_next">
+					{{ui.nav_next}}
+				</span>
 			</div>
 		</div>
 	</div>
