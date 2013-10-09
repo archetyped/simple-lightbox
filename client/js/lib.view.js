@@ -697,27 +697,8 @@ var View = {
 			model.parent = this.get_theme_model(model.parent);
 		}
 		
-		/* Process attributes */
-		
-		//Layout
-		var prop_layout = 'layout_uri';
-		var dfr_layout = $.Deferred();
-		if ( prop_layout in model && this.util.is_string(model[prop_layout]) ) {
-			$.get(model[prop_layout]).always(function(data) {
-				//Set layout (raw) attribute
-				if ( t.util.is_string(data) ) {
-					model['layout_raw'] = data;
-				}
-				dfr_layout.resolve();
-			});
-		} else {
-			dfr_layout.resolve();
-		}
-		
 		//Complete loading when all components loaded
-		$.when(dfr_layout).always(function() {
-			dfr.resolve();
-		});
+		dfr.resolve();
 		//Add theme model
 		this.Theme.prototype._models[id] = model;
 		return model;

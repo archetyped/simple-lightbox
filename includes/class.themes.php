@@ -239,9 +239,12 @@ class SLB_Themes extends SLB_Collection_Controller {
 			);
 			/* Optional properties */
 			//Layout
-			$uri = $thm->get_layout('uri');
-			if ( !empty($uri) ) {
-				$thm_props['layout_uri'] = $uri;
+			$layout = $thm->get_layout('contents');
+			if ( !empty($layout) ) {
+				//Format
+				$layout = str_replace(array("\n", "\r", "\t"), '', $layout);
+				//Save
+				$thm_props['layout_raw'] = $layout;
 			}
 			//Add properties to parameters
 			$params[] = json_encode($thm_props);
