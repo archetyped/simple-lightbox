@@ -57,16 +57,6 @@ class SLB_Theme extends SLB_Component {
 		return !!$this->public;
 	}
 	
-	/* Assets */
-	
-	/**
-	 * Get Theme style path
-	 * @see `get_style()`
-	 */
-	public function get_client_style($format = null) {
-		return $this->get_style('client', $format);
-	}
-	
 	/* Templates */
 	
 	/**

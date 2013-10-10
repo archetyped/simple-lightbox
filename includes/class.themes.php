@@ -28,9 +28,8 @@ class SLB_Themes extends SLB_Collection_Controller {
 		//Register themes
 		$this->util->add_action('init', $this->m('init_defaults'), 1);
 		
-		$this->util->add_action('footer', $this->m('client_output'), 1, 0, false);
-		
 		//Client output
+		$this->util->add_action('footer', $this->m('client_output'), 1, 0, false);
 		$this->util->add_filter('footer_script', $this->m('client_output_script'), $this->util->priority('client_footer_output'), 1, false);
 	}
 	
@@ -221,7 +220,6 @@ class SLB_Themes extends SLB_Collection_Controller {
 		$thms = array_reverse($thm->get_ancestors());
 		$thms[] = $thm;
 		
-		$id_fmt = 'extend_theme_%s';
 		$out = array();
 		$out[] = '/* Themes */';
 		$code = array();
