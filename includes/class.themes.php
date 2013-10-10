@@ -221,7 +221,7 @@ class SLB_Themes extends SLB_Collection_Controller {
 		$thms = array_reverse($thm->get_ancestors());
 		$thms[] = $thm;
 		
-		$id_fmt = 'add_theme_%s';
+		$id_fmt = 'extend_theme_%s';
 		$out = array();
 		$out[] = '/* Themes */';
 		$code = array();
@@ -250,7 +250,7 @@ class SLB_Themes extends SLB_Collection_Controller {
 			$params[] = json_encode($thm_props);
 			
 			//Add theme to client
-			$code[] = $this->util->call_client_method('View.add_theme', $params, false);
+			$code[] = $this->util->call_client_method('View.extend_theme', $params, false);
 		}
 
 		$out[] = implode('', $code);
