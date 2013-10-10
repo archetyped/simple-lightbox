@@ -32,8 +32,7 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 	protected function _hooks() {
 		parent::_hooks();
 		$this->util->add_action('init', $this->m('init_defaults'));
-		
-		$this->util->add_action('footer_script', $this->m('client_output'), $this->util->priority('client_footer_output'), 1, false);
+		$this->util->add_action('footer', $this->m('client_output'), 1, 0, false);
 	}
 	
 	/* Collection Management */
@@ -175,17 +174,19 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 	
 	/**
 	 * Initialize default handlers
-	 * @param SLB_Content_Handlers $controller Handlers controller
+	 * @param SLB_Content_Handlers $handlers Handlers controller
 	 */
-	public function init_defaults($controller) {
-		$handlers = array (
+	public function init_defaults($handlers) {
+		$defaults = array (
 			'image'		=> array (
 				'match'			=> $this->m('match_image'),
-				'client_script'	=> $this->util->get_file_url('content-handlers/image/handler.image.js'),
-			),
+				'scripts'		=> array (
+					array ( 'base', $this->util->get_file_url('content-handlers/image/handler.image.js') ),
+				)
+			)
 		);
-		foreach ( $handlers as $id => $props ) {
-			$controller->add($id, $props);
+		foreach ( $defaults as $id => $props ) {
+			$handlers->add($id, $props);
 		}
 	}
 	
@@ -201,31 +202,13 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 	/* Output */
 	
 	/**
-	 * Client output
-	 * 
-	 * @param array $commands Client script commands
-	 * @return array Modified script commands
+	 * Build client output
+	 * Load handler files in client
 	 */
-	public function client_output($commands) {
-		//Stop if not enabled
-		if ( !$this->has_parent() || !$this->get_parent()->is_enabled() ) {
-			return $commands;
-		}
-		$id_fmt = 'add_handler_%s';
-		$out = array();
-		$out[] = '/* Content Handlers */';
-		$code = array();
-		//Load matched handlers
+	public function client_output() {
+		//Get handlers for current request
 		foreach ( $this->request_matches as $handler ) {
-			//Define
-			$params = array(
-				sprintf("'%s'", $handler->get_id()),
-				sprintf("'%s'", $handler->get_client_script('uri')),
-			);
-			$code[] = $this->util->call_client_method('View.add_content_handler',  $params, false);
+			$handler->enqueue_client_files();
 		}
-		$out[] = implode('', $code);
-		$commands[] = implode(PHP_EOL, $out);
-		return $commands;
 	}
 }

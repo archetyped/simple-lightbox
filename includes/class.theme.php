@@ -59,68 +59,12 @@ class SLB_Theme extends SLB_Component {
 	
 	/* Assets */
 	
-	public function set_scripts($scripts) {
-		$this->add_files('scripts', $scripts);
-	}
-	
-	public function set_styles($styles) {
-		$this->add_files('styles', $styles);
-	}
-	
 	/**
 	 * Get Theme style path
 	 * @see `get_style()`
 	 */
 	public function get_client_style($format = null) {
 		return $this->get_style('client', $format);
-	}
-	
-	/**
-	 * Get formatted handle for file
-	 * @param string $base_handle Base handle to format
-	 * @return string Formatted handle
-	 */
-	public function get_handle($base_handle) {
-		return $this->add_prefix( array('theme', $this->get_id(), $base_handle), '-');
-	}
-	
-	/**
-	 * Enqueue files in client
-	 * 
-	 * @param string $type (optional) Type of file to load (singular) (Default: All client file types)
-	 */
-	public function enqueue_client_files($type = null) {
-		if ( empty($type) ) {
-			$type = array ( 'script', 'style');
-		}
-		if ( !is_array($type) ) {
-			$type = array ( $type );
-		}
-		foreach ( $type as $t ) {
-			$m = (object) array (
-				'get'		=> $this->m('get_' . $t . 's'),
-				'enqueue'	=> 'wp_enqueue_' . $t,
-			);
-			$v = $this->util->get_plugin_version();
-			$files = call_user_func($m->get);
-			$param_final = ( 'script' == $t ) ? true : 'all';
-			foreach ( $files as $f ) {
-				$f = (object) $f;
-				//Format handle
-				$handle = $this->get_handle($f->handle);
-				
-				//Format dependencies
-				$deps = array();
-				foreach ( $f->deps as $dep ) {
-					if ( $this->util->has_wrapper($dep) ) {
-						$dep = $this->get_handle( $this->util->remove_wrapper($dep) );
-					}
-					$deps[] = $dep;
-				}
-				call_user_func($m->enqueue, $handle, $f->uri, $deps, $v, $param_final);
-			}
-			unset($files, $f, $param_final, $handle, $deps, $dep);
-		}
 	}
 	
 	/* Templates */
