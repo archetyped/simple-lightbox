@@ -1,5 +1,8 @@
 (function($) {
-return {
+$(document).ready(function() {
+if ( typeof SLB == 'undefined' || typeof SLB.View == 'undefined' || typeof SLB.View.extend_template_tag_handler == 'undefined' )
+	return false;
+SLB.View.extend_template_tag_handler('item', {
 	render: function(item, tag) {
 		var dfr = $.Deferred();
 		var m = 'get_' + tag.get_prop();
@@ -13,5 +16,6 @@ return {
 		}
 		return dfr.promise();
 	}
-}
+});
+});
 })(jQuery);
