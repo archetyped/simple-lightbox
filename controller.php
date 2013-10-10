@@ -23,7 +23,7 @@ class SLB_Lightbox extends SLB_Base {
 		'view'			=> array (
 			'file'		=> 'client/js/lib.view.js',
 			'deps'		=> array('jquery', '[core]'),
-			'context'	=> array( array('public', '[is_enabled]') ),
+			'context'	=> array( array('public', '[is_request_valid]') ),
 			'in_footer'	=> true,
 		),
 	);
@@ -638,6 +638,16 @@ class SLB_Lightbox extends SLB_Base {
 	/* Client */
 	
 	/**
+	 * Checks if output should be loaded in current request
+	 * @uses `is_enabled()`
+	 * @uses `has_cached_media_items()`
+	 * @return bool TRUE if output is being loaded into client
+	 */
+	public function is_request_valid() {
+		return ( $this->is_enabled() && $this->has_cached_media_items() ) ? true : false;
+	}
+	
+	/**
 	 * Sets options/settings to initialize lightbox functionality on page load
 	 * @return void
 	 */
@@ -665,15 +675,24 @@ class SLB_Lightbox extends SLB_Base {
 		if ( !$this->has_cached_media_items() )
 			return false;
 		
+		//Set up hooks
+		add_action('wp_print_footer_scripts', $this->m('client_footer_script'));
+		
 		//Build client output
 		
 		echo '<!-- SLB -->' . PHP_EOL;
+		$this->util->do_action('footer');
+		echo PHP_EOL . '<!-- /SLB -->' . PHP_EOL;
+	}
+	
+	/**
+	 * Output client footer scripts
+	 */
+	function client_footer_script() {
 		$client_script = $this->util->apply_filters('footer_script', array());
 		if ( !empty($client_script) ) {
 			echo $this->util->build_script_element($client_script, 'footer', true, true);
 		}
-		$this->util->do_action('footer');
-		echo PHP_EOL . '<!-- /SLB -->' . PHP_EOL;
 	}
 	
 	/**
