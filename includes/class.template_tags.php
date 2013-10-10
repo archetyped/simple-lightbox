@@ -32,8 +32,7 @@ class SLB_Template_Tags extends SLB_Collection_Controller {
 	protected function _hooks() {
 		parent::_hooks();
 		$this->util->add_action('init', $this->m('init_defaults'));
-		
-		$this->util->add_action('footer_script', $this->m('client_output'), $this->util->priority('client_footer_output'), 1, false);
+		$this->util->add_action('footer', $this->m('client_output'), 1, 0, false);
 	}
 	
 	/* Collection Management */
@@ -61,10 +60,14 @@ class SLB_Template_Tags extends SLB_Collection_Controller {
 	public function init_defaults($tags) {
 		$defaults = array (
 			'item'		=> array (
-				'client_script'	=> $this->util->get_file_url('template-tags/item/tag.item.js'),
+				'scripts'		=> array (
+					array ( 'base', $this->util->get_file_url('template-tags/item/tag.item.js') ),
+				)
 			),
 			'ui'		=> array (
-				'client_script'	=> $this->util->get_file_url('template-tags/ui/tag.ui.js'),
+				'scripts'		=> array (
+					array ( 'base', $this->util->get_file_url('template-tags/ui/tag.ui.js') ),
+				)
 			),
 		);
 		foreach ( $defaults as $id => $props ) {
@@ -75,30 +78,12 @@ class SLB_Template_Tags extends SLB_Collection_Controller {
 	/* Output */
 	
 	/**
-	 * Client output
-	 * 
-	 * @param array $commands Client script commands
-	 * @return array Modified script commands
+	 * Build client output
 	 */
-	public function client_output($commands) {
-		//Stop if not enabled
-		if ( !$this->has_parent() || !$this->get_parent()->is_enabled() ) {
-			return $commands;
-		}
-		$out = array();
-		$out[] = '/* Template Tags */';
-		$code = array();
+	public function client_output() {
 		//Load matched handlers
-		foreach ( $this->get() as $id => $tag ) {
-			//Define
-			$params = array(
-				sprintf("'%s'", $id),
-				sprintf("'%s'", $tag->get_client_script('uri')),
-			);
-			$code[] = $this->util->call_client_method('View.add_template_tag_handler',  $params, false);
+		foreach ( $this->get() as $tag ) {
+			$tag->enqueue_client_files();
 		}
-		$out[] = implode('', $code);
-		$commands[] = implode(PHP_EOL, $out);
-		return $commands;
 	}
 }
