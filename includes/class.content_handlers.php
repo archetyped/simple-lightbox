@@ -175,17 +175,19 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 	
 	/**
 	 * Initialize default handlers
-	 * @param SLB_Content_Handlers $controller Handlers controller
+	 * @param SLB_Content_Handlers $handlers Handlers controller
 	 */
-	public function init_defaults($controller) {
-		$handlers = array (
+	public function init_defaults($handlers) {
+		$defaults = array (
 			'image'		=> array (
 				'match'			=> $this->m('match_image'),
-				'client_script'	=> $this->util->get_file_url('content-handlers/image/handler.image.js'),
-			),
+				'scripts'		=> array (
+					array ( 'base', $this->util->get_file_url('content-handlers/image/handler.image.js') ),
+				)
+			)
 		);
-		foreach ( $handlers as $id => $props ) {
-			$controller->add($id, $props);
+		foreach ( $defaults as $id => $props ) {
+			$handlers->add($id, $props);
 		}
 	}
 	
