@@ -544,64 +544,27 @@ var View = {
 	},
 	
 	/**
-	 * Add Content Handler
+	 * Add/Update Content Handler
 	 * @param string id Handler ID
-	 * @param obj attributes (optional) Handler properties/methods
+	 * @param obj attr Handler attributes
+	 * @return obj|bool Handler instance (FALSE on failure)
 	 */
-	add_content_handler: function(id, attributes) {
-		//Validate
-		if ( !this.util.is_string(id) ) {
-			return false;
-		}
-		var dfr = $.Deferred();
-		var t = this;
-		
-		if ( !this.util.is_obj(attributes, false) ) {
-			//Check for URI (external loading)
-			if ( this.util.is_string(attributes) ) {
-				$.get(attributes).always(function(data, textStatus) {
-					var r = null;
-					try {
-						eval('r = ' + data);
-					} catch (e) {}
-					if ( !t.util.is_obj(r) ) {
-						r = {};
-					}
-					dfr.resolve(r);
-				});
-			} else {
-				dfr.resolve({});
-			}
-		} else {
-			dfr.resolve(attributes);
-		}
-		
-		dfr.done(function(o) {
-			//Save
-			var types = t.get_components(t.Content_Handler);
-			if ( !t.util.is_obj(types, false) ) {
-				types = {};
-			}
-			types[id] = new t.Content_Handler(id, o);
-		});
-	},
-	
-	/**
-	 * Update content handler
-	 * @param string id Handler to update
-	 * @param obj attr Variable number of attribute objects to add handlera
-	 */
-	update_content_handler: function(id, attr) {
+	extend_content_handler: function(id, attr) {
+		var hdl = false;
 		if ( !this.util.is_string(id) || !this.util.is_obj(attr) ) {
-			return false;
+			return hdl;
 		}
-		//Get existing handler
-		var h = this.get_content_handler(id);
-		if ( null == h ) {
-			return false;
+		hdl = this.get_content_handler(id);
+		//Add new content handler
+		if ( null == hdl ) {
+			var hdls = this.get_content_handlers();
+			hdls[id] = hdl = new this.Content_Handler(id, attr);
 		}
-		//Add additional attributes
-		h.set_attributes(attr);
+		//Update existing handler
+		else {
+			hdl.set_attributes(attr);
+		}
+		return hdl;
 	},
 	
 	/* Group */
