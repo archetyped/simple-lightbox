@@ -687,42 +687,27 @@ var View = {
 	},
 	
 	/**
-	 * Add Theme Tag Handler to Theme prototype
-	 * @param string id Unique ID
-	 * @param obj attrs (optional) Default tag attributes/values (or URI to attributes definition)
+	 * Add/Update Template Tag Handler
+	 * @param string id Handler ID
+	 * @param obj attr Handler attributes
+	 * @return obj|bool Handler instance (FALSE on failure)
 	 */
-	add_template_tag_handler: function(id, attributes) {
-		//Validate
-		if ( !this.util.is_string(id) ) {
-			return false;
+	extend_template_tag_handler: function(id, attr) {
+		var hdl = false;
+		if ( !this.util.is_string(id) || !this.util.is_obj(attr) ) {
+			return hdl;
 		}
-		var dfr = $.Deferred();
-		var t = this;
-		
-		if ( !this.util.is_obj(attributes, false) ) {
-			//Check for URI (external loading)
-			if ( this.util.is_string(attributes) ) {
-				$.get(attributes).always(function(data) {
-					var r = null;
-					try {
-						eval('r = ' + data);
-					} catch (e) {}
-					if ( !t.util.is_obj(r) ) {
-						r = {};
-					}
-					dfr.resolve(r);
-				});
-			} else {
-				dfr.resolve({});
-			}
-		} else {
-			dfr.resolve(attributes);
+		var hdls = this.get_template_tag_handlers(); 
+		//Add new content handler
+		if ( !this.util.in_obj(hdls, id) ) {
+			hdls[id] = hdl = new this.Template_Tag_Handler(id, attr);
 		}
-		
-		dfr.done(function(o) {
-			//Add handler
-			t.get_template_tag_handlers()[id] = new t.Template_Tag_Handler(id, o);
-		});
+		//Update existing handler
+		else {
+			hdl = hdls[id];
+			hdl.set_attributes(attr);
+		}
+		return hdl;
 	},
 	
 	/**
