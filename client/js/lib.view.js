@@ -659,13 +659,13 @@ var View = {
 	/* Theme */
 	
 	/**
-	 * Add theme
+	 * Add/Update theme
 	 * @param string name Theme name
 	 * @param obj attr Theme options
 	 * > Multiple attribute parameters are merged
 	 * @return obj Theme model
 	 */
-	add_theme: function(id, attr) {
+	extend_theme: function(id, attr) {
 		var t = this;
 		//Validate
 		if ( !this.util.is_string(id) ) {
@@ -674,57 +674,33 @@ var View = {
 		var dfr = $.Deferred();
 		this.loading.push(dfr);
 		
-		//Build attributes
-		var attrs = [{'parent': null}];
-		if ( arguments.length >= 2 ) {
-			var args = Array.prototype.slice.call(arguments, 1);
-			var t = this;
-			$.each(args, function(idx, arg) {
-				if ( t.util.is_obj(arg) ) {
-					attrs.push(arg)
-				}
-			});
+		//Get model if it already exists
+		var model = this.get_theme_model(id);
+		
+		//Create default attributes for new theme
+		if ( this.util.is_empty(model) ) {
+			//Default
+			var model = {'parent': null, 'id': id};
+			//Save theme model
+			this.Theme.prototype._models[id] = model;
 		}
 		
-		//Set ID
-		attrs.push({'id': id});
+		//Add custom attributes
+		if ( this.util.is_obj(attr) ) {
+			//Sanitize
+			if ( 'id' in attr ) {
+				delete(attr['id']);
+			}
+			$.extend(model, attr);
+		}
 		
-		//Create theme model
-		var model = $.extend.apply(null, attrs);
-		
-		//Connect to parent model
+		//Link parent model
 		if ( this.util.is_string(model.parent) ) {
 			model.parent = this.get_theme_model(model.parent);
 		}
 		
 		//Complete loading when all components loaded
 		dfr.resolve();
-		//Add theme model
-		this.Theme.prototype._models[id] = model;
-		return model;
-	},
-	
-	/**
-	 * Extend theme model
-	 * @param string id Theme to update
-	 * @param obj attr Attributes to add to theme model
-	 * @return obj Theme model
-	 */
-	extend_theme: function(id, attr) {
-		//Validate
-		if ( !this.util.is_string(id) || !this.util.is_obj(attr) )
-			return false;
-		//Retrieve model
-		var model = this.get_theme_model(id);
-		//Fallback: Create new theme
-		if ( this.util.is_empty(model) ) {
-			var args = Array.prototype.slice.call(arguments);
-			model = this.add_theme.apply(this, args);
-			return model;
-		}
-		
-		//Merge attributes into model
-		$.extend(model, attr);
 		return model;
 	},
 	
