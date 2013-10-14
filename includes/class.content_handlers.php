@@ -196,7 +196,15 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 	 * @return bool TRUE if URI is image
 	 */
 	public function match_image($uri) {
-		return ( $this->util->has_file_extension($uri, array('jpg', 'jpeg', 'jpe', 'jfif', 'jif', 'gif', 'png')) ) ? true : false;
+		//Standard
+		$match = ( $this->util->has_file_extension($uri, array('jpg', 'jpeg', 'jpe', 'jfif', 'jif', 'gif', 'png')) ) ? true : false;
+		
+		//If match not found, allow third-party matching
+		if ( !$match ) {
+			$match = $this->util->apply_filters('image_match', $match, $uri);
+		}
+		
+		return !!$match;
 	}
 	
 	/* Output */
