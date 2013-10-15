@@ -932,6 +932,8 @@ class SLB_Utilities {
 		$this->extend_client_object($ctx, true);
 	}
 	
+	/* Path */
+	
 	/**
 	 * Joins and normalizes the slashes in the paths passed to method
 	 * All forward/back slashes are converted to forward slashes
@@ -1010,9 +1012,10 @@ class SLB_Utilities {
 	 * @param string $file file name
 	 * @return string File path
 	 */
-	function get_file_path($file) {
+	function get_file_path($file, $relative = null) {
+		//Build path
 		if ( is_string($file) && '' != trim($file) ) {
-			$file = $this->normalize_path($this->get_path_base(), $file);
+			$file = $this->normalize_path($this->get_path_base($relative), $file);
 		}
 		return $file;
 	}
@@ -1031,6 +1034,15 @@ class SLB_Utilities {
 	function is_file($filename) {
 		$ext = $this->get_file_extension($filename);
 		return ( empty($ext) ) ? false : true;
+	}
+	
+	/**
+	 * Check if string is valid URI
+	 * @param string $uri String to check
+	 * @return bool TRUE if string is valid URI
+	 */
+	function is_uri($uri) {
+		return ( preg_match('|^(https?:)?//|', $uri) ) ? true : false;
 	}
 	
 	/**
@@ -1105,12 +1117,46 @@ class SLB_Utilities {
 	 * @uses normalize_path()
 	 * @return string Base path
 	 */
-	function get_path_base() {
+	function get_path_base($relative = null) {
 		static $path_base = '';
 		if ( '' == $path_base ) {
 			$path_base = $this->normalize_path(WP_PLUGIN_DIR, $this->get_plugin_base());
 		}
-		return $path_base;
+		$ret = $path_base;
+		//Make relative path
+		if ( !empty($relative) ) {
+			//Default
+			if ( is_bool($relative) ) {
+				$relative = ABSPATH;
+			}
+			//Custom
+			if ( is_string($relative) ) {
+				$ret = $this->get_relative_path($ret, $relative);
+			}
+		}
+		return $ret;
+	}
+	
+	/**
+	 * Retrieve relative path for absolute paths
+	 * @param string $path Path to modify
+	 * @param string $relative (optional) Base path to make $path relative to (Default: Site's base path)
+	 * @return string Relative path
+	 */
+	function get_relative_path($path, $relative = true) {
+		//Default base path
+		if ( !is_string($relative) ) {
+			$relative = ABSPATH;
+		}
+		if ( !empty($relative) && !empty($path) ) {
+			$relative = $this->normalize_path($relative);
+			$path = $this->normalize_path($path);
+			//Strip base path
+			if ( strpos($path, $relative) === 0 ) {
+				$path = substr($path, strlen($relative));
+			}
+		}
+		return $path;
 	}
 	
 	/**
