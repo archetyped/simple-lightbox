@@ -181,7 +181,7 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 			'image'		=> array (
 				'match'			=> $this->m('match_image'),
 				'scripts'		=> array (
-					array ( 'base', $this->util->get_file_url('content-handlers/image/handler.image.js') ),
+					array ( 'base', $this->util->get_file_path('content-handlers/image/handler.image.js', true) ),
 				)
 			)
 		);
