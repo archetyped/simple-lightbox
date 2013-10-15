@@ -3,12 +3,13 @@
 Plugin Name: Simple Lightbox
 Plugin URI: http://archetyped.com/lab/slb-2-0rc4/
 Description: The highly customizable lightbox for WordPress
-Version: 2.0
+Version: 2.1
 Author: Archetyped
 Author URI: http://archetyped.com
+Support URI: https://github.com/archetyped/simple-lightbox/wiki/Reporting-Issues
 */
-/* 
-Copyright 2013 Solomon Marchessault (sol@archetyped.com)
+/*
+Copyright 2013 Sol Marchessault (sol@archetyped.com)
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -30,13 +31,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  * @param string $classname Class to load
  */
 function slb_autoload($classname) {
-	$prefix = 'SLB_';
+	$prefix = 'slb_';
+	$cls = strtolower($classname);
 	//Remove prefix
-	if ( 0 !== strpos($classname, $prefix) ) {
+	if ( 0 !== strpos($cls, $prefix) ) {
 		return false;
 	}
 	//Format class for filename
-	$fn = 'class.' . strtolower( substr($classname, strlen($prefix)) ) . '.php';
+	$fn = 'class.' . substr($cls, strlen($prefix)) . '.php';
 	//Build path
 	$path = dirname(__FILE__) . '/' . "includes/" . $fn;
 	//Load file
@@ -47,7 +49,7 @@ function slb_autoload($classname) {
 
 spl_autoload_register('slb_autoload');
 
-require_once 'model.php';
+require_once 'controller.php';
 
 $slb = new SLB_Lightbox();
 

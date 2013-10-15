@@ -32,8 +32,7 @@ class SLB_Template_Tags extends SLB_Collection_Controller {
 	protected function _hooks() {
 		parent::_hooks();
 		$this->util->add_action('init', $this->m('init_defaults'));
-		
-		add_action('wp_footer', $this->m('client_output'), $this->util->priority('client_footer_output'));
+		$this->util->add_action('footer', $this->m('client_output'), 1, 0, false);
 	}
 	
 	/* Collection Management */
@@ -61,10 +60,14 @@ class SLB_Template_Tags extends SLB_Collection_Controller {
 	public function init_defaults($tags) {
 		$defaults = array (
 			'item'		=> array (
-				'client_script'	=> $this->util->get_file_url('template-tags/item/tag.item.js'),
+				'scripts'		=> array (
+					array ( 'base', $this->util->get_file_path('template-tags/item/tag.item.js', true) ),
+				)
 			),
 			'ui'		=> array (
-				'client_script'	=> $this->util->get_file_url('template-tags/ui/tag.ui.js'),
+				'scripts'		=> array (
+					array ( 'base', $this->util->get_file_path('template-tags/ui/tag.ui.js', true) ),
+				)
 			),
 		);
 		foreach ( $defaults as $id => $props ) {
@@ -75,27 +78,12 @@ class SLB_Template_Tags extends SLB_Collection_Controller {
 	/* Output */
 	
 	/**
-	 * Client output
+	 * Build client output
 	 */
 	public function client_output() {
-		//Stop if not enabled
-		if ( !$this->has_parent() || !$this->get_parent()->is_enabled() ) {
-			return;
-		}
-		$out = array();
-		$out[] = '<!-- SLB-TPTG -->' . PHP_EOL;
-		$code = array();
 		//Load matched handlers
-		foreach ( $this->get() as $id => $tag ) {
-			//Define
-			$params = array(
-				sprintf("'%s'", $id),
-				sprintf("'%s'", $tag->get_client_script('uri')),
-			);
-			$code[] = $this->util->call_client_method('View.add_template_tag_handler',  $params, false);
+		foreach ( $this->get() as $tag ) {
+			$tag->enqueue_client_files();
 		}
-		$out[] = $this->util->build_script_element(implode('', $code), 'add_template_tags', true, true);
-		$out[] = '<!-- /SLB-TPTG -->' . PHP_EOL;
-		echo implode('', $out);
 	}
 }

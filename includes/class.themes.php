@@ -29,7 +29,8 @@ class SLB_Themes extends SLB_Collection_Controller {
 		$this->util->add_action('init', $this->m('init_defaults'), 1);
 		
 		//Client output
-		add_action('wp_footer', $this->m('client_output'), $this->util->priority('client_footer_output'));
+		$this->util->add_action('footer', $this->m('client_output'), 1, 0, false);
+		$this->util->add_filter('footer_script', $this->m('client_output_script'), $this->util->priority('client_footer_output'), 1, false);
 	}
 	
 	protected function _options() {
@@ -54,17 +55,38 @@ class SLB_Themes extends SLB_Collection_Controller {
 	 * @param SLB_Themes $themes Themes controller
 	 */
 	function init_defaults($themes) {
+		$scheme = is_ssl() ? 'https' : 'http';
+		$baseline = $this->add_prefix('baseline');
+		$themes_path = $this->util->get_file_path('themes', true);
 		$defaults = array (
+			$baseline					=> array (
+				'name'			=> __('Baseline', 'simple-lightbox'),
+				'public'		=> false,
+				'layout'		=> $themes_path . '/baseline/layout.html',
+				'scripts'		=> array (
+					array ( 'base', $themes_path . '/baseline/client.js' ),
+				),
+				'styles'		=> array (
+					array ( 'base', $themes_path . '/baseline/css/style.css' )
+				),
+			),
 			$this->get_default_id()		=> array (
 				'name'			=> __('Default (Light)', 'simple-lightbox'),
-				'layout'		=> $this->util->get_file_url('themes/default/layout.html'),
-				'client_script'	=> $this->util->get_file_url('themes/default/client.js'),
-				'client_style'	=> $this->util->get_file_url('themes/default/css/style.css'),
+				'parent'		=> $baseline,
+				'scripts'		=> array (
+					array ( 'base', $themes_path . '/default/client.js' ),
+				),
+				'styles'		=> array (
+					array ( 'font', "$scheme://fonts.googleapis.com/css?family=Yanone+Kaffeesatz" ),
+					array ( 'base', $themes_path . '/default/css/style.css' )
+				),
 			),
 			$this->add_prefix('black')	=> array (
 				'name'			=> __('Default (Dark)', 'simple-lightbox'),
 				'parent'		=> $this->get_default_id(),
-				'client_style'	=> $this->util->get_file_url('themes/black/css/style.css'),
+				'styles'		=> array (
+					array ( 'base', $themes_path . '/black/css/style.css' )
+				)
 			),
 		);
 		
@@ -87,7 +109,7 @@ class SLB_Themes extends SLB_Collection_Controller {
 		//Prepare parent
 		if ( isset($props['parent']) && !($props['parent'] instanceof $this->item_type) ) {
 			$pid = $props['parent'];
-			$items = $this->get();
+			$items = $this->get(array('include_private' => true));
 			if ( isset($items[$pid]) ) {
 				$props['parent'] = $items[$pid];
 			}
@@ -95,6 +117,46 @@ class SLB_Themes extends SLB_Collection_Controller {
 		$o = ( is_string($id) ) ? new $this->item_type($id, $props) : $id;
 		//Add to collection
 		return parent::add($o);
+	}
+	
+	/**
+	 * Get themes
+	 * @param array $args (optional) Arguments
+	 * @return array Themes
+	 */
+	public function get($args = null) {
+		//Normalize arguments
+		$args_default = array(
+			'include_public'	=> true,
+			'include_private'	=> false,
+		);
+		$r = wp_parse_args($args, $args_default);
+		$r['include_public'] = !!$r['include_public'];
+		$r['include_private'] = !!$r['include_private'];
+		
+		$items = parent::get($args);
+		
+		if ( empty($items) )
+			return $items;
+		
+		/* Process custom arguments */
+
+		//Filter
+		$items_exclude = array();
+		//Identify excluded themes
+		$filter_props = array('include_public' => true, 'include_private' => false);
+		foreach ( $filter_props as $filter_prop => $filter_value ) {
+			if ( !$r[ $filter_prop ] ) {
+				foreach ( $items as $id => $item ) {
+					if ( $item->get_public() == $filter_value ) {
+						$items_exclude[] = $id;
+					}
+				}
+			}
+		}
+		//Filter themes from collection
+		$items = array_diff_key($items, array_fill_keys($items_exclude, null));
+		return $items;
 	}
 
 	/* Helpers */
@@ -129,27 +191,38 @@ class SLB_Themes extends SLB_Collection_Controller {
 	/* Output */
 	
 	/**
-	 * Client output
+	 * Build client output
 	 */
 	public function client_output() {
-		//Stop if not enabled
-		if ( !$this->has_parent() || !$this->get_parent()->is_enabled() ) {
-			return;
-		}
+		//Process active theme
+		$thm = $this->get_selected();
 		
+		//Get theme ancestors
+		$thms = array_reverse($thm->get_ancestors());
+		$thms[] = $thm;
+		
+		foreach ( $thms as $thm ) {
+			//Load files
+			$thm->enqueue_client_files();
+		}
+	}
+	
+	/**
+	 * Client output script
+	 * 
+	 * @param array $commands Client script commands
+	 * @return array Modified script commands
+	 */
+	public function client_output_script($commands) {
 		//Theme
-		/**
-		 * @var SLB_Theme
-		 */
 		$thm = $this->get_selected();
 
 		//Process theme ancestors
 		$thms = array_reverse($thm->get_ancestors());
 		$thms[] = $thm;
 		
-		$id_fmt = 'add_theme_%s';
 		$out = array();
-		$out[] = '<!-- SLB-THM -->' . PHP_EOL;
+		$out[] = '/* Themes */';
 		$code = array();
 		
 		//Build output for each theme
@@ -165,30 +238,23 @@ class SLB_Themes extends SLB_Collection_Controller {
 			);
 			/* Optional properties */
 			//Layout
-			$uri = $thm->get_layout('uri');
-			if ( !empty($uri) ) {
-				$thm_props['layout_uri'] = $uri;
-			}
-			//Script
-			$script = $thm->get_client_script('uri');
-			if ( !empty($script) ) {
-				$thm_props['client_script'] = $script;
-			}
-			//Style
-			$style = $thm->get_client_style('uri');
-			if ( !empty($style) ) {
-				$thm_props['client_style'] = $style;
+			$layout = $thm->get_layout('contents');
+			if ( !empty($layout) ) {
+				//Format
+				$layout = str_replace(array("\n", "\r", "\t"), '', $layout);
+				//Save
+				$thm_props['layout_raw'] = $layout;
 			}
 			//Add properties to parameters
 			$params[] = json_encode($thm_props);
 			
 			//Add theme to client
-			$code[] = $this->util->call_client_method('View.add_theme', $params, false);
+			$code[] = $this->util->call_client_method('View.extend_theme', $params, false);
 		}
 
-		$out[] = $this->util->build_script_element(implode('', $code), 'add_themes', true, true);
-		$out[] = '<!-- /SLB-THM -->' . PHP_EOL;
-		echo implode('', $out);
+		$out[] = implode('', $code);
+		$commands[] = implode(PHP_EOL, $out);
+		return $commands;
 	}
 	
 	/* Options */

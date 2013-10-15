@@ -25,6 +25,7 @@ class SLB_Utilities {
 	private $plugin_headers = array (
 		'Name'			=> 'Plugin Name',
 		'PluginURI'		=> 'Plugin URI',
+		'SupportURI'	=> 'Support URI',
 		'Version'		=> 'Version',
 		'Description'	=> 'Description',
 		'Author'		=> 'Author',
@@ -99,29 +100,41 @@ class SLB_Utilities {
 	
 	/**
 	 * Check if a string is prefixed
-	 * @param string $text Text to check for prefix
+	 * @param string|array $text Text to check for prefix
 	 * @param string $sep (optional) Separator used
 	 */
 	function has_prefix($text, $sep = null) {
+		if ( empty($text) )
+			return false;
+		if ( !is_array($text) )
+			$text = array($text);
+		$text = array_values($text);
+		$text = $text[0];
 		return ( !empty($text) && stripos($text, $this->get_prefix($sep)) === 0 );
 	}
 	
 	/**
 	 * Prepend plugin prefix to some text
-	 * @param string $text Text to add to prefix
+	 * @param string|array $text Text to add to prefix
 	 * @param string $sep (optional) Text used to separate prefix and text
 	 * @param bool $once (optional) Whether to add prefix to text that already contains a prefix or not
 	 * @return string Text with prefix prepended
 	 */
 	function add_prefix($text, $sep = '_', $once = true) {
-		if ( $once && $this->has_prefix($text, $sep) )
-			return $text;
-		return $this->get_prefix($sep) . $text;
+		//Normalize data type (array)
+		if ( empty($text) )
+			$text = array('');
+		if ( !is_array($text) )
+			$text = array($text);
+		//Add prefix (if necessary)
+		if ( !$once || ( $once && !$this->has_prefix($text, $sep) ) )
+			array_unshift($text, $this->get_prefix());
+		return implode($sep, $text);
 	}
 	
 	/**
 	 * Prepend uppercased plugin prefix to some text
-	 * @param string $text Text to add to prefix
+	 * @param string|array $text Text to add to prefix
 	 * @param string $sep (optional) Text used to separate prefix and text
 	 * @param bool $once (optional) Whether to add prefix to text that already contains a prefix or not
 	 * @return string Text with prefix prepended
@@ -602,11 +615,17 @@ class SLB_Utilities {
 	 * @uses self::get_parent_property() to retrieve hook prefix
 	 * @uses self::add_prefix()
 	 * @param string $tag Base tag
+	 * @param bool|string $hook_prefix (optional) Secondary prefix to use for hook (Default: Use predefined hook name, FALSE: no secondary hook)
 	 * @return string Formatted hook
 	 */
-	function get_hook($tag) {
+	function get_hook($tag, $hook_prefix = true) {
 		//Hook prefix
-		$hook = $this->get_parent_property('hook_prefix', '');
+		$hook = '';
+		if ( is_bool($hook_prefix) && $hook_prefix ) {
+			$hook = $this->get_parent_property('hook_prefix', '');
+		} elseif ( is_string($hook_prefix) ) {
+			$hook = $hook_prefix;
+		}
 		if ( !empty($hook) )
 			$hook .= '_';
 		//Prefix
@@ -618,19 +637,27 @@ class SLB_Utilities {
 	 * Namespaces $tag
 	 * @uses self::get_hook()
 	 * @see do_action()
+	 * @param string|array $tag Action hook. If array, get hook prefix
 	 */
 	function do_action($tag, $arg = '') {
+		//Handle hook prefix
+		$hook_prefix = true;
+		if ( is_array($tag) ) {
+			$hook_prefix = $tag[1];
+			$tag = $tag[0];
+		}
 		$args = func_get_args();
-		$args[0] = $this->get_hook($tag);
+		$args[0] = $this->get_hook($tag, $hook_prefix);
 		return call_user_func_array('do_action', $args);
 	}
 	
 	/**
 	 * Run internal action passing arguments in array
 	 * @uses do_action_ref_array()
+	 * @param bool|string $hook_prefix (optional) Secondary prefix to use for hook (Default: Use predefined hook name, FALSE: no secondary hook)
 	 */
-	function do_action_ref_array($tag, $args) {
-		return do_action_ref_array($this->get_hook($tag), $args);
+	function do_action_ref_array($tag, $args, $hook_prefix = true) {
+		return do_action_ref_array($this->get_hook($tag, $hook_prefix), $args);
 	}
 	
 	/**
@@ -638,19 +665,27 @@ class SLB_Utilities {
 	 * Namespaces $tag
 	 * @uses self::get_hook()
 	 * @see apply_filters()
+	 * @param string|array $tag Action hook. If array, get hook prefix
 	 */
 	function apply_filters($tag, $value) {
+		//Handle hook prefix
+		$hook_prefix = true;
+		if ( is_array($tag) ) {
+			$hook_prefix = $tag[1];
+			$tag = $tag[0];
+		}
 		$args = func_get_args();
-		$args[0] = $this->get_hook($tag);
+		$args[0] = $this->get_hook($tag, $hook_prefix);
 		return call_user_func_array('apply_filters', $args);
 	}
 	
 	/**
 	 * Run internal filter passing arguments in array
 	 * @uses apply_filters_ref_array()
+	 * @param bool|string $hook_prefix (optional) Secondary prefix to use for hook (Default: Use predefined hook name, FALSE: no secondary hook)
 	 */
-	function apply_filters_ref_array($tag, $args) {
-		return apply_filters_ref_array($this->get_hook($tag), $args);	
+	function apply_filters_ref_array($tag, $args, $hook_prefix = true) {
+		return apply_filters_ref_array($this->get_hook($tag, $hook_prefix), $args);	
 	}
 	
 	/**
@@ -658,9 +693,10 @@ class SLB_Utilities {
 	 * Namespaces $tag
 	 * @uses self::get_hook()
 	 * @see add_action()
+	 * @param bool|string $hook_prefix (optional) Secondary prefix to use for hook (Default: Use predefined hook name, FALSE: no secondary hook)
 	 */
-	function add_action($tag, $function_to_add, $priority = 10, $accepted_args = 1) {
-		return add_action($this->get_hook($tag), $function_to_add, $priority, $accepted_args);
+	function add_action($tag, $function_to_add, $priority = 10, $accepted_args = 1, $hook_prefix = true) {
+		return add_action($this->get_hook($tag, $hook_prefix), $function_to_add, $priority, $accepted_args);
 	}
 	
 	/**
@@ -668,9 +704,10 @@ class SLB_Utilities {
 	 * Namespaces $tag
 	 * @uses self::get_hook()
 	 * @see add_filter()
+	 * @param bool|string $hook_prefix (optional) Secondary prefix to use for hook (Default: Use predefined hook name, FALSE: no secondary hook)
 	 */
-	function add_filter($tag, $function_to_add, $priority = 10, $accepted_args = 1) {
-		return add_filter($this->get_hook($tag), $function_to_add, $priority, $accepted_args);
+	function add_filter($tag, $function_to_add, $priority = 10, $accepted_args = 1, $hook_prefix = true) {
+		return add_filter($this->get_hook($tag, $hook_prefix), $function_to_add, $priority, $accepted_args);
 	}
 	
 	/**
@@ -678,9 +715,10 @@ class SLB_Utilities {
 	 * Namespaces $tag
 	 * @uses self::get_hook()
 	 * @uses remove_action()
+	 * @param bool|string $hook_prefix (optional) Secondary prefix to use for hook (Default: Use predefined hook name, FALSE: no secondary hook)
 	 */
-	function remove_action($tag, $function_to_remove, $priority = 10, $accepted_args = 1) {
-		return remove_action($this->get_hook($tag), $function_to_remove, $priority, $accepted_args);	
+	function remove_action($tag, $function_to_remove, $priority = 10, $accepted_args = 1, $hook_prefix = true) {
+		return remove_action($this->get_hook($tag, $hook_prefix), $function_to_remove, $priority, $accepted_args);	
 	}
 	
 	/**
@@ -688,9 +726,10 @@ class SLB_Utilities {
 	 * Namespaces $tag
 	 * @uses self::get_hook()
 	 * @uses remove_filter()
+	 * @param bool|string $hook_prefix (optional) Secondary prefix to use for hook (Default: Use predefined hook name, FALSE: no secondary hook)
 	 */
-	function remove_filter($tag, $function_to_remove, $priority = 10, $accepted_args = 1) {
-		return remove_filter($this->get_hook($tag), $function_to_remove, $priority, $accepted_args);
+	function remove_filter($tag, $function_to_remove, $priority = 10, $accepted_args = 1, $hook_prefix = true) {
+		return remove_filter($this->get_hook($tag, $hook_prefix), $function_to_remove, $priority, $accepted_args);
 	}
 
 	/* Meta */
@@ -777,36 +816,7 @@ class SLB_Utilities {
 		return '_' . $this->add_prefix($text);
 	}
 	
-	/*-** Request **-*/
-	
-	/**
-	 * Checks if the currently executing file matches specified file name
-	 * @param string $filename Filename to check for
-	 * @return bool TRUE if current page matches specified filename, FALSE otherwise
-	 */
-	function is_current_file( $filename ) {
-		return ( $filename == basename( $_SERVER['SCRIPT_NAME'] ) );
-	}
-	
-	/**
-	 * Checks whether the current page is a management page
-	 * @return bool TRUE if current page is a management page, FALSE otherwise
-	 */
-	function is_admin_management_page() {
-		return ( is_admin()
-				 && ( $this->is_current_file('edit.php')
-				 	|| ( $this->is_current_file('admin.php')
-				 		&& isset($_GET['page'])
-				 		&& strpos($_GET['page'], 'cnr') === 0 )
-				 	)
-				 );
-	}
-	
 	/* Class */
-	
-	function is_a($obj, $class_name) {
-		return ( is_object($obj) && is_a($obj, $this->add_prefix_uc($class_name)) ) ? true : false;
-	}
 	
 	/**
 	 * Retrieve name of internal class
@@ -848,6 +858,9 @@ class SLB_Utilities {
 				parse_str($_SERVER['QUERY_STRING'], $qv);
 				if ( isset($qv['page']) ) {
 					$ctx[] = $this->build_context('page', $qv['page']);
+					if ( stripos($qv['page'], $this->get_prefix()) === 0 ) {
+						$ctx[] = $this->build_context('page', $this->get_prefix());
+					}
 				}
 				//Action
 				if ( !empty($action) ) {
@@ -918,6 +931,8 @@ class SLB_Utilities {
 		$ctx->context = $this->get_context();
 		$this->extend_client_object($ctx, true);
 	}
+	
+	/* Path */
 	
 	/**
 	 * Joins and normalizes the slashes in the paths passed to method
@@ -997,9 +1012,10 @@ class SLB_Utilities {
 	 * @param string $file file name
 	 * @return string File path
 	 */
-	function get_file_path($file) {
+	function get_file_path($file, $relative = null) {
+		//Build path
 		if ( is_string($file) && '' != trim($file) ) {
-			$file = $this->normalize_path($this->get_path_base(), $file);
+			$file = $this->normalize_path($this->get_path_base($relative), $file);
 		}
 		return $file;
 	}
@@ -1018,6 +1034,15 @@ class SLB_Utilities {
 	function is_file($filename) {
 		$ext = $this->get_file_extension($filename);
 		return ( empty($ext) ) ? false : true;
+	}
+	
+	/**
+	 * Check if string is valid URI
+	 * @param string $uri String to check
+	 * @return bool TRUE if string is valid URI
+	 */
+	function is_uri($uri) {
+		return ( preg_match('|^(https?:)?//|', $uri) ) ? true : false;
 	}
 	
 	/**
@@ -1092,12 +1117,46 @@ class SLB_Utilities {
 	 * @uses normalize_path()
 	 * @return string Base path
 	 */
-	function get_path_base() {
+	function get_path_base($relative = null) {
 		static $path_base = '';
 		if ( '' == $path_base ) {
 			$path_base = $this->normalize_path(WP_PLUGIN_DIR, $this->get_plugin_base());
 		}
-		return $path_base;
+		$ret = $path_base;
+		//Make relative path
+		if ( !empty($relative) ) {
+			//Default
+			if ( is_bool($relative) ) {
+				$relative = ABSPATH;
+			}
+			//Custom
+			if ( is_string($relative) ) {
+				$ret = $this->get_relative_path($ret, $relative);
+			}
+		}
+		return $ret;
+	}
+	
+	/**
+	 * Retrieve relative path for absolute paths
+	 * @param string $path Path to modify
+	 * @param string $relative (optional) Base path to make $path relative to (Default: Site's base path)
+	 * @return string Relative path
+	 */
+	function get_relative_path($path, $relative = true) {
+		//Default base path
+		if ( !is_string($relative) ) {
+			$relative = ABSPATH;
+		}
+		if ( !empty($relative) && !empty($path) ) {
+			$relative = $this->normalize_path($relative);
+			$path = $this->normalize_path($path);
+			//Strip base path
+			if ( strpos($path, $relative) === 0 ) {
+				$path = substr($path, strlen($relative));
+			}
+		}
+		return $path;
 	}
 	
 	/**
@@ -1626,7 +1685,7 @@ class SLB_Utilities {
 	function build_script_element($content = '', $id = '', $wrap_jquery = true, $wait_doc_ready = false) {
 		//Stop processing invalid content
 		if ( is_array($content) && !empty($content) ) {
-			$content = implode(PHP_EOL, $content);	
+			$content = implode(PHP_EOL, $content);
 		}
 		if ( empty($content) || !is_string($content) ) {
 			return '';

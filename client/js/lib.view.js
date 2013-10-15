@@ -544,64 +544,27 @@ var View = {
 	},
 	
 	/**
-	 * Add Content Handler
+	 * Add/Update Content Handler
 	 * @param string id Handler ID
-	 * @param obj attributes (optional) Handler properties/methods
+	 * @param obj attr Handler attributes
+	 * @return obj|bool Handler instance (FALSE on failure)
 	 */
-	add_content_handler: function(id, attributes) {
-		//Validate
-		if ( !this.util.is_string(id) ) {
-			return false;
-		}
-		var dfr = $.Deferred();
-		var t = this;
-		
-		if ( !this.util.is_obj(attributes, false) ) {
-			//Check for URI (external loading)
-			if ( this.util.is_string(attributes) ) {
-				$.get(attributes).always(function(data, textStatus) {
-					var r = null;
-					try {
-						eval('r = ' + data);
-					} catch (e) {}
-					if ( !t.util.is_obj(r) ) {
-						r = {};
-					}
-					dfr.resolve(r);
-				});
-			} else {
-				dfr.resolve({});
-			}
-		} else {
-			dfr.resolve(attributes);
-		}
-		
-		dfr.done(function(o) {
-			//Save
-			var types = t.get_components(t.Content_Handler);
-			if ( !t.util.is_obj(types, false) ) {
-				types = {};
-			}
-			types[id] = new t.Content_Handler(id, o);
-		});
-	},
-	
-	/**
-	 * Update content handler
-	 * @param string id Handler to update
-	 * @param obj attr Variable number of attribute objects to add handlera
-	 */
-	update_content_handler: function(id, attr) {
+	extend_content_handler: function(id, attr) {
+		var hdl = false;
 		if ( !this.util.is_string(id) || !this.util.is_obj(attr) ) {
-			return false;
+			return hdl;
 		}
-		//Get existing handler
-		var h = this.get_content_handler(id);
-		if ( null == h ) {
-			return false;
+		hdl = this.get_content_handler(id);
+		//Add new content handler
+		if ( null == hdl ) {
+			var hdls = this.get_content_handlers();
+			hdls[id] = hdl = new this.Content_Handler(id, attr);
 		}
-		//Add additional attributes
-		h.set_attributes(attr);
+		//Update existing handler
+		else {
+			hdl.set_attributes(attr);
+		}
+		return hdl;
 	},
 	
 	/* Group */
@@ -659,13 +622,13 @@ var View = {
 	/* Theme */
 	
 	/**
-	 * Add theme
+	 * Add/Update theme
 	 * @param string name Theme name
 	 * @param obj attr Theme options
 	 * > Multiple attribute parameters are merged
 	 * @return obj Theme model
 	 */
-	add_theme: function(id, attr) {
+	extend_theme: function(id, attr) {
 		var t = this;
 		//Validate
 		if ( !this.util.is_string(id) ) {
@@ -674,111 +637,33 @@ var View = {
 		var dfr = $.Deferred();
 		this.loading.push(dfr);
 		
-		//Build attributes
-		var attrs = [{'parent': null}];
-		if ( arguments.length >= 2 ) {
-			var args = Array.prototype.slice.call(arguments, 1);
-			var t = this;
-			$.each(args, function(idx, arg) {
-				if ( t.util.is_obj(arg) ) {
-					attrs.push(arg)
-				}
-			});
+		//Get model if it already exists
+		var model = this.get_theme_model(id);
+		
+		//Create default attributes for new theme
+		if ( this.util.is_empty(model) ) {
+			//Default
+			var model = {'parent': null, 'id': id};
+			//Save theme model
+			this.Theme.prototype._models[id] = model;
 		}
 		
-		//Set ID
-		attrs.push({'id': id});
+		//Add custom attributes
+		if ( this.util.is_obj(attr) ) {
+			//Sanitize
+			if ( 'id' in attr ) {
+				delete(attr['id']);
+			}
+			$.extend(model, attr);
+		}
 		
-		//Create theme model
-		var model = $.extend.apply(null, attrs);
-		
-		//Connect to parent model
+		//Link parent model
 		if ( this.util.is_string(model.parent) ) {
 			model.parent = this.get_theme_model(model.parent);
 		}
 		
-		/* Process attributes */
-		
-		//Layout
-		var prop_layout = 'layout_uri';
-		var dfr_layout = $.Deferred();
-		if ( prop_layout in model && this.util.is_string(model[prop_layout]) ) {
-			$.get(model[prop_layout]).always(function(data) {
-				//Set layout (raw) attribute
-				if ( t.util.is_string(data) ) {
-					model['layout_raw'] = data;
-				}
-				dfr_layout.resolve();
-			});
-		} else {
-			dfr_layout.resolve();
-		}
-		
-		//Attributes (external)
-		var prop_script = 'client_script';
-		var dfr_script = $.Deferred();
-		if ( prop_script in model && this.util.is_string(model[prop_script]) ) {
-			//Retrieve client script
-			$.get(model[prop_script]).always(function(data) {
-				var r = null;
-				try {
-					eval('r = ' + data);
-				} catch (e) {}
-				if ( t.util.is_obj(r) ) {
-					//Add attributes to model
-					$.extend(model, r);
-				}
-				dfr_script.resolve();
-			});
-		} else {
-			dfr_script.resolve();
-		}
-		
-		//Styles
-		var prop_style = 'client_style';
-		if ( prop_style in model && this.util.is_string(model[prop_style]) ) {
-			//Add stylesheet to document
-			$('<link />', {
-				'id': 'theme_style_' + model.id,
-				'href': model[prop_style],
-				'type': 'text/css',
-				'rel': 'stylesheet'
-			}).appendTo('body');
-		}
-		
 		//Complete loading when all components loaded
-		$.when(dfr_layout, dfr_script).always(function() {
-			dfr.resolve();
-		});
-		//Add theme model
-		this.Theme.prototype._models[id] = model;
-		return model;
-	},
-	
-	/**
-	 * Update theme model
-	 * @param string id Theme to update
-	 * @param obj attr Variable number of attribute objects to add to model
-	 */
-	update_theme: function(id, attr) {
-		var model = this.get_theme_model(id);
-		var args = Array.prototype.slice.call(arguments);
-		if ( this.util.is_empty(model) ) {
-			model = this.add_model.apply(this, args);
-		} else {
-			//Process attributes
-			args.shift();
-			var attrs = [];
-			var t = this;
-			$.each(args, function(idx, arg) {
-				if ( t.util.is_obj(arg) ) {
-					attrs.push(arg);
-				}
-			});
-			//Merge attributes into model
-			attrs.unshift(model);
-			$.extend.apply($, attrs);
-		}
+		dfr.resolve();
 		return model;
 	},
 	
@@ -802,42 +687,27 @@ var View = {
 	},
 	
 	/**
-	 * Add Theme Tag Handler to Theme prototype
-	 * @param string id Unique ID
-	 * @param obj attrs (optional) Default tag attributes/values (or URI to attributes definition)
+	 * Add/Update Template Tag Handler
+	 * @param string id Handler ID
+	 * @param obj attr Handler attributes
+	 * @return obj|bool Handler instance (FALSE on failure)
 	 */
-	add_template_tag_handler: function(id, attributes) {
-		//Validate
-		if ( !this.util.is_string(id) ) {
-			return false;
+	extend_template_tag_handler: function(id, attr) {
+		var hdl = false;
+		if ( !this.util.is_string(id) || !this.util.is_obj(attr) ) {
+			return hdl;
 		}
-		var dfr = $.Deferred();
-		var t = this;
-		
-		if ( !this.util.is_obj(attributes, false) ) {
-			//Check for URI (external loading)
-			if ( this.util.is_string(attributes) ) {
-				$.get(attributes).always(function(data) {
-					var r = null;
-					try {
-						eval('r = ' + data);
-					} catch (e) {}
-					if ( !t.util.is_obj(r) ) {
-						r = {};
-					}
-					dfr.resolve(r);
-				});
-			} else {
-				dfr.resolve({});
-			}
-		} else {
-			dfr.resolve(attributes);
+		var hdls = this.get_template_tag_handlers(); 
+		//Add new content handler
+		if ( !this.util.in_obj(hdls, id) ) {
+			hdls[id] = hdl = new this.Template_Tag_Handler(id, attr);
 		}
-		
-		dfr.done(function(o) {
-			//Add handler
-			t.get_template_tag_handlers()[id] = new t.Template_Tag_Handler(id, o);
-		});
+		//Update existing handler
+		else {
+			hdl = hdls[id];
+			hdl.set_attributes(attr);
+		}
+		return hdl;
 	},
 	
 	/**

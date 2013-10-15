@@ -11,6 +11,12 @@ class SLB_Theme extends SLB_Component {
 	
 	protected $props_required = array('name');
 	
+	/**
+	 * Public flag
+	 * @var bool
+	 */
+	protected $public = true;
+	
 	/* Get/Set */
 	
 	/**
@@ -35,25 +41,20 @@ class SLB_Theme extends SLB_Component {
 		return $ret;
 	}
 	
-	/* Style */
-	
 	/**
-	 * Set Theme style path
-	 * @see `add_style()`
+	 * Set public flag
+	 * @param bool $public
 	 */
-	public function set_client_style($src, $deps = array()) {
-		if ( is_array($src) ) {
-			list($src, $deps) = func_get_arg(0);
-		}
-		return $this->add_style('client', $src, $deps);
+	public function set_public($public) {
+		$this->public = !!$public;
 	}
 	
 	/**
-	 * Get Theme style path
-	 * @see `get_style()`
+	 * Get privacy state
+	 * @return bool
 	 */
-	public function get_client_style($format = null) {
-		return $this->get_style('client', $format);
+	public function get_public() {
+		return !!$this->public;
 	}
 	
 	/* Templates */

@@ -1425,10 +1425,10 @@ class SLB_Field_Type extends SLB_Field_Base {
 					//Iterate through instances of current placeholder
 					foreach ( $instances as $instance ) {
 						//Process value based on placeholder name
-						$target_property = apply_filters($this->add_prefix('process_placeholder_' . $tag), '', $this, $instance, $layout, $data);
+						$target_property = $this->util->apply_filters(array('process_placeholder_' . $tag, false), '', $this, $instance, $layout, $data);
 						//Process value using default processors (if necessary)
 						if ( '' == $target_property ) {
-							$target_property = apply_filters($this->add_prefix('process_placeholder'), $target_property, $this, $instance, $layout, $data);
+							$target_property = $this->util->apply_filters(array('process_placeholder', false), $target_property, $this, $instance, $layout, $data);
 						}
 
 						//Clear value if value not a string
@@ -1496,8 +1496,9 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	
 	/**
 	 * Associative array of groups in collection
-	 * Key: Group name
+	 * Key: Group ID
 	 * Value: object of group properties
+	 *  > id
 	 *  > title
 	 *  > description string Group description
 	 *  > items array Items in group
@@ -1728,7 +1729,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	 */
 	function get($item, $safe_mode = false) {
 		if ( $this->has($item) ) {
-			if ( !is_object($item) || !is_a($item, $this->item_type) ) {
+			if ( !is_object($item) || !($item instanceof $this->item_type) ) {
 				if ( is_string($item) ) {
 					$item = trim($item);
 					$item =& $this->items[$item];
@@ -1890,7 +1891,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 			$grp->description = $p['description'];
 			$grp->priority = $p['priority'];
 		} else {
-			$this->groups[$id] =& $this->create_group($p['title'], $p['description'], $p['priority']);
+			$this->groups[$id] =& $this->create_group($id, $p['title'], $p['description'], $p['priority']);
 		}
 		//Add items to group (if supplied)
 		if ( !empty($items) && is_array($items) ) {
@@ -1917,11 +1918,13 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	 * @param int $priority (optional) Group priority (e.g. used to sort groups during output)
 	 * @return object Group object
 	 */
-	function &create_group($title = '', $description = '', $priority = 10) {
+	function &create_group($id = '', $title = '', $description = '', $priority = 10) {
 		//Create new group object
 		$group = new stdClass();
 		/* Set group properties */
-		
+		//Set ID
+		$id = ( is_scalar($id) ) ? trim($id) : '';
+		$group->id = $id;
 		//Set Title
 		$title = ( is_scalar($title) ) ? trim($title) : '';
 		$group->title = $title;
@@ -2156,6 +2159,35 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	}
 	
 	/**
+	 * Set build variable
+	 * @param string $key Variable name
+	 * @param mixed $val Variable value 
+	 */
+	function set_build_var($key, $val) {
+		$this->build_vars[$key] = $val;
+	}
+	
+	/**
+	 * Retrieve build variable
+	 * @param string $key Variable name
+	 * @param mixed $default Value if variable is not set
+	 * @return mixed Variable value
+	 */
+	function get_build_var($key, $default = null) {
+		return ( array_key_exists($key, $this->build_vars) ) ? $this->build_vars[$key] : $default;
+	}
+	
+	/**
+	 * Delete build variable
+	 * @param string $key Variable name to delete
+	 */
+	function delete_build_var($key) {
+		if ( array_key_exists($key, $this->build_vars) ) {
+			unset($this->build_vars[$key]);
+		}
+	}
+	
+	/**
 	 * Parses build variables prior to use
 	 * @uses this->reset_build_vars() to reset build variables for each request
 	 * @param array $build_vars Variables to use for current request
@@ -2301,10 +2333,10 @@ class SLB_Fields extends SLB_Field_Collection {
 		$this->add($span);
 		
 		//Enable plugins to modify (add, remove, etc.) field types
-		do_action_ref_array($this->add_prefix('register_fields'), array(&$this));
+		$this->util->do_action_ref_array('register_fields', array(&$this), false);
 		
 		//Signal completion of field registration
-		do_action_ref_array($this->add_prefix('fields_registered'), array(&$this));
+		$this->util->do_action_ref_array('fields_registered', array(&$this), false);
 	}
 	
 	/* Placeholder handlers */
@@ -2321,10 +2353,10 @@ class SLB_Fields extends SLB_Field_Collection {
 		$this->register_placeholder('checked', $this->m('process_placeholder_checked'));
 		
 		//Allow other code to register placeholders
-		do_action_ref_array($this->add_prefix('register_field_placeholders'), array(&$this));
+		$this->util->do_action_ref_array('register_field_placeholders', array(&$this), false);
 		
 		//Signal completion of field placeholder registration
-		do_action_ref_array($this->add_prefix('field_placeholders_registered'), array(&$this));
+		$this->util->do_action_ref_array('field_placeholders_registered', array(&$this), false);
 	}
 	
 	/**
@@ -2360,7 +2392,7 @@ class SLB_Fields extends SLB_Field_Collection {
 	 */
 	function process_placeholder_default($output, $item, $placeholder, $layout, $data) {
 		//Validate parameters before processing
-		if ( empty($output) && is_a($item, 'SLB_Field_Type') && is_array($placeholder) ) {
+		if ( empty($output) && ($item instanceof SLB_Field_Type) && is_array($placeholder) ) {
 			//Build path to replacement data
 			$output = $item->get_member_value($placeholder);
 
@@ -2387,7 +2419,7 @@ class SLB_Fields extends SLB_Field_Collection {
 					}
 					$output = implode(' ', $group_out);
 				}
-			} elseif ( is_object($output) && is_a($output, $item->base_class) ) {
+			} elseif ( is_object($output) && ($output instanceof $item->base_class) ) {
 				/* Targeted property is actually a nested item */
 				//Set caller to current item
 				$output->set_caller($item);

@@ -1,184 +1,4 @@
 <?php
-
-/**
- * Option object
- * @package Simple Lightbox
- * @subpackage Options
- * @author Archetyped
- */
-class SLB_Option extends SLB_Field {
-	
-	/* Properties */
-	
-	public $hook_prefix = 'option';
-	
-	/**
-	 * Determines whether option will be sent to client
-	 * @var bool
-	 */
-	var $in_client = false;
-	
-	/**
-	 * Child mapping
-	 * @see SLB_Field_Base::map
-	 * @var array
-	 */
-	var $map = array (
-		'default'	=> 'data',
-		'attr'		=> 'properties'
-	);
-	
-	var $property_priority = array ('id', 'data', 'parent');
-	
-	/* Init */
-	
-	/**
-	 * @see SLB_Field::__construct()
-	 * @uses parent::__construct() to initialize instance
-	 * @param $id
-	 * @param $title
-	 * @param $default
-	 */
-	function __construct($id, $title = '', $default = '') {
-		//Normalize properties
-		$args = func_get_args();
-		$defaults = array ('title' => '', 'default' => '');
-		$props = $this->make_properties($args, $defaults);
-		//Validate
-		if ( is_scalar($id) )
-			$props['id'] = $id;
-		if ( !is_string($props['title']) )
-			$props['title'] = '';
-		//Send to parent constructor
-		parent::__construct($props);
-	}
-	
-	/* Getters/Setters */
-	
-	/**
-	 * Retrieve default value for option
-	 * @return mixed Default option value
-	 */
-	function get_default($context = '') {
-		return $this->get_data($context, false);	
-	}
-			
-	/**
-	 * Sets parent based on default value
-	 */
-	function set_parent($parent = null) {
-		$p =& $this->get_parent();
-		if ( empty($parent) && empty($p) ) {
-			$parent = 'text';
-			$d = $this->get_default();
-			if ( is_bool($d) )
-				$parent = 'checkbox';
-			$parent = 'option_' . $parent;
-		} elseif ( !empty($p) && !is_object($p) ) {
-			$parent =& $p;
-		}
-		parent::set_parent($parent);
-	}
-	
-	/**
-	 * Set in_client property
-	 * @uses this::in_client
-	 * @param bool Whether or not option should be included in client output (Default: false)
-	 * @return void
-	 */
-	function set_in_client($in_client = false) {
-		$this->in_client = !!$in_client;
-	}
-	
-	/**
-	 * Determines whether option should be included in client output
-	 * @uses this::in_client
-	 * @return bool TRUE if option is included in client output
-	 */
-	function get_in_client() {
-		return $this->in_client;
-	}
-	
-	/* Formatting */
-	
-	/**
-	 * Format data as string for browser output
-	 * @see SLB_Field_Base::format()
-	 * @param mixed $value Data to format
-	 * @param string $context (optional) Current context
-	 * @return string Formatted value
-	 */
-	function format_display($value, $context = '') {
-		if ( !is_string($value) ) {
-			if ( is_bool($value) ) {
-				$value = ( $value ) ? __('Enabled', 'simple-lightbox') : __('Disabled', 'simple-lightbox');
-			}
-			elseif ( is_null($value) )
-				$value = '';
-			else
-				$value = strval($value);
-		} elseif ( empty($value) ) {
-			$value = 'empty';
-		}
-		return htmlentities($value);
-	}
-	
-	/**
-	 * Format data using same format as default value
-	 * @see SLB_Field_Base::format()
-	 * @param mixed $value Data to format
-	 * @param string $context (optional) Current context
-	 * @return mixed Formatted option value 
-	 */
-	function format_default($value, $context = '') {
-		//Get default value
-		$d = $this->get_default();
-		if ( empty($d) )
-			return $value;
-		if ( is_bool($d) )
-			$value = $this->format_bool($value);
-		elseif ( is_string($d) )
-			$value = $this->format_string($value);
-		return $value;
-	}
-	
-	/**
-	 * Format data as boolean (true/false)
-	 * @see SLB_Field_Base::format()
-	 * @param mixed $value Data to format
-	 * @param string $context (optional) Current context
-	 * @return bool Option value
-	 */
-	function format_bool($value, $context = '') {
-		if ( !is_bool($value) )
-			$value = !!$value;
-		return $value;
-	}
-	
-	/**
-	 * Format data as string
-	 * @see SLB_Field_Base::format()
-	 * @param mixed $value Data to format
-	 * @param string $context (optional) Current context
-	 * @return string Option string value
-	 */
-	function format_string($value, $context = '') {
-		if ( is_bool($value) ) {
-			$value = ( $value ) ? 'true' : 'false';
-		} 
-		elseif ( is_object($value) ) {
-			$value = get_class($value);
-		}
-		elseif ( is_array($value) ) {
-			$value = implode(' ', $value);
-		} 
-		else {
-			$value = strval($value);
-		}
-		return $value;
-	}
-}
-
 /**
  * Options collection
  * @package Simple Lightbox
@@ -233,11 +53,14 @@ class SLB_Options extends SLB_Field_Collection {
 	protected function _hooks() {
 		parent::_hooks();
 		//Register fields
-		add_action($this->add_prefix('register_fields'), $this->m('register_fields'));
+		$this->util->add_action('register_fields', $this->m('register_fields'), 10, 1, false);
 		//Set option parents
-		add_action($this->add_prefix('fields_registered'), $this->m('set_parents'));
+		$this->util->add_action('fields_registered', $this->m('set_parents'), 10, 1, false);
 		//Building
 		$this->util->add_action('build_init', $this->m('build_init'));
+		//Admin
+		$this->util->add_action('admin_page_render_content', $this->m('admin_page_render_content'), 10, 3, false);
+		$this->util->add_filter('admin_action_reset', $this->m('admin_action_reset'), 10, 3, false);
 	}
 	
 	/* Legacy/Migration */
@@ -411,30 +234,38 @@ class SLB_Options extends SLB_Field_Collection {
 	function register_fields(&$fields) {
 		//Layouts
 		$o = $this->get_field_elements();
+		$l =& $o->layout;
 		
-		$form = $o->layout->opt_pre . $o->layout->label_ref . $o->layout->field_pre . $o->layout->form . $o->layout->field_post . $o->layout->opt_post;
+		$form = implode('', array (
+			$l->opt_pre,
+			$l->label_ref,
+			$l->field_pre,
+			$l->form,
+			$l->field_post,
+			$l->opt_post
+		));
 		
 		//Text input
 		$otxt = new SLB_Field_Type('option_text', 'text');
 		$otxt->set_property('class', '{inherit} code');
 		$otxt->set_property('size', null);
 		$otxt->set_property('value', '{data context="form"}');
-		$otxt->set_layout('label', $o->layout->label);
+		$otxt->set_layout('label', $l->label);
 		$otxt->set_layout('form', $form);
 		$fields->add($otxt);
 		
 		//Checkbox
 		$ocb = new SLB_Field_Type('option_checkbox', 'checkbox');
-		$ocb->set_layout('label', $o->layout->label);
+		$ocb->set_layout('label', $l->label);
 		$ocb->set_layout('form', $form);
 		$fields->add($ocb);
 		
 		//Select
 		$othm = new SLB_Field_Type('option_select', 'select');
-		$othm->set_layout('label', $o->layout->label);
-		$othm->set_layout('form_start', $o->layout->field_pre . '{inherit}');
-		$othm->set_layout('form_end', '{inherit}' . $o->layout->field_post);
-		$othm->set_layout('form', $o->layout->opt_pre . '{inherit}' . $o->layout->opt_post);
+		$othm->set_layout('label', $l->label);
+		$othm->set_layout('form_start', $l->field_pre . '{inherit}');
+		$othm->set_layout('form_end', '{inherit}' . $l->field_post);
+		$othm->set_layout('form', $l->opt_pre . '{inherit}' . $l->opt_post);
 		$fields->add($othm);
 	}
 	
@@ -470,12 +301,10 @@ class SLB_Options extends SLB_Field_Collection {
 	 * @param array $values (optional) Option values
 	 * @return array Full options data
 	 */
-	function validate($values = null, $force_save = false) {
-		if ( empty($values) && isset($_REQUEST[$this->add_prefix('options')]) ) {
-			$values_orig = $values;
-			if ( is_string($values_orig) ) 
-				$force_save = true;
-			$values = $_REQUEST[$this->add_prefix('options')];
+	function validate($values = null) {
+		$qvar = $this->get_id('formatted');
+		if ( empty($values) && isset($_REQUEST[$qvar]) ) {
+			$values = $_REQUEST[$qvar];
 		}
 		if ( is_array($values) ) {
 			//Format data based on option type (bool, string, etc.)
@@ -485,23 +314,34 @@ class SLB_Options extends SLB_Field_Collection {
 				if ( is_bool($d) && !empty($val) )
 					$values[$id] = true;
 			}
+			
 			//Merge in additional options that are not in post data
-			//Missing options (e.g. disabled checkboxes) & defaults
-			$items =& $this->get_items();
-			foreach ( $items as $id => $opt ) {
-				//Add options that were not included in form submission
-				if ( !array_key_exists($id, $values) ) {
-					if ( is_bool($opt->get_default()) )
-						$values[$id] = false;
-					else
-						$values[$id] = $opt->get_default();
+			//Missing options (e.g. disabled checkboxes, empty fields, etc.)
+			
+			//Get groups that were output in request
+			$qvar_groups = $qvar . '_groups';
+			if ( isset($_REQUEST[$qvar_groups]) ) {
+				$groups = explode( ',', implode(',', $_REQUEST[$qvar_groups]) );
+
+				//Get group items				
+				$items = array();
+				$items_temp = null;
+				foreach ( $groups as $gid ) {
+					$items_temp = $this->get_group_items($gid);
+					$items = array_merge($items, $items_temp);
+				}
+				unset($items_temp);
+				$items = call_user_func_array('array_merge', $items);
+				foreach ( $items as $id => $opt ) {
+					//Add options that were not included in form submission
+					if ( !array_key_exists($id, $values) ) {
+						if ( is_bool($opt->get_default()) )
+							$values[$id] = false;
+						else
+							$values[$id] = $opt->get_default();
+					}
 				}
 			}
-		}
-		
-		if ( $force_save ) {
-			$this->set_data($values);
-			$values = $values_orig;
 		}
 		
 		//Return value
@@ -525,10 +365,7 @@ class SLB_Options extends SLB_Field_Collection {
 					$opt = $this->get($id);
 					if ( is_bool($opt->get_default()) )
 						$data[$id] = !!$val;
-				}/* else {
-					//Remove data that has no matching item
-					unset($data[$id]);
-				}*/
+				}
 			}
 		}
 		return $data;
@@ -669,5 +506,134 @@ class SLB_Options extends SLB_Field_Collection {
 			$out[$option->get_id()] = $option->get_data('default');
 		}
 		return $out;
+	}
+	
+	/* Admin */
+	
+	/**
+	 * Handles output building for options on admin pages
+	 * @param obj|array $opts Options instance or Array of options instance and groups to build
+	 * @param obj $page Admin Page instance
+	 * @param obj $state Admin Page state properties
+	 */
+	public function admin_page_render_content($opts, $page, $state) {
+		$groups = null;
+		if ( is_array($opts) && count($opts) == 2 ) {
+			$groups = $opts[1];
+			$opts = $opts[0];
+		}
+		if ( $opts === $this ) {
+			//Set build variables and callbacks
+			$this->set_build_var('admin_page', $page);
+			$this->set_build_var('admin_state', $state);
+			if ( !empty($groups) ) {
+				$this->set_build_var('groups', $groups);
+			}
+			$hooks = array (
+				'filter'	=> array (
+					'parse_build_vars'		=> array( $this->m('admin_parse_build_vars'), 10, 2 )
+				)
+			);
+			
+			//Add hooks
+			foreach ( $hooks as $type => $hook ) {
+				$m = 'add_' . $type;
+				foreach ( $hook as $tag => $args ) {
+					array_unshift($args, $tag);
+					call_user_func_array($this->util->m($m), $args);
+				}
+			}
+			
+			//Build output
+			$this->build(array('build_groups' => $this->m('admin_build_groups')));
+			
+			//Remove hooks
+			foreach ( $hooks as $type => $hook ) {
+				$m = 'remove_' . $type;
+				foreach ( $hook as $tag => $args ) {
+					call_user_func($this->util->m($m), $tag, $args[0]);
+				}
+			}
+			//Clear custom build vars
+			$this->delete_build_var('admin_page');
+			$this->delete_build_var('admin_state');
+		}
+	}
+
+	/**
+	 * Builds option groups output
+	 */
+	public function admin_build_groups() {
+		$page = $this->get_build_var('admin_page');
+		$state = $this->get_build_var('admin_state');
+		$groups = $this->get_build_var('groups');
+		
+		//Get all groups
+		$groups_all = $this->get_groups();
+		$groups_built = array();
+		if ( empty($groups) ) {
+			$groups = array_keys($groups_all);
+		}
+		//Iterate through groups
+		foreach ( $groups as $gid ) {
+			//Validate
+			if ( !isset($groups_all[$gid]) || !count($this->get_items($gid)) ) {
+				continue;
+			}
+			//Add meta box for each group
+			$g = $groups_all[$gid];
+			add_meta_box($g->id, $g->title, $this->m('admin_build_group'), $state->screen, $state->context, $state->priority, array('group' => $g->id, 'page' => $page));
+			$groups_built[] = $gid;
+		}
+		
+		//Define groups built
+		if ( !empty($groups_built) ) {
+			echo $this->util->build_html_element(array(
+				'tag'	=> 'input',
+				'type'	=> 'hidden',
+				'value'	=> implode(',', $groups_built),
+				'name'	=> $this->get_id('formatted') . '_groups[]'
+			));
+		}
+	}
+	
+	/**
+	 * Group output handler for admin pages
+	 * @param obj $obj Object passed by `do_meta_boxes()` call (Default: NULL)
+	 * @param array $box Meta box properties
+	 */
+	public function admin_build_group($obj, $box) {
+		$a = $box['args'];
+		$group = $a['group'];
+		$this->build_group($group);
+	}
+	
+	/**
+	 * Parse build vars
+	 * @uses `options_parse_build_vars` filter hook
+	 */
+	public function admin_parse_build_vars($vars, $opts) {
+		//Handle form submission
+		if ( isset($_REQUEST[$opts->get_id('formatted')]) ) {
+			$vars['validate_pre'] = $vars['save_pre'] = true;
+		}
+		return $vars;
+	}
+
+	/**
+	 * Admin reset handler
+	 * @param bool $res Current result
+	 * @param obj $opts Options instance
+	 * @param obj $reset Admin Reset instance
+	 */
+	public function admin_action_reset($res, $opts, $reset) {
+		//Only process matching options instance
+		if ( $opts === $this ) {
+			//Reset options
+			$this->reset();
+			//Set result
+			$res = true;
+		}
+		return $res;
 	}
 }

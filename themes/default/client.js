@@ -1,7 +1,10 @@
 (function($) {
-return {
+$(document).ready(function() {
+if ( typeof SLB == 'undefined' || typeof SLB.View == 'undefined' || typeof SLB.View.extend_theme == 'undefined' )
+	return false;
+SLB.View.extend_theme('slb_default', {
 	/**
-	 * State transition handlers
+	 * Define transition handlers
 	 */
 	'transition': {
 		/**
@@ -27,7 +30,7 @@ return {
 			d.find('.slb_content').css({width: '', height: ''}).find('.slb_template_tag').hide();
 			d.find('.slb_details').height(0);
 			//Show viewer DOM
-			d.show(function() {
+			d.show({'always': function() {
 				if ( document.documentElement.clientWidth > 480 ) {
 					/* Standard */
 					//Center vertically
@@ -42,7 +45,7 @@ return {
 					pos.top = $(document).scrollTop();
 				}
 				final();
-			});
+			}});
 			return dfr.promise();
 		},
 		/**
@@ -65,8 +68,8 @@ return {
 				var lanim = {opacity: 0, top: $(document).scrollTop() + ( $(window).height() / 2 )},
 					canim = {width: 0, height: 0};
 				//Shrink & fade out viewer
-				var pos = l.animate(lanim).promise();
-				var size = ( $.isEmptyObject(canim) ) ? true : c.animate(canim).promise();
+				var pos = l.animate(lanim, 'fast').promise();
+				var size = ( $.isEmptyObject(canim) ) ? true : c.animate(canim, 'fast').promise();
 				$.when(pos, size).done(function() {
 					//Fade out overlay
 					v.get_overlay().fadeOut(function() {
@@ -108,9 +111,9 @@ return {
 			var props = {height: 0};
 			if ( document.documentElement.clientWidth > 480 ) {
 				//Hide details
-				det.animate(props, 'slow');
+				det.css(props);
 				//Hide content
-				cont.fadeOut();
+				cont.hide();
 			} else {
 				det.css(props);
 				cont.hide();
@@ -148,8 +151,8 @@ return {
 				}
 				pos.top = pos.top || 0;
 				//Resize container
-				pos = l.animate(pos).promise();
-				dims = c.animate(dims).promise();
+				pos = l.animate(pos, 'fast').promise();
+				dims = c.animate(dims, 'fast').promise();
 				$.when(pos, dims).done(function() {
 					//Hide loading indicator
 					loader.fadeOut('fast', function() {
@@ -173,30 +176,7 @@ return {
 			}
 			return dfr.promise();
 		}
-	},
-	/**
-	 * Theme offsets
-	 * Reports additional space required for theme UI
-	 */
-	'offset': function() {
-		var dims = {'width': 0, 'height': 0};
-		if ( document.documentElement.clientWidth > 480 ) {
-			var d = this.get_viewer().get_layout().find('.slb_details');
-			d.find('.slb_template_tag').show();
-			$.extend(dims, {'width': 32, 'height': d.find('.slb_data').outerHeight()})
-		}
-		return dims;
-	},
-	/**
-	 * Theme margins
-	 * Reports additional margins used for positioning viewer
-	 */
-	'margin': function() {
-		var m = {'height': 0, 'width': 0};
-		if ( document.documentElement.clientWidth > 480 ) {
-			$.extend(m, {'height': 50, 'width': 20});
-		}
-		return m;
 	}
-};
+});
+});
 })(jQuery);

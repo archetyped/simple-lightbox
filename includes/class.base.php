@@ -100,7 +100,7 @@ class SLB_Base {
 	 * Options
 	 * @var SLB_Options
 	 */
-	var $options = null;
+	protected $options = null;
 	
 	/**
 	 * Admin
@@ -185,12 +185,9 @@ class SLB_Base {
 		$class = $this->util->get_class('Options');
 		$key = 'options';
 		if ( $this->shares($key) ) {
-			/**
-			 * @var SLB_Options
-			 */
 			$opts = $this->gvar($key);
 			//Setup options instance
-			if ( !is_a($opts, $class) ) {
+			if ( !($opts instanceof $class) ) {
 				$opts = $this->gvar($key, new $class());
 			}
 		} else {
@@ -215,12 +212,9 @@ class SLB_Base {
 		$class = $this->util->get_class('Admin');
 		$key = 'admin';
 		if ( $this->shares($key) ) {
-			/**
-			 * @var SLB_Admin
-			 */
 			$adm = $this->gvar($key);
 			//Setup options instance
-			if ( !is_a($adm, $class) ) {
+			if ( !($adm instanceof $class) ) {
 				$adm = $this->gvar($key, new $class($this));
 			}
 		} else {
@@ -266,8 +260,11 @@ class SLB_Base {
 		add_action('init', $this->m('register_client_files'));
 		
 		//Enqueue
-		$hook_enqueue = ( ( is_admin() ) ? 'admin' : 'wp' ) . '_enqueue_scripts' ;
-		add_action($hook_enqueue, $this->m('enqueue_client_files'));
+		$hk_prfx = ( ( is_admin() ) ? 'admin' : 'wp' );
+		$hk_enqueue = $hk_prfx . '_enqueue_scripts' ;
+		$hk_enqueue_ft = $hk_prfx . '_footer';
+		add_action($hk_enqueue, $this->m('enqueue_client_files'));
+		add_action($hk_enqueue_ft, $this->m('enqueue_client_files_footer'), 1);
 	}
 	
 	/**
@@ -305,9 +302,10 @@ class SLB_Base {
 	 * Enqueues files for client output (scripts/styles) based on context
 	 * @uses `admin_enqueue_scripts` Action hook depending on context
 	 * @uses `wp_enqueue_scripts` Action hook depending on context
+	 * @param bool $footer (optional) Whether to enqueue footer files (Default: No)
 	 * @return void
 	 */
-	function enqueue_client_files() {
+	function enqueue_client_files($footer = false) {
 		//Enqueue files
 		foreach ( $this->client_files as $type => $files ) {
 			$func = $this->get_client_files_handler($type, 'enqueue');
@@ -317,6 +315,10 @@ class SLB_Base {
 			foreach ( $files as $f ) {
 				//Skip shadow files
 				if ( !$f->enqueue ) {
+					continue;
+				}
+				//Enqueue files only for current location (header/footer)
+				if ( isset($f->in_footer) && $f->in_footer != $footer ) {
 					continue;
 				}
 				$load = true;
@@ -351,6 +353,13 @@ class SLB_Base {
 				}
 			}
 		}
+	}
+	
+	/**
+	 * Enqueue client files in the footer
+	 */
+	public function enqueue_client_files_footer() {
+		$this->enqueue_client_files(true);
 	}
 	
 	/**
@@ -514,7 +523,7 @@ class SLB_Base {
 	function is_options_valid($data, $check_var = true) {
 		$class = $this->util->get_class('Options');
 		$ret = ( empty($data) || !is_array($data) || !class_exists($class) ) ? false : true;
-		if ( $ret && $check_var && !is_a($this->options, $class) )
+		if ( $ret && $check_var && !($this->options instanceof $class) )
 			$ret = false;
 		return $ret;
 	}

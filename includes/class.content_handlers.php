@@ -32,8 +32,7 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 	protected function _hooks() {
 		parent::_hooks();
 		$this->util->add_action('init', $this->m('init_defaults'));
-		
-		add_action('wp_footer', $this->m('client_output'), $this->util->priority('client_footer_output'));
+		$this->util->add_action('footer', $this->m('client_output'), 1, 0, false);
 	}
 	
 	/* Collection Management */
@@ -175,17 +174,19 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 	
 	/**
 	 * Initialize default handlers
-	 * @param SLB_Content_Handlers $controller Handlers controller
+	 * @param SLB_Content_Handlers $handlers Handlers controller
 	 */
-	public function init_defaults($controller) {
-		$handlers = array (
+	public function init_defaults($handlers) {
+		$defaults = array (
 			'image'		=> array (
 				'match'			=> $this->m('match_image'),
-				'client_script'	=> $this->util->get_file_url('content-handlers/image/handler.image.js'),
-			),
+				'scripts'		=> array (
+					array ( 'base', $this->util->get_file_path('content-handlers/image/handler.image.js', true) ),
+				)
+			)
 		);
-		foreach ( $handlers as $id => $props ) {
-			$controller->add($id, $props);
+		foreach ( $defaults as $id => $props ) {
+			$handlers->add($id, $props);
 		}
 	}
 	
@@ -195,34 +196,27 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 	 * @return bool TRUE if URI is image
 	 */
 	public function match_image($uri) {
-		return ( $this->util->has_file_extension($uri, array('jpg', 'jpeg', 'jpe', 'jfif', 'jif', 'gif', 'png')) ) ? true : false;
+		//Standard
+		$match = ( $this->util->has_file_extension($uri, array('jpg', 'jpeg', 'jpe', 'jfif', 'jif', 'gif', 'png')) ) ? true : false;
+		
+		//If match not found, allow third-party matching
+		if ( !$match ) {
+			$match = $this->util->apply_filters('image_match', $match, $uri);
+		}
+		
+		return !!$match;
 	}
 	
 	/* Output */
 	
 	/**
-	 * Client output
+	 * Build client output
+	 * Load handler files in client
 	 */
 	public function client_output() {
-		//Stop if not enabled
-		if ( !$this->has_parent() || !$this->get_parent()->is_enabled() ) {
-			return;
-		}
-		$id_fmt = 'add_handler_%s';
-		$out = array();
-		$out[] = '<!-- SLB-HDL -->' . PHP_EOL;
-		$code = array();
-		//Load matched handlers
+		//Get handlers for current request
 		foreach ( $this->request_matches as $handler ) {
-			//Define
-			$params = array(
-				sprintf("'%s'", $handler->get_id()),
-				sprintf("'%s'", $handler->get_client_script('uri')),
-			);
-			$code[] = $this->util->call_client_method('View.add_content_handler',  $params, false);
+			$handler->enqueue_client_files();
 		}
-		$out[] = $this->util->build_script_element(implode('', $code), 'add_content_handlers', true, true);
-		$out[] = '<!-- /SLB-HDL -->' . PHP_EOL;
-		echo implode('', $out);
 	}
 }

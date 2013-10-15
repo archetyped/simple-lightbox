@@ -40,6 +40,64 @@ class SLB_Component extends SLB_Base_Object {
 		return $this->name;
 	}
 	
+	public function set_scripts($scripts) {
+		$this->add_files('scripts', $scripts);
+	}
+	
+	public function set_styles($styles) {
+		$this->add_files('styles', $styles);
+	}
+	
+	/* Assets */
+	
+	/**
+	 * Get formatted handle for file
+	 * @param string $base_handle Base handle to format
+	 * @return string Formatted handle
+	 */
+	public function get_handle($base_handle) {
+		return $this->add_prefix( array('theme', $this->get_id(), $base_handle), '-');
+	}
+	
+	/**
+	 * Enqueue files in client
+	 * 
+	 * @param string $type (optional) Type of file to load (singular) (Default: All client file types)
+	 */
+	public function enqueue_client_files($type = null) {
+		if ( empty($type) ) {
+			$type = array ( 'script', 'style');
+		}
+		if ( !is_array($type) ) {
+			$type = array ( $type );
+		}
+		foreach ( $type as $t ) {
+			$m = (object) array (
+				'get'		=> $this->m('get_' . $t . 's'),
+				'enqueue'	=> 'wp_enqueue_' . $t,
+			);
+			$v = $this->util->get_plugin_version();
+			$files = call_user_func($m->get);
+			$param_final = ( 'script' == $t ) ? true : 'all';
+			foreach ( $files as $f ) {
+				$f = (object) $f;
+				//Format handle
+				$handle = $this->get_handle($f->handle);
+				
+				//Format dependencies
+				$deps = array();
+				foreach ( $f->deps as $dep ) {
+					if ( $this->util->has_wrapper($dep) ) {
+						$dep = $this->get_handle( $this->util->remove_wrapper($dep) );
+					}
+					$deps[] = $dep;
+				}
+				call_user_func($m->enqueue, $handle, $f->uri, $deps, $v, $param_final);
+			}
+			unset($files, $f, $param_final, $handle, $deps, $dep);
+		}
+	}
+	
 	/* Helpers */
 	
 	/**
@@ -60,30 +118,5 @@ class SLB_Component extends SLB_Base_Object {
 			}
 		}
 		return $ret;
-	}
-	
-	/* Client */
-	
-	/**
-	 * Set client script file
-	 * @see Base_Object::add_script()
-	 * @param string $src Script URI
-	 * @param array $deps (optional) File dependencies
-	 */
-	public function set_client_script($src, $deps = array()) {
-		if ( is_array($src) ) {
-			list($src, $deps) = func_get_arg(0);
-		}
-		return $this->add_script('client', $src, $deps);
-	}
-	
-	/**
-	 * Retrieve client script
-	 * @see Base_Object::get_script()
-	 * @param string $format (optional) Data format of return value
-	 * @return mixed Client script data (formatted according to $format parameter)
-	 */
-	public function get_client_script($format = null) {
-		return $this->get_script('client', $format);
 	}
 }

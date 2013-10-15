@@ -176,6 +176,27 @@ class SLB_Base_Object extends SLB_Base {
 	}
 	
 	/**
+	 * Add multiple files
+	 * @param string $type Group to add files to
+	 * @param array $files Files to add
+	 * @see add_file() for file parameters
+	 * @return object Current instance
+	 */
+	protected function add_files($type, $files) {
+		if ( !is_array($files) || empty($files) )
+			return false;
+		$m = $this->m('add_file');
+		foreach ( $files as $file ) {
+			if ( !is_array($file) || empty($file) ) {
+				continue;
+			}
+			array_unshift($file, $type);
+			call_user_func_array($m, $file);
+		}
+		return $this;
+	}
+	
+	/**
 	 * Retrieve files
 	 * All files or a specific group of files can be retrieved
 	 * @param string $type (optional) File group to retrieve
@@ -209,9 +230,29 @@ class SLB_Base_Object extends SLB_Base {
 			switch ( $format ) {
 				case 'uri':
 					$ret = $ret['uri'];
+					//Normalize URI
+					if ( !$this->util->is_uri($ret) ) {
+						$ret = $this->util->normalize_path(site_url(), $ret);
+					}
+					break;
+				case 'path':
+					$ret = $ret['uri'];
+					//Normalize path
+					if ( !$this->util->is_uri($ret) ) {
+						$ret = $this->util->get_relative_path($ret);
+						$ret = $this->util->normalize_path(ABSPATH, $ret);
+					}
 					break;
 				case 'object':
 					$ret = (object) $ret;
+					break;
+				case 'contents':
+					$ret = $ret['uri'];
+					if ( !$this->util->is_uri($ret) ) {
+						$ret = $this->util->get_relative_path($ret);
+						$ret = $this->util->normalize_path(ABSPATH, $ret);
+					}
+					$ret = file_get_contents($ret);
 					break;
 			}
 		}
