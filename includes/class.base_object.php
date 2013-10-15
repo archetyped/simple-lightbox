@@ -230,12 +230,29 @@ class SLB_Base_Object extends SLB_Base {
 			switch ( $format ) {
 				case 'uri':
 					$ret = $ret['uri'];
+					//Normalize URI
+					if ( !$this->util->is_uri($ret) ) {
+						$ret = $this->util->normalize_path(site_url(), $ret);
+					}
+					break;
+				case 'path':
+					$ret = $ret['uri'];
+					//Normalize path
+					if ( !$this->util->is_uri($ret) ) {
+						$ret = $this->util->get_relative_path($ret);
+						$ret = $this->util->normalize_path(ABSPATH, $ret);
+					}
 					break;
 				case 'object':
 					$ret = (object) $ret;
 					break;
 				case 'contents':
-					$ret = file_get_contents($ret['uri']);
+					$ret = $ret['uri'];
+					if ( !$this->util->is_uri($ret) ) {
+						$ret = $this->util->get_relative_path($ret);
+						$ret = $this->util->normalize_path(ABSPATH, $ret);
+					}
+					$ret = file_get_contents($ret);
 					break;
 			}
 		}
