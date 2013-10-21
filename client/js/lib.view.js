@@ -5,7 +5,7 @@
  * @author Archetyped
  */
 
-(function ($) {
+if ( jQuery ){(function ($) {
 
 if ( typeof SLB == 'undefined' || !SLB.attach ) {
 	return false;
@@ -4516,4 +4516,4 @@ View.Template_Tag_Handler = Component.extend(Template_Tag_Handler);
 SLB.attach('View', View);
 View = SLB.View;
 View.update_refs();
-})(jQuery);
+})(jQuery);}
