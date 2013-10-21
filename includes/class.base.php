@@ -281,7 +281,7 @@ class SLB_Base {
 				continue;
 			foreach ( $files as $f ) {
 				//Get file URI
-				$f->file = ( !$this->util->is_file($f->file) && is_callable($f->file) ) ? call_user_func($f->file) : $this->util->get_file_url($f->file);
+				$f->file = ( !$this->util->is_file($f->file) && is_callable($f->file) ) ? call_user_func($f->file) : $this->util->get_file_url($f->file, true);
 				$params = array($f->id, $f->file, $f->deps, $v);
 				//Set additional parameters based on file type (script, style, etc.)
 				switch ( $type ) {
