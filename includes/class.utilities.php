@@ -1712,8 +1712,8 @@ class SLB_Utilities {
 		$start = array('/* <![CDATA[ */');
 		$end = array('/* ]]> */');
 		if ( $wrap_jquery ) {
-			$start[] = '(function($){';
-			$end[] = '})(jQuery);';
+			$start[] = 'if ( jQuery ){(function($){';
+			$end[] = '})(jQuery);}';
 			
 			//Add event handler (if necessary)
 			if ( $wait_doc_ready ) {

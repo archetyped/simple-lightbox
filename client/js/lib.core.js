@@ -3,8 +3,7 @@
  * @package SLB
  * @author Archetyped
  */
-
-(function($) {
+if ( jQuery ){(function($) {
 
 /**
  * Extendible class
@@ -588,4 +587,4 @@ this.SLB = new SLB_Core();
 
 SLB.setup_client();
 
-})(jQuery);
+})(jQuery);}
