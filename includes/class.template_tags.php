@@ -58,15 +58,16 @@ class SLB_Template_Tags extends SLB_Collection_Controller {
 	 * @param SLB_Template_Tags $tags Tags controller
 	 */
 	public function init_defaults($tags) {
+		$src_base = $this->util->get_file_url('template-tags', true);
 		$defaults = array (
 			'item'		=> array (
 				'scripts'		=> array (
-					array ( 'base', $this->util->get_file_path('template-tags/item/tag.item.js', true) ),
+					array ( 'base', $src_base . '/item/tag.item.js' ),
 				)
 			),
 			'ui'		=> array (
 				'scripts'		=> array (
-					array ( 'base', $this->util->get_file_path('template-tags/ui/tag.ui.js', true) ),
+					array ( 'base', $src_base . '/ui/tag.ui.js' ),
 				)
 			),
 		);

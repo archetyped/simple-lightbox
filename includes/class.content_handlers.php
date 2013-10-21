@@ -177,11 +177,12 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 	 * @param SLB_Content_Handlers $handlers Handlers controller
 	 */
 	public function init_defaults($handlers) {
+		$src_base = $this->util->get_file_url('content-handlers', true);
 		$defaults = array (
 			'image'		=> array (
 				'match'			=> $this->m('match_image'),
 				'scripts'		=> array (
-					array ( 'base', $this->util->get_file_path('content-handlers/image/handler.image.js', true) ),
+					array ( 'base', $src_base . '/image/handler.image.js' ),
 				)
 			)
 		);
