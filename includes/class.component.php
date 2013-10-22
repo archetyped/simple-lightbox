@@ -56,7 +56,7 @@ class SLB_Component extends SLB_Base_Object {
 	 * @return string Formatted handle
 	 */
 	public function get_handle($base_handle) {
-		return $this->add_prefix( array('theme', $this->get_id(), $base_handle), '-');
+		return $this->add_prefix( array('asset', $this->get_id(), $base_handle), '-');
 	}
 	
 	/**
