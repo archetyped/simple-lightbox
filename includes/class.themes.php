@@ -198,7 +198,7 @@ class SLB_Themes extends SLB_Collection_Controller {
 		$thm = $this->get_selected();
 		
 		//Get theme ancestors
-		$thms = array_reverse($thm->get_ancestors());
+		$thms = $thm->get_ancestors(true);
 		$thms[] = $thm;
 		
 		foreach ( $thms as $thm ) {
@@ -218,7 +218,7 @@ class SLB_Themes extends SLB_Collection_Controller {
 		$thm = $this->get_selected();
 
 		//Process theme ancestors
-		$thms = array_reverse($thm->get_ancestors());
+		$thms = $thm->get_ancestors(true);
 		$thms[] = $thm;
 		
 		$out = array();
