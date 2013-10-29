@@ -116,11 +116,11 @@ class SLB_Base {
 	function __construct() {
 		$this->util = new SLB_Utilities($this);
 		if ( $this->can('init') ) {
-			$hook = 'plugins_loaded';
-			if ( current_filter() == $hook || self::$_init_passed ) {
+			$hook = 'init';
+			if ( did_action($hook) || self::$_init_passed ) {
 				$this->_init();
 			} else {
-				add_action($hook, $this->m('_init'));
+				add_action($hook, $this->m('_init'), 1);
 			}
 		}
 	}

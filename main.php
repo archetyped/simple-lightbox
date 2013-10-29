@@ -48,7 +48,11 @@ function slb_autoload($classname) {
 }
 
 spl_autoload_register('slb_autoload');
+$slb = null;
+function slb_init() {
+	global $slb;
+	require_once 'controller.php';
+	$slb = new SLB_Lightbox();
+}
 
-require_once 'controller.php';
-
-$slb = new SLB_Lightbox();
+add_action('init', 'slb_init', 0);
