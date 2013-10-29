@@ -658,13 +658,8 @@ var View = {
 		}
 		
 		//Load styles
-		if ( this.util.in_obj(attr, 'styles') && this.util.is_array(attr.styles) ) {
-			console.log('Loading styles: %o', id);
-			console.dir(attr.styles);
-			var head = $('head');
-			$.each(attr.styles, function(i, style) {
-				head.append('<link rel="stylesheet" type="text/css" href="' + style.uri + '" />');
-			});
+		if ( this.util.in_obj(attr, 'styles') ) {
+			this.load_styles(attr.styles);
 		}
 		
 		//Link parent model
@@ -741,6 +736,20 @@ var View = {
 		}
 		//Default: Return empty handler
 		return new this.Template_Tag_Handler(id, {});
+	},
+	
+	/**
+	 * Load styles
+	 * @param array styles Styles to load 
+	 */
+	load_styles: function(styles) {
+		if ( this.util.is_array(styles) ) {
+			var out = '';
+			$.each(styles, function(i, style) {
+				out += '<link rel="stylesheet" type="text/css" href="' + style.uri + '" />';
+			});
+			$('head').append(out);
+		}
 	}
 };
 
