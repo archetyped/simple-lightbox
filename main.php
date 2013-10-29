@@ -52,8 +52,3 @@ spl_autoload_register('slb_autoload');
 require_once 'controller.php';
 
 $slb = new SLB_Lightbox();
-
-function slb_register_theme($name, $title, $stylesheet_url, $layout) {
-	global $slb;
-	$slb->register_theme($name, $title, $stylesheet_url, $layout);
-}

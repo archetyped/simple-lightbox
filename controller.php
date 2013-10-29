@@ -916,25 +916,6 @@ class SLB_Lightbox extends SLB_Base {
 		return ( empty($this->media_items_raw) ) ? false : true; 
 	}
 	
-	/*-** Theme **-*/
-	
-	/**
-	 * Retrieve theme
-	 * @param string $id ID of theme to retrieve
-	 * @return SLB_Theme Theme instance
-	 * @TODO Refactor
-	 */
-	function get_theme($id = '') {
-		//Default: Get current theme if no theme specified
-		if ( !$this->themes->has_item($id) ) {
-			$id = $this->options->get_value('theme');
-			if ( !$this->themes->has_item($id) ) {
-				$id = $this->themes->get_default_id();
-			}
-		}
-		return $this->themes->get_item($id);
-	}
-
 	/*-** Grouping **-*/
 	
 	/**
