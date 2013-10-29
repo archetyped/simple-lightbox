@@ -26,33 +26,13 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-/**
- * Class loading handler
- * @param string $classname Class to load
- */
-function slb_autoload($classname) {
-	$prefix = 'slb_';
-	$cls = strtolower($classname);
-	//Remove prefix
-	if ( 0 !== strpos($cls, $prefix) ) {
-		return false;
-	}
-	//Format class for filename
-	$fn = 'class.' . substr($cls, strlen($prefix)) . '.php';
-	//Build path
-	$path = dirname(__FILE__) . '/' . "includes/" . $fn;
-	//Load file
-	if ( is_readable($path) ) {
-		require $path;
-	}
-}
-
-spl_autoload_register('slb_autoload');
 $slb = null;
+/**
+ * Initialize SLB
+ */
 function slb_init() {
-	global $slb;
+	require_once 'load.php';
 	require_once 'controller.php';
-	$slb = new SLB_Lightbox();
+	$GLOBALS['slb'] = new SLB_Lightbox();
 }
-
-add_action('init', 'slb_init', 0);
+add_action('init', 'slb_init', 1);
