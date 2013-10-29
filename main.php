@@ -1,4 +1,4 @@
-<?php 
+<?php
 /* 
 Plugin Name: Simple Lightbox
 Plugin URI: http://archetyped.com/tools/simple-lightbox/
@@ -11,7 +11,6 @@ Support URI: https://github.com/archetyped/simple-lightbox/wiki/Reporting-Issues
 /*
 Copyright 2013 Sol Marchessault (sol@archetyped.com)
 */
-
 $slb = null;
 /**
  * Initialize SLB

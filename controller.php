@@ -1,7 +1,6 @@
 <?php 
-
 /**
- * Model (Core functionality)
+ * Controller
  * @package Simple Lightbox
  * @author Archetyped
  */
@@ -158,7 +157,6 @@ class SLB_Lightbox extends SLB_Base {
 	
 	/**
 	 * Init options
-	 * 
 	 */
 	protected function _options() {
 		//Setup options
