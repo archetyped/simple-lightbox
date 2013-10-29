@@ -203,7 +203,7 @@ class SLB_Themes extends SLB_Collection_Controller {
 		
 		foreach ( $thms as $thm ) {
 			//Load files
-			$thm->enqueue_client_files('script');
+			$thm->enqueue_scripts();
 		}
 	}
 	
