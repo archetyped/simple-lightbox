@@ -203,7 +203,7 @@ class SLB_Themes extends SLB_Collection_Controller {
 		
 		foreach ( $thms as $thm ) {
 			//Load files
-			$thm->enqueue_client_files();
+			$thm->enqueue_client_files('script');
 		}
 	}
 	
@@ -235,6 +235,7 @@ class SLB_Themes extends SLB_Collection_Controller {
 			$thm_props = array(
 				'name'			=> $thm->get_name(),
 				'parent'		=> ( $thm->has_parent() ) ? $thm->get_parent()->get_id() : '',
+				'styles'		=> array_values($thm->get_styles()),
 			);
 			/* Optional properties */
 			//Layout

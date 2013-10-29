@@ -657,6 +657,16 @@ var View = {
 			$.extend(model, attr);
 		}
 		
+		//Load styles
+		if ( this.util.in_obj(attr, 'styles') && this.util.is_array(attr.styles) ) {
+			console.log('Loading styles: %o', id);
+			console.dir(attr.styles);
+			var head = $('head');
+			$.each(attr.styles, function(i, style) {
+				head.append('<link rel="stylesheet" type="text/css" href="' + style.uri + '" />');
+			});
+		}
+		
 		//Link parent model
 		if ( this.util.is_string(model.parent) ) {
 			model.parent = this.get_theme_model(model.parent);
