@@ -249,8 +249,7 @@ class SLB_Base_Object extends SLB_Base {
 				case 'contents':
 					$ret = $ret['uri'];
 					if ( !$this->util->is_uri($ret) ) {
-						$ret = $this->util->get_relative_path($ret);
-						$ret = $this->util->normalize_path(ABSPATH, $ret);
+						$ret = $this->util->normalize_path(site_url(), $ret);
 					}
 					$ret = file_get_contents($ret);
 					break;
