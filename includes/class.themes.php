@@ -234,7 +234,7 @@ class SLB_Themes extends SLB_Collection_Controller {
 			$thm_props = array(
 				'name'			=> $thm->get_name(),
 				'parent'		=> ( $thm->has_parent() ) ? $thm->get_parent()->get_id() : '',
-				'styles'		=> array_values($thm->get_styles()),
+				'styles'		=> array_values($thm->get_styles(array('uri_format'=>'full'))),
 			);
 			/* Optional properties */
 			//Layout

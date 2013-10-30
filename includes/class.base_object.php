@@ -273,8 +273,27 @@ class SLB_Base_Object extends SLB_Base {
 	 * Retrieve stylesheet files
 	 * @return array Stylesheet files
 	 */
-	public function get_styles() {
-		return $this->get_files('styles');
+	public function get_styles($opts = null) {
+		$files = $this->get_files('styles');
+		if ( is_array($opts) ) {
+			$opts = (object) $opts;
+		}
+		if ( is_object($opts) && !empty($opts) ) {
+			//Parse options
+			//URI Format
+			if ( isset($opts->uri_format) ) {
+				foreach ( $files as $hdl => $props ) {
+					switch ( $opts->uri_format ) {
+						case 'full':
+							if ( !$this->util->is_uri($props['uri']) ) {
+								$files[$hdl]['uri'] = $this->util->normalize_path(site_url(), $props['uri']);
+							}
+							break;
+					}
+				}
+			}
+		}
+		return $files;
 	}
 	
 	/**

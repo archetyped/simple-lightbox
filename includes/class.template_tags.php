@@ -99,7 +99,7 @@ class SLB_Template_Tags extends SLB_Collection_Controller {
 		$code = array();
 		
 		foreach ( $this->get() as $tag ) {
-			$styles = $tag->get_styles();
+			$styles = $tag->get_styles(array('uri_format'=>'full'));
 			if ( empty($styles) ) {
 				continue;
 			}
