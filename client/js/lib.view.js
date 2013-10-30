@@ -716,6 +716,10 @@ var View = {
 			hdl = hdls[id];
 			hdl.set_attributes(attr);
 		}
+		//Load styles
+		if ( this.util.in_obj(attr, 'styles') ) {
+			this.load_styles(attr.styles);
+		}
 		return hdl;
 	},
 	

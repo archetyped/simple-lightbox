@@ -224,7 +224,6 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 	
 	/**
 	 * Client output script
-	 * 
 	 * @param array $commands Client script commands
 	 * @return array Modified script commands
 	 */
