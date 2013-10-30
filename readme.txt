@@ -56,6 +56,8 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 3. Dark Theme
 
 == Changelog ==
+= 2.1.2 =
+* Fix: Incorrect paths when WP in subdirectory (Kim's Van Repair)
 
 = 2.1.1 =
 * Fix: Automatic resizing
