@@ -232,7 +232,7 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 		$code = array();
 		
 		foreach ( $this->request_matches as $handler ) {
-			$styles = $handler->get_styles();
+			$styles = $handler->get_styles(array('uri_format'=>'full'));
 			if ( empty($styles) ) {
 				continue;
 			}
