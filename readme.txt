@@ -3,7 +3,7 @@ Contributors: Archetyped
 Donate link: http://gum.co/slb-donate
 License: GPLv2
 Tags: lightbox, gallery, photography, images, theme, template, style
-Requires at least: 3.6.1
+Requires at least: 3.7
 Tested up to: 3.7
 Stable tag: trunk
 
@@ -56,6 +56,14 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 3. Dark Theme
 
 == Changelog ==
+
+= 2.1.1 =
+* Fix: Automatic resizing
+* Fix: Compatibility with non-standard wp-content location (On the Path of the Wijdemans)
+* Optimize: jQuery dependency handling
+* Optimize: Plugin initialization
+* Optimize: Deferred component stylesheet loading
+* Optimize: Code cleanup
 
 = 2.1 =
 * Update: Finalized Theme API
