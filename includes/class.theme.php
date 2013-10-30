@@ -21,9 +21,10 @@ class SLB_Theme extends SLB_Component {
 	
 	/**
 	 * Retrieve theme's ancestors
+	 * @param bool $sort_topdown (optional) Ancestor sorting (Default: Nearest to Farthest)
 	 * @return array Theme's ancestors (sorted by nearest to most distant ancestor)
 	 */
-	public function get_ancestors() {
+	public function get_ancestors($sort_topdown = false) {
 		$ret = array();
 		/**
 		 * @var SLB_Theme
@@ -37,6 +38,10 @@ class SLB_Theme extends SLB_Component {
 			}
 			//Get next ancestor
 			$thm = $par;
+		}
+		//Sorting
+		if ( $sort_topdown ) {
+			$ret = array_reverse($ret);
 		}
 		return $ret;
 	}

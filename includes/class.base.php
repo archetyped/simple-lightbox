@@ -354,7 +354,7 @@ class SLB_Base {
 			}
 		}
 	}
-	
+
 	/**
 	 * Enqueue client files in the footer
 	 */

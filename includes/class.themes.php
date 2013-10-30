@@ -198,12 +198,12 @@ class SLB_Themes extends SLB_Collection_Controller {
 		$thm = $this->get_selected();
 		
 		//Get theme ancestors
-		$thms = array_reverse($thm->get_ancestors());
+		$thms = $thm->get_ancestors(true);
 		$thms[] = $thm;
 		
 		foreach ( $thms as $thm ) {
 			//Load files
-			$thm->enqueue_client_files();
+			$thm->enqueue_scripts();
 		}
 	}
 	
@@ -218,11 +218,10 @@ class SLB_Themes extends SLB_Collection_Controller {
 		$thm = $this->get_selected();
 
 		//Process theme ancestors
-		$thms = array_reverse($thm->get_ancestors());
+		$thms = $thm->get_ancestors(true);
 		$thms[] = $thm;
 		
-		$out = array();
-		$out[] = '/* Themes */';
+		$out = array('/* THM */');
 		$code = array();
 		
 		//Build output for each theme
@@ -235,6 +234,7 @@ class SLB_Themes extends SLB_Collection_Controller {
 			$thm_props = array(
 				'name'			=> $thm->get_name(),
 				'parent'		=> ( $thm->has_parent() ) ? $thm->get_parent()->get_id() : '',
+				'styles'		=> array_values($thm->get_styles()),
 			);
 			/* Optional properties */
 			//Layout
@@ -252,8 +252,10 @@ class SLB_Themes extends SLB_Collection_Controller {
 			$code[] = $this->util->call_client_method('View.extend_theme', $params, false);
 		}
 
-		$out[] = implode('', $code);
-		$commands[] = implode(PHP_EOL, $out);
+		if ( !empty($code) ) {
+			$out[] = implode('', $code);
+			$commands[] = implode(PHP_EOL, $out);
+		}
 		return $commands;
 	}
 	
