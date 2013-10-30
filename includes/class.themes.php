@@ -221,8 +221,7 @@ class SLB_Themes extends SLB_Collection_Controller {
 		$thms = $thm->get_ancestors(true);
 		$thms[] = $thm;
 		
-		$out = array();
-		$out[] = '/* Themes */';
+		$out = array('/* THM */');
 		$code = array();
 		
 		//Build output for each theme
@@ -253,8 +252,10 @@ class SLB_Themes extends SLB_Collection_Controller {
 			$code[] = $this->util->call_client_method('View.extend_theme', $params, false);
 		}
 
-		$out[] = implode('', $code);
-		$commands[] = implode(PHP_EOL, $out);
+		if ( !empty($code) ) {
+			$out[] = implode('', $code);
+			$commands[] = implode(PHP_EOL, $out);
+		}
 		return $commands;
 	}
 	
