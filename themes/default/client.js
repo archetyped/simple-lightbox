@@ -56,7 +56,8 @@ SLB.View.extend_theme('slb_default', {
 		 */
 		'close': function(v, dfr) {
 			var l = v.get_layout(),
-				c = l.find('.slb_content');
+				c = l.find('.slb_content'),
+				spd = 'fast';
 			var t = this;
 			var reset = function() {
 				//Reset state
@@ -68,8 +69,8 @@ SLB.View.extend_theme('slb_default', {
 				var lanim = {opacity: 0, top: $(document).scrollTop() + ( $(window).height() / 2 )},
 					canim = {width: 0, height: 0};
 				//Shrink & fade out viewer
-				var pos = l.animate(lanim, 'fast').promise();
-				var size = ( $.isEmptyObject(canim) ) ? true : c.animate(canim, 'fast').promise();
+				var pos = l.animate(lanim, spd).promise();
+				var size = ( $.isEmptyObject(canim) ) ? true : c.animate(canim, spd).promise();
 				$.when(pos, size).done(function() {
 					//Fade out overlay
 					v.get_overlay().fadeOut(function() {
@@ -131,37 +132,44 @@ SLB.View.extend_theme('slb_default', {
 		 */
 		'complete': function(v, dfr) {
 			//Elements
-			var l = v.get_layout(),
+			var t = this,
+				l = v.get_layout(),
 				loader = l.find('.slb_loading'),
 				det = l.find('.slb_details'),
 				det_data = det.find('.slb_data'),
 				c = l.find('.slb_content'),
-				c_tag = c.find('.slb_template_tag'),
-				c_tag_cont = c.find('.slb_template_tag_item_content');
+				c_tag = c.find('.slb_template_tag');
 			//Transition
 			if ( document.documentElement.clientWidth > 480 ) {
+				var spd = 'fast';
 				//Resize viewer to fit item
-				var dims = this.get_item_dimensions();
-				//Show detail tags (container still hidden)
-				det.find('.slb_template_tag').show();
+				var dims_item = this.get_item_dimensions();
+				var dims_det = {'height': 0, 'width': 0};
+				//Determine details height
+				det.width(dims_item.width);
+				dims_det.height = det_data.outerHeight();
+				det.width('');
+				//Determine vertical positioning (centered)
 				var top_scr = $(document).scrollTop();
-				var pos = { 'top': top_scr + ( $(window).height() / 2 ) - ( this.get_dimensions().height / 2 ) };
+				var pos = { 'top': top_scr + ( $(window).height() / 2 ) - ( ( dims_det.height + dims_item.height ) / 2 ) };
 				if ( pos.top < top_scr ) {
 					pos.top = top_scr;
 				}
 				pos.top = pos.top || 0;
-				//Resize container
-				pos = l.animate(pos, 'fast').promise();
-				dims = c.animate(dims, 'fast').promise();
-				$.when(pos, dims).done(function() {
+				//Resize viewer
+				pos = l.animate(pos, spd).promise();
+				dims_item = c.animate(dims_item, spd).promise();
+				//Display elements
+				$.when(pos, dims_item).done(function() {
+					var c_tag_cont = c.find('.slb_template_tag_item_content');
 					//Hide loading indicator
-					loader.fadeOut('fast', function() {
+					loader.fadeOut(spd, function() {
 						//Display content
 						c_tag_cont.fadeIn(function() {
 							//Show UI
 							c_tag.show();
 							//Show details
-							det.animate({height: det_data.outerHeight()}, 'slow').promise().done(function() {
+							det.animate({'height': det_data.outerHeight()}, 'slow').promise().done(function() {
 								det.height('');
 								dfr.resolve();
 							});

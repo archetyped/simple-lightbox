@@ -5,7 +5,7 @@
  * @author Archetyped
  */
 
-(function ($) {
+if ( jQuery ){(function ($) {
 
 if ( !SLB || !SLB.attach ) {
 	return false;
@@ -28,4 +28,4 @@ $(document).ready(function() {
 	SLB.Admin.init();
 });
 
-})(jQuery);
+})(jQuery);}

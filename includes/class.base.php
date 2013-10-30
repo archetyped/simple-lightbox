@@ -116,11 +116,11 @@ class SLB_Base {
 	function __construct() {
 		$this->util = new SLB_Utilities($this);
 		if ( $this->can('init') ) {
-			$hook = 'plugins_loaded';
-			if ( current_filter() == $hook || self::$_init_passed ) {
+			$hook = 'init';
+			if ( did_action($hook) || self::$_init_passed ) {
 				$this->_init();
 			} else {
-				add_action($hook, $this->m('_init'));
+				add_action($hook, $this->m('_init'), 1);
 			}
 		}
 	}
@@ -281,7 +281,7 @@ class SLB_Base {
 				continue;
 			foreach ( $files as $f ) {
 				//Get file URI
-				$f->file = ( !$this->util->is_file($f->file) && is_callable($f->file) ) ? call_user_func($f->file) : $this->util->get_file_url($f->file);
+				$f->file = ( !$this->util->is_file($f->file) && is_callable($f->file) ) ? call_user_func($f->file) : $this->util->get_file_url($f->file, true);
 				$params = array($f->id, $f->file, $f->deps, $v);
 				//Set additional parameters based on file type (script, style, etc.)
 				switch ( $type ) {
@@ -354,7 +354,7 @@ class SLB_Base {
 			}
 		}
 	}
-	
+
 	/**
 	 * Enqueue client files in the footer
 	 */

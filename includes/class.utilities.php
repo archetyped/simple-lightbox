@@ -998,11 +998,12 @@ class SLB_Utilities {
 	/**
 	 * Returns URL of file (assumes that it is in plugin directory)
 	 * @param string $file name of file get URL
+	 * @param string|bool $relative Path that URI should be relative to (Default: full path)
 	 * @return string File URL
 	 */
-	function get_file_url($file) {
+	function get_file_url($file, $relative = null) {
 		if ( is_string($file) && '' != trim($file) ) {
-			$file = str_replace(' ', '%20', $this->normalize_path($this->get_url_base(), $file));
+			$file = str_replace(' ', '%20', $this->normalize_path($this->get_url_base(false, $relative), $file));
 		}
 		return $file;
 	}
@@ -1102,12 +1103,29 @@ class SLB_Utilities {
 	 * @uses normalize_path()
 	 * @return string Base URL
 	 */
-	function get_url_base() {
-		static $url_base = '';
-		if ( '' == $url_base ) {
+	function get_url_base($trailing_slash = false, $relative = null) {
+		static $url_base = null;
+		if ( empty($url_base) ) {
 			$url_base = $this->normalize_path(plugins_url(), $this->get_plugin_base());
 		}
-		return $url_base;
+		$ret = $url_base;
+		//Trailing slash
+		if ( !!$trailing_slash ) {
+			$ret .= '/';
+		}
+		//Relative
+		if ( !empty($relative) ) {
+			//Default
+			if ( is_bool($relative) ) {
+				$relative = site_url();
+			}
+			//Custom
+			if ( is_string($relative) ) {
+				$ret = $this->get_relative_path($ret, $relative);
+			}
+		}
+		
+		return $ret;
 	}
 	
 	/**
@@ -1694,8 +1712,8 @@ class SLB_Utilities {
 		$start = array('/* <![CDATA[ */');
 		$end = array('/* ]]> */');
 		if ( $wrap_jquery ) {
-			$start[] = '(function($){';
-			$end[] = '})(jQuery);';
+			$start[] = 'if ( jQuery ){(function($){';
+			$end[] = '})(jQuery);}';
 			
 			//Add event handler (if necessary)
 			if ( $wait_doc_ready ) {

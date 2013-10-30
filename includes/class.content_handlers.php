@@ -33,6 +33,7 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 		parent::_hooks();
 		$this->util->add_action('init', $this->m('init_defaults'));
 		$this->util->add_action('footer', $this->m('client_output'), 1, 0, false);
+		$this->util->add_filter('footer_script', $this->m('client_output_script'), $this->util->priority('client_footer_output'), 1, false);
 	}
 	
 	/* Collection Management */
@@ -177,12 +178,13 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 	 * @param SLB_Content_Handlers $handlers Handlers controller
 	 */
 	public function init_defaults($handlers) {
+		$src_base = $this->util->get_file_url('content-handlers', true);
 		$defaults = array (
 			'image'		=> array (
 				'match'			=> $this->m('match_image'),
 				'scripts'		=> array (
-					array ( 'base', $this->util->get_file_path('content-handlers/image/handler.image.js', true) ),
-				)
+					array ( 'base', $src_base . '/image/handler.image.js' ),
+				),
 			)
 		);
 		foreach ( $defaults as $id => $props ) {
@@ -216,7 +218,36 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 	public function client_output() {
 		//Get handlers for current request
 		foreach ( $this->request_matches as $handler ) {
-			$handler->enqueue_client_files();
+			$handler->enqueue_scripts();
 		}
+	}
+	
+	/**
+	 * Client output script
+	 * @param array $commands Client script commands
+	 * @return array Modified script commands
+	 */
+	public function client_output_script($commands) {
+		$out = array('/* CHDL */');
+		$code = array();
+		
+		foreach ( $this->request_matches as $handler ) {
+			$styles = $handler->get_styles();
+			if ( empty($styles) ) {
+				continue;
+			}
+			//Setup client parameters
+			$params = array(
+				sprintf("'%s'", $handler->get_id()),
+			);
+			$params[] = json_encode( array('styles' => array_values($styles)) );
+			//Extend handler in client
+			$code[] = $this->util->call_client_method('View.extend_content_handler', $params, false);
+		}
+		if ( !empty($code) ) {
+			$out[] = implode('', $code);
+			$commands[] = implode(PHP_EOL, $out);
+		}
+		return $commands;
 	}
 }

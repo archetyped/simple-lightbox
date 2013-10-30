@@ -33,6 +33,7 @@ class SLB_Template_Tags extends SLB_Collection_Controller {
 		parent::_hooks();
 		$this->util->add_action('init', $this->m('init_defaults'));
 		$this->util->add_action('footer', $this->m('client_output'), 1, 0, false);
+		$this->util->add_filter('footer_script', $this->m('client_output_script'), $this->util->priority('client_footer_output'), 1, false);
 	}
 	
 	/* Collection Management */
@@ -58,15 +59,16 @@ class SLB_Template_Tags extends SLB_Collection_Controller {
 	 * @param SLB_Template_Tags $tags Tags controller
 	 */
 	public function init_defaults($tags) {
+		$src_base = $this->util->get_file_url('template-tags', true);
 		$defaults = array (
 			'item'		=> array (
 				'scripts'		=> array (
-					array ( 'base', $this->util->get_file_path('template-tags/item/tag.item.js', true) ),
+					array ( 'base', $src_base . '/item/tag.item.js' ),
 				)
 			),
 			'ui'		=> array (
 				'scripts'		=> array (
-					array ( 'base', $this->util->get_file_path('template-tags/ui/tag.ui.js', true) ),
+					array ( 'base', $src_base . '/ui/tag.ui.js' ),
 				)
 			),
 		);
@@ -83,7 +85,36 @@ class SLB_Template_Tags extends SLB_Collection_Controller {
 	public function client_output() {
 		//Load matched handlers
 		foreach ( $this->get() as $tag ) {
-			$tag->enqueue_client_files();
+			$tag->enqueue_scripts();
 		}
+	}
+	
+	/**
+	 * Client output script
+	 * @param array $commands Client script commands
+	 * @return array Modified script commands
+	 */
+	public function client_output_script($commands) {
+		$out = array('/* TPLT */');
+		$code = array();
+		
+		foreach ( $this->get() as $tag ) {
+			$styles = $tag->get_styles();
+			if ( empty($styles) ) {
+				continue;
+			}
+			//Setup client parameters
+			$params = array(
+				sprintf("'%s'", $tag->get_id()),
+			);
+			$params[] = json_encode( array('styles' => array_values($styles)) );
+			//Extend handler in client
+			$code[] = $this->util->call_client_method('View.extend_template_tag_handler', $params, false);
+		}
+		if ( !empty($code) ) {
+			$out[] = implode('', $code);
+			$commands[] = implode(PHP_EOL, $out);
+		}
+		return $commands;
 	}
 }

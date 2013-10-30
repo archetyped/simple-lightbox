@@ -5,7 +5,7 @@
  * @author Archetyped
  */
 
-(function ($) {
+if ( jQuery ){(function ($) {
 
 if ( typeof SLB == 'undefined' || !SLB.attach ) {
 	return false;
@@ -564,6 +564,10 @@ var View = {
 		else {
 			hdl.set_attributes(attr);
 		}
+		//Load styles
+		if ( this.util.in_obj(attr, 'styles') ) {
+			this.load_styles(attr.styles);
+		}
 		return hdl;
 	},
 	
@@ -657,6 +661,11 @@ var View = {
 			$.extend(model, attr);
 		}
 		
+		//Load styles
+		if ( this.util.in_obj(attr, 'styles') ) {
+			this.load_styles(attr.styles);
+		}
+		
 		//Link parent model
 		if ( this.util.is_string(model.parent) ) {
 			model.parent = this.get_theme_model(model.parent);
@@ -707,6 +716,10 @@ var View = {
 			hdl = hdls[id];
 			hdl.set_attributes(attr);
 		}
+		//Load styles
+		if ( this.util.in_obj(attr, 'styles') ) {
+			this.load_styles(attr.styles);
+		}
 		return hdl;
 	},
 	
@@ -731,6 +744,20 @@ var View = {
 		}
 		//Default: Return empty handler
 		return new this.Template_Tag_Handler(id, {});
+	},
+	
+	/**
+	 * Load styles
+	 * @param array styles Styles to load 
+	 */
+	load_styles: function(styles) {
+		if ( this.util.is_array(styles) ) {
+			var out = '';
+			$.each(styles, function(i, style) {
+				out += '<link rel="stylesheet" type="text/css" href="' + style.uri + '" />';
+			});
+			$('head').append(out);
+		}
 	}
 };
 
@@ -4516,4 +4543,4 @@ View.Template_Tag_Handler = Component.extend(Template_Tag_Handler);
 SLB.attach('View', View);
 View = SLB.View;
 View.update_refs();
-})(jQuery);
+})(jQuery);}

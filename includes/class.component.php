@@ -56,12 +56,11 @@ class SLB_Component extends SLB_Base_Object {
 	 * @return string Formatted handle
 	 */
 	public function get_handle($base_handle) {
-		return $this->add_prefix( array('theme', $this->get_id(), $base_handle), '-');
+		return $this->add_prefix( array('asset', $this->get_id(), $base_handle), '-');
 	}
 	
 	/**
 	 * Enqueue files in client
-	 * 
 	 * @param string $type (optional) Type of file to load (singular) (Default: All client file types)
 	 */
 	public function enqueue_client_files($type = null) {
@@ -96,6 +95,20 @@ class SLB_Component extends SLB_Base_Object {
 			}
 			unset($files, $f, $param_final, $handle, $deps, $dep);
 		}
+	}
+	
+	/**
+	 * Enqueue scripts
+	 */
+	public function enqueue_scripts() {
+		$this->enqueue_client_files('script');
+	}
+
+	/**
+	 * Enqueue styles
+	 */
+	public function enqueue_styles() {
+		$this->enqueue_client_files('style');
 	}
 	
 	/* Helpers */
