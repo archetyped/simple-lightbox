@@ -26,6 +26,13 @@ class SLB_Lightbox extends SLB_Base {
 			'in_footer'	=> true,
 		),
 	);
+	
+	var $styles = array (
+		'core'			=> array (
+			'file'		=> 'client/css/app.css',
+			'context'	=> array('public'),
+		)
+	);
 
 	/**
 	 * Fields
