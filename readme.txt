@@ -56,6 +56,10 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 3. Dark Theme
 
 == Changelog ==
+= 2.1.3 =
+* Fix: PHP configuration issue on some web hosts (Tim's got (config) issues)
+* Optimize: Hide overlapping elements when lightbox is displayed (e.g. Flash, etc.)
+
 = 2.1.2 =
 * Fix: Incorrect paths when WP in subdirectory (Kim's Van Repair)
 
