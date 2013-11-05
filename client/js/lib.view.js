@@ -2061,6 +2061,7 @@ var Viewer = {
 		//Get theme output
 		var v = this;
 		var thm = this.get_theme();
+		v.dom_prep();
 		//Register theme event handlers
 		if ( !this.get_status('render-events') ) {
 			this.set_status('render-events');
@@ -2194,11 +2195,20 @@ var Viewer = {
 	},
 	
 	/**
-	 * Restore DOM
-	 * Show overlapping DOM elements, etc.
-	 * @TODO Build functionality
+	 * Prepare DOM for viewer
 	 */
-	dom_restore: function() {},
+	dom_prep: function(mode) {
+		var m = ( this.util.is_bool(mode) && !mode ) ? 'removeClass' : 'addClass';
+		$('html')[m](this.util.add_prefix('overlay'));
+	},
+	
+	/**
+	 * Restore DOM
+	 * Required after viewer is closed
+	 */
+	dom_restore: function() {
+		this.dom_prep(false);
+	},
 	
 	/* Layout */
 	
