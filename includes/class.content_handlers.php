@@ -31,7 +31,7 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 	
 	protected function _hooks() {
 		parent::_hooks();
-		$this->util->add_action('init', $this->m('init_defaults'));
+		$this->util->add_action('init', $this->m('init_defaults'), 5);
 		$this->util->add_action('footer', $this->m('client_output'), 1, 0, false);
 		$this->util->add_filter('footer_script', $this->m('client_output_script'), $this->util->priority('client_footer_output'), 1, false);
 	}
