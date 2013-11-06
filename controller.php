@@ -122,6 +122,11 @@ class SLB_Lightbox extends SLB_Base {
 	
 	/* Init */
 	
+	public function _init() {
+		parent::_init();
+		$this->util->do_action('init');
+	}
+	
 	/**
 	 * Register hooks
 	 * @uses parent::_hooks()
