@@ -2862,19 +2862,7 @@ var Content_Handler = {
 	render: function(item) {
 		var dfr = $.Deferred();
 		//Validate
-		var ret = this.call_attribute('render', item);
-		if ( this.util.is_promise(ret) ) {
-			ret.done(function(output) {
-				dfr.resolve(output);
-			});
-		} else {
-			//String format
-			if ( this.util.is_string(ret) ) {
-				ret = this.util.format(ret, item.get_uri());
-			}
-			//Resolve deferred immediately
-			dfr.resolve(ret);
-		}
+		var ret = this.call_attribute('render', item, dfr);
 		return dfr.promise();
 	}
 };

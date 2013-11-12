@@ -3,8 +3,13 @@ $(document).ready(function() {
 if ( typeof SLB == 'undefined' || typeof SLB.View == 'undefined' || typeof SLB.View.extend_content_handler == 'undefined' )
 	return false;
 SLB.View.extend_content_handler('image', {
-	render: function(item) {
-		var dfr = $.Deferred();
+	/**
+	 * Render images
+	 * @param obj item Content Item
+	 * @param obj dfr Promise for rendering process
+	 * @return obj Promise for rendering process (Resolved when content is loaded)
+	 */
+	render: function(item, dfr) {
 		//Create image object
 		var img = new Image();
 		var type = this;
