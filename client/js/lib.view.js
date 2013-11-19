@@ -1734,7 +1734,9 @@ var Viewer = {
 				t.trigger('item-change');
 			})
 			.on(['close', 'item-change'], function() {
-				t.unlock();
+				t.unload().done(function() {
+					t.unlock();
+				});
 			});
 	},
 	
@@ -2257,6 +2259,17 @@ var Viewer = {
 	
 	unload: function() {
 		
+	},
+	
+	/**
+	 * Unload viewer
+	 */
+	unload: function() {
+		var dfr = $.Deferred();
+		//Unload item data
+		this.get_theme().dom_get_tag('item').text('');
+		dfr.resolve();
+		return dfr.promise();
 	},
 	
 	/**
