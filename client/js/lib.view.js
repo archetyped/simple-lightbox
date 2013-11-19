@@ -2904,6 +2904,7 @@ var Content_Item = {
 	/* Properties */
 	
 	data: null,
+	loaded: null,
 	
 	/* Init */
 	
@@ -3263,8 +3264,26 @@ var Content_Item = {
 		//Retrieve viewer
 		var v = this.get_viewer();
 		//Load item
+		this.load();
 		var ret = v.show(this);
 		return ret;
+	},
+	
+	/**
+	 * Load item data
+	 * 
+	 * Retrieves item data from external sources (if necessary)
+	 * @uses this.loaded to save loaded state
+	 * @return obj Promise that is resolved when item data is loaded
+	 */
+	load: function() {
+		if ( !this.util.is_promise(this.loaded) ) {
+			//Load item (via content handler)
+			this.loaded = $.Deferred();
+			
+		}
+		
+		return this.loaded.promise();
 	},
 	
 	reset: function() {
