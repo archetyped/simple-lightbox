@@ -2855,6 +2855,21 @@ var Content_Handler = {
 	/* Processing/Output */
 	
 	/**
+	 * Loads item data
+	 * @param obj item Content item to load data for
+	 * @return obj Promise that is resolved when item data is loaded
+	 */
+	load: function(item) {
+		var dfr = $.Deferred();
+		var ret = this.call_attribute('load', item, dfr);
+		//Handle missing load method
+		if ( null === ret ) {
+			dfr.resolve();
+		}
+		return dfr.promise();
+	},
+	
+	/**
 	 * Render output to display item
 	 * @param Content_Item item Item to render output for
 	 * @return obj jQuery.Promise that is resolved when item is rendered
@@ -2904,6 +2919,7 @@ var Content_Item = {
 	/* Properties */
 	
 	data: null,
+	loaded: null,
 	
 	/* Init */
 	
@@ -3112,6 +3128,10 @@ var Content_Item = {
 		this.data = data;
 	},
 	
+	get_data: function() {
+		return this.data;
+	},
+	
 	/**
 	 * Determine gallery type
 	 * @return string|null Gallery type ID (NULL if item not in gallery)
@@ -3263,8 +3283,24 @@ var Content_Item = {
 		//Retrieve viewer
 		var v = this.get_viewer();
 		//Load item
+		this.load();
 		var ret = v.show(this);
 		return ret;
+	},
+	
+	/**
+	 * Load item data
+	 * 
+	 * Retrieves item data from external sources (if necessary)
+	 * @uses this.loaded to save loaded state
+	 * @return obj Promise that is resolved when item data is loaded
+	 */
+	load: function() {
+		if ( !this.util.is_promise(this.loaded) ) {
+			//Load item data (via content handler)
+			this.loaded = this.get_type().load(this);
+		}
+		return this.loaded.promise();
 	},
 	
 	reset: function() {
@@ -4016,7 +4052,7 @@ var Template = {
 				var tags = this.get_tags(),
 					tag_promises = [];
 				//Render Tag output
-				loading_promise.done(function() {
+				$.when(item.load(), loading_promise).done(function() {
 					if ( !v.is_active() ) {
 						return false;
 					}
