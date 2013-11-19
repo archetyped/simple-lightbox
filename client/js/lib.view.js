@@ -2855,6 +2855,21 @@ var Content_Handler = {
 	/* Processing/Output */
 	
 	/**
+	 * Loads item data
+	 * @param obj item Content item to load data for
+	 * @return obj Promise that is resolved when item data is loaded
+	 */
+	load: function(item) {
+		var dfr = $.Deferred();
+		var ret = this.call_attribute('load', item, dfr);
+		//Handle missing load method
+		if ( null === ret ) {
+			dfr.resolve();
+		}
+		return dfr.promise();
+	},
+	
+	/**
 	 * Render output to display item
 	 * @param Content_Item item Item to render output for
 	 * @return obj jQuery.Promise that is resolved when item is rendered
@@ -3113,6 +3128,10 @@ var Content_Item = {
 		this.data = data;
 	},
 	
+	get_data: function() {
+		return this.data;
+	},
+	
 	/**
 	 * Determine gallery type
 	 * @return string|null Gallery type ID (NULL if item not in gallery)
@@ -3278,11 +3297,9 @@ var Content_Item = {
 	 */
 	load: function() {
 		if ( !this.util.is_promise(this.loaded) ) {
-			//Load item (via content handler)
-			this.loaded = $.Deferred();
-			
+			//Load item data (via content handler)
+			this.loaded = this.get_type().load(this);
 		}
-		
 		return this.loaded.promise();
 	},
 	
@@ -4035,7 +4052,7 @@ var Template = {
 				var tags = this.get_tags(),
 					tag_promises = [];
 				//Render Tag output
-				loading_promise.done(function() {
+				$.when(item.load(), loading_promise).done(function() {
 					if ( !v.is_active() ) {
 						return false;
 					}
