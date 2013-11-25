@@ -453,6 +453,7 @@ class SLB_Lightbox extends SLB_Base {
 			$q = null;
 			$uri = (object) $uri_proto;
 			$type = false;
+			$props_extra = array();
 			
 			//Parse link attributes
 			$attrs = $this->util->parse_attribute_string($link_new, array('href' => ''));
@@ -494,6 +495,7 @@ class SLB_Lightbox extends SLB_Base {
 				$src = wp_get_attachment_url($pid);
 				if ( !!$src ) {
 					$uri->source = $src;
+					$props_extra['id'] = $pid;
 				}
 				unset($src);
 			}
@@ -509,9 +511,11 @@ class SLB_Lightbox extends SLB_Base {
 				$hdl_result = $this->handlers->match($uri->source);
 				if ( !!$hdl_result->handler ) {
 					$type = $hdl_result->handler->get_id();
+					$props_extra = $hdl_result->props;
 					//Updated source URI
-					if ( isset($hdl_result->props['uri']) ) {
-						$uri->source = $hdl_result->props['uri'];
+					if ( isset($props_extra['uri']) ) {
+						$uri->source = $props_extra['uri'];
+						unset($props_extra['uri']);
 					}
 				}
 			}
@@ -557,7 +561,7 @@ class SLB_Lightbox extends SLB_Base {
 			}
 			
 			//Cache item attributes
-			$this->cache_media_item($uri, $type, $internal, $pid);
+			$this->cache_media_item($uri, $type, $internal, $props_extra);
 			
 			//Update link in content
 			$link_new = '<a ' . $this->util->build_attribute_string($attrs) . '>';
@@ -871,20 +875,20 @@ class SLB_Lightbox extends SLB_Base {
 	 * > source: Source URI (e.g. for attachment URIs)
 	 * @param string $type Media type (image, attachment, etc.)
 	 * @param bool $internal TRUE if media is internal (e.g. attachment)
-	 * @param int $id (optional) ID of media item (for internal items) (Default: NULL)
+	 * @param array $props (optional) Properties to store for item (Default: NULL)
 	 */
-	private function cache_media_item($uri, $type, $internal, $id = null) {
+	private function cache_media_item($uri, $type, $internal, $props = null) {
 		//Validate
 		if ( !is_object($uri) || !is_string($type) ) {
 			return false;
 		}
 		if ( !$this->media_item_cached($uri->source) ) {
 			//Set properties
-			$i = array('type' => $type, 'source' => $uri->source, 'internal' => $internal, 'id' => null, '_entries' => array());
-			//ID
-			if ( is_numeric($id) && !!$id ) {
-				$i['id'] = absint($id);
+			$i = array('id' => null, '_entries' => array());
+			if ( is_array($props) && !empty($props) ) {
+				$i = array_merge($i, $props);
 			}
+			$i = array_merge($i, array('type' => $type, 'source' => $uri->source, 'internal' => $internal));
 			//Cache media item
 			$this->media_items_raw[$uri->source] = (object) $i;
 		}
