@@ -443,20 +443,22 @@ class SLB_Lightbox extends SLB_Base {
 		}
 		
 		//Iterate through and activate supported links
+		$uri_proto = array('raw' => '', 'source' => '');
+		
 		foreach ( $links as $link ) {
 			//Init vars
 			$pid = 0;
 			$link_new = $link;
 			$internal = false;
 			$q = null;
-			$uri = (object) array('raw' => '', 'base' => '', 'source' => '');
+			$uri = (object) $uri_proto;
 			$type = false;
 			
 			//Parse link attributes
 			$attrs = $this->util->parse_attribute_string($link_new, array('href' => ''));
 			$attrs_legacy = ( isset($attrs['rel']) && !empty($attrs['rel']) ) ? explode(' ', trim($attrs['rel'])) : array();
 			//Get URI
-			$uri->raw = $uri->base = $uri->source = $attrs['href'];
+			$uri->raw = $uri->source = $attrs['href'];
 			
 			//Stop processing invalid links
 			if ( !$this->validate_uri($uri->raw)
@@ -483,31 +485,12 @@ class SLB_Lightbox extends SLB_Base {
 			//Check if item links to internal media (attachment)
 			$uri_dom = str_replace($protocol, '', strtolower($uri->raw));
 			if ( strpos($uri_dom, $domain) === 0 ) {
-				//Save URL for further processing
 				$internal = true;
 			}
 			
-			//Sanitize URI
-			$qpos = strpos($uri->raw, '?');
-			if ( $qpos !== false ) {
-				$uri->base = substr($uri->raw, 0, $qpos);
-				if ( $internal ) {
-					//Extract query string
-					$q = substr($uri->raw, $qpos + 1);
-					//Check for attachment ID
-					if ( strpos($q, $qv_att . '=') !== false ) {
-						//Parse query string
-						wp_parse_str($q, $q);
-						//Strip other variables from query string
-						$uri->base = add_query_arg($qv_att, $q[$qv_att], $uri->base);
-					}
-				}
-			}
-						
-			//Get source URI
-			$uri->source = $uri->base;
-			if ( $internal && is_local_attachment($uri->source) ) {
-				$pid = url_to_postid($uri->base);
+			//Get source URI (e.g. attachments)
+			if ( $internal && is_local_attachment($uri->raw) ) {
+				$pid = url_to_postid($uri->raw);
 				$src = wp_get_attachment_url($pid);
 				if ( !!$src ) {
 					$uri->source = $src;
@@ -515,17 +498,21 @@ class SLB_Lightbox extends SLB_Base {
 				unset($src);
 			}
 			
-			/* Determine link type */
+			/* Determine content type */
 			
 			//Check if URI has already been processed
-			if ( $this->media_item_cached($uri->base) ) {
-				$i = $this->get_cached_media_item($uri->base);
+			if ( $this->media_item_cached($uri->source) ) {
+				$i = $this->get_cached_media_item($uri->source);
 				$type = $i->type;
 			} else {
 				//Get handler match
-				$handler = $this->handlers->match($uri->source);
-				if ( !!$handler ) {
-					$type = $handler->get_id();
+				$hdl_result = $this->handlers->match($uri->source);
+				if ( !!$hdl_result->handler ) {
+					$type = $hdl_result->handler->get_id();
+					//Updated source URI
+					if ( isset($hdl_result->props['uri']) ) {
+						$uri->source = $hdl_result->props['uri'];
+					}
 				}
 			}
 			
@@ -721,12 +708,13 @@ class SLB_Lightbox extends SLB_Base {
 		$props_map = array('description' => 'post_content', 'title' => 'post_title', 'caption' => 'post_excerpt');
 
 		//Separate media into buckets by type
-		$m_bucket = array();
+		//$m_bucket = array();
 		$m_internals = array();
 		$type = $id = null;
 		
 		$m_items = $this->media_items = $this->get_cached_media_items();
 		foreach ( $m_items as $uri => $p ) {
+			/*
 			$type = $p->{$props->type};
 			//Initialize bucket (if necessary)
 			if ( !isset($m_bucket[$type]) ) {
@@ -734,6 +722,7 @@ class SLB_Lightbox extends SLB_Base {
 			}
 			//Add item to bucket
 			$m_bucket[$type][$uri] =& $m_items[$uri];
+			*/
 			//Set aside internal links for additional processing
 			if ( $p->internal && !isset($m_internals[$uri]) ) {
 				$m_internals[$uri] =& $m_items[$uri];
@@ -851,6 +840,20 @@ class SLB_Lightbox extends SLB_Base {
 			}
 			unset($atts, $atts_meta, $m, $a, $uri, $pids, $pids_flat);
 		}
+
+		//Expand URI variants
+		foreach ( $m_items as $uri => $p ) {
+			if ( empty($p->_entries) ) {
+				continue;
+			}
+			foreach ( $p->_entries as $uri_variant ) {
+				if ( isset($this->media_items[$uri_variant]) ) {
+					continue;
+				}
+				$this->media_items[$uri_variant] = array('_parent' => $uri);
+			}
+		}
+		unset($uri, $p, $uri_variant);
 		
 		//Build client output
 		$obj = 'View.assets';
@@ -865,9 +868,9 @@ class SLB_Lightbox extends SLB_Base {
 	 * @param object $uri URI to cache
 	 * Members
 	 * > raw: Raw Link URI
-	 * > base: Sanitized URI
 	 * > source: Source URI (e.g. for attachment URIs)
 	 * @param string $type Media type (image, attachment, etc.)
+	 * @param bool $internal TRUE if media is internal (e.g. attachment)
 	 * @param int $id (optional) ID of media item (for internal items) (Default: NULL)
 	 */
 	private function cache_media_item($uri, $type, $internal, $id = null) {
@@ -875,7 +878,7 @@ class SLB_Lightbox extends SLB_Base {
 		if ( !is_object($uri) || !is_string($type) ) {
 			return false;
 		}
-		if ( !$this->media_item_cached($uri->base) ) {
+		if ( !$this->media_item_cached($uri->source) ) {
 			//Set properties
 			$i = array('type' => $type, 'source' => $uri->source, 'internal' => $internal, 'id' => null, '_entries' => array());
 			//ID
@@ -883,12 +886,11 @@ class SLB_Lightbox extends SLB_Base {
 				$i['id'] = absint($id);
 			}
 			//Cache media item
-			$this->media_items_raw[$uri->base] = (object) $i;
+			$this->media_items_raw[$uri->source] = (object) $i;
 		}
 		//Add URI variants
-		$entries =& $this->media_items_raw[$uri->base]->_entries;
-		if ( !in_array($uri->raw, $entries) ) {
-			$entries[] = $uri->raw;
+		if ( $uri->raw != $uri->source && !in_array($uri->raw, $this->media_items_raw[$uri->source]->_entries) ) {
+			$this->media_items_raw[$uri->source]->_entries[] = $uri->raw;
 		}
 	}
 	
