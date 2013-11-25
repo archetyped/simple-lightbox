@@ -1734,7 +1734,9 @@ var Viewer = {
 				t.trigger('item-change');
 			})
 			.on(['close', 'item-change'], function() {
-				t.unlock();
+				t.unload().done(function() {
+					t.unlock();
+				});
 			});
 	},
 	
@@ -2257,6 +2259,17 @@ var Viewer = {
 	
 	unload: function() {
 		
+	},
+	
+	/**
+	 * Unload viewer
+	 */
+	unload: function() {
+		var dfr = $.Deferred();
+		//Unload item data
+		this.get_theme().dom_get_tag('item').text('');
+		dfr.resolve();
+		return dfr.promise();
 	},
 	
 	/**
@@ -2855,6 +2868,21 @@ var Content_Handler = {
 	/* Processing/Output */
 	
 	/**
+	 * Loads item data
+	 * @param obj item Content item to load data for
+	 * @return obj Promise that is resolved when item data is loaded
+	 */
+	load: function(item) {
+		var dfr = $.Deferred();
+		var ret = this.call_attribute('load', item, dfr);
+		//Handle missing load method
+		if ( null === ret ) {
+			dfr.resolve();
+		}
+		return dfr.promise();
+	},
+	
+	/**
 	 * Render output to display item
 	 * @param Content_Item item Item to render output for
 	 * @return obj jQuery.Promise that is resolved when item is rendered
@@ -2862,19 +2890,7 @@ var Content_Handler = {
 	render: function(item) {
 		var dfr = $.Deferred();
 		//Validate
-		var ret = this.call_attribute('render', item);
-		if ( this.util.is_promise(ret) ) {
-			ret.done(function(output) {
-				dfr.resolve(output);
-			});
-		} else {
-			//String format
-			if ( this.util.is_string(ret) ) {
-				ret = this.util.format(ret, item.get_uri());
-			}
-			//Resolve deferred immediately
-			dfr.resolve(ret);
-		}
+		var ret = this.call_attribute('render', item, dfr);
 		return dfr.promise();
 	}
 };
@@ -2916,6 +2932,7 @@ var Content_Item = {
 	/* Properties */
 	
 	data: null,
+	loaded: null,
 	
 	/* Init */
 	
@@ -2947,27 +2964,25 @@ var Content_Item = {
 			var attrs = [{}, this._attr_default, {'permalink': key}];
 			if ( this.util.is_obj(assets) ) {
 				var t = this;
-				var get_assets = function(key, raw) {
+				/**
+				 * Retrieve item assets
+				 * Handles variant items as well (Retrieves parent item assets)
+				 * @param string key Item URI
+				 * @return obj Item assets (Empty if no match)
+				 */
+				var get_assets = function(key) {
 					var ret = {};
 					if ( key in assets && t.util.is_obj(assets[key]) ) {
-						var ret = assets[key];
-						if ( t.util.is_string(raw) ) {
-							var e = '_entries';
-							if ( !( e in ret ) || -1 == $.inArray(raw, ret[e]) ) {
-								ret = {};
-							}
+						ret = assets[key];
+						//Handle variants
+						if ( '_parent' in ret ) {
+							ret = get_assets(ret._parent);
 						}
 					}
 					return ret;
 				};
-				var asset = get_assets(key);
-				if ( this.util.is_empty(asset) && ( kpos = key.indexOf('?') ) && kpos != -1 ) {
-					var key_base = key.substr(0, kpos);
-					asset = get_assets(key_base, key); 
-				}
-				if ( !this.util.is_empty(asset) ) {
-					attrs.push(asset);
-				}
+				//Save assets
+				attrs.push(get_assets(key));
 			}
 			this._attr_default = $.extend.apply(this, attrs);
 		}
@@ -3124,6 +3139,10 @@ var Content_Item = {
 		this.data = data;
 	},
 	
+	get_data: function() {
+		return this.data;
+	},
+	
 	/**
 	 * Determine gallery type
 	 * @return string|null Gallery type ID (NULL if item not in gallery)
@@ -3275,8 +3294,24 @@ var Content_Item = {
 		//Retrieve viewer
 		var v = this.get_viewer();
 		//Load item
+		this.load();
 		var ret = v.show(this);
 		return ret;
+	},
+	
+	/**
+	 * Load item data
+	 * 
+	 * Retrieves item data from external sources (if necessary)
+	 * @uses this.loaded to save loaded state
+	 * @return obj Promise that is resolved when item data is loaded
+	 */
+	load: function() {
+		if ( !this.util.is_promise(this.loaded) ) {
+			//Load item data (via content handler)
+			this.loaded = this.get_type().load(this);
+		}
+		return this.loaded.promise();
 	},
 	
 	reset: function() {
@@ -4028,7 +4063,7 @@ var Template = {
 				var tags = this.get_tags(),
 					tag_promises = [];
 				//Render Tag output
-				loading_promise.done(function() {
+				$.when(item.load(), loading_promise).done(function() {
 					if ( !v.is_active() ) {
 						return false;
 					}
