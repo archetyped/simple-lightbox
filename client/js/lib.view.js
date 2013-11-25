@@ -2964,27 +2964,25 @@ var Content_Item = {
 			var attrs = [{}, this._attr_default, {'permalink': key}];
 			if ( this.util.is_obj(assets) ) {
 				var t = this;
-				var get_assets = function(key, raw) {
+				/**
+				 * Retrieve item assets
+				 * Handles variant items as well (Retrieves parent item assets)
+				 * @param string key Item URI
+				 * @return obj Item assets (Empty if no match)
+				 */
+				var get_assets = function(key) {
 					var ret = {};
 					if ( key in assets && t.util.is_obj(assets[key]) ) {
-						var ret = assets[key];
-						if ( t.util.is_string(raw) ) {
-							var e = '_entries';
-							if ( !( e in ret ) || -1 == $.inArray(raw, ret[e]) ) {
-								ret = {};
-							}
+						ret = assets[key];
+						//Handle variants
+						if ( '_parent' in ret ) {
+							ret = get_assets(ret._parent);
 						}
 					}
 					return ret;
 				};
-				var asset = get_assets(key);
-				if ( this.util.is_empty(asset) && ( kpos = key.indexOf('?') ) && kpos != -1 ) {
-					var key_base = key.substr(0, kpos);
-					asset = get_assets(key_base, key); 
-				}
-				if ( !this.util.is_empty(asset) ) {
-					attrs.push(asset);
-				}
+				//Save assets
+				attrs.push(get_assets(key));
 			}
 			this._attr_default = $.extend.apply(this, attrs);
 		}
