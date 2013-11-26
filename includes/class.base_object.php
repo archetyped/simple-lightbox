@@ -251,11 +251,8 @@ class SLB_Base_Object extends SLB_Base {
 					if ( !$this->util->is_uri($ret) ) {
 						$ret = $this->util->normalize_path(site_url(), $ret);
 					}
-					$ch = curl_init($ret);
-					curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-					curl_setopt($ch, CURLOPT_HEADER, false);
-					$ret = curl_exec($ch);
-					curl_close($ch);
+					$get = wp_safe_remote_get($ret);
+					$ret = ( !is_wp_error($get) && 200 == $get['response']['code'] ) ? $get['body'] : '';
 					break;
 			}
 		}
