@@ -680,10 +680,7 @@ class SLB_Lightbox extends SLB_Base {
 		add_action('wp_print_footer_scripts', $this->m('client_footer_script'));
 		
 		//Build client output
-		
-		echo '<!-- SLB -->' . PHP_EOL;
 		$this->util->do_action('footer');
-		echo PHP_EOL . '<!-- /SLB -->' . PHP_EOL;
 	}
 	
 	/**
