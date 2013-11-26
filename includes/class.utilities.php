@@ -30,9 +30,6 @@ class SLB_Utilities {
 		'Description'	=> 'Description',
 		'Author'		=> 'Author',
 		'AuthorURI'		=> 'Author URI',
-		'TextDomain'	=> 'Text Domain',
-		'DomainPath'	=> 'Domain Path',
-		'Network'		=> 'Network',
 	);
 	
 	
@@ -1287,17 +1284,6 @@ class SLB_Utilities {
 	}
 	
 	/**
-	 * Retrieve plugin textdomain (for localization)
-	 * @return string
-	 */
-	function get_plugin_textdomain() {
-		static $dom = '';
-		if ( empty($dom) )
-			$dom = $this->get_plugin_base(true);
-		return $dom;
-	}
-	
-	/**
 	 * Retrieve current post type based on URL query variables
 	 * @return string|null Current post type
 	 */
@@ -1351,24 +1337,8 @@ class SLB_Utilities {
 	/*-** General **-*/
 	
 	/**
-	 * Checks if last parameter sent to a function is an array of options and returns it
-	 * Calling function should use `func_get_args()` and pass the value to this method
-	 * @param array $args Parameters passed to calling function
-	 * @return array Options array (Default: empty array)
-	 */
-	function func_get_options($args) {
-		$r = array();
-		if ( is_array($args) && !empty($args) ) {
-			$last = count($args) - 1;
-			if ( is_array($args[$last]) )
-				$r = $args[$last];
-		}
-		return $r;
-	}
-	
-	/**
 	 * Checks if a property exists in a class or object
-	 * (Compatibility method for PHP 4
+	 * Compatibility method for PHP 4
 	 * @param mixed $class Class or object to check 
 	 * @param string $property Name of property to look for in $class
 	 */
@@ -1544,20 +1514,6 @@ class SLB_Utilities {
 	}
 	
 	/**
-	 * Returns value of item at specified path in array
-	 * @param array $arr Array to get item from
-	 * @param array $path Array of segments that form path to array (each array item is a deeper dimension in the array)
-	 * @return mixed Value of item in array (Default: empty string)
-	 */
-	function &get_array_item(&$arr, &$path) {
-		$item = '';
-		if ($this->array_item_isset($arr, $path)) {
-			eval('$item =& $arr' . $this->get_array_path($path) . ';');
-		}
-		return $item;
-	}
-	
-	/**
 	 * Build formatted string based on array values
 	 * Array values in formatted string will be ordered by index order
 	 * @param array $attribute Values to build string with
@@ -1677,6 +1633,14 @@ class SLB_Utilities {
 		return $ret;
 	}
 	
+	/**
+	 * Build HTML link element
+	 * @uses build_html_element() to build link output
+	 * @param string $uri Link URI
+	 * @param string $content Link content
+	 * @param $array (optional) $attributes Additional link attributes
+	 * @return string HTML link element
+	 */
 	function build_html_link($uri, $content, $attributes = array()) {
 		$attributes = array_merge(array('href' => $uri, 'title' => $content), $attributes);
 		return $this->build_html_element(array('tag' => 'a', 'wrap' => true, 'content' => $content, 'attributes' => $attributes));
@@ -1732,16 +1696,6 @@ class SLB_Utilities {
 	}
 	
 	/**
-	 * Generate external script element
-	 * @param $url Script URL
-	 * @return string Script element
-	 */
-	function build_ext_script_element($url = '') {
-		$attributes = array('src' => $url, 'type' => 'text/javascript');
-		return $this->build_html_element(array('tag' => 'script', 'attributes' => $attributes)) . PHP_EOL;
-	}
-	
-	/**
 	 * Generate HTML element based on values
 	 * @param $args Element arguments
 	 * @return string Generated HTML element
@@ -1786,195 +1740,5 @@ class SLB_Utilities {
 
 		$ret .= $el_end;
 		return $ret;	
-	}
-	
-	/*-** Admin **-*/
-	
-	/**
-	 * Add submenu page in the admin menu
-	 * Adds ability to set the position of the page in the menu
-	 * @see add_submenu_page (Wraps functionality)
-	 * 
-	 * @param $parent
-	 * @param $page_title
-	 * @param $menu_title
-	 * @param $access_level
-	 * @param $file
-	 * @param $function
-	 * @param int $pos Index position of menu page
-	 * 
-	 * @global array $submenu Admin page submenus
-	 */
-	function add_submenu_page($parent, $page_title, $menu_title, $capability, $file, $function = '', $pos = false) {
-		//Add submenu page as usual
-		$args = func_get_args();
-		$hookname = call_user_func_array('add_submenu_page', $args);
-		if ( is_int($pos) ) {
-			global $submenu;
-			//Get last submenu added
-			$parent = $this->get_submenu_parent_file($parent);
-			if ( isset($submenu[$parent]) ) {
-			$subs =& $submenu[$parent];
-
-			//Make sure menu isn't already in the desired position
-			if ( $pos <= ( count($subs) - 1 ) ) {
-				//Get submenu that was just added
-				$sub = array_pop($subs);
-				//Insert into desired position
-				if ( 0 == $pos ) {
-					array_unshift($subs, $sub);
-				} else {
-					$top = array_slice($subs, 0, $pos);
-					$bottom = array_slice($subs, $pos);
-					array_push($top, $sub);
-					$subs = array_merge($top, $bottom);
-				}
-			}
-		}
-		}
-		
-		return $hookname;
-	}
-	
-	/**
-	 * Remove admin submenu
-	 * @param string $parent Submenu parent file
-	 * @param string $file Submenu file name
-	 * @return int|null Index of removed submenu (NULL if submenu not found)
-	 * 
-	 * @global array $submenu
-	 * @global array $_registered_pages
-	 */
-	function remove_submenu_page($parent, $file) {
-		global $submenu, $_registered_pages;
-		$ret = null;
-		
-		$parent = $this->get_submenu_parent_file($parent);
-		$file = plugin_basename($file);
-		$file_index = 2;
-		
-		//Find submenu
-		if ( isset($submenu[$parent]) ) {
-			$subs =& $submenu[$parent];
-			for ($x = 0; $x < count($subs); $x++) {
-				if ( $subs[$x][$file_index] == $file ) {
-					//Remove matching submenu
-					$hookname = get_plugin_page_hookname($file, $parent);
-					remove_all_actions($hookname);
-					unset($_registered_pages[$hookname]);
-					unset($subs[$x]);
-					$subs = array_values($subs);
-					//Set index and stop processing
-					$ret = $x;
-					break;
-				}
-			}
-		}
-		
-		return $ret;
-	}
-	
-	/**
-	 * Replace a submenu page
-	 * Adds a submenu page in the place of an existing submenu page that has the same $file value
-	 * 
-	 * @param $parent
-	 * @param $page_title
-	 * @param $menu_title
-	 * @param $access_level
-	 * @param $file
-	 * @param $function
-	 * @return string Hookname
-	 * 
-	 * @global array $submenu
-	 */
-	function replace_submenu_page($parent, $page_title, $menu_title, $access_level, $file, $function = '') {
-		global $submenu;
-		//Remove matching submenu (if exists)
-		$pos = $this->remove_submenu_page($parent, $file);
-		//Insert submenu page
-		$hookname = $this->add_submenu_page($parent, $page_title, $menu_title, $access_level, $file, $function, $pos);
-		return $hookname;
-	}
-	
-	/**
-	 * Retrieves parent file for submenu
-	 * @param string $parent Parent file
-	 * @return string Formatted parent file name
-	 * 
-	 * @global array $_wp_real_parent_file;
-	 */
-	function get_submenu_parent_file($parent) {
-		global $_wp_real_parent_file;
-		$parent = plugin_basename($parent);
-		if ( isset($_wp_real_parent_file[$parent]) )
-			$parent = $_wp_real_parent_file[$parent];
-		return $parent;
-	}
-	
-	/* Shortcodes */
-	
-	/**
-	 * Generate shortcode to be used in content
-	 * @param string $tag Shortcode tag
-	 * @param array $attr Associative array of attributes
-	 * @return string Shortcode markup
-	 */
-	public function make_shortcode($tag, $attr = array()) {
-		return '[' . $tag . ']';
-	}
-	
-	/**
-	 * Build shortcode regex pattern for specific shortcode
-	 * @uses $shortcode_tags
-	 * @param string $tag Shortcode tag
-	 * @return string Shortcode regex pattern
-	 */
-	public function get_shortcode_regex($tag) {
-		global $shortcode_tags;
-		//Backup shortcodes
-		$tgs_temp = $shortcode_tags;
-		$ret = '';
-		if ( !is_string($tag) || empty($tag) ) {
-			return $ret;
-		}
-		//Modify
-		$shortcode_tags = array( $tag => null );
-		//Build pattern
-		$ret = get_shortcode_regex();
-		//Restore shortcodes
-		$shortcode_tags = $tgs_temp;
-		
-		return $ret;
-	}
-	/**
-	 * Check if content contains shortcode
-	 * @param string $tag Name of shortcode to check for
-	 * @param string $content Content to check for shortcode
-	 * @return bool TRUE if content contains shortcode
-	 */
-	public function has_shortcode($content, $tag) {
-		$ptn = $this->get_shortcode_regex($tag);
-		$ret = ( is_string($content) && preg_match("/$ptn/s", $content) == 1 ) ? true : false;
-		return $ret;
-	}
-	
-	/**
-	 * Add shortcode to content
-	 * @param string $content Content to add shortcode to
-	 * @param bool $in_footer (optional) Add shortcode to head or footer of content (Default: footer)
-	 * @return string Modified content
-	 */
-	public function add_shortcode($content, $tag, $attr = null, $in_footer = true) {
-		if ( !is_string($content) ) {
-			$content = '';
-		}
-		$sc = $this->make_shortcode($tag, $attr);
-		if ( !!$in_footer ) {
-			$content .= $sc;
-		} else {
-			$content = $sc . $content;
-		}
-		return $content;
 	}
 }
