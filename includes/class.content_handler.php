@@ -15,6 +15,12 @@ class SLB_Content_Handler extends SLB_Component {
 	 */
 	protected $match;
 	
+	/**
+	 * Custom attributes
+	 * @var callback
+	 */
+	protected $attributes;
+	
 	/* Matching */
 		
 	/**
@@ -53,5 +59,20 @@ class SLB_Content_Handler extends SLB_Component {
 			$ret = call_user_func($this->get_match(), $uri, $uri_raw);
 		}
 		return $ret;
+	}
+	
+	/* Attributes */
+	
+	public function set_attributes($callback) {
+		$this->attributes = ( is_callable($callback) ) ? $callback : null;
+		return $this;
+	}
+	
+	public function get_attributes() {
+		$ret = null;
+		if ( !is_null($this->attributes) ) {
+			$ret = call_user_func($this->attributes);
+		}
+		return ( is_array($ret) ) ? $ret : array();
 	}
 }
