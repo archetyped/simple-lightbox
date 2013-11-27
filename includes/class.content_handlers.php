@@ -252,15 +252,21 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 		$code = array();
 		
 		foreach ( $this->request_matches as $handler ) {
+			//Attributes
+			$attrs = $handler->get_attributes();
+			//Styles
 			$styles = $handler->get_styles(array('uri_format'=>'full'));
-			if ( empty($styles) ) {
+			if ( !empty($styles) ) {
+				$attrs['styles'] = array_values($styles);
+			}
+			if ( empty($attrs) ) {
 				continue;
 			}
 			//Setup client parameters
 			$params = array(
 				sprintf("'%s'", $handler->get_id()),
+				json_encode($attrs),
 			);
-			$params[] = json_encode( array('styles' => array_values($styles)) );
 			//Extend handler in client
 			$code[] = $this->util->call_client_method('View.extend_content_handler', $params, false);
 		}
