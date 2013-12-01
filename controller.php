@@ -14,13 +14,13 @@ class SLB_Lightbox extends SLB_Base {
 	
 	var $scripts = array (
 		'core'			=> array (
-			'file'		=> 'client/js/lib.core.js',
+			'file'		=> 'client/js/lib/lib.core.js',
 			'deps'		=> 'jquery',
 			'enqueue'	=> false,
 			'in_footer'	=> true,
 		),
 		'view'			=> array (
-			'file'		=> 'client/js/lib.view.js',
+			'file'		=> 'client/js/lib/lib.view.js',
 			'deps'		=> array('jquery', '[core]'),
 			'context'	=> array( array('public', '[is_request_valid]') ),
 			'in_footer'	=> true,
