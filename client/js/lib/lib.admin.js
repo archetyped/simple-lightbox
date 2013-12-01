@@ -5,6 +5,8 @@
  * @author Archetyped
  */
 
+/* global SLB, postboxes, pagenow */
+
 if ( jQuery ){(function ($) {
 
 if ( !SLB || !SLB.attach ) {
@@ -20,7 +22,7 @@ var Admin = {
 			postboxes.add_postbox_toggles(pagenow);
 		}
 	},
-}
+};
 
 SLB.attach('Admin', Admin);
 
