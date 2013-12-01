@@ -1475,7 +1475,7 @@ var Component = {
 			'tag': 'div',
 			'content': '',
 			'class': this.add_ns(element)
-		}
+		};
 		//Setup content
 		if ( !this.util.is_empty(content) ) {
 			if ( this.util.is_type(content, jQuery, false) || this.util.is_string(content, false) ) {
@@ -1967,7 +1967,7 @@ var Viewer = {
 			v.set_active();
 			//Display
 			v.render();
-		}
+		};
 		if ( !this.is_locked() ) {
 			fin();
 		} else if ( !this.get_status(fin_set) ) {
@@ -2326,7 +2326,7 @@ var Viewer = {
 		var v = this;
 		var close = function() {
 			v.close();
-		}
+		};
 		//Layout
 		l.click(close);
 		//Overlay
@@ -2354,7 +2354,7 @@ var Viewer = {
 		var v = this;
 		var h = function(ev) {
 			return v.keys_control(ev);
-		}
+		};
 		if ( mode ) {
 			$(document).on(e, h);
 		} else {
@@ -3919,7 +3919,7 @@ var Theme = {
 						el.stop(false, true);
 					}
 				});
-			}
+			};
 			//Stop queued animations
 			if ( !!clear_queue ) {
 				anim_stop();
