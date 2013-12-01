@@ -4159,6 +4159,8 @@ var Template = {
 		switch ( rtype ) {
 			case 'string' :
 				dom = dom.wrap('<div />').parent().html();
+				l = dom;
+				break;
 			default :
 				l = dom;
 		}
