@@ -134,12 +134,12 @@ var View = {
 	
 	init_components: function() {
 		this.collections = {
-			'viewers':	 			this.Viewer,
+			'viewers':				this.Viewer,
 			'items':				this.Content_Item,
-			'content_handlers': 	this.Content_Handler,
-			'groups': 				this.Group,
-			'themes': 				this.Theme,
-			'template_tags': 		this.Template_Tag
+			'content_handlers':		this.Content_Handler,
+			'groups':				this.Group,
+			'themes':				this.Theme,
+			'template_tags':		this.Template_Tag
 		};
 		
 		this.component_defaults = [
@@ -1077,7 +1077,7 @@ var Component = {
 	 *   > Check if property already set
 	 *   > Check attributes
 	 *   > Check container object(s)
-	 * 	 > Check parent object (controller)
+	 *   > Check parent object (controller)
 	 * @uses _containers to check potential container components for references
 	 * @param string cname Component name
 	 * @param bool check_attr (optional) Whether or not to check instance attributes for component (Default: TRUE)
@@ -1459,8 +1459,8 @@ var Component = {
 	 * Wrapper element created and added to main DOM element if not yet created
 	 * @param string element ID for DOM element (Used as class name for wrapper)
 	 * @param string|jQuery|obj content Content to add to DOM (Object contains element properties)
-	 * 	> tag 		: Element tag name
-	 * 	> content	: Element content
+	 *  > tag		: Element tag name
+	 *  > content	: Element content
 	 * @return jQuery Inserted element(s)
 	 */
 	dom_put: function(element, content) {
@@ -1590,8 +1590,8 @@ var Component = {
 	 * Event handlers are executed in the context of the current component instance
 	 * Event handlers are passed parameters
 	 * > ev			(obj)	Event object
-	 * 	> type		(string)	Event name
-	 * 	> data		(mixed)		Data to pass to handlers (if supplied)
+	 *  > type		(string)	Event name
+	 *  > data		(mixed)		Data to pass to handlers (if supplied)
 	 * > component	(obj)	Current component instance
 	 * @param string event Custom event to trigger
 	 * @param mixed data (optional) Data to pass to event handlers
@@ -2100,7 +2100,7 @@ var Viewer = {
 							v.open = true;
 						})
 						.fail(function() {
-							 set_pos();
+							set_pos();
 							//Fallback open
 							v.get_overlay().show();
 							v.dom_get().show();
@@ -4406,7 +4406,7 @@ var Template_Tag = {
 	 * @param Content_Item item
 	 * @return obj jQuery.Promise object that is resolved when tag is rendered
 	 * Parameters passed to callbacks
-	 * > tag 	obj		Current tag instance
+	 * > tag	obj		Current tag instance
 	 * > output	string	Tag output
 	 */
 	render: function(item) {
