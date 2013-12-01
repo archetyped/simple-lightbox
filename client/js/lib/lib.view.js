@@ -7,7 +7,7 @@
 /* global SLB */
 if ( jQuery ){(function ($) {
 
-if ( typeof SLB == 'undefined' || !SLB.attach ) {
+if ( typeof SLB === 'undefined' || !SLB.attach ) {
 	return false;
 }
 
@@ -153,7 +153,7 @@ var View = {
 	component_make_default: function(type) {
 		var ret = false;
 		for ( var x = 0; x < this.component_defaults.length; x++ ) {
-			if ( type == this.component_defaults[x] ) {
+			if ( type === this.component_defaults[x] ) {
 				ret = true;
 				break;
 			}
@@ -181,7 +181,7 @@ var View = {
 		if ( this.util.is_func(type) ) {
 			//Determine collection
 			for ( var coll in this.collections ) {
-				if ( type == this.collections[coll] && coll in this ) {
+				if ( type === this.collections[coll] && coll in this ) {
 					ret = this[coll];
 					break;
 				}
@@ -251,7 +251,7 @@ var View = {
 			options = {};
 		}
 		//Check if specialized method exists for component type
-		var m = ( 'component' != type.prototype._slug ) ? 'add_' + type.prototype._slug : null;
+		var m = ( 'component' !== type.prototype._slug ) ? 'add_' + type.prototype._slug : null;
 		if ( !this.util.is_empty(m) && ( m in this ) && this.util.is_func(this[m]) ) {
 			ret = this[m](id, options);
 		}
@@ -516,7 +516,7 @@ var View = {
 		//Check if item exists in collection
 		ret = $.inArray(item, items);
 		//Cache item
-		if ( -1 == ret ) {
+		if ( -1 === ret ) {
 			ret = items.push(item) - 1;
 		}
 		//Return item index in cache
@@ -951,7 +951,7 @@ var Component = {
 	 */
 	check_id: function(id, nonempty) {
 		//Validate
-		if ( arguments.length == 1 && this.util.is_bool(arguments[0]) ) {
+		if ( arguments.length === 1 && this.util.is_bool(arguments[0]) ) {
 			nonempty = arguments[0];
 			id = null;
 		}
@@ -1124,7 +1124,7 @@ var Component = {
 			for ( var i = 0; i < containers.length; i++ ) {
 				con = containers[i];
 				//Validate container
-				if ( con == cname ) {
+				if ( con === cname ) {
 					continue;
 				}
 				//Retrieve container
@@ -1250,7 +1250,7 @@ var Component = {
 			if ( this.util.is_obj(opts) ) {
 				var attr_prefix = this.util.get_attribute();
 				$.each(opts, function(idx, opt) {
-					if ( opt.name.indexOf( attr_prefix ) == -1 ) {
+					if ( opt.name.indexOf( attr_prefix ) === -1 ) {
 						return true;
 					}
 					//Process custom attributes
@@ -1990,7 +1990,7 @@ var Viewer = {
 			//Reset count
 			this.history_set(0);
 			//Close viewer
-			if ( -1 != count ) {
+			if ( -1 !== count ) {
 				this.close();
 			}	
 		}
@@ -2051,7 +2051,7 @@ var Viewer = {
 	 * @return bool TRUE if viewer is open, FALSE otherwise 
 	 */
 	is_open: function() {
-		return ( this.dom_get().css('display') == 'none' ) ? false : true;
+		return ( this.dom_get().css('display') === 'none' ) ? false : true;
 	},
 	
 	/**
@@ -2667,14 +2667,14 @@ var Group = {
 		if ( !this.util.is_type(item, View.Content_Item) ) {
 			item = this.get_current();
 		}
-		if ( this.get_size() == 1 ) {
+		if ( this.get_size() === 1 ) {
 			return item;
 		}
 		var next = null;
 		var pos = this.get_pos(item);
-		if ( pos != -1 ) {
+		if ( pos !== -1 ) {
 			pos = ( pos + 1 < this.get_size() ) ? pos + 1 : 0;
-			if ( 0 != pos || item.get_viewer().get_attribute('loop') ) {
+			if ( 0 !== pos || item.get_viewer().get_attribute('loop') ) {
 				next = this.get_item(pos);
 			}
 		}
@@ -2686,13 +2686,13 @@ var Group = {
 		if ( !this.util.is_type(item, View.Content_Item) ) {
 			item = this.get_current();
 		}
-		if ( this.get_size() == 1 ) {
+		if ( this.get_size() === 1 ) {
 			return item;
 		}
 		var prev = null;
 		var pos = this.get_pos(item);
-		if ( pos != -1 && ( 0 != pos || item.get_viewer().get_attribute('loop') ) ) {
-			if ( pos == 0 ) {
+		if ( pos !== -1 && ( 0 !== pos || item.get_viewer().get_attribute('loop') ) ) {
+			if ( pos === 0 ) {
 				pos = this.get_size();
 			}
 			pos -= 1;
@@ -2750,7 +2750,7 @@ var Group = {
 	},
 	
 	is_single: function() {
-		return ( this.get_size() == 1 );
+		return ( this.get_size() === 1 );
 	}
 };
 
@@ -3045,13 +3045,13 @@ var Content_Item = {
 	 */
 	get_uri: function(mode) {
 		//Validate
-		if ( $.inArray(mode ,['source', 'permalink']) == -1 ) {
+		if ( $.inArray(mode ,['source', 'permalink']) === -1 ) {
 			mode = 'source';
 		}
 		//Retrieve URI
 		var ret = this.get_attribute(mode);
 		if ( !this.util.is_string(ret) ) {
-			ret = ( 'source' == mode ) ? this.get_attribute('permalink') : '';
+			ret = ( 'source' === mode ) ? this.get_attribute('permalink') : '';
 		}
 		return ret;
 	},
@@ -3174,7 +3174,7 @@ var Content_Item = {
 			return true;
 		}
 		//Check for specific gallery type
-		return ( gType == type ) ? true : false;
+		return ( gType === type ) ? true : false;
 	},
 	
 	/*-** Component References **-*/
@@ -3530,7 +3530,7 @@ var Theme = {
 	 */
 	_c: function(id, attributes, viewer) {
 		//Validate
-		if ( arguments.length == 1 && this.util.is_type(arguments[0], View.Viewer) ) {
+		if ( arguments.length === 1 && this.util.is_type(arguments[0], View.Viewer) ) {
 			viewer = arguments[0];
 			id = null;
 		}
@@ -3701,7 +3701,7 @@ var Theme = {
 		var item = this.get_viewer().get_item();
 		var w = $(window);
 		//Check cache freshness
-		if ( !( status in cache ) || !this.util.is_obj(cache[status]) || cache[status].width != w.width() || cache[status].height != w.height() ) {
+		if ( !( status in cache ) || !this.util.is_obj(cache[status]) || cache[status].width !== w.width() || cache[status].height !== w.height() ) {
 				cache = {};
 		}
 		if ( this.util.is_empty(cache) ) {
@@ -3714,7 +3714,7 @@ var Theme = {
 		}
 		//Retrieve cached values
 		var pos = $.inArray(item, cache[status].index);
-		if ( pos != -1 && pos in cache ) {
+		if ( pos !== -1 && pos in cache ) {
 			meas = cache[pos];
 		}
 		//Generate measurement
@@ -4274,9 +4274,9 @@ var Template = {
 			var tc = null;
 			for ( var x = 0; x < tags.length; x++ ) {
 				tc = tags[x];
-				if ( name == tc.get_name() ) {
+				if ( name === tc.get_name() ) {
 					//Check tag property
-					if ( !prop || prop == tc.get_prop() ) {
+					if ( !prop || prop === tc.get_prop() ) {
 						tags_filtered.push(tc);
 					}
 				}
@@ -4380,7 +4380,7 @@ var Template_Tag = {
 		//Get tag ID
 		attrs.name = parts[0];
 		//Get main property
-		if ( attrs.name.indexOf('.') != -1 ) {
+		if ( attrs.name.indexOf('.') !== -1 ) {
 			attrs.name = attrs.name.split('.', 2);
 			attrs.prop = attrs.name[1];
 			attrs.name = attrs.name[0];
