@@ -1051,11 +1051,11 @@ var Component = {
 	 */
 	check_component: function(comp, ctype) {
 		//Validate
-		if ( this.util.is_empty(comp)
-			|| ( this.util.is_obj(comp) && !this.util.is_func(ctype) )
-			|| ( this.util.is_string(comp) && !this.has_reference(comp) )
-			|| ( this.util.is_empty(ctype) && !this.util.is_string(comp) )
-			|| ( !this.util.is_obj(comp) && !this.util.is_string(comp) )
+		if ( this.util.is_empty(comp) ||
+			( this.util.is_obj(comp) && !this.util.is_func(ctype) ) ||
+			( this.util.is_string(comp) && !this.has_reference(comp) ) ||
+			( this.util.is_empty(ctype) && !this.util.is_string(comp) ) ||
+			( !this.util.is_obj(comp) && !this.util.is_string(comp) )
 		) {
 			return false;
 		}
