@@ -2257,10 +2257,6 @@ var Viewer = {
 		return $(o);
 	},
 	
-	unload: function() {
-		
-	},
-	
 	/**
 	 * Unload viewer
 	 */
