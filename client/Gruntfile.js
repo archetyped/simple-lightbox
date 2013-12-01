@@ -4,7 +4,7 @@ module.exports = function(grunt) {
 	grunt.initConfig({
 		// Metadata.
 		pkg : grunt.file.readJSON('package.json'),
-		banner : '/*! <%= pkg.title || pkg.name %> - v<%= pkg.version %> - ' + '<%= grunt.template.today("yyyy-mm-dd") %>\n' + '<%= pkg.homepage ? "* " + pkg.homepage + "\\n" : "" %>' + '* Copyright (c) <%= grunt.template.today("yyyy") %> <%= pkg.author.name %>;' + ' Licensed <%= _.pluck(pkg.licenses, "type").join(", ") %> */\n',
+		banner : '/*! <%= pkg.title || pkg.name %> - v<%= pkg.version %> - ' + '<%= grunt.template.today("yyyy-mm-dd") %>\n' + '<%= pkg.homepage ? "* " + pkg.homepage + "\\n" : "" %>' + '* Copyright (c) <%= grunt.template.today("yyyy") %> <%= pkg.author.name %>;' + ' Licensed <%= pkg.license %> */\n',
 		// Task configuration.
 		concat : {
 			options : {
@@ -18,12 +18,15 @@ module.exports = function(grunt) {
 		},
 		uglify : {
 			options : {
-				banner : '<%= banner %>'
+				banner : '<%= banner %>',
+				mangle: false,
+				report: 'min'
 			},
 			dist : {
-				src : '<%= concat.dist.dest %>',
-				dest : 'dist/<%= pkg.name %>.min.js'
-			}
+				files : grunt.file.expandMapping(['**/*.js'], 'js/dist/', {
+					cwd: 'js/lib/'
+				})
+			},
 		},
 		jshint : {
 			options : {
@@ -54,10 +57,13 @@ module.exports = function(grunt) {
 		},
 		sass : {
 			dist : {
-				files : {
-					'css/app.css' : 'sass/app.scss',
-					'css/admin.css' : 'sass/admin.scss'
-				}
+				options : {
+					outputStyle : 'compressed',
+				},
+				files : grunt.file.expandMapping(['**/*.scss'], 'css/', {
+					cwd: 'sass/',
+					ext: '.css'
+				})
 			}
 		},
 		watch : {
