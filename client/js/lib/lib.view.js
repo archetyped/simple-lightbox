@@ -647,7 +647,7 @@ var View = {
 		//Create default attributes for new theme
 		if ( this.util.is_empty(model) ) {
 			//Default
-			var model = {'parent': null, 'id': id};
+			model = {'parent': null, 'id': id};
 			//Save theme model
 			this.Theme.prototype._models[id] = model;
 		}
@@ -1338,7 +1338,7 @@ var Component = {
 		attr = this.get_attribute(attr);
 		if ( this.util.is_func(attr) ) {
 			//Get arguments
-			var args = Array.prototype.slice.call(arguments, 1);
+			args = Array.prototype.slice.call(arguments, 1);
 			//Pass arguments to user-defined method
 			attr = attr.apply(this, args);
 		}
@@ -3469,8 +3469,8 @@ var Modeled_Component = {
 		if ( !this.util.is_bool(safe_mode) ) {
 			safe_mode = true;
 		}
-		var mcurr;
-		var m = mcurr = this.get_model();
+		var mcurr = this.get_model();
+		var m = mcurr;
 		var found = false;
 		while ( this.util.is_obj(m) ) {
 			//Check if attribute exists in model
@@ -3631,7 +3631,7 @@ var Theme = {
 			//Retrieve matching theme model
 			var models = this.get_models();
 			if ( !this.util.is_string(id) ) {
-				var id = this.get_parent().get_option('theme_default');
+				id = this.get_parent().get_option('theme_default');
 			}
 			//Select first theme model if specified model is invalid
 			if ( !this.util.in_obj(models, id) ) {
