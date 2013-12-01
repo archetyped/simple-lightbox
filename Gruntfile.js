@@ -8,13 +8,12 @@ module.exports = function(grunt) {
 		// Task configuration.
 		uglify : {
 			options : {
-				banner : '<%= banner %>',
 				mangle: false,
 				report: 'min'
 			},
 			dist : {
-				files : grunt.file.expandMapping(['**/*.js'], 'js/dist/', {
-					cwd: 'js/dev/'
+				files : grunt.file.expandMapping(['**/*.js'], 'client/js/dist/', {
+					cwd: 'client/js/dev/'
 				})
 			},
 		},
@@ -39,7 +38,7 @@ module.exports = function(grunt) {
 				src : 'Gruntfile.js'
 			},
 			lib_test : {
-				src : ['js/dev/**/*.js']
+				src : ['client/js/dev/**/*.js']
 			}
 		},
 		qunit : {
@@ -50,8 +49,8 @@ module.exports = function(grunt) {
 				options : {
 					outputStyle : 'compressed',
 				},
-				files : grunt.file.expandMapping(['**/*.scss'], 'css/', {
-					cwd: 'sass/',
+				files : grunt.file.expandMapping(['**/*.scss'], 'client/css/', {
+					cwd: 'client/sass/',
 					ext: '.css'
 				})
 			}
@@ -66,7 +65,7 @@ module.exports = function(grunt) {
 				tasks : ['jshint:lib_test']
 			},
 			sass : {
-				files : 'sass/**/*.scss',
+				files : 'client/sass/**/*.scss',
 				tasks : ['sass']
 			}
 		}
