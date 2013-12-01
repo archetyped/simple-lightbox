@@ -4,7 +4,7 @@
  * @subpackage View
  * @author Archetyped
  */
-
+/* global SLB */
 if ( jQuery ){(function ($) {
 
 if ( typeof SLB == 'undefined' || !SLB.attach ) {
@@ -4204,7 +4204,7 @@ var Template = {
 	get_tag_container: function(tag) {
 		//Build element
 		var attr = this.get_tag_attribute();
-		return this.util.format('<span %s="%s"></span>', attr, escape(tag)); 
+		return this.util.format('<span %s="%s"></span>', attr, encodeURI(tag)); 
 	},
 	
 	get_tag_attribute: function() {
@@ -4251,7 +4251,7 @@ var Template = {
 			$(nodes).each(function(idx) {
 				//Get tag placeholder
 				var el = $(this);
-				var tag = new View.Template_Tag(unescape(el.attr(attr)));
+				var tag = new View.Template_Tag(decodeURI(el.attr(attr)));
 				//Populate valid tags
 				if ( tag.has_handler() ) {
 					//Add tag to array
