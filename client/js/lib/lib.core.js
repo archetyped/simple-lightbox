@@ -31,23 +31,26 @@ Class.extend = function(members) {
 	}
 	
 	//Copy members
+	var make_handler = function(nm, fn) {
+		return (function(nm, fn) {
+			return function() {
+				//Cache super variable
+				var tmp = this._super;
+				//Set variable to super class method
+				this._super = _super[nm];
+				//Call method
+				var ret = fn.apply(this, arguments);
+				//Restore super variable
+				this._super = tmp;
+				//Return value
+				return ret;
+			};
+		})(nm, fn);
+	};
 	for ( name in members ) {
 		//Evaluate function members (if overwriting super class method)
 		if ( 'function' === typeof members[name] && 'function' === typeof _super[name] ) {
-			proto[name] = (function(name, fn) {
-				return function() {
-					//Cache super variable
-					var tmp = this._super;
-					//Set variable to super class method
-					this._super = _super[name];
-					//Call method
-					var ret = fn.apply(this, arguments);
-					//Restore super variable
-					this._super = tmp;
-					//Return value
-					return ret;
-				};
-			})(name, members[name]);
+			proto[name] = make_handler(name, members[name]);
 		} else {
 			val = members[name];
 			if ( $.isPlainObject(members[name]) ) {
@@ -78,7 +81,7 @@ Class.extend = function(members) {
 	//Set constructor
 	Class.prototype.constructor = Class;
 	
-	Class.extend = arguments.callee;
+	Class.extend = this.extend;
 	
 	//Return function
 	return Class;
