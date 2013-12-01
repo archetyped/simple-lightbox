@@ -4,26 +4,19 @@ module.exports = function(grunt) {
 	grunt.initConfig({
 		// Metadata.
 		pkg : grunt.file.readJSON('package.json'),
-		banner : '/*! <%= pkg.title || pkg.name %> - v<%= pkg.version %> - ' + '<%= grunt.template.today("yyyy-mm-dd") %>\n' + '<%= pkg.homepage ? "* " + pkg.homepage + "\\n" : "" %>' + '* Copyright (c) <%= grunt.template.today("yyyy") %> <%= pkg.author.name %>;' + ' Licensed <%= _.pluck(pkg.licenses, "type").join(", ") %> */\n',
+		banner : '/*! <%= pkg.title || pkg.name %> - v<%= pkg.version %> - ' + '<%= grunt.template.today("yyyy-mm-dd") %>\n' + '<%= pkg.homepage ? "* " + pkg.homepage + "\\n" : "" %>' + '* Copyright (c) <%= grunt.template.today("yyyy") %> <%= pkg.author.name %>;' + ' Licensed <%= pkg.license %> */\n',
 		// Task configuration.
-		concat : {
-			options : {
-				banner : '<%= banner %>',
-				stripBanners : true
-			},
-			dist : {
-				src : ['js/lib/<%= pkg.name %>.js'],
-				dest : 'js/dist/<%= pkg.name %>.js'
-			}
-		},
 		uglify : {
 			options : {
-				banner : '<%= banner %>'
+				banner : '<%= banner %>',
+				mangle: false,
+				report: 'min'
 			},
 			dist : {
-				src : '<%= concat.dist.dest %>',
-				dest : 'dist/<%= pkg.name %>.min.js'
-			}
+				files : grunt.file.expandMapping(['**/*.js'], 'js/dist/', {
+					cwd: 'js/dev/'
+				})
+			},
 		},
 		jshint : {
 			options : {
@@ -31,7 +24,7 @@ module.exports = function(grunt) {
 				eqeqeq : true,
 				immed : true,
 				latedef : true,
-				newcap : true,
+				newcap : false,
 				noarg : true,
 				sub : true,
 				undef : true,
@@ -46,7 +39,7 @@ module.exports = function(grunt) {
 				src : 'Gruntfile.js'
 			},
 			lib_test : {
-				src : ['js/lib/**/*.js']
+				src : ['js/dev/**/*.js']
 			}
 		},
 		qunit : {
@@ -54,10 +47,13 @@ module.exports = function(grunt) {
 		},
 		sass : {
 			dist : {
-				files : {
-					'css/app.css' : 'sass/app.scss',
-					'css/admin.css' : 'sass/admin.scss'
-				}
+				options : {
+					outputStyle : 'compressed',
+				},
+				files : grunt.file.expandMapping(['**/*.scss'], 'css/', {
+					cwd: 'sass/',
+					ext: '.css'
+				})
 			}
 		},
 		watch : {
@@ -85,6 +81,6 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks('grunt-contrib-watch');
 
 	// Default task.
-	grunt.registerTask('default', ['jshint', 'uglify', 'sass:dist', 'watch']);
+	grunt.registerTask('default', ['jshint', 'uglify', 'sass:dist']);
 
 };
