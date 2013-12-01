@@ -512,7 +512,6 @@ var View = {
 		if ( !this.util.is_type(item, this.Content_Item) ) {
 			return ret;
 		}
-		var prop = 'items';
 		var items = this.get_items();
 		//Check if item exists in collection
 		ret = $.inArray(item, items);
@@ -633,7 +632,6 @@ var View = {
 	 * @return obj Theme model
 	 */
 	extend_theme: function(id, attr) {
-		var t = this;
 		//Validate
 		if ( !this.util.is_string(id) ) {
 			return false;
@@ -2132,7 +2130,7 @@ var Viewer = {
 						//Autofit content
 						if ( v.get_attribute('autofit', true) ) {
 							var dims = $.extend({'display': 'inline-block'}, thm.get_item_dimensions());
-							var tag = thm.dom_get_tag('item', 'content').css(dims);
+							thm.dom_get_tag('item', 'content').css(dims);
 						}
 					})
 					.always(function() {
@@ -2886,7 +2884,7 @@ var Content_Handler = {
 	render: function(item) {
 		var dfr = $.Deferred();
 		//Validate
-		var ret = this.call_attribute('render', item, dfr);
+		this.call_attribute('render', item, dfr);
 		return dfr.promise();
 	}
 };
@@ -3852,7 +3850,7 @@ var Theme = {
 			var factor = Math.min(max.width / dims.width, max.height / dims.height);
 			//Resize dimensions
 			if ( factor < 1 ) {
-				$.each(dims, function(key, val) {
+				$.each(dims, function(key) {
 					dims[key] = Math.round(dims[key] * factor);
 				});
 			}
@@ -3867,7 +3865,7 @@ var Theme = {
 	get_dimensions: function() {
 		var dims = this.get_item_dimensions();
 		var offset = this.get_offset();
-		$.each(dims, function(key, val) {
+		$.each(dims, function(key) {
 			dims[key] += offset[key];
 		});
 		return dims;
@@ -4151,7 +4149,7 @@ var Template = {
 		var tag_temp = new View.Template_Tag();
 		var cls = tag_temp.get_class();
 		var cls_new = ['x', cls].join('_');
-		$(tag_temp.get_selector(), dom).each(function(idx) {
+		$(tag_temp.get_selector(), dom).each(function() {
 			//Replace matching class name with blocking class
 			$(this).removeClass(cls).addClass(cls_new);
 		});
@@ -4246,7 +4244,7 @@ var Template = {
 			var attr = this.get_tag_attribute();
 			var nodes = $(d).find('[' + attr + ']');
 			//Build tag instances from nodes
-			$(nodes).each(function(idx) {
+			$(nodes).each(function() {
 				//Get tag placeholder
 				var el = $(this);
 				var tag = new View.Template_Tag(decodeURI(el.attr(attr)));
