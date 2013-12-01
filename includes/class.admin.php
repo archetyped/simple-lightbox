@@ -15,7 +15,7 @@ class SLB_Admin extends SLB_Base {
 	
 	protected $scripts = array (
 		'admin'	=> array (
-			'file'		=> 'client/js/lib/lib.admin.js',
+			'file'		=> 'client/js/dev/lib.admin.js',
 			'deps'		=> array('[core]'),
 			'context'	=> array( 'admin_page_slb' ),
 			'in_footer'	=> true,
