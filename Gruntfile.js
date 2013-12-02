@@ -39,15 +39,18 @@ module.exports = function(grunt) {
 			})
 		},
 		themes : {
-			sass : grunt.file.expandMapping(['*/**/*.scss'], 'css/', {
+			sass : [{
+				expand : true,
 				cwd : 'themes/',
+				src : ['*/**/*.scss'],
+				dest : 'css/',
 				srcd : 'sass/',
 				ext : '.css',
 				rename : function(dest, matchedSrcPath, options) {
 					var path = [options.cwd, matchedSrcPath.replace(options.srcd, dest)].join('');
 					return path;
 				}
-			})
+			}]
 		}
 	};
 	
@@ -132,8 +135,6 @@ module.exports = function(grunt) {
 			}
 		}
 	});
-	
-	console.log(files.themes.sass);
 	
 	// These plugins provide necessary tasks.
 	grunt.loadNpmTasks('grunt-contrib-concat');
