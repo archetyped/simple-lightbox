@@ -13,6 +13,7 @@
     "grunt-contrib-qunit": "~0.3.0",
     "grunt-contrib-jshint": "~0.7.2",
     "grunt-contrib-watch": "~0.5.3",
-    "grunt-sass": "~0.8.1"
+    "grunt-sass": "~0.8.1",
+    "node-bourbon": "~1.0.0"
   }
 }
