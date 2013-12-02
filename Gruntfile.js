@@ -84,6 +84,9 @@ module.exports = function(grunt) {
 				globals : {}
 			},
 			gruntfile : {
+				options : {
+					node : true
+				},
 				src : 'Gruntfile.js'
 			},
 			client : {
@@ -121,6 +124,15 @@ module.exports = function(grunt) {
 				files : files.themes.sass
 			}
 		},
+		phplint : {
+			options : {
+				phpArgs : {
+					'-lf': null
+				}
+			},
+			core : ['*.php'],
+			includes : ['includes/**/*.php']
+		},
 		watch : {
 			gruntfile : {
 				files : '<%= jshint.gruntfile.src %>',
@@ -151,10 +163,11 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks('grunt-contrib-qunit');
 	grunt.loadNpmTasks('grunt-contrib-jshint');
 	grunt.loadNpmTasks('grunt-sass');
+	grunt.loadNpmTasks('grunt-phplint');
 	grunt.loadNpmTasks('grunt-contrib-watch');
 
 	// Default Tasks
-	grunt.registerTask('build', ['jshint', 'uglify', 'sass']);
+	grunt.registerTask('build', ['phplint', 'jshint', 'uglify', 'sass']);
 	grunt.registerTask('watch_client', ['watch:client_js', 'watch:client_sass']);
 	grunt.registerTask('watch_themes', ['watch:themes_js', 'watch:themes_sass']);
 };
