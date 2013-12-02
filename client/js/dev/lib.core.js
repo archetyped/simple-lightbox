@@ -32,20 +32,18 @@ Class.extend = function(members) {
 	
 	//Copy members
 	var make_handler = function(nm, fn) {
-		return (function(nm, fn) {
-			return function() {
-				//Cache super variable
-				var tmp = this._super;
-				//Set variable to super class method
-				this._super = _super[nm];
-				//Call method
-				var ret = fn.apply(this, arguments);
-				//Restore super variable
-				this._super = tmp;
-				//Return value
-				return ret;
-			};
-		})(nm, fn);
+		return function() {
+			//Cache super variable
+			var tmp = this._super;
+			//Set variable to super class method
+			this._super = _super[nm];
+			//Call method
+			var ret = fn.apply(this, arguments);
+			//Restore super variable
+			this._super = tmp;
+			//Return value
+			return ret;
+		};
 	};
 	for ( name in members ) {
 		//Evaluate function members (if overwriting super class method)
