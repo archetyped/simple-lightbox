@@ -5,7 +5,7 @@ module.exports = function(grunt) {
 			var args = Array.prototype.slice.call(arguments);
 			trailing = ( typeof args[args.length - 1] === 'boolean' ) ? args.pop() : true;
 			//Build path
-			var x, sep = '/';
+			var sep = '/';
 			var path = args.join(sep);
 			if ( trailing ) {
 				path += sep;
@@ -33,6 +33,20 @@ module.exports = function(grunt) {
 			sass : grunt.file.expandMapping(['**/*.scss'], paths.make(paths.client, paths.css), {
 				cwd: paths.make(paths.client, paths.sass),
 				ext: '.css'
+			}),
+			js : grunt.file.expandMapping(['**/*.js'], 'client/js/dist/', {
+				cwd: 'client/js/dev/'
+			})
+		},
+		themes : {
+			sass : grunt.file.expandMapping(['*/**/*.scss'], 'css/', {
+				cwd : 'themes/',
+				srcd : 'sass/',
+				ext : '.css',
+				rename : function(dest, matchedSrcPath, options) {
+					var path = [options.cwd, matchedSrcPath.replace(options.srcd, dest)].join('');
+					return path;
+				}
 			})
 		}
 	};
@@ -67,11 +81,13 @@ module.exports = function(grunt) {
 				src : ['client/js/dev/**/*.js']
 			},
 			themes : {
+				options : {
+					globals : {
+						'SLB' : true
+					}
+				},
 				src : ['themes/**/*.js']
 			}
-		},
-		qunit : {
-			files : ['test/**/*.html']
 		},
 		uglify : {
 			options : {
@@ -79,10 +95,8 @@ module.exports = function(grunt) {
 				report: 'min'
 			},
 			client : {
-				files : grunt.file.expandMapping(['**/*.js'], 'client/js/dist/', {
-					cwd: 'client/js/dev/'
-				})
-			},
+				files : files.client.js
+			}
 		},
 		sass : {
 			options : {
@@ -90,6 +104,9 @@ module.exports = function(grunt) {
 			},
 			client : {
 				files : files.client.sass
+			},
+			themes : {
+				files : files.themes.sass
 			}
 		},
 		watch : {
@@ -104,9 +121,19 @@ module.exports = function(grunt) {
 			client_sass : {
 				files : ['client/sass/**/*.scss'],
 				tasks : ['sass:client']
+			},
+			themes_js : {
+				files : '<%= jshint.themes.src %>',
+				tasks : ['jshint:themes']
+			},
+			themes_sass : {
+				files : ['themes/*/sass/*.scss'],
+				tasks : ['sass:themes']
 			}
 		}
 	});
+	
+	console.log(files.themes.sass);
 	
 	// These plugins provide necessary tasks.
 	grunt.loadNpmTasks('grunt-contrib-concat');
@@ -116,7 +143,8 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks('grunt-sass');
 	grunt.loadNpmTasks('grunt-contrib-watch');
 
-	// Default task.
-	grunt.registerTask('default', ['jshint', 'uglify', 'sass:dist']);
-
+	// Default Tasks
+	grunt.registerTask('build', ['jshint', 'uglify', 'sass']);
+	grunt.registerTask('watch_client', ['watch:client_js', 'watch:client_sass']);
+	grunt.registerTask('watch_themes', ['watch:themes_js', 'watch:themes_sass']);
 };
