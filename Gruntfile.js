@@ -115,6 +115,9 @@ module.exports = function(grunt) {
 				files : files.client.sass
 			},
 			themes : {
+				options : {
+					includePaths : require('node-bourbon').includePaths
+				},
 				files : files.themes.sass
 			}
 		},

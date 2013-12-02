@@ -1,12 +1,12 @@
 //Imports
 
-@import "compass";
+@import "bourbon";
 
 //Variables
 
 //Mixins
 
-@mixin box-sizing-border {
+%box-sizing-border-box {
 	@include box-sizing(border-box);
 }
 
@@ -25,7 +25,7 @@
 			size: 12px;
 		}
 		
-		/* Reset */
+		//Reset
 		* {
 			margin: 0;
 			padding: 0;
@@ -44,14 +44,14 @@
 			clear: none;
 		}
 		
-		/* General */
+		//General
 		
 		a img {
 			border: none;
 		}
 		
 		.slb_viewer_layout {
-			@include box-sizing-border;
+			@extend %box-sizing-border-box;
 			z-index: 2;
 			position: absolute;
 			width: 100%;
@@ -69,7 +69,7 @@
 		}
 		
 		.slb_container {
-			@include box-sizing-border;
+			@extend %box-sizing-border-box;
 			position: relative;
 			display: inline-block;
 			background-color: #fff;
@@ -95,9 +95,9 @@
 			cursor: pointer;
 		}
 		
-		/* UI */
+		//UI
 		
-		/* Content */
+		  //Content
 		.slb_content {
 			position: relative;
 		}
@@ -135,7 +135,7 @@
 			}
 			
 			.slb_template_tag_ui {
-				@include opacity(0);
+				opacity: 0;
 			}
 		}
 		
@@ -143,19 +143,18 @@
 		
 		//Small screen
 		@media screen and (max-width: 480px) {
-			@mixin vsizing {
+			%vsizing {
 				min-height: 100%;
 				min-width: 320px;
 				width: 100%;
 			}
-			@include vsizing;
+			@extend %vsizing;
 			.slb_viewer_layout {
-				@include vsizing;
+				@extend %vsizing;
 				display: block;
 			}
 			.slb_container {
-				@include vsizing;
-				@include box-sizing-border;
+				@extend %vsizing;
 				max-width: 100%;
 				margin: 0;
 				padding: 5px;
