@@ -1,7 +1,10 @@
 (function($) {
 $(document).ready(function() {
-if ( typeof SLB == 'undefined' || typeof SLB.View == 'undefined' || typeof SLB.View.extend_theme == 'undefined' )
+//Validation
+if ( typeof SLB === 'undefined' || typeof SLB.View === 'undefined' || typeof SLB.View.extend_theme !== 'function' ) {
 	return false;
+}
+//Extend theme
 SLB.View.extend_theme('slb_baseline', {
 	/**
 	 * Theme offsets

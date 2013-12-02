@@ -1,7 +1,10 @@
 (function($) {
 $(document).ready(function() {
-if ( typeof SLB == 'undefined' || typeof SLB.View == 'undefined' || typeof SLB.View.extend_theme == 'undefined' )
+//Validation
+if ( typeof SLB === 'undefined' || typeof SLB.View === 'undefined' || typeof SLB.View.extend_theme !== 'function' ) {
 	return false;
+}
+//Extend Theme
 SLB.View.extend_theme('slb_default', {
 	/**
 	 * Define transition handlers
@@ -14,7 +17,6 @@ SLB.View.extend_theme('slb_default', {
 		 * @return jQuery.Promise Resolved when transition is complete
 		 */
 		'open': function(v, dfr) {
-			var t = this;
 			var d = v.dom_get(),
 				l = v.get_layout().hide(),
 				o = v.get_overlay().hide();
@@ -58,13 +60,12 @@ SLB.View.extend_theme('slb_default', {
 			var l = v.get_layout(),
 				c = l.find('.slb_content'),
 				spd = 'fast';
-			var t = this;
 			var reset = function() {
 				//Reset state
 				c.width('').height('');
 				l.css('opacity', '');
 				dfr.resolve();
-			}
+			};
 			if ( v.animation_enabled() && document.documentElement.clientWidth > 480 ) { /* Standard */
 				var lanim = {opacity: 0, top: $(document).scrollTop() + ( $(window).height() / 2 )},
 					canim = {width: 0, height: 0};
@@ -92,7 +93,7 @@ SLB.View.extend_theme('slb_default', {
 		'load': function(v, dfr) {
 			v.get_layout().find('.slb_loading').show();
 			if ( document.documentElement.clientWidth > 480 ) {
-				return v.get_layout().fadeIn().promise()
+				return v.get_layout().fadeIn().promise();
 			} else {
 				v.get_layout().show();
 				dfr.resolve();
@@ -132,8 +133,7 @@ SLB.View.extend_theme('slb_default', {
 		 */
 		'complete': function(v, dfr) {
 			//Elements
-			var t = this,
-				l = v.get_layout(),
+			var l = v.get_layout(),
 				loader = l.find('.slb_loading'),
 				det = l.find('.slb_details'),
 				det_data = det.find('.slb_data'),
