@@ -30,13 +30,19 @@ module.exports = function(grunt) {
 	
 	var files = {
 		client : {
-			sass : grunt.file.expandMapping(['**/*.scss'], paths.make(paths.client, paths.css), {
-				cwd: paths.make(paths.client, paths.sass),
-				ext: '.css'
-			}),
-			js : grunt.file.expandMapping(['**/*.js'], 'client/js/dist/', {
-				cwd: 'client/js/dev/'
-			})
+			sass : [{
+				expand : true,
+				cwd : paths.make(paths.client, paths.sass),
+				dest : paths.make(paths.client, paths.css),
+				src : ['**/*.scss'],
+				ext : '.css'
+			}],
+			js : [{
+				expand : true,
+				cwd : 'client/js/dev/',
+				dest : 'client/js/dist/',
+				src : ['**/*.js'],
+			}]
 		},
 		themes : {
 			sass : [{
