@@ -16,13 +16,13 @@ class SLB_Utilities {
 	 * Instance parent
 	 * @var object
 	 */
-	var $parent = null;
+	private $_parent = null;
 	
 	/**
 	 * Default plugin headers
 	 * @var array
 	 */
-	private $plugin_headers = array (
+	private $_plugin_headers = array (
 		'Name'			=> 'Plugin Name',
 		'PluginURI'		=> 'Plugin URI',
 		'SupportURI'	=> 'Support URI',
@@ -37,7 +37,7 @@ class SLB_Utilities {
 	 * Standard hook priorities
 	 * @var array
 	 */
-	private $priorities = array (
+	private $_priorities = array (
 		'high'							=> 1,
 		'low'							=> 99,
 		'safe'							=> 15,
@@ -47,8 +47,9 @@ class SLB_Utilities {
 	/* Constructors */
 	
 	function __construct(&$obj) {
-		if ( is_object($obj) )
-			$this->parent =& $obj;
+		if ( is_object($obj) ) {
+			$this->_parent =& $obj;
+		}
 	}
 	
 	/**
@@ -91,7 +92,7 @@ class SLB_Utilities {
 	 */
 	function get_prefix($sep = null) {
 		$sep = $this->get_sep($sep);
-		$prefix = ( !empty($this->parent->prefix) ) ? $this->parent->prefix . $sep : '';
+		$prefix = ( !empty($this->_parent->prefix) ) ? $this->_parent->prefix . $sep : '';
 		return $prefix;
 	}
 	
@@ -186,8 +187,8 @@ class SLB_Utilities {
 	 */
 	public function priority($id = null) {
 		$pri = 10;
-		if ( !is_null($id) && array_key_exists($id, $this->priorities) ) {
-			$pri = $this->priorities[$id];
+		if ( !is_null($id) && array_key_exists($id, $this->_priorities) ) {
+			$pri = $this->_priorities[$id];
 		}
 		return $pri;
 	}
@@ -424,7 +425,7 @@ class SLB_Utilities {
 	 */
 	function parse_client_file_callback($callback) {
 		if ( $this->has_wrapper($callback) ) {
-			$callback = $this->m($this->parent, $this->remove_wrapper($callback));
+			$callback = $this->m($this->_parent, $this->remove_wrapper($callback));
 		}
 		if ( !is_callable($callback) )
 			$callback = null;
@@ -588,8 +589,8 @@ class SLB_Utilities {
 	 * @return obj|bool Parent object (FALSE if no valid parent set)
 	 */
 	function &get_parent() {
-		if ( is_object($this->parent) )
-			return $this->parent;
+		if ( is_object($this->_parent) )
+			return $this->_parent;
 		else
 			return false; 
 	}
@@ -1207,7 +1208,7 @@ class SLB_Utilities {
 					if ( !$this->has_file_extension($ftemp, 'php') || !is_readable($ftemp) )
 						continue;
 					//Check for data
-					$data = get_file_data($ftemp, $this->plugin_headers);
+					$data = get_file_data($ftemp, $this->_plugin_headers);
 					if ( !empty($data['Name']) ) {
 						//Set base file
 						$file = $ftemp;
@@ -1248,7 +1249,7 @@ class SLB_Utilities {
 		//Get plugin data
 		if ( empty($data) ) {
 			$file = $this->get_plugin_base_file(); 
-			$data = get_file_data($file, $this->plugin_headers);
+			$data = get_file_data($file, $this->_plugin_headers);
 		}
 		//Return specified field
 		if ( !empty($field) ) {
