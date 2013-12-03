@@ -422,7 +422,8 @@ class SLB_Lightbox extends SLB_Base {
 		}
 		//Process links
 		$protocol = array('http://', 'https://');
-		$domain = str_replace($protocol, '', strtolower(get_bloginfo('url')));
+		$uri_home = strtolower(home_url());
+		$domain = str_replace($protocol, '', $uri_home);
 		$qv_att = 'attachment_id';
 		
 		//Setup group properties
@@ -484,14 +485,22 @@ class SLB_Lightbox extends SLB_Base {
 			}
 			
 			//Check if item links to internal media (attachment)
-			$uri_dom = str_replace($protocol, '', strtolower($uri->raw));
-			if ( strpos($uri_dom, $domain) === 0 ) {
+			if ( 0 === strpos($uri->raw, '/') ) {
+				//Relative URIs are always internal
 				$internal = true;
+				$uri->source = $uri_home . $uri->raw;
+			} else {
+				//Absolute URI
+				$uri_dom = str_replace($protocol, '', strtolower($uri->raw));
+				if ( strpos($uri_dom, $domain) === 0 ) {
+					$internal = true;
+				}
+				unset($uri_dom);
 			}
 			
 			//Get source URI (e.g. attachments)
-			if ( $internal && is_local_attachment($uri->raw) ) {
-				$pid = url_to_postid($uri->raw);
+			if ( $internal && is_local_attachment($uri->source) ) {
+				$pid = url_to_postid($uri->source);
 				$src = wp_get_attachment_url($pid);
 				if ( !!$src ) {
 					$uri->source = $src;
