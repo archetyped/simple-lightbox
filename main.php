@@ -16,8 +16,10 @@ $slb = null;
  * Initialize SLB
  */
 function slb_init() {
-	require_once 'load.php';
-	require_once 'controller.php';
+	$path = dirname(__FILE__) . '/';
+	require_once $path . 'load.php';
+	require_once $path . 'controller.php';
 	$GLOBALS['slb'] = new SLB_Lightbox();
 }
+
 add_action('init', 'slb_init', 1);
