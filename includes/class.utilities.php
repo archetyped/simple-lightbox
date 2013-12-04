@@ -19,6 +19,12 @@ class SLB_Utilities {
 	private $_parent = null;
 	
 	/**
+	 * Plugin Base
+	 * @var string
+	 */
+	private $_plugin_base = null;
+	
+	/**
 	 * Default plugin headers
 	 * @var array
 	 */
@@ -588,11 +594,12 @@ class SLB_Utilities {
 	 * Retrieve parent object
 	 * @return obj|bool Parent object (FALSE if no valid parent set)
 	 */
-	function &get_parent() {
-		if ( is_object($this->_parent) )
+	function get_parent() {
+		if ( is_object($this->_parent) ) {
 			return $this->_parent;
-		else
-			return false; 
+		} else {
+			return false;
+		} 
 	}
 	
 	/**
@@ -1182,13 +1189,25 @@ class SLB_Utilities {
 	 * @return string Base directory
 	 */
 	function get_plugin_base($trim = false) {
-		static $plugin_dir = '';
-		if ( '' == $plugin_dir ) {
-			$plugin_dir = str_replace($this->normalize_path(WP_PLUGIN_DIR), '', $this->normalize_path(dirname(dirname(__FILE__))));
+		$ret = $this->_plugin_base;
+		if ( empty($ret) ) {
+			//Get base directory of parent object
+			if ( $this->get_parent() ) {
+				$r = new ReflectionClass(get_class($this->get_parent()));
+				$base = $r->getFileName();
+				unset($r);
+			} else {
+				$base = __FILE__;
+			}
+			//Extract base
+			$base = trim(str_replace($this->normalize_path( WP_PLUGIN_DIR ), '', $this->normalize_path( $base )), ' \/');
+			$base = array_shift( explode('/', $base) );
+			$ret = $this->_plugin_base = $base;
 		}
-		if ( $trim )
-			$plugin_dir = trim($plugin_dir, ' \/');
-		return $plugin_dir;
+		if ( $trim ) {
+			$ret = trim($ret, ' \/');
+		}
+		return $ret;
 	}
 	
 	/**
