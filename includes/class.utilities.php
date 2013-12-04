@@ -16,28 +16,40 @@ class SLB_Utilities {
 	 * Instance parent
 	 * @var object
 	 */
-	var $parent = null;
+	private $_parent = null;
 	
 	/**
-	 * Default plugin headers
-	 * @var array
+	 * Plugin Base
+	 * @var string
 	 */
-	private $plugin_headers = array (
-		'Name'			=> 'Plugin Name',
-		'PluginURI'		=> 'Plugin URI',
-		'SupportURI'	=> 'Support URI',
-		'Version'		=> 'Version',
-		'Description'	=> 'Description',
-		'Author'		=> 'Author',
-		'AuthorURI'		=> 'Author URI',
+	private $_plugin = array(
+		'base'		=> null,
+		'file'		=> null,
+		'name'		=> null,
+		'data'		=> null,
+		'uri'		=> null,
+		'headers'	=> array (
+			'Name'			=> 'Plugin Name',
+			'PluginURI'		=> 'Plugin URI',
+			'SupportURI'	=> 'Support URI',
+			'Version'		=> 'Version',
+			'Description'	=> 'Description',
+			'Author'		=> 'Author',
+			'AuthorURI'		=> 'Author URI',
+		)
 	);
 	
+	/**
+	 * Plugin base path
+	 * @var string
+	 */
+	private $_path_base = null;
 	
 	/**
 	 * Standard hook priorities
 	 * @var array
 	 */
-	private $priorities = array (
+	private $_priorities = array (
 		'high'							=> 1,
 		'low'							=> 99,
 		'safe'							=> 15,
@@ -47,8 +59,9 @@ class SLB_Utilities {
 	/* Constructors */
 	
 	function __construct(&$obj) {
-		if ( is_object($obj) )
-			$this->parent =& $obj;
+		if ( is_object($obj) ) {
+			$this->_parent =& $obj;
+		}
 	}
 	
 	/**
@@ -91,7 +104,7 @@ class SLB_Utilities {
 	 */
 	function get_prefix($sep = null) {
 		$sep = $this->get_sep($sep);
-		$prefix = ( !empty($this->parent->prefix) ) ? $this->parent->prefix . $sep : '';
+		$prefix = ( !empty($this->_parent->prefix) ) ? $this->_parent->prefix . $sep : '';
 		return $prefix;
 	}
 	
@@ -186,8 +199,8 @@ class SLB_Utilities {
 	 */
 	public function priority($id = null) {
 		$pri = 10;
-		if ( !is_null($id) && array_key_exists($id, $this->priorities) ) {
-			$pri = $this->priorities[$id];
+		if ( !is_null($id) && array_key_exists($id, $this->_priorities) ) {
+			$pri = $this->_priorities[$id];
 		}
 		return $pri;
 	}
@@ -424,7 +437,7 @@ class SLB_Utilities {
 	 */
 	function parse_client_file_callback($callback) {
 		if ( $this->has_wrapper($callback) ) {
-			$callback = $this->m($this->parent, $this->remove_wrapper($callback));
+			$callback = $this->m($this->_parent, $this->remove_wrapper($callback));
 		}
 		if ( !is_callable($callback) )
 			$callback = null;
@@ -587,11 +600,12 @@ class SLB_Utilities {
 	 * Retrieve parent object
 	 * @return obj|bool Parent object (FALSE if no valid parent set)
 	 */
-	function &get_parent() {
-		if ( is_object($this->parent) )
-			return $this->parent;
-		else
-			return false; 
+	function get_parent() {
+		if ( is_object($this->_parent) ) {
+			return $this->_parent;
+		} else {
+			return false;
+		} 
 	}
 	
 	/**
@@ -1101,11 +1115,10 @@ class SLB_Utilities {
 	 * @return string Base URL
 	 */
 	function get_url_base($trailing_slash = false, $relative = null) {
-		static $url_base = null;
-		if ( empty($url_base) ) {
-			$url_base = $this->normalize_path(plugins_url(), $this->get_plugin_base());
+		$ret = $this->_plugin['uri'];
+		if ( empty($ret) ) {
+			$ret = $this->normalize_path(plugins_url(), $this->get_plugin_base());
 		}
-		$ret = $url_base;
 		//Trailing slash
 		if ( !!$trailing_slash ) {
 			$ret .= '/';
@@ -1133,11 +1146,24 @@ class SLB_Utilities {
 	 * @return string Base path
 	 */
 	function get_path_base($relative = null) {
-		static $path_base = '';
-		if ( '' == $path_base ) {
-			$path_base = $this->normalize_path(WP_PLUGIN_DIR, $this->get_plugin_base());
+		$ret = $this->_path_base;
+		if ( empty($ret) ) {
+			//Get base directory of parent object
+			if ( $this->get_parent() ) {
+				$r = new ReflectionClass(get_class($this->get_parent()));
+				$base = $r->getFileName();
+				unset($r);
+			} else {
+				$base = __FILE__;
+			}
+			//Extract base path
+			$base = $this->normalize_path($base);
+			if ( 0 === strpos($base, $this->normalize_path(WP_PLUGIN_DIR)) ) {
+				$end = strpos($base, '/', strlen(WP_PLUGIN_DIR) + 1);
+				$base = substr($base, 0, $end);
+			}
+			$ret = $this->_path_base = $base;
 		}
-		$ret = $path_base;
 		//Make relative path
 		if ( !empty($relative) ) {
 			//Default
@@ -1177,17 +1203,16 @@ class SLB_Utilities {
 	/**
 	 * Retrieve plugin's base directory
 	 * @uses WP_PLUGIN_DIR
-	 * @uses normalize_path()
+	 * @uses Utilities::get_path_base() to retrieve plugin base path
+	 * @uses Utilities::_plugin_base to save plugin base
 	 * @return string Base directory
 	 */
-	function get_plugin_base($trim = false) {
-		static $plugin_dir = '';
-		if ( '' == $plugin_dir ) {
-			$plugin_dir = str_replace($this->normalize_path(WP_PLUGIN_DIR), '', $this->normalize_path(dirname(dirname(__FILE__))));
+	function get_plugin_base() {
+		$ret = $this->_plugin['base'];
+		if ( empty($ret) ) {
+			$ret = $this->_plugin['base'] = basename($this->get_path_base());
 		}
-		if ( $trim )
-			$plugin_dir = trim($plugin_dir, ' \/');
-		return $plugin_dir;
+		return $ret;
 	}
 	
 	/**
@@ -1197,9 +1222,9 @@ class SLB_Utilities {
 	 * @return string Base file path
 	 */
 	function get_plugin_base_file() {
-		static $file = '';
-		if ( empty($file) ) {
-			$dir = @ opendir($this->get_path_base());
+		$ret = $this->_plugin['file'];
+		if ( empty($ret) ) {
+			$dir = @opendir($this->get_path_base());
 			if ( $dir ) {
 				while ( ($ftemp = readdir($dir)) !== false ) {
 					//Only process PHP files
@@ -1207,10 +1232,12 @@ class SLB_Utilities {
 					if ( !$this->has_file_extension($ftemp, 'php') || !is_readable($ftemp) )
 						continue;
 					//Check for data
-					$data = get_file_data($ftemp, $this->plugin_headers);
+					$data = get_file_data($ftemp, $this->_plugin['headers']);
 					if ( !empty($data['Name']) ) {
 						//Set base file
 						$file = $ftemp;
+						//Save plugin data
+						$this->set_plugin_info($data);
 						break;
 					}
 				}
@@ -1229,33 +1256,35 @@ class SLB_Utilities {
 	 * @return string Internal plugin name
 	 */
 	function get_plugin_base_name() {
-		static $name = false;
-		if ( !$name ) {
-			$file = $this->get_plugin_base_file();
-			$name = plugin_basename($file);
+		$ret = $this->_plugin['name'];
+		if ( empty($ret) ) {
+			$ret = $this->_plugin['name'] = plugin_basename( $this->get_plugin_base_file() );
 		}
-		return $name;
+		return $ret;
+	}
+	
+	private function set_plugin_info($data) {
+		if ( is_array($data) ) {
+			$this->_plugin['data'] = $data;
+		}
 	}
 	
 	/**
 	 * Retrieve plugin info
 	 * Parses info comment in main plugin file
-	 * @uses get_plugin_base_file()
+	 * @uses get_plugin_base_file() to retrieve plugin info
+	 * @return array|string Plugin info (specific value if field set)
 	 */
-	function get_plugin_info($field = '') {
-		static $data = array();
-		$ret = '';
+	function get_plugin_info($field = null) {
+		$ret = $this->_plugin['data'];
 		//Get plugin data
-		if ( empty($data) ) {
-			$file = $this->get_plugin_base_file(); 
-			$data = get_file_data($file, $this->plugin_headers);
+		if ( empty($ret) ) {
+			$this->get_plugin_base_file(); 
+			$ret = $this->_plugin['data'];
 		}
 		//Return specified field
 		if ( !empty($field) ) {
-			if ( isset($data[$field]) )
-				$ret = $data[$field];
-		} else {
-			$ret = $data;
+			$ret = ( is_array($ret) && isset($ret[$field]) ) ? $ret[$field] : '';
 		}
 		return $ret;
 	}
@@ -1267,15 +1296,10 @@ class SLB_Utilities {
 	 * @return string Plugin version
 	 */
 	function get_plugin_version($strip_desc = true) {
-		static $v = '';
 		//Retrieve version
-		if ( empty($v) ) {
-			$field = 'Version';
-			$v = $this->get_plugin_info($field);
-		}
+		$ret = $this->get_plugin_info('Version');
 		//Format
-		$ret = $v;
-		if ( $strip_desc ) {
+		if ( !empty($ret) && $strip_desc ) {
 			$ret = explode(' ', $ret, 2);
 			$ret = $ret[0];
 		}
