@@ -15,7 +15,7 @@ class SLB_Admin extends SLB_Base {
 	
 	protected $scripts = array (
 		'admin'	=> array (
-			'file'		=> 'client/js/lib.admin.js',
+			'file'		=> 'client/js/dev/lib.admin.js',
 			'deps'		=> array('[core]'),
 			'context'	=> array( 'admin_page_slb' ),
 			'in_footer'	=> true,
@@ -542,13 +542,14 @@ class SLB_Admin extends SLB_Base {
 	 * @return array Updated plugin metadata
 	 */
 	public function plugin_row_meta($plugin_meta, $plugin_file, $plugin_data, $status) {
-		if ( $plugin_file == $this->util->get_plugin_base_name() ) {
+		$u = ( is_object($this->parent) && isset($this->parent->util) ) ? $this->parent->util : $this->util;
+		if ( $plugin_file == $u->get_plugin_base_name() ) {
 			//Add metadata
 			//Support
 			$t = __('Get Support', 'simple-lightbox');
-			$l = $this->util->get_plugin_info('SupportURI');
+			$l = $u->get_plugin_info('SupportURI');
 			if ( !empty($l) ) {
-				$plugin_meta[] = $this->util->build_html_link($l, $t);
+				$plugin_meta[] = $u->build_html_link($l, $t);
 			}
 		}
 		return $plugin_meta;

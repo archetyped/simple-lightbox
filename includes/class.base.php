@@ -170,7 +170,7 @@ class SLB_Base {
 		$lpath = $this->util->get_plugin_file_path($ldir, array(false, false));
 		$lpath_abs = $this->util->get_file_path($ldir);
 		if ( is_dir($lpath_abs) ) {
-			load_plugin_textdomain('ar-series', false, $lpath);
+			load_plugin_textdomain('simple-lightbox', false, $lpath);
 		}
 		
 		//Context

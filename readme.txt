@@ -56,6 +56,20 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 3. Dark Theme
 
 == Changelog ==
+= 2.2.0 (Beta) =
+* Add: Add-on support
+* Add: Load external data for item
+* Add: Unloading process for viewer
+* Add: Relative links marked as "internal"
+* Add: Grunt build workflow
+* Optimize: Initialization process
+* Optimize: Client-side output (JavaScript, CSS)
+* Optimize: Improved URI handling (variants, query strings, etc.)
+* Optimize: Improved support for content types (video, etc.)
+* Optimize: Improved File contents retrieval
+* Optimize: Plugin metadata cleanup
+* Optimize: Use absolute paths for file includes (props k3davis)
+
 = 2.1.3 =
 * Fix: PHP configuration issue on some web hosts (Tim's got (config) issues)
 * Optimize: Hide overlapping elements when lightbox is displayed (e.g. Flash, etc.)

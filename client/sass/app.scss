@@ -2,4 +2,9 @@ html.slb_overlay {
 	object,embed,iframe {
 		visibility: hidden;
 	}
+	#slb_viewer_wrap {
+		object,embed,iframe {
+			visibility: visible;
+		}
+	}
 }
