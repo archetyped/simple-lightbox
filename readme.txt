@@ -56,7 +56,8 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 3. Dark Theme
 
 == Changelog ==
-= 2.2.0 (Beta) =
+= 2.2.0 =
+* Update: WordPress 3.8 support
 * Add: Add-on support
 * Add: Load external data for item
 * Add: Unloading process for viewer
