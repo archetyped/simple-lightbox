@@ -245,8 +245,9 @@ class SLB_Base {
 	 */
 	protected function _client_files() {
 		foreach ( $this->client_files as $key => $val ) {
-			if ( empty($val) && isset($this->{$key}) )
+			if ( empty($val) && isset($this->{$key}) ) {
 				$this->client_files[$key] =& $this->{$key};
+			}
 			$g =& $this->client_files[$key];
 			if ( is_array($g) && !empty($g) ) {
 				$g = $this->util->parse_client_files($g, $key);
@@ -312,13 +313,17 @@ class SLB_Base {
 			if ( !$func ) {
 				continue;
 			}
-			foreach ( $files as $f ) {
-				//Skip shadow files
-				if ( !$f->enqueue ) {
+			foreach ( $files as $fkey => $f ) {
+				//Skip previously-enqueued files and shadow files
+				if ( $f->enqueued || !$f->enqueue ) {
 					continue;
 				}
 				//Enqueue files only for current location (header/footer)
-				if ( isset($f->in_footer) && $f->in_footer != $footer ) {
+				if ( isset($f->in_footer) ) {
+					if ( $f->in_footer != $footer ) {
+						continue;
+					}
+				} elseif ( $footer ) {
 					continue;
 				}
 				$load = true;
@@ -346,9 +351,10 @@ class SLB_Base {
 						}
 					}
 				}
-				
 				//Load valid file
 				if ( $load ) {
+					//Mark file as enqueued
+					$this->client_files[$type]->{$fkey}->enqueued = true;
 					$func($f->id);
 				}
 			}
