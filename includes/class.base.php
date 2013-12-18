@@ -256,7 +256,13 @@ class SLB_Base {
 			if ( empty($g) )
 				unset($this->client_files[$key]);
 		}
-
+		
+		
+		//Stop if no files are set for registration
+		if ( empty($this->client_files) ) {
+			return false;
+		}
+		
 		//Register
 		add_action('init', $this->m('register_client_files'));
 		
