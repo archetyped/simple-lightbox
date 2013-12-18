@@ -315,6 +315,7 @@ class SLB_Utilities {
 				'callback'	=> null,
 				'context'	=> array(),
 				'enqueue'	=> true,
+				'enqueued'  => false
 			);
 			switch ( $type ) {
 				case 'styles':
