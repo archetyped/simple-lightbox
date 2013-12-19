@@ -2285,7 +2285,7 @@ var Viewer = {
 		this.slideshow_stop();
 		this.keys_disable();
 		//Clear for next item
-		this.get_status('item_working', true).resolve();
+		this.unlock();
 	},
 	
 	/* Content */
