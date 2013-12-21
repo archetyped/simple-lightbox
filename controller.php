@@ -138,7 +138,7 @@ class SLB_Lightbox extends SLB_Base {
 		add_action('admin_menu', $this->m('admin_menus'));
 		
 		/* Init */
-		add_action('init', $this->m('_hooks_init'));
+		add_action('wp', $this->m('_hooks_init'));
 	}
 	
 	/**
@@ -302,13 +302,15 @@ class SLB_Lightbox extends SLB_Base {
 			if ( $ret ) {
 				$opt = '';
 				//Determine option to check
-				if ( is_home() )
+				if ( is_home() ) {
 					$opt = 'home';
+				}
 				elseif ( is_singular() ) {
 					$opt = ( is_page() ) ? 'page' : 'post';
 				}
-				elseif ( is_archive() || is_search() )
+				elseif ( is_archive() || is_search() ) {
 					$opt = 'archive';
+				}
 				//Check sub-option
 				if ( !empty($opt) && ( $opt = 'enabled_' . $opt ) && $this->options->has($opt) ) {
 					$ret = $this->options->get_bool($opt);
