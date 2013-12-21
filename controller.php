@@ -145,7 +145,7 @@ class SLB_Lightbox extends SLB_Base {
 	 * Init Hooks
 	 */
 	public function _hooks_init() {
-		if ( $this->is_enabled() ) {
+		if ( !is_admin() && $this->is_enabled() ) {
 			$priority = $this->util->priority('low');
 			
 			//Init lightbox
