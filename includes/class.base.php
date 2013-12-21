@@ -270,7 +270,7 @@ class SLB_Base {
 		$hk_prfx = ( ( is_admin() ) ? 'admin' : 'wp' );
 		$hk_enqueue = $hk_prfx . '_enqueue_scripts' ;
 		$hk_enqueue_ft = $hk_prfx . '_footer';
-		add_action($hk_enqueue, $this->m('enqueue_client_files'));
+		add_action($hk_enqueue, $this->m('enqueue_client_files'), 10, 0);
 		add_action($hk_enqueue_ft, $this->m('enqueue_client_files_footer'), 1);
 	}
 	
