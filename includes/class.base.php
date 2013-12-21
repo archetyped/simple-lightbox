@@ -313,6 +313,10 @@ class SLB_Base {
 	 * @return void
 	 */
 	function enqueue_client_files($footer = false) {
+		//Validate
+		if ( !is_bool($footer) ) {
+			$footer = false;
+		}
 		//Enqueue files
 		foreach ( $this->client_files as $type => $files ) {
 			$func = $this->get_client_files_handler($type, 'enqueue');
