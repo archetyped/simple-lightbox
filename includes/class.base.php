@@ -270,7 +270,7 @@ class SLB_Base {
 		$hk_prfx = ( ( is_admin() ) ? 'admin' : 'wp' );
 		$hk_enqueue = $hk_prfx . '_enqueue_scripts' ;
 		$hk_enqueue_ft = $hk_prfx . '_footer';
-		add_action($hk_enqueue, $this->m('enqueue_client_files'));
+		add_action($hk_enqueue, $this->m('enqueue_client_files'), 10, 0);
 		add_action($hk_enqueue_ft, $this->m('enqueue_client_files_footer'), 1);
 	}
 	
@@ -313,6 +313,10 @@ class SLB_Base {
 	 * @return void
 	 */
 	function enqueue_client_files($footer = false) {
+		//Validate
+		if ( !is_bool($footer) ) {
+			$footer = false;
+		}
 		//Enqueue files
 		foreach ( $this->client_files as $type => $files ) {
 			$func = $this->get_client_files_handler($type, 'enqueue');
