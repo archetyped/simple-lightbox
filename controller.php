@@ -10,30 +10,6 @@ class SLB_Lightbox extends SLB_Base {
 	
 	protected $model = true;
 		
-	/* Files */
-	
-	var $scripts = array (
-		'core'			=> array (
-			'file'		=> 'client/js/dev/lib.core.js',
-			'deps'		=> 'jquery',
-			'enqueue'	=> false,
-			'in_footer'	=> true,
-		),
-		'view'			=> array (
-			'file'		=> 'client/js/dev/lib.view.js',
-			'deps'		=> array('jquery', '[core]'),
-			'context'	=> array( array('public', '[is_request_valid]') ),
-			'in_footer'	=> true,
-		),
-	);
-	
-	var $styles = array (
-		'core'			=> array (
-			'file'		=> 'client/css/app.css',
-			'context'	=> array('public'),
-		)
-	);
-
 	/**
 	 * Fields
 	 * @var SLB_Fields
@@ -125,6 +101,33 @@ class SLB_Lightbox extends SLB_Base {
 	public function _init() {
 		parent::_init();
 		$this->util->do_action('init');
+	}
+	
+	protected function _client_files() {
+		$files = array (
+			'scripts' => array (
+				'core'			=> array (
+					'file'		=> 'client/js/dev/lib.core.js',
+					'deps'		=> 'jquery',
+					'enqueue'	=> false,
+					'in_footer'	=> true,
+				),
+				'view'			=> array (
+					'file'		=> 'client/js/dev/lib.view.js',
+					'deps'		=> array('jquery', '[core]'),
+					'context'	=> array( array('public', '[is_request_valid]') ),
+					'in_footer'	=> true,
+				),
+			),
+			'styles' => array (
+				'core'			=> array (
+					'file'		=> 'client/css/app.css',
+					'context'	=> array('public'),
+				)
+			)
+		);
+		$this->client_files = $files;
+		parent::_client_files();
 	}
 	
 	/**
