@@ -83,7 +83,7 @@ class SLB_Base {
 	 * 
 	 * Array is processed and converted to an object on init
 	 */
-	var $client_files = array(
+	private $client_files = array (
 		'scripts'	=> array(),
 		'styles'	=> array()
 	);
@@ -243,18 +243,19 @@ class SLB_Base {
 	/**
 	 * Initialize client files
 	 */
-	protected function _client_files() {
+	protected function _client_files($files = null) {
+		//Validation
+		if ( !is_array($files) || empty($files) ) {
+			return false;
+		} 
 		foreach ( $this->client_files as $key => $val ) {
-			if ( empty($val) && isset($this->{$key}) ) {
-				$this->client_files[$key] =& $this->{$key};
-			}
-			$g =& $this->client_files[$key];
-			if ( is_array($g) && !empty($g) ) {
-				$g = $this->util->parse_client_files($g, $key);
+			if ( isset($files[$key]) && is_array($files[$key]) || !empty($files[$key]) ) {
+				$this->client_files[$key] = $this->util->parse_client_files($files[$key], $key);
 			}
 			//Remove empty file groups
-			if ( empty($g) )
+			if ( empty($this->client_files[$key]) ) {
 				unset($this->client_files[$key]);
+			}
 		}
 		
 		

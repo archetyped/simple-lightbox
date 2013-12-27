@@ -325,11 +325,19 @@ class SLB_Utilities {
 					$defaults['in_footer'] = false;
 			}
 			//Iterate through files
+			/**
+			 * $h (string) handle
+			 * $p (array) properties
+			 */
 			foreach ( $files as $h => $p ) {
 				unset($file, $cb, $ctxs, $ctx);
 				//Set ID
 				$p['id'] = $this->add_prefix($h);
 				//Type Validation
+				/**
+				 * $m (string) property name
+				 * $d (mixed) default value
+				 */
 				foreach ( $defaults as $m => $d ) {
 					//Check if value requires validation
 					if ( !is_array($d) || !isset($p[$m]) || is_array($p[$m]) )
@@ -341,6 +349,7 @@ class SLB_Utilities {
 						unset($p[$m]);
 				}
 				
+				//Normalize file properties
 				$p = array_merge($defaults, $p);
 				
 				/* File name */
@@ -350,7 +359,7 @@ class SLB_Utilities {
 				
 				//Determine if filename or callback
 				if ( !$this->is_file($file) )
-					$file = $this->parse_client_file_callback($file);
+					$file = ( is_callable($file) ) ? $file : null;
 				//Remove invalid file and move on to next
 				if ( empty($file) ) {
 					unset($files[$h]);
@@ -371,13 +380,10 @@ class SLB_Utilities {
 				
 				//Validate callback
 				$cb =& $p['callback'];
-				if ( !is_null($cb) ) {
-					$cb = $this->parse_client_file_callback($cb);
+				if ( !is_null($cb) && !is_callable($cb) ) {
 					//Remove files with invalid callbacks (will never be loaded)
-					if ( is_null($cb) ) {
-						unset($files[$h]);
-						continue;
-					}	
+					unset($files[$h]);
+					continue;
 				}
 				
 				//Validate contexts
@@ -394,8 +400,7 @@ class SLB_Utilities {
 							break;
 						case 2 :
 							//Context + Callback
-							$ctx[1] = $this->parse_client_file_callback($ctx[1]);
-							if ( !is_null($ctx[1]) ) {
+							if ( is_callable($ctx[1]) ) {
 								break;
 							}
 							//Continue to default case if callback is invalid
@@ -430,21 +435,6 @@ class SLB_Utilities {
 		return $files;
 	}
 
-	/**
-	 * Parses callbacks set for client files
-	 * @param string $callback Callback value
-	 *  > Values wrapped in square brackets (`[` & `]`) are internal methods (of parent object)
-	 * @return callback|null Validated callback (NULL if callback is invalid)
-	 */
-	function parse_client_file_callback($callback) {
-		if ( $this->has_wrapper($callback) ) {
-			$callback = $this->m($this->_parent, $this->remove_wrapper($callback));
-		}
-		if ( !is_callable($callback) )
-			$callback = null;
-		return $callback;
-	}
-	
 	/**
 	 * Build JS client object
 	 * @param string (optional) $path Additional object path

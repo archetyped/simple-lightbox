@@ -11,24 +11,6 @@ class SLB_Admin extends SLB_Base {
 	
 	protected $mode = 'sub';
 
-	/* Files */
-	
-	protected $scripts = array (
-		'admin'	=> array (
-			'file'		=> 'client/js/dev/lib.admin.js',
-			'deps'		=> array('[core]'),
-			'context'	=> array( 'admin_page_slb' ),
-			'in_footer'	=> true,
-		),
-	);
-	
-	protected $styles = array (
-		'admin'	=> array (
-			'file'		=> 'client/css/admin.css',
-			'context'	=> array( 'admin_page_slb', 'admin_page_plugins' )
-		)
-	);
-
 	/* Properties */
 	
 	/**
@@ -111,6 +93,32 @@ class SLB_Admin extends SLB_Base {
 		add_filter('plugin_row_meta', $this->m('plugin_row_meta'), 10, 4);
 		add_action('in_plugin_update_message-' . $this->util->get_plugin_base_name(), $this->m('plugin_update_message'), 10, 2);
 		add_filter('site_transient_update_plugins', $this->m('plugin_update_transient'));
+	}
+	
+	/**
+	 * Declare client files (scripts, styles)
+	 * @uses parent::_client_files()
+	 * @return void
+	 */
+	protected function _client_files($files = null) {
+		$pfx = $this->get_prefix();
+		$files = array (
+			'scripts' => array (
+				'admin'	=> array (
+					'file'		=> 'client/js/dev/lib.admin.js',
+					'deps'		=> array('[core]'),
+					'context'	=> array( "admin_page_$pfx" ),
+					'in_footer'	=> true,
+				),
+			),
+			'styles' => array (
+				'admin'	=> array (
+					'file'		=> 'client/css/admin.css',
+					'context'	=> array( "admin_page_$pfx", 'admin_page_plugins' )
+				)
+			)
+		);
+		parent::_client_files($files);
 	}
 	
 	/* Handlers */
