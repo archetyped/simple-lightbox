@@ -103,7 +103,12 @@ class SLB_Lightbox extends SLB_Base {
 		$this->util->do_action('init');
 	}
 	
-	protected function _client_files() {
+	/**
+	 * Declare client files (scripts, styles)
+	 * @uses parent::_client_files()
+	 * @return void
+	 */
+	protected function _client_files($files = null) {
 		$files = array (
 			'scripts' => array (
 				'core'			=> array (
@@ -126,8 +131,7 @@ class SLB_Lightbox extends SLB_Base {
 				)
 			)
 		);
-		$this->client_files = $files;
-		parent::_client_files();
+		parent::_client_files($files);
 	}
 	
 	/**
