@@ -101,19 +101,20 @@ class SLB_Admin extends SLB_Base {
 	 * @return void
 	 */
 	protected function _client_files($files = null) {
+		$pfx = $this->get_prefix();
 		$files = array (
 			'scripts' => array (
 				'admin'	=> array (
 					'file'		=> 'client/js/dev/lib.admin.js',
 					'deps'		=> array('[core]'),
-					'context'	=> array( 'admin_page_slb' ),
+					'context'	=> array( "admin_page_$pfx" ),
 					'in_footer'	=> true,
 				),
 			),
 			'styles' => array (
 				'admin'	=> array (
 					'file'		=> 'client/css/admin.css',
-					'context'	=> array( 'admin_page_slb', 'admin_page_plugins' )
+					'context'	=> array( "admin_page_$pfx", 'admin_page_plugins' )
 				)
 			)
 		);
