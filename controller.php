@@ -127,7 +127,7 @@ class SLB_Lightbox extends SLB_Base {
 				),
 				'view'			=> array (
 					'file'		=> "$js_path/lib.view.js",
-					'deps'		=> array('jquery', '[core]'),
+					'deps'		=> array('[core]'),
 					'context'	=> array( array('public', $this->m('is_request_valid')) ),
 					'in_footer'	=> true,
 				),
