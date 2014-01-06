@@ -12,13 +12,6 @@ module.exports = function(grunt) {
 			}
 			return path;
 		},
-		makeJS : function(base) {
-			return {
-				base : paths.make(base, paths.js),
-				dev : paths.make(base, paths.dev),
-				dist : paths.make(base, paths.dist)	
-			};
-		},
 		sass : 'sass',
 		css : 'css',
 		js : 'js',
@@ -40,7 +33,7 @@ module.exports = function(grunt) {
 			js : [{
 				expand : true,
 				cwd : 'client/js/dev/',
-				dest : 'client/js/dist/',
+				dest : 'client/js/prod/',
 				src : ['**/*.js'],
 			}]
 		},
@@ -140,7 +133,7 @@ module.exports = function(grunt) {
 			},
 			client_js : {
 				files : '<%= jshint.client.src %>',
-				tasks : ['jshint:client']
+				tasks : ['jshint:client', 'uglify:client']
 			},
 			client_sass : {
 				files : ['client/sass/**/*.scss'],
