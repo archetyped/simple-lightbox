@@ -116,16 +116,17 @@ class SLB_Lightbox extends SLB_Base {
 	 * @return void
 	 */
 	protected function _client_files($files = null) {
+		$js_path = 'client/js/prod';
 		$files = array (
 			'scripts' => array (
 				'core'			=> array (
-					'file'		=> 'client/js/dev/lib.core.js',
+					'file'		=> "$js_path/lib.core.js",
 					'deps'		=> 'jquery',
 					'enqueue'	=> false,
 					'in_footer'	=> true,
 				),
 				'view'			=> array (
-					'file'		=> 'client/js/dev/lib.view.js',
+					'file'		=> "$js_path/lib.view.js",
 					'deps'		=> array('jquery', '[core]'),
 					'context'	=> array( array('public', $this->m('is_request_valid')) ),
 					'in_footer'	=> true,
