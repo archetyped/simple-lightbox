@@ -1,3 +1,4 @@
+if ( typeof(jQuery) !== 'undefined' ) {
 (function($) {
 $(document).ready(function() {
 //Validation
@@ -31,3 +32,4 @@ SLB.View.extend_theme('slb_baseline', {
 });
 });
 })(jQuery);
+}

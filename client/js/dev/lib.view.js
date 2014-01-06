@@ -5,7 +5,7 @@
  * @author Archetyped
  */
 /* global SLB */
-if ( jQuery ){(function ($) {
+if ( typeof(jQuery) !== 'undefined' ){(function ($) {
 
 if ( typeof SLB === 'undefined' || !SLB.attach ) {
 	return false;
