@@ -1,8 +1,9 @@
 if ( typeof(jQuery) !== 'undefined' ) {
 (function($) {
 $(document).ready(function() {
-if ( typeof SLB == 'undefined' || typeof SLB.View == 'undefined' || typeof SLB.View.extend_template_tag_handler == 'undefined' )
+if ( typeof SLB === 'undefined' || typeof SLB.View === 'undefined' || typeof SLB.View.extend_template_tag_handler === 'undefined' ) {
 	return false;
+}
 SLB.View.extend_template_tag_handler('ui', {
 	init: function(item, tag, v) {
 		//Add event handlers
@@ -42,11 +43,14 @@ SLB.View.extend_template_tag_handler('ui', {
 		v.on('slideshow-toggle', function(ev, v) {
 			//Update slideshow control tag
 			var tags = v.get_theme().get_tags('ui', 'slideshow_control');
+			var render_tag = function(tag) {
+				tag.render(v.get_item()).done(function(r) {
+					r.tag.dom_get().html(r.output);
+				});
+			};
 			if ( tags.length ) {
 				for ( var x = 0; x < tags.length; x++ ) {
-					tags[x].render(v.get_item()).done(function(r) {
-						r.tag.dom_get().html(r.output);
-					});
+					render_tag(tags[x]);
 				}
 			}
 		});
@@ -75,12 +79,12 @@ SLB.View.extend_template_tag_handler('ui', {
 		return dfr.promise();
 	},
 	props: {
-		'slideshow_control': function(item, tag) {
+		'slideshow_control': function(item) {
 			//Get slideshow status
 			var prop = ( item.get_viewer().slideshow_active() ) ? 'slideshow_stop' : 'slideshow_start';
 			return item.get_viewer().get_label(prop);
 		},
-		'group_status': function(item, tag) {
+		'group_status': function(item) {
 			//Handle single items
 			if ( item.get_group().is_single() ) {
 				return '';
@@ -101,7 +105,7 @@ SLB.View.extend_template_tag_handler('ui', {
 			//Parse placeholders
 			for ( key in handlers ) {
 				ph = delim + key + delim;
-				if ( out.indexOf(ph) != -1 ) {
+				if ( out.indexOf(ph) !== -1 ) {
 					out = out.replace(ph, handlers[key]());
 				}
 			}

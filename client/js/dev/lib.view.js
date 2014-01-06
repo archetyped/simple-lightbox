@@ -555,7 +555,7 @@ var View = {
 		}
 		hdl = this.get_content_handler(id);
 		//Add new content handler
-		if ( null == hdl ) {
+		if ( null === hdl ) {
 			var hdls = this.get_content_handlers();
 			hdls[id] = hdl = new this.Content_Handler(id, attr);
 		}
@@ -3167,7 +3167,7 @@ var Content_Item = {
 	in_gallery: function(gType) {
 		var type = this.gallery_type();
 		//No gallery
-		if ( null == type ) {
+		if ( null === type ) {
 			return false;
 		}
 		//Boolean check
@@ -3355,7 +3355,7 @@ var Modeled_Component = {
 			}
 		}
 		//Check standard attributes as fallback
-		if ( null == ret ) {
+		if ( null === ret ) {
 			ret = this._super(key, def, enforce_type);
 		}
 		return ret;
