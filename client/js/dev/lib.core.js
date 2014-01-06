@@ -3,7 +3,7 @@
  * @package SLB
  * @author Archetyped
  */
-if ( jQuery ){(function($) {
+if ( typeof(jQuery) !== 'undefined' ){(function($) {
 
 /**
  * Extendible class

@@ -1,3 +1,4 @@
+if ( typeof(jQuery) !== 'undefined' ) {
 (function($) {
 $(document).ready(function() {
 if ( typeof SLB == 'undefined' || typeof SLB.View == 'undefined' || typeof SLB.View.extend_template_tag_handler == 'undefined' )
@@ -110,3 +111,4 @@ SLB.View.extend_template_tag_handler('ui', {
 });
 });
 })(jQuery);
+}

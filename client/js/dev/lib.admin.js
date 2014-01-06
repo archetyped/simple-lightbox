@@ -7,7 +7,7 @@
 
 /* global SLB, postboxes, pagenow */
 
-if ( jQuery ){(function ($) {
+if ( typeof(jQuery) !== 'undefined' ){(function ($) {
 
 if ( !SLB || !SLB.attach ) {
 	return false;
