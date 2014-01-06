@@ -55,6 +55,7 @@ class SLB_Themes extends SLB_Collection_Controller {
 	 * @param SLB_Themes $themes Themes controller
 	 */
 	function init_defaults($themes) {
+		$js_path = 'js/dev';
 		$scheme = is_ssl() ? 'https' : 'http';
 		$baseline = $this->add_prefix('baseline');
 		$src_base = $this->util->get_file_url('themes', true);
@@ -64,7 +65,7 @@ class SLB_Themes extends SLB_Collection_Controller {
 				'public'		=> false,
 				'layout'		=> $src_base . '/baseline/layout.html',
 				'scripts'		=> array (
-					array ( 'base', $src_base . '/baseline/client.js' ),
+					array ( 'base', $src_base . "/baseline/$js_path/client.js" ),
 				),
 				'styles'		=> array (
 					array ( 'base', $src_base . '/baseline/css/style.css' ),
@@ -74,7 +75,7 @@ class SLB_Themes extends SLB_Collection_Controller {
 				'name'			=> __('Default (Light)', 'simple-lightbox'),
 				'parent'		=> $baseline,
 				'scripts'		=> array (
-					array ( 'base', $src_base . '/default/client.js' ),
+					array ( 'base', $src_base . "/default/$js_path/client.js" ),
 				),
 				'styles'		=> array (
 					array ( 'font', "$scheme://fonts.googleapis.com/css?family=Yanone+Kaffeesatz" ),
