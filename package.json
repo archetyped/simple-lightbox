@@ -15,6 +15,8 @@
     "grunt-contrib-watch": "~0.5.3",
     "grunt-sass": "~0.8.1",
     "node-bourbon": "~1.0.0",
-    "grunt-phplint": "0.0.5"
+    "grunt-phplint": "0.0.5",
+    "load-grunt-tasks": "~0.2.1",
+    "time-grunt": "~0.2.7"
   }
 }
