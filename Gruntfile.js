@@ -25,7 +25,8 @@ module.exports = function(grunt) {
 				eqnull : true,
 				browser : true,
 				jquery : true,
-				globals : {}
+				globals : {},
+				reporter: require('jshint-stylish')
 			},
 			gruntfile : {
 				options : {
