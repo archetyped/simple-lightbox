@@ -1,58 +1,5 @@
 /*global module:false*/
 module.exports = function(grunt) {
-	var paths = {
-		make : function (seg, trailing) {
-			var args = Array.prototype.slice.call(arguments);
-			trailing = ( typeof args[args.length - 1] === 'boolean' ) ? args.pop() : true;
-			//Build path
-			var sep = '/';
-			var path = args.join(sep);
-			if ( trailing ) {
-				path += sep;
-			}
-			return path;
-		},
-		sass : 'sass',
-		css : 'css',
-		js : 'js',
-		dev : 'dev',
-		dist : 'dist',
-		client : 'client',
-		themes : 'themes'
-	};
-	
-	var files = {
-		client : {
-			sass : [{
-				expand : true,
-				cwd : paths.make(paths.client, paths.sass),
-				dest : paths.make(paths.client, paths.css),
-				src : ['**/*.scss'],
-				ext : '.css'
-			}],
-			js : [{
-				expand : true,
-				cwd : 'client/js/dev/',
-				dest : 'client/js/prod/',
-				src : ['**/*.js'],
-			}]
-		},
-		themes : {
-			sass : [{
-				expand : true,
-				cwd : 'themes/',
-				src : ['*/**/*.scss'],
-				dest : 'css/',
-				srcd : 'sass/',
-				ext : '.css',
-				rename : function(dest, matchedSrcPath, options) {
-					var path = [options.cwd, matchedSrcPath.replace(options.srcd, dest)].join('');
-					return path;
-				}
-			}]
-		}
-	};
-	
 	// Project configuration.
 	grunt.initConfig({
 		// Metadata.
@@ -82,6 +29,14 @@ module.exports = function(grunt) {
 				},
 				src : 'Gruntfile.js'
 			},
+			all : {
+				options : {
+					globals : {
+						'SLB' : true
+					}
+				},
+				src : ['**/js/dev/**/*.js']
+			},
 			client : {
 				src : ['client/js/dev/**/*.js']
 			},
@@ -100,7 +55,12 @@ module.exports = function(grunt) {
 				report: 'min'
 			},
 			client : {
-				files : files.client.js
+				files : [{
+					expand : true,
+					cwd : 'client/js/dev/',
+					dest : 'client/js/prod/',
+					src : ['**/*.js'],
+				}]
 			}
 		},
 		sass : {
@@ -108,13 +68,30 @@ module.exports = function(grunt) {
 				outputStyle : 'compressed',
 			},
 			client : {
-				files : files.client.sass
+				files : [{
+					expand : true,
+					cwd : 'client/sass/',
+					dest : 'client/css/',
+					src : ['**/*.scss'],
+					ext : '.css'
+				}]
 			},
 			themes : {
 				options : {
 					includePaths : require('node-bourbon').includePaths
 				},
-				files : files.themes.sass
+				files : [{
+					expand : true,
+					cwd : 'themes/',
+					src : ['*/**/*.scss'],
+					dest : 'css/',
+					srcd : 'sass/',
+					ext : '.css',
+					rename : function(dest, matchedSrcPath, options) {
+						var path = [options.cwd, matchedSrcPath.replace(options.srcd, dest)].join('');
+						return path;
+					}
+				}]
 			}
 		},
 		phplint : {
@@ -160,7 +137,7 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks('grunt-contrib-watch');
 
 	// Default Tasks
-	grunt.registerTask('build', ['phplint', 'jshint', 'uglify', 'sass']);
+	grunt.registerTask('build', ['phplint', 'jshint:gruntfile', 'jshint:all', 'uglify', 'sass']);
 	grunt.registerTask('watch_client', ['watch:client_js', 'watch:client_sass']);
 	grunt.registerTask('watch_themes', ['watch:themes_js', 'watch:themes_sass']);
 };
