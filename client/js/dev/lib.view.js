@@ -4534,16 +4534,7 @@ var Template_Tag_Handler = {
 	render: function(item, instance) {
 		var dfr = $.Deferred();
 		//Pass to attribute method
-		var ret = this.call_attribute('render', item, instance);
-		//Check for promise
-		if ( this.util.is_promise(ret) ) {
-			ret.done(function(output) {
-				dfr.resolve(output);
-			});
-		} else {
-			//Resolve non-promises immediately
-			dfr.resolve(ret);
-		}
+		this.call_attribute('render', item, instance, dfr);
 		//Return promise
 		return dfr.promise();
 	},
