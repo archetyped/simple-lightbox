@@ -109,7 +109,8 @@ class SLB_Lightbox extends SLB_Base {
 	 * @return void
 	 */
 	protected function _client_files($files = null) {
-		$js_path = 'client/js/prod';
+		$js_path = 'client/js/';
+		$js_path .= ( SLB_DEV ) ? 'dev' : 'prod';
 		$files = array (
 			'scripts' => array (
 				'core'			=> array (
