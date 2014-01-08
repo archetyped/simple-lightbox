@@ -1,9 +1,5 @@
-if ( typeof(jQuery) !== 'undefined' ) {
-(function($) {
+if ( typeof jQuery !== 'undefined' && typeof SLB !== 'undefined' && SLB.View && SLB.View.extend_content_handler ) {(function($) {
 $(document).ready(function() {
-if ( typeof SLB === 'undefined' || typeof SLB.View === 'undefined' || typeof SLB.View.extend_content_handler === 'undefined' ) {
-	return false;
-}
 SLB.View.extend_content_handler('image', {
 	/**
 	 * Render images
@@ -19,8 +15,7 @@ SLB.View.extend_content_handler('image', {
 			//Save Data
 			item.set_data(img);
 			//Set attributes
-			var dim = {'width': img.width, 'height': img.height};
-			item.set_attribute('dimensions', dim);
+			item.set_attribute('dimensions', {'width': img.width, 'height': img.height});
 			//Build output
 			var out = $('<img />', {'src': item.get_uri()});
 			//Resolve deferred
