@@ -5,14 +5,17 @@ grunt.config('uglify', {
 		mangle: false,
 		report: 'min'
 	},
-	client : {
+	all : {
 		files : [{
 			expand : true,
-			cwd : 'client/js/dev/',
-			dest : 'client/js/prod/',
-			src : ['**/*.js'],
+			cwd : '',
+			dest : '',
+			src : ['<%= paths.js.dyn %>'],
+			rename : function(dest, srcPath) {
+				return srcPath.replace('/js/dev/', '/js/prod/');
+			}
 		}]
-	}
+	},
 });
 
 };

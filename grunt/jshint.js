@@ -2,6 +2,7 @@ module.exports = function(grunt) {
 
 grunt.config('jshint', {
 	options : {
+		reporter: require('jshint-stylish'),
 		curly : true,
 		eqeqeq : true,
 		immed : true,
@@ -15,14 +16,13 @@ grunt.config('jshint', {
 		eqnull : true,
 		browser : true,
 		jquery : true,
-		globals : {},
-		reporter: require('jshint-stylish')
+		globals : {}
 	},
-	gruntfile : {
+	grunt : {
 		options : {
 			node : true
 		},
-		src : 'Gruntfile.js'
+		src : ['Gruntfile.js', 'grunt/*.js']
 	},
 	all : {
 		options : {
@@ -30,19 +30,8 @@ grunt.config('jshint', {
 				'SLB' : true
 			}
 		},
-		src : ['**/js/dev/**/*.js']
+		src : ['<%= paths.js.dyn %>']
 	},
-	client : {
-		src : ['client/js/dev/**/*.js']
-	},
-	themes : {
-		options : {
-			globals : {
-				'SLB' : true
-			}
-		},
-		src : ['themes/**/*.js']
-	}
 });
 
 };

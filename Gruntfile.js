@@ -8,12 +8,17 @@ module.exports = function(grunt) {
 	grunt.initConfig({
 		// Metadata.
 		pkg : grunt.file.readJSON('package.json'),
+		paths : {
+			js : {
+				std : '**/js/dev/**/*.js',
+				dyn : '<%= paths.js.std %>'
+			}
+		},
 	});
 	
 	grunt.loadTasks('grunt');
 	
 	// Default Tasks
 	grunt.registerTask('build', ['phplint', 'jshint:gruntfile', 'jshint:all', 'uglify', 'sass']);
-	grunt.registerTask('watch_client', ['watch:client_js', 'watch:client_sass']);
-	grunt.registerTask('watch_themes', ['watch:themes_js', 'watch:themes_sass']);
+	grunt.registerTask('watch_all', ['watch:js', 'watch:sass']);
 };
