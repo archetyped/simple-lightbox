@@ -19,6 +19,6 @@ module.exports = function(grunt) {
 	grunt.loadTasks('grunt');
 	
 	// Default Tasks
-	grunt.registerTask('build', ['phplint', 'jshint:gruntfile', 'jshint:all', 'uglify', 'sass']);
+	grunt.registerTask('build', ['phplint', 'jshint', 'uglify', 'sass']);
 	grunt.registerTask('watch_all', ['watch:js', 'watch:sass']);
 };
