@@ -1,4 +1,13 @@
 <?php
+
+/* Constants */
+
+if ( !defined('SLB_DEV') ) {
+	define('SLB_DEV', ( isset( $_REQUEST['slb_dev'] ) && !!$_REQUEST['slb_dev'] ) );
+}
+
+/* Class loading */
+
 /**
  * Class loading handler
  * @param string $classname Class to load
