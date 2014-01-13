@@ -858,7 +858,7 @@ var Component = {
 		this.set_id(id);
 		//Save init attributes
 		this._attr_init = attributes;
-		this.register_hooks();
+		this._hooks();
 	},
 	
 	_set_parent: function() {
@@ -870,7 +870,7 @@ var Component = {
 	 * Register hooks on init
 	 * Placeholder method to be overridden by child classes
 	 */
-	register_hooks: function() {},
+	_hooks: function() {},
 	
 	/* Methods */
 	
@@ -1725,7 +1725,7 @@ var Viewer = {
 	
 	/* Init */
 	
-	register_hooks: function() {
+	_hooks: function() {
 		var t = this;
 		this
 			.on(['item-prev', 'item-next'], function() {
@@ -2575,7 +2575,7 @@ var Group = {
 	
 	/* Init */
 	
-	register_hooks: function() {
+	_hooks: function() {
 		var t = this;
 		this.on(['item-prev', 'item-next'], function() {
 			t.trigger('item-change');
