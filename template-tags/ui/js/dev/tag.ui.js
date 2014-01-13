@@ -55,9 +55,6 @@ SLB.View.extend_template_tag_handler('ui', {
 		//Initialize event handlers (once per viewer)
 		var v = item.get_viewer();
 		var st = ['events-init', tag.get_ns(), tag.get_name()].join('_');
-		var fmt = function(output) {
-			return output;
-		};
 		if ( !v.get_status(st) ) {
 			v.set_status(st);
 			this.call_attribute('init', item, tag, v);
@@ -66,10 +63,10 @@ SLB.View.extend_template_tag_handler('ui', {
 		var ret = this.handle_prop(tag.get_prop(), item, tag);
 		if ( this.util.is_promise(ret) ) {
 			ret.done(function(output) {
-				dfr.resolve(fmt(output));
+				dfr.resolve(output);
 			});
 		} else {
-			dfr.resolve(fmt(ret));
+			dfr.resolve(ret);
 		}
 		return dfr.promise();
 	},
