@@ -1,7 +1,13 @@
 if ( typeof jQuery !== 'undefined' && typeof SLB !== 'undefined' && SLB.View && SLB.View.extend_template_tag_handler ) {(function($) {
 $(document).ready(function() {
 SLB.View.extend_template_tag_handler('ui', {
-	init: function(item, tag, v) {
+	_hooks : function() {
+		this.on('viewer-init', function(ev) {
+			this.call_attribute('viewer_init', ev);
+		});
+	},
+	viewer_init: function(ev) {
+		var v = ev.viewer;
 		//Add event handlers
 		v.on('events-complete', function(ev, v) {
 			//Register event handlers
@@ -52,13 +58,6 @@ SLB.View.extend_template_tag_handler('ui', {
 		});
 	},
 	render: function(item, tag, dfr) {
-		//Initialize event handlers (once per viewer)
-		var v = item.get_viewer();
-		var st = ['events-init', tag.get_ns(), tag.get_name()].join('_');
-		if ( !v.get_status(st) ) {
-			v.set_status(st);
-			this.call_attribute('init', item, tag, v);
-		}
 		//Process content
 		var ret = this.handle_prop(tag.get_prop(), item, tag);
 		if ( this.util.is_promise(ret) ) {
