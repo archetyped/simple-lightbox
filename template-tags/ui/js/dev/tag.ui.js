@@ -1,9 +1,5 @@
-if ( typeof(jQuery) !== 'undefined' ) {
-(function($) {
+if ( typeof jQuery !== 'undefined' && typeof SLB !== 'undefined' && SLB.View && SLB.View.extend_template_tag_handler ) {(function($) {
 $(document).ready(function() {
-if ( typeof SLB === 'undefined' || typeof SLB.View === 'undefined' || typeof SLB.View.extend_template_tag_handler === 'undefined' ) {
-	return false;
-}
 SLB.View.extend_template_tag_handler('ui', {
 	init: function(item, tag, v) {
 		//Add event handlers
