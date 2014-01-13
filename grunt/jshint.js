@@ -27,7 +27,8 @@ grunt.config('jshint', {
 	all : {
 		options : {
 			globals : {
-				'SLB' : true
+				'SLB' : true,
+				'console' : true
 			}
 		},
 		src : ['<%= paths.js.dyn %>']
