@@ -718,6 +718,10 @@ var View = {
 		if ( this.util.in_obj(attr, 'styles') ) {
 			this.load_styles(attr.styles);
 		}
+		//Set hooks
+		if ( this.util.in_obj(attr, '_hooks') ) {
+			attr._hooks.call(hdl);
+		}
 		return hdl;
 	},
 	
@@ -831,7 +835,7 @@ var Component = {
 	 * > Key: string Event type
 	 * > Value: array Handlers
 	 */
-	_events: null,
+	_events: {},
 	
 	/**
 	 * Status management
@@ -4021,6 +4025,22 @@ var Template = {
 		this._super('', attributes);
 	},
 	
+	_hooks: function() {
+		this.on('dom_init', function(ev) {
+			//Init tag handlers
+			var tags = this.get_tags(null, null, true);
+			var names = [];
+			var t = this;
+			$.each(tags, function(idx, tag) {
+				var name = tag.get_name();
+				if ( -1 === $.inArray(name, names) ) {
+					names.push(name);
+					tag.get_handler().trigger(ev.type, {template: t});
+				}
+			});
+		});
+	},
+	
 	get_theme: function() {
 		var ret = this.get_component('theme', true, false, false);
 		return ret;
@@ -4231,13 +4251,20 @@ var Template = {
 	 * Template is parsed if tags not set
 	 * @param string name (optional) Tag type to retrieve instances of
 	 * @param string prop (optional) Tag property to retrieve instances of
+	 * @param bool isolate (optional) Do not save retrieved tags, only fetch and return (Default: TRUE)
 	 * @return array Template_Tag instances
 	 */
-	get_tags: function(name, prop) {
+	get_tags: function(name, prop, isolate) {
+		//Validate
+		if ( !this.util.is_bool(isolate) ) {
+			isolate = false;
+		}
+		//Setup
 		var a = 'tags';
 		var tags = this.get_attribute(a);
 		//Initialize tags
 		if ( !this.util.is_array(tags) ) {
+			console.log('Init tags');
 			tags = [];
 			//Retrieve layout DOM tree
 			var d = this.dom_get();
@@ -4253,18 +4280,23 @@ var Template = {
 				if ( tag.has_handler() ) {
 					//Add tag to array
 					tags.push(tag);
-					//Connect tag to DOM node
-					tag.dom_set(el);
-					//Set classes
-					el.addClass(tag.get_classes(' '));
+					if ( !isolate ) {
+						//Connect tag to DOM node
+						tag.dom_set(el);
+						//Set classes
+						el.addClass(tag.get_classes(' '));
+					}
 				}
 				//Clear data attribute
-				el.removeAttr(attr);
+				if ( !isolate ) {
+					el.removeAttr(attr);
+				}
 			});
-			//Save tags
-			this.set_attribute(a, tags, false);
+			if ( !isolate ) {
+				//Save tags
+				this.set_attribute(a, tags, false);
+			}
 		}
-		tags = this.get_attribute(a, [], false);
 		//Filter tags by parameters
 		if ( !this.util.is_empty(tags) && this.util.is_string(name) ) {
 			//Normalize
@@ -4303,6 +4335,7 @@ var Template = {
 	dom_init: function() {
 		//Create DOM object from parsed layout
 		this.dom_set(this.get_layout());
+		this.trigger('dom_init');
 	},
 	
 	/**

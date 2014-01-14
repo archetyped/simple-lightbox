@@ -2,12 +2,12 @@ if ( typeof jQuery !== 'undefined' && typeof SLB !== 'undefined' && SLB.View && 
 $(document).ready(function() {
 SLB.View.extend_template_tag_handler('ui', {
 	_hooks : function() {
-		this.on('viewer-init', function(ev) {
-			this.call_attribute('viewer_init', ev);
+		this.on('dom_init', function(ev) {
+			this.call_attribute('dom_init', ev);
 		});
 	},
-	viewer_init: function(ev) {
-		var v = ev.viewer;
+	dom_init: function(ev) {
+		var v = ev.data.template.get_theme().get_viewer();
 		//Add event handlers
 		v.on('events-complete', function(ev, v) {
 			//Register event handlers
