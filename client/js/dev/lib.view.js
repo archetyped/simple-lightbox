@@ -3584,6 +3584,8 @@ var Theme = {
 		return ret;
 	},
 	
+	/* Tags */
+	
 	/**
 	 * Retrieve tags from template
 	 * All tags will be retrieved by default
@@ -3603,6 +3605,15 @@ var Theme = {
 	 */
 	dom_get_tag: function(tag, prop) {
 		return $(this.get_template().dom_get_tag(tag, prop));
+	},
+	
+	/**
+	 * Retrieve template tag CSS selector
+	 * @uses Template.get_tag_selector()
+	 * @return string Template tag CSS selector
+	 */
+	get_tag_selector: function() {
+		return this.get_template().get_tag_selector();
 	},
 	
 	/* Model */
@@ -4169,7 +4180,7 @@ var Template = {
 		//Create DOM structure from raw template
 		var dom = $(l);
 		//Find hard-coded tag nodes
-		var tag_temp = new View.Template_Tag();
+		var tag_temp = this.get_tag_temp();
 		var cls = tag_temp.get_class();
 		var cls_new = ['x', cls].join('_');
 		$(tag_temp.get_selector(), dom).each(function() {
@@ -4227,7 +4238,7 @@ var Template = {
 	},
 	
 	get_tag_attribute: function() {
-		return this.get_parent().get_component_temp(View.Template_Tag).dom_get_attribute();
+		return this.get_tag_temp().dom_get_attribute();
 	},
 	
 	/**
@@ -4326,6 +4337,24 @@ var Template = {
 	 */
 	has_tags: function() {
 		return ( this.get_tags().length > 0 ) ? true : false;
+	},
+	
+	/**
+	 * Retrieve temporary tag instance
+	 * @return Template_Tag Temporary tag
+	 */
+	get_tag_temp: function() {
+		return this.get_parent().get_component_temp(View.Template_Tag);
+	},
+	
+	/**
+	 * Retrieve Template tag CSS selector
+	 * @uses Template.get_tag_temp() to retrieve temporary tag instance
+	 * @uses Template_Tag.get_selector() to retrieve selector
+	 * @return string Template Tag CSS selector
+	 */
+	get_tag_selector: function() {
+		return this.get_tag_temp().get_selector();
 	},
 	
 	/*-** DOM **-*/
