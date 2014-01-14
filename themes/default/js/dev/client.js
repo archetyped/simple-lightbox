@@ -12,36 +12,35 @@ SLB.View.extend_theme('slb_default', {
 		 * @return promise Resolved when transition is complete
 		 */
 		'open': function(v, dfr) {
-			var d = v.dom_get(),
-				l = v.get_layout().hide(),
+			//Reset layout and overlay state on open
+			var l = v.get_layout().hide(),
 				o = v.get_overlay().hide();
-			var pos = {'top' : ''};
-			var final = function() {
-				//Show overlay
-				o.fadeIn(function() {
-					l.css(pos);
-					dfr.resolve();
-				});
-			};
+			
 			//Clean UI
-			d.find('.slb_content').css({width: '', height: ''}).find('.slb_template_tag').hide();
+			var d = v.dom_get();
+			d.find('.slb_content').css({width: '', height: ''}).find(this.get_tag_selector()).hide();
 			d.find('.slb_details').height(0);
 			//Show viewer DOM
 			d.show({'always': function() {
+				var pos = {'top_base': $(document).scrollTop()};
 				if ( document.documentElement.clientWidth > 480 ) {
-					/* Standard */
+					/* Standard screen */
 					//Center vertically
-					var top_scr = $(document).scrollTop();
-					pos.top = ( top_scr + $(window).height() / 2 ) - ( l.height() / 2 );
-					if ( pos.top < top_scr ) {
-						pos.top = top_scr;
+					pos.top = ( pos.top_base + $(window).height() / 2 ) - ( l.height() / 2 );
+					if ( pos.top < pos.top_base ) {
+						pos.top = pos.top_base;
 					}
 				} else {
-					//Position at top
 					/* Small screen */
-					pos.top = $(document).scrollTop();
+					//Position at top
+					pos.top = pos.top_base;
 				}
-				final();
+				//Show overlay
+				o.fadeIn({'always': function() {
+					//Position lightbox
+					l.css(pos);
+					dfr.resolve();
+				}});
 			}});
 			return dfr.promise();
 		},
