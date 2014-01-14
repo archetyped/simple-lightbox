@@ -1,21 +1,15 @@
-if ( typeof(jQuery) !== 'undefined' ) {
-(function($) {
+if ( typeof jQuery !== 'undefined' && typeof SLB !== 'undefined' && SLB.View && SLB.View.extend_theme ) {(function($) {
 $(document).ready(function() {
-//Validation
-if ( typeof SLB === 'undefined' || typeof SLB.View === 'undefined' || typeof SLB.View.extend_theme !== 'function' ) {
-	return false;
-}
-//Extend Theme
 SLB.View.extend_theme('slb_default', {
 	/**
-	 * Define transition handlers
+	 * Transition event handlers
 	 */
 	'transition': {
 		/**
 		 * Open event
 		 * @param View.Viewer v Viewer instance
-		 * @param jQuery.Deferred dfr Deferred instance to be resolved when animation is complete
-		 * @return jQuery.Promise Resolved when transition is complete
+		 * @param deferred dfr Resolved when transition is complete
+		 * @return promise Resolved when transition is complete
 		 */
 		'open': function(v, dfr) {
 			var d = v.dom_get(),
