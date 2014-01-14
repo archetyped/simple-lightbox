@@ -5,6 +5,13 @@ grunt.config('watch', {
 		files : ['client/sass/**/*.scss'],
 		tasks : ['sass:client']
 	},
+	jshint : {
+		files : '<%= paths.js.std %>',
+		tasks : ['jshint:all'],
+		options : {
+			spawn : false,
+		}
+	},
 	js : {
 		files : '<%= paths.js.std %>',
 		tasks : ['jshint:all', 'uglify:all'],
