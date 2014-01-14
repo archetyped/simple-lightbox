@@ -67,8 +67,9 @@ SLB.View.extend_template_tag_handler('ui', {
 	props: {
 		'slideshow_control': function(item) {
 			//Get slideshow status
-			var prop = ( item.get_viewer().slideshow_active() ) ? 'slideshow_stop' : 'slideshow_start';
-			return item.get_viewer().get_label(prop);
+			var v = item.get_viewer();
+			var prop = ( v.slideshow_active() ) ? 'slideshow_stop' : 'slideshow_start';
+			return v.get_label(prop);
 		},
 		'group_status': function(item) {
 			//Handle single items
@@ -81,18 +82,20 @@ SLB.View.extend_template_tag_handler('ui', {
 				ph,
 				delim = '%',
 				handlers = {
-				current: function() {
-					return item.get_group(true).get_pos() + 1;
-				},
-				total: function() {
-					return item.get_group().get_size();
-				}
-			};
+					current: function() {
+						return item.get_group(true).get_pos() + 1;
+					},
+					total: function() {
+						return item.get_group().get_size();
+					}
+				};
 			//Parse placeholders
 			for ( key in handlers ) {
+				//Build placeholder
 				ph = delim + key + delim;
-				if ( out.indexOf(ph) !== -1 ) {
-					out = out.replace(ph, handlers[key]());
+				//Replace placeholder
+				if ( -1 !== out.indexOf(ph) ) {
+					out = out.replace(new RegExp(ph, 'ig'), handlers[key]());
 				}
 			}
 			return out;
