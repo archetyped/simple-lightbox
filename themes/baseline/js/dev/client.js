@@ -1,6 +1,10 @@
 if ( typeof jQuery !== 'undefined' && typeof SLB !== 'undefined' && SLB.View && SLB.View.extend_theme ) {(function($) {
 $(document).ready(function() {
 SLB.View.extend_theme('slb_baseline', {
+	'breakpoints': {
+		'small': 480,
+		'large': 1024
+	},
 	/**
 	 * Theme offsets
 	 * Reports additional space required for theme UI
