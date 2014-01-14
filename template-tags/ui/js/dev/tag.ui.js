@@ -1,50 +1,51 @@
 if ( typeof jQuery !== 'undefined' && typeof SLB !== 'undefined' && SLB.View && SLB.View.extend_template_tag_handler ) {(function($) {
 $(document).ready(function() {
 SLB.View.extend_template_tag_handler('ui', {
-	init: function(item, tag, v) {
+	_hooks : function() {
+		this.on('dom_init', function(ev) {
+			this.call_attribute('events_init', ev);
+		});
+	},
+	events_init: function(ev) {
+		var v = ev.data.template.get_theme().get_viewer();
 		//Add event handlers
 		v.on('events-complete', function(ev, v) {
 			//Register event handlers
 
 			/* Close */
 			
-			var close = function() {
-				return v.close();
-			};
 			//Close button
-			v.get_theme().dom_get_tag('ui', 'close').click(close);
+			v.get_theme().dom_get_tag('ui', 'close').click(function() {
+				return v.close();
+			});
 			
 			/* Navigation */
 			
-			var nav_next = function() {
+			v.get_theme().dom_get_tag('ui', 'nav_next').click(function() {
 				v.item_next();
-			};
-			
-			var nav_prev = function() {
+			});
+			v.get_theme().dom_get_tag('ui', 'nav_prev').click(function() {
 				v.item_prev();
-			};
-			
-			v.get_theme().dom_get_tag('ui', 'nav_next').click(nav_next);
-			v.get_theme().dom_get_tag('ui', 'nav_prev').click(nav_prev);
+			});
 			
 			/* Slideshow */
 			
-			var slideshow_control = function() {
+			v.get_theme().dom_get_tag('ui', 'slideshow_control').click(function() {
 				v.slideshow_toggle();
-			};
-			
-			v.get_theme().dom_get_tag('ui', 'slideshow_control').click(slideshow_control);
+			});
 		});
 		
 		v.on('slideshow-toggle', function(ev, v) {
 			//Update slideshow control tag
 			var tags = v.get_theme().get_tags('ui', 'slideshow_control');
-			var render_tag = function(tag) {
-				tag.render(v.get_item()).done(function(r) {
-					r.tag.dom_get().html(r.output);
-				});
-			};
 			if ( tags.length ) {
+				//Renderer
+				var render_tag = function(tag) {
+					tag.render(v.get_item()).done(function(r) {
+						r.tag.dom_get().html(r.output);
+					});
+				};
+				//Process tags
 				for ( var x = 0; x < tags.length; x++ ) {
 					render_tag(tags[x]);
 				}
@@ -52,13 +53,6 @@ SLB.View.extend_template_tag_handler('ui', {
 		});
 	},
 	render: function(item, tag, dfr) {
-		//Initialize event handlers (once per viewer)
-		var v = item.get_viewer();
-		var st = ['events-init', tag.get_ns(), tag.get_name()].join('_');
-		if ( !v.get_status(st) ) {
-			v.set_status(st);
-			this.call_attribute('init', item, tag, v);
-		}
 		//Process content
 		var ret = this.handle_prop(tag.get_prop(), item, tag);
 		if ( this.util.is_promise(ret) ) {
@@ -73,8 +67,9 @@ SLB.View.extend_template_tag_handler('ui', {
 	props: {
 		'slideshow_control': function(item) {
 			//Get slideshow status
-			var prop = ( item.get_viewer().slideshow_active() ) ? 'slideshow_stop' : 'slideshow_start';
-			return item.get_viewer().get_label(prop);
+			var v = item.get_viewer();
+			var prop = ( v.slideshow_active() ) ? 'slideshow_stop' : 'slideshow_start';
+			return v.get_label(prop);
 		},
 		'group_status': function(item) {
 			//Handle single items
@@ -87,18 +82,20 @@ SLB.View.extend_template_tag_handler('ui', {
 				ph,
 				delim = '%',
 				handlers = {
-				current: function() {
-					return item.get_group(true).get_pos() + 1;
-				},
-				total: function() {
-					return item.get_group().get_size();
-				}
-			};
+					current: function() {
+						return item.get_group(true).get_pos() + 1;
+					},
+					total: function() {
+						return item.get_group().get_size();
+					}
+				};
 			//Parse placeholders
 			for ( key in handlers ) {
+				//Build placeholder
 				ph = delim + key + delim;
-				if ( out.indexOf(ph) !== -1 ) {
-					out = out.replace(ph, handlers[key]());
+				//Replace placeholder
+				if ( -1 !== out.indexOf(ph) ) {
+					out = out.replace(new RegExp(ph, 'ig'), handlers[key]());
 				}
 			}
 			return out;
