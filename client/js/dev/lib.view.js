@@ -3364,6 +3364,30 @@ var Modeled_Component = {
 		}
 		return ret;
 	},
+	
+	/**
+	 * Get attribute recursively
+	 * Merges objects from ancestors together
+	 * @see Component.get_attribute() for more information
+	 */
+	get_attribute_recursive: function(key, def, enforce_type) {
+		var ret = this.get_attribute(key,  def, true, enforce_type);
+		if ( this.util.is_obj(ret) ) {
+			//Merge ancestor objects
+			var models = this.get_ancestors(false);
+			ret = [ret];
+			var t = this;
+			$.each(models, function(idx, model) {
+				if ( key in model && t.util.is_obj(model[key]) ) {
+					ret.push(model[key]);
+				}
+			});
+			//Merge transition handlers into current theme
+			ret.push({});
+			ret = $.extend.apply($, ret.reverse());
+		}
+		return ret;
+	},
 
 	/**
 	 * Set attribute value
@@ -3886,7 +3910,7 @@ var Theme = {
 		});
 		return dims;
 	},
-	
+
 	/* Output */
 	
 	/**
