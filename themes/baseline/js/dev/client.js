@@ -12,7 +12,7 @@ SLB.View.extend_theme('slb_baseline', {
 	 */
 	'offset': function() {
 		var o;
-		if ( document.documentElement.clientWidth > 480 ) {
+		if ( document.documentElement.clientWidth > this.get_breakpoint('small') ) {
 			o = {'width': 32, 'height': 55};
 		} else {
 			o = {'width': 0, 'height': 0};
@@ -26,7 +26,7 @@ SLB.View.extend_theme('slb_baseline', {
 	 */
 	'margin': function() {
 		var m;
-		if ( document.documentElement.clientWidth > 480 ) {
+		if ( document.documentElement.clientWidth > this.get_breakpoint('small') ) {
 			m = {'height': 50, 'width': 20};
 		} else {
 			m = {'height': 0, 'width': 0};
