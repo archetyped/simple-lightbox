@@ -3364,6 +3364,30 @@ var Modeled_Component = {
 		}
 		return ret;
 	},
+	
+	/**
+	 * Get attribute recursively
+	 * Merges objects from ancestors together
+	 * @see Component.get_attribute() for more information
+	 */
+	get_attribute_recursive: function(key, def, enforce_type) {
+		var ret = this.get_attribute(key,  def, true, enforce_type);
+		if ( this.util.is_obj(ret) ) {
+			//Merge ancestor objects
+			var models = this.get_ancestors(false);
+			ret = [ret];
+			var t = this;
+			$.each(models, function(idx, model) {
+				if ( key in model && t.util.is_obj(model[key]) ) {
+					ret.push(model[key]);
+				}
+			});
+			//Merge transition handlers into current theme
+			ret.push({});
+			ret = $.extend.apply($, ret.reverse());
+		}
+		return ret;
+	},
 
 	/**
 	 * Set attribute value
@@ -3885,6 +3909,30 @@ var Theme = {
 			dims[key] += offset[key];
 		});
 		return dims;
+	},
+	
+	/**
+	 * Retrieve all breakpoints
+	 * @return object Breakpoints
+	 */
+	get_breakpoints: function() {
+		return this.get_attribute_recursive('breakpoints');
+	},
+	
+	/**
+	 * Get breakpoint value
+	 * @param string target Breakpoint target
+	 * @return int Breakpoint value (pixels)
+	 */
+	get_breakpoint: function(target) {
+		var ret = 0;
+		if ( this.util.is_string(target) ) {
+			var b = this.get_attribute_recursive('breakpoints');
+			if ( this.util.is_obj(b) && target in b ) {
+				ret = b[target];
+			}
+		}
+		return ret;
 	},
 	
 	/* Output */

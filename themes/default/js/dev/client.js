@@ -17,13 +17,14 @@ SLB.View.extend_theme('slb_default', {
 				o = v.get_overlay().hide();
 			
 			//Clean UI
+			var thm = this;
 			var d = v.dom_get();
 			d.find('.slb_content').css({width: '', height: ''}).find(this.get_tag_selector()).hide();
 			d.find('.slb_details').height(0);
 			//Show viewer DOM
 			d.show({'always': function() {
 				var pos = {'top_base': $(document).scrollTop()};
-				if ( document.documentElement.clientWidth > 480 ) {
+				if ( document.documentElement.clientWidth > thm.get_breakpoint('small') ) {
 					/* Standard screen */
 					//Center vertically
 					pos.top = ( pos.top_base + $(window).height() / 2 ) - ( l.height() / 2 );
@@ -60,7 +61,7 @@ SLB.View.extend_theme('slb_default', {
 				l.css('opacity', '');
 				dfr.resolve();
 			};
-			if ( v.animation_enabled() && document.documentElement.clientWidth > 480 ) { /* Standard */
+			if ( v.animation_enabled() && document.documentElement.clientWidth > this.get_breakpoint('small') ) { /* Standard */
 				var lanim = {opacity: 0, top: $(document).scrollTop() + ( $(window).height() / 2 )},
 					canim = {width: 0, height: 0};
 				//Shrink & fade out viewer
@@ -86,7 +87,7 @@ SLB.View.extend_theme('slb_default', {
 		 */
 		'load': function(v, dfr) {
 			v.get_layout().find('.slb_loading').show();
-			if ( document.documentElement.clientWidth > 480 ) {
+			if ( document.documentElement.clientWidth > this.get_breakpoint('small') ) {
 				return v.get_layout().fadeIn().promise();
 			} else {
 				v.get_layout().show();
@@ -105,7 +106,7 @@ SLB.View.extend_theme('slb_default', {
 				det = l.find('.slb_details'),
 				cont = l.find('.slb_content .slb_template_tag');
 			var props = {height: 0};
-			if ( document.documentElement.clientWidth > 480 ) {
+			if ( document.documentElement.clientWidth > this.get_breakpoint('small') ) {
 				//Hide details
 				det.css(props);
 				//Hide content
@@ -134,7 +135,7 @@ SLB.View.extend_theme('slb_default', {
 				c = l.find('.slb_content'),
 				c_tag = c.find('.slb_template_tag');
 			//Transition
-			if ( document.documentElement.clientWidth > 480 ) {
+			if ( document.documentElement.clientWidth > this.get_breakpoint('small') ) {
 				var spd = 'fast';
 				//Resize viewer to fit item
 				var dims_item = this.get_item_dimensions();
