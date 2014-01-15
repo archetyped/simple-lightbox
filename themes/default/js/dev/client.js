@@ -55,7 +55,7 @@ SLB.View.extend_theme('slb_default', {
 			//Viewer elements
 			var l = v.get_layout(),
 				c = l.find('.slb_content');
-			//Reset handler
+			//Reset procedure
 			var reset = function() {
 				//Reset state
 				c.width('').height('');
@@ -68,7 +68,7 @@ SLB.View.extend_theme('slb_default', {
 					'layout': { opacity: 0, top: $(document).scrollTop() + ( $(window).height() / 2 ) },
 					'content': { width: 0, height: 0 },
 					'speed': 'fast'
-				}
+				};
 				//Shrink & fade out viewer
 				var pos = l.animate(anims.layout, anims.speed).promise();
 				var size = c.animate(anims.content, anims.speed).promise();
@@ -87,17 +87,15 @@ SLB.View.extend_theme('slb_default', {
 		/**
 		 * Item loading event
 		 * @param View.Viewer v Viewer instance
-		 * @param jQuery.Deferred dfr Deferred instance to be resolved when animation is complete
-		 * @return jQuery.Promise Resolved when transition is complete
+		 * @param deferred dfr Resolved when animation is complete
+		 * @return promise Resolved when transition is complete
 		 */
-		'load': function(v, dfr) {
+		'load': function(v) {
 			v.get_layout().find('.slb_loading').show();
 			if ( document.documentElement.clientWidth > this.get_breakpoint('small') ) {
 				return v.get_layout().fadeIn().promise();
 			} else {
-				v.get_layout().show();
-				dfr.resolve();
-				return dfr;
+				return v.get_layout().show().promise();
 			}
 		},
 		/**
