@@ -52,26 +52,31 @@ SLB.View.extend_theme('slb_default', {
 		 * @return jQuery.Promise Resolved when transition is complete
 		 */
 		'close': function(v, dfr) {
+			//Viewer elements
 			var l = v.get_layout(),
-				c = l.find('.slb_content'),
-				spd = 'fast';
+				c = l.find('.slb_content');
+			//Reset handler
 			var reset = function() {
 				//Reset state
 				c.width('').height('');
 				l.css('opacity', '');
 				dfr.resolve();
 			};
-			if ( v.animation_enabled() && document.documentElement.clientWidth > this.get_breakpoint('small') ) { /* Standard */
-				var lanim = {opacity: 0, top: $(document).scrollTop() + ( $(window).height() / 2 )},
-					canim = {width: 0, height: 0};
+			if ( v.animation_enabled() && document.documentElement.clientWidth > this.get_breakpoint('small') ) { 
+				/* Standard */
+				var anims = {
+					'layout': { opacity: 0, top: $(document).scrollTop() + ( $(window).height() / 2 ) },
+					'content': { width: 0, height: 0 },
+					'speed': 'fast'
+				}
 				//Shrink & fade out viewer
-				var pos = l.animate(lanim, spd).promise();
-				var size = ( $.isEmptyObject(canim) ) ? true : c.animate(canim, spd).promise();
+				var pos = l.animate(anims.layout, anims.speed).promise();
+				var size = c.animate(anims.content, anims.speed).promise();
 				$.when(pos, size).done(function() {
 					//Fade out overlay
-					v.get_overlay().fadeOut(function() {
+					v.get_overlay().fadeOut({'always': function() {
 						reset();
-					});
+					}});
 				});
 			} else {
 				l.css('opacity', 0);
