@@ -3910,7 +3910,31 @@ var Theme = {
 		});
 		return dims;
 	},
-
+	
+	/**
+	 * Retrieve all breakpoints
+	 * @return object Breakpoints
+	 */
+	get_breakpoints: function() {
+		return this.get_attribute_recursive('breakpoints');
+	},
+	
+	/**
+	 * Get breakpoint value
+	 * @param string target Breakpoint target
+	 * @return int Breakpoint value (pixels)
+	 */
+	get_breakpoint: function(target) {
+		var ret = 0;
+		if ( this.util.is_string(target) ) {
+			var b = this.get_attribute_recursive('breakpoints');
+			if ( this.util.is_obj(b) && target in b ) {
+				ret = b[target];
+			}
+		}
+		return ret;
+	},
+	
 	/* Output */
 	
 	/**
