@@ -109,15 +109,11 @@ SLB.View.extend_theme('slb_default', {
 				det = l.find('.slb_details'),
 				cont = l.find('.slb_content .slb_template_tag');
 			var props = {height: 0};
-			if ( document.documentElement.clientWidth > this.get_breakpoint('small') ) {
-				//Hide details
-				det.css(props);
-				//Hide content
-				cont.hide();
-			} else {
-				det.css(props);
-				cont.hide();
-			}
+			//Hide details
+			det.css(props);
+			//Hide content
+			cont.hide();
+			//Finish
 			$.when(det.promise(), cont.promise()).done(function() {
 				dfr.resolve();
 			});
