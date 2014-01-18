@@ -7,7 +7,7 @@ grunt.config('phplint', {
 		}
 	},
 	all : {
-		src : '<%= paths.php.src_std %>'
+		src : '<%= paths.php.files %>'
 	}
 });
 

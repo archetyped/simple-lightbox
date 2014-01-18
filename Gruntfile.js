@@ -14,8 +14,8 @@ module.exports = function(grunt) {
 			
 			// PHP assets
 			php : {
-				src_std : ['*.php', '**/*.php', '!node_modules/**/*.php'], // Standard file match
-				src_dyn : '<%= paths.php.src_std' // Dynamic file match
+				files_std : ['*.php', '**/*.php', '!node_modules/**/*.php'], // Standard file match
+				files : '<%= paths.php.files_std %>' // Dynamic file match
 			},
 			
 			// JavaScript assets
@@ -23,8 +23,8 @@ module.exports = function(grunt) {
 				base : 'js', //Base dir
 				src : '<%= paths.js.base %>/dev', // Development code
 				dest : '<%= paths.js.base %>/prod', // Production code
-				src_std : '**/<%= paths.js.src %>/**/*.js', // Standard file match
-				src_dyn : '<%= paths.js.src_std %>' // Dynamic file match
+				files_std : '**/<%= paths.js.src %>/**/*.js', // Standard file match
+				files : '<%= paths.js.files_std %>' // Dynamic file match
 			},
 			
 			// Sass assets
