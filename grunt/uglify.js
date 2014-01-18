@@ -10,7 +10,7 @@ grunt.config('uglify', {
 			expand : true,
 			cwd : '',
 			dest : '',
-			src : ['<%= paths.js.src_dyn %>'],
+			src : ['<%= paths.js.files %>'],
 			rename : function(dest, srcPath) {
 				return srcPath.replace('/' + grunt.config.get('paths.js.src') + '/', '/' + grunt.config.get('paths.js.dest') + '/');
 			}
