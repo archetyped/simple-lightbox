@@ -31,7 +31,7 @@ grunt.config('jshint', {
 				'console' : true
 			}
 		},
-		src : ['<%= paths.js.dyn %>']
+		src : ['<%= paths.js.files %>']
 	},
 });
 

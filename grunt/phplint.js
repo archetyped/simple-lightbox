@@ -6,8 +6,9 @@ grunt.config('phplint', {
 			'-lf': null
 		}
 	},
-	core : ['*.php'],
-	includes : ['includes/**/*.php']
+	all : {
+		src : '<%= paths.php.files %>'
+	}
 });
 
 };
