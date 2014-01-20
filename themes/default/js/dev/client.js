@@ -132,7 +132,7 @@ SLB.View.extend_theme('slb_default', {
 				det = l.find('.slb_details'),
 				det_data = det.find('.slb_data'),
 				c = l.find('.slb_content'),
-				c_tag = c.find('.slb_template_tag');
+				c_tag = c.find( this.get_tag_selector() );
 			//Transition
 			if ( document.documentElement.clientWidth > this.get_breakpoint('small') ) {
 				var spd = 'fast';
@@ -154,8 +154,9 @@ SLB.View.extend_theme('slb_default', {
 				pos = l.animate(pos, spd).promise();
 				dims_item = c.animate(dims_item, spd).promise();
 				//Display elements
+				var thm = this;
 				$.when(pos, dims_item).done(function() {
-					var c_tag_cont = c.find('.slb_template_tag_item_content');
+					var c_tag_cont = c.find( thm.get_tag_selector('item', 'content') );
 					//Hide loading indicator
 					loader.fadeOut(spd, function() {
 						//Display content
