@@ -3634,10 +3634,12 @@ var Theme = {
 	/**
 	 * Retrieve template tag CSS selector
 	 * @uses Template.get_tag_selector()
+	 * @param name string Tag name
+	 * @param prop string Tag Property
 	 * @return string Template tag CSS selector
 	 */
-	get_tag_selector: function(name) {
-		return this.get_template().get_tag_selector(name);
+	get_tag_selector: function(name, prop) {
+		return this.get_template().get_tag_selector(name, prop);
 	},
 	
 	/* Model */
@@ -4400,16 +4402,21 @@ var Template = {
 	 * Retrieve Template tag CSS selector
 	 * @uses Template.get_tag_temp() to retrieve temporary tag instance
 	 * @uses Template_Tag.get_selector() to retrieve selector
-	 * @param string name Tag name to build selector for
+	 * @param name string Tag name
+	 * @param prop string Tag Property
 	 * @return string Template Tag CSS selector
 	 */
-	get_tag_selector: function(name) {
+	get_tag_selector: function(name, prop) {
 		if ( !this.util.is_string(name) ) {
 			name = '';
 		}
+		if ( !this.util.is_string(prop) ) {
+			prop = '';
+		}
 		var tag = this.get_tag_temp();
 		tag.set_attribute('name', name);
-		return tag.get_selector('tag');
+		tag.set_attribute('prop', prop);
+		return tag.get_selector('full');
 	},
 	
 	/*-** DOM **-*/
@@ -4610,7 +4617,7 @@ var Template_Tag = {
 				var parts = [this.get_name(), this.get_prop()];
 				var a = [];
 				var i;
-				for ( i = 0; i < a.length; i++ ) {
+				for ( i = 0; i < parts.length; i++ ) {
 					if ( this.util.is_string(parts[i]) ) {
 						a.push(parts[i]);
 					}
@@ -4628,7 +4635,15 @@ var Template_Tag = {
 	 * @return string Tag selector
 	 */
 	get_selector: function(level) {
-		return '.' + this.get_class(level);
+		//Get base
+		var ret = this.get_class(level);
+		//Format
+		if ( this.util.is_string(ret) ) {
+			ret = '.' + ret;
+		} else {
+			ret = '';
+		}
+		return ret;
 	}
 };
 
