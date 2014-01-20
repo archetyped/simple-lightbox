@@ -138,29 +138,29 @@ SLB.View.extend_theme('slb_default', {
 				var spd = 'fast';
 				//Resize viewer to fit item
 				var dims_item = this.get_item_dimensions();
-				var dims_det = {'height': 0, 'width': 0};
 				//Determine details height
 				det.width(dims_item.width);
-				dims_det.height = det_data.outerHeight();
+				var dims_det = {'height': det_data.outerHeight()};
+				//Reset width
 				det.width('');
 				//Determine vertical positioning (centered)
-				var top_scr = $(document).scrollTop();
-				var pos = { 'top': top_scr + ( $(window).height() / 2 ) - ( ( dims_det.height + dims_item.height ) / 2 ) };
-				if ( pos.top < top_scr ) {
-					pos.top = top_scr;
+				var pos = { 'top_base': $(document).scrollTop() };
+				//Center vertically
+				pos.top = pos.top_base + ( $(window).height() / 2 ) - ( ( dims_det.height + dims_item.height ) / 2 );
+				if ( pos.top < pos.top_base ) {
+					pos.top = pos.top_base;
 				}
-				pos.top = pos.top || 0;
-				//Resize viewer
+				
+				//Position/Resize viewer
 				pos = l.animate(pos, spd).promise();
 				dims_item = c.animate(dims_item, spd).promise();
 				//Display elements
 				var thm = this;
 				$.when(pos, dims_item).done(function() {
-					var c_tag_cont = c.find( thm.get_tag_selector('item', 'content') );
 					//Hide loading indicator
 					loader.fadeOut(spd, function() {
 						//Display content
-						c_tag_cont.fadeIn(function() {
+						c.find( thm.get_tag_selector('item', 'content') ).fadeIn(function() {
 							//Show UI
 							c_tag.show();
 							//Show details
