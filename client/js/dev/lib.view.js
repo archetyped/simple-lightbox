@@ -3636,8 +3636,8 @@ var Theme = {
 	 * @uses Template.get_tag_selector()
 	 * @return string Template tag CSS selector
 	 */
-	get_tag_selector: function() {
-		return this.get_template().get_tag_selector();
+	get_tag_selector: function(name) {
+		return this.get_template().get_tag_selector(name);
 	},
 	
 	/* Model */
@@ -4400,10 +4400,16 @@ var Template = {
 	 * Retrieve Template tag CSS selector
 	 * @uses Template.get_tag_temp() to retrieve temporary tag instance
 	 * @uses Template_Tag.get_selector() to retrieve selector
+	 * @param string name Tag name to build selector for
 	 * @return string Template Tag CSS selector
 	 */
-	get_tag_selector: function() {
-		return this.get_tag_temp().get_selector();
+	get_tag_selector: function(name) {
+		if ( !this.util.is_string(name) ) {
+			name = '';
+		}
+		var tag = this.get_tag_temp();
+		tag.set_attribute('name', name);
+		return tag.get_selector('tag');
 	},
 	
 	/*-** DOM **-*/
@@ -4593,21 +4599,27 @@ var Template_Tag = {
 	 */
 	get_class: function(level) {
 		var cls = '';
+		//Build base
 		switch ( level ) {
 			case 'tag' :
 				//Tag name
-				cls = this.add_ns(this.get_name());
+				cls = this.get_name();
 				break;
 			case 'full' :
 				//Tag name + property
-				cls = this.add_ns([this.get_name(), this.get_prop()].join('_'));
-				break;
-			default :
-				//General
-				cls = this.get_ns(); 
+				var parts = [this.get_name(), this.get_prop()];
+				var a = [];
+				var i;
+				for ( i = 0; i < a.length; i++ ) {
+					if ( this.util.is_string(parts[i]) ) {
+						a.push(parts[i]);
+					}
+				}
+				cls = a.join('_');
 				break;
 		}
-		return cls;
+		//Format & return
+		return ( !this.util.is_string(cls) ) ? this.get_ns() : this.add_ns(cls);
 	},
 	
 	/**
