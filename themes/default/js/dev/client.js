@@ -107,7 +107,7 @@ SLB.View.extend_theme('slb_default', {
 		'unload': function(v, dfr) {
 			var l = v.get_layout(),
 				det = l.find('.slb_details'),
-				cont = l.find('.slb_content .slb_template_tag');
+				cont = l.find('.slb_content ' + this.get_tag_selector());
 			var props = {height: 0};
 			//Hide details
 			det.css(props);
