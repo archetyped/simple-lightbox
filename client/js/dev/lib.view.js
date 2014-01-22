@@ -862,9 +862,12 @@ var Component = {
 		this._hooks();
 	},
 	
+	/**
+	 * Set Component parent to View module
+	 * @uses `_super._set_parent()`
+	 */
 	_set_parent: function() {
-		this._parent = View;
-		this.util._parent = this;
+		this._super(View);
 	},
 	
 	/**
