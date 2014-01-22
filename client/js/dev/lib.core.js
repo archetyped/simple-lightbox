@@ -169,8 +169,9 @@ var Base = {
 	},
 	
 	/**
-	 * Get parent object
-	 * @return obj Parent object
+	 * Get parent instance
+	 * @uses `Base._parent` property
+	 * @return obj Parent instance
 	 */
 	get_parent: function() {
 		return this._parent;
