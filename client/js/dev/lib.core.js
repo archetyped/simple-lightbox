@@ -99,25 +99,45 @@ Class.extend = function(members) {
 	return Class;
 };
 
-/* Base */
+/**
+ * Base Class
+ */
 var Base = {
 	/* Properties */
 	
+	/**
+	 * Base object flag
+	 * @var bool
+	 */
 	base: false,
+	/**
+	 * Instance parent
+	 * @var object
+	 */
 	_parent: null,
+	/**
+	 * Class prefix
+	 * @var string
+	 */
 	prefix: 'slb',
 	
 	/* Methods */
 	
 	/**
 	 * Constructor
+	 * Sets instance parent
 	 */
 	_init: function() {
 		this._set_parent();
 	},
 	
+	/**
+	 * Set instance parent
+	 * Set utilities parent to current instance
+	 * @param obj p Parent instance
+	 */
 	_set_parent: function(p) {
-		if ( typeof p !== 'undefined' ) {
+		if ( 'undefined' !== typeof p ) {
 			this._parent = p;
 		}
 		this.util._parent = this;
