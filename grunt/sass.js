@@ -4,13 +4,13 @@ grunt.config('sass', {
 	options : {
 		outputStyle : 'compressed',
 	},
-	client : {
+	core : {
 		files : [{
 			expand : true,
-			cwd : 'client/sass/',
-			dest : 'client/css/',
-			src : ['**/*.scss'],
-			ext : '.css'
+			cwd : '<%= paths.sass.base_src %>/',
+			dest : '<%= paths.sass.base_dest %>/',
+			src : ['<%= paths.sass.target %>', '<%= paths.sass.exclude %>'],
+			ext : '<%= paths.sass.ext %>'
 		}]
 	},
 	themes : {
@@ -20,10 +20,10 @@ grunt.config('sass', {
 		files : [{
 			expand : true,
 			cwd : 'themes/',
-			src : ['*/**/*.scss'],
-			dest : 'css/',
-			srcd : 'sass/',
-			ext : '.css',
+			src : ['*/**/*.scss', '<%= paths.sass.exclude %>'],
+			dest : '<%= paths.sass.dest %>/',
+			srcd : '<%= paths.sass.src %>/',
+			ext : '<%= paths.sass.ext %>',
 			rename : function(dest, matchedSrcPath, options) {
 				var path = [options.cwd, matchedSrcPath.replace(options.srcd, dest)].join('');
 				return path;

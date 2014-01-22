@@ -1,53 +1,47 @@
-if ( typeof(jQuery) !== 'undefined' ) {
-(function($) {
+if ( typeof jQuery !== 'undefined' && typeof SLB !== 'undefined' && SLB.View && SLB.View.extend_theme ) {(function($) {
 $(document).ready(function() {
-//Validation
-if ( typeof SLB === 'undefined' || typeof SLB.View === 'undefined' || typeof SLB.View.extend_theme !== 'function' ) {
-	return false;
-}
-//Extend Theme
 SLB.View.extend_theme('slb_default', {
 	/**
-	 * Define transition handlers
+	 * Transition event handlers
 	 */
 	'transition': {
 		/**
 		 * Open event
 		 * @param View.Viewer v Viewer instance
-		 * @param jQuery.Deferred dfr Deferred instance to be resolved when animation is complete
-		 * @return jQuery.Promise Resolved when transition is complete
+		 * @param deferred dfr Resolved when transition is complete
+		 * @return promise Resolved when transition is complete
 		 */
 		'open': function(v, dfr) {
-			var d = v.dom_get(),
-				l = v.get_layout().hide(),
+			//Reset layout and overlay state on open
+			var l = v.get_layout().hide(),
 				o = v.get_overlay().hide();
-			var pos = {'top' : ''};
-			var final = function() {
-				//Show overlay
-				o.fadeIn(function() {
-					l.css(pos);
-					dfr.resolve();
-				});
-			};
+			
 			//Clean UI
-			d.find('.slb_content').css({width: '', height: ''}).find('.slb_template_tag').hide();
+			var thm = this;
+			var d = v.dom_get();
+			d.find('.slb_content').css({width: '', height: ''}).find(this.get_tag_selector()).hide();
 			d.find('.slb_details').height(0);
 			//Show viewer DOM
 			d.show({'always': function() {
-				if ( document.documentElement.clientWidth > 480 ) {
-					/* Standard */
+				var pos = {'top_base': $(document).scrollTop()};
+				if ( document.documentElement.clientWidth > thm.get_breakpoint('small') ) {
+					/* Standard screen */
 					//Center vertically
-					var top_scr = $(document).scrollTop();
-					pos.top = ( top_scr + $(window).height() / 2 ) - ( l.height() / 2 );
-					if ( pos.top < top_scr ) {
-						pos.top = top_scr;
+					pos.top = ( pos.top_base + $(window).height() / 2 ) - ( l.height() / 2 );
+					if ( pos.top < pos.top_base ) {
+						pos.top = pos.top_base;
 					}
 				} else {
-					//Position at top
 					/* Small screen */
-					pos.top = $(document).scrollTop();
+					//Position at top
+					pos.top = pos.top_base;
 				}
-				final();
+				//Show overlay
+				o.fadeIn({'always': function() {
+					//Position lightbox
+					l.css(pos);
+					dfr.resolve();
+				}});
 			}});
 			return dfr.promise();
 		},
@@ -58,26 +52,31 @@ SLB.View.extend_theme('slb_default', {
 		 * @return jQuery.Promise Resolved when transition is complete
 		 */
 		'close': function(v, dfr) {
+			//Viewer elements
 			var l = v.get_layout(),
-				c = l.find('.slb_content'),
-				spd = 'fast';
+				c = l.find('.slb_content');
+			//Reset procedure
 			var reset = function() {
 				//Reset state
 				c.width('').height('');
 				l.css('opacity', '');
 				dfr.resolve();
 			};
-			if ( v.animation_enabled() && document.documentElement.clientWidth > 480 ) { /* Standard */
-				var lanim = {opacity: 0, top: $(document).scrollTop() + ( $(window).height() / 2 )},
-					canim = {width: 0, height: 0};
+			if ( v.animation_enabled() && document.documentElement.clientWidth > this.get_breakpoint('small') ) { 
+				/* Standard */
+				var anims = {
+					'layout': { opacity: 0, top: $(document).scrollTop() + ( $(window).height() / 2 ) },
+					'content': { width: 0, height: 0 },
+					'speed': 'fast'
+				};
 				//Shrink & fade out viewer
-				var pos = l.animate(lanim, spd).promise();
-				var size = ( $.isEmptyObject(canim) ) ? true : c.animate(canim, spd).promise();
+				var pos = l.animate(anims.layout, anims.speed).promise();
+				var size = c.animate(anims.content, anims.speed).promise();
 				$.when(pos, size).done(function() {
 					//Fade out overlay
-					v.get_overlay().fadeOut(function() {
+					v.get_overlay().fadeOut({'always': function() {
 						reset();
-					});
+					}});
 				});
 			} else {
 				l.css('opacity', 0);
@@ -88,17 +87,15 @@ SLB.View.extend_theme('slb_default', {
 		/**
 		 * Item loading event
 		 * @param View.Viewer v Viewer instance
-		 * @param jQuery.Deferred dfr Deferred instance to be resolved when animation is complete
-		 * @return jQuery.Promise Resolved when transition is complete
+		 * @param deferred dfr Resolved when animation is complete
+		 * @return promise Resolved when transition is complete
 		 */
-		'load': function(v, dfr) {
+		'load': function(v) {
 			v.get_layout().find('.slb_loading').show();
-			if ( document.documentElement.clientWidth > 480 ) {
+			if ( document.documentElement.clientWidth > this.get_breakpoint('small') ) {
 				return v.get_layout().fadeIn().promise();
 			} else {
-				v.get_layout().show();
-				dfr.resolve();
-				return dfr;
+				return v.get_layout().show().promise();
 			}
 		},
 		/**
@@ -110,17 +107,13 @@ SLB.View.extend_theme('slb_default', {
 		'unload': function(v, dfr) {
 			var l = v.get_layout(),
 				det = l.find('.slb_details'),
-				cont = l.find('.slb_content .slb_template_tag');
+				cont = l.find('.slb_content ' + this.get_tag_selector());
 			var props = {height: 0};
-			if ( document.documentElement.clientWidth > 480 ) {
-				//Hide details
-				det.css(props);
-				//Hide content
-				cont.hide();
-			} else {
-				det.css(props);
-				cont.hide();
-			}
+			//Hide details
+			det.css(props);
+			//Hide content
+			cont.hide();
+			//Finish
 			$.when(det.promise(), cont.promise()).done(function() {
 				dfr.resolve();
 			});
@@ -139,34 +132,35 @@ SLB.View.extend_theme('slb_default', {
 				det = l.find('.slb_details'),
 				det_data = det.find('.slb_data'),
 				c = l.find('.slb_content'),
-				c_tag = c.find('.slb_template_tag');
+				c_tag = c.find( this.get_tag_selector() );
 			//Transition
-			if ( document.documentElement.clientWidth > 480 ) {
+			if ( document.documentElement.clientWidth > this.get_breakpoint('small') ) {
 				var spd = 'fast';
 				//Resize viewer to fit item
 				var dims_item = this.get_item_dimensions();
-				var dims_det = {'height': 0, 'width': 0};
 				//Determine details height
 				det.width(dims_item.width);
-				dims_det.height = det_data.outerHeight();
+				var dims_det = {'height': det_data.outerHeight()};
+				//Reset width
 				det.width('');
 				//Determine vertical positioning (centered)
-				var top_scr = $(document).scrollTop();
-				var pos = { 'top': top_scr + ( $(window).height() / 2 ) - ( ( dims_det.height + dims_item.height ) / 2 ) };
-				if ( pos.top < top_scr ) {
-					pos.top = top_scr;
+				var pos = { 'top_base': $(document).scrollTop() };
+				//Center vertically
+				pos.top = pos.top_base + ( $(window).height() / 2 ) - ( ( dims_det.height + dims_item.height ) / 2 );
+				if ( pos.top < pos.top_base ) {
+					pos.top = pos.top_base;
 				}
-				pos.top = pos.top || 0;
-				//Resize viewer
+				
+				//Position/Resize viewer
 				pos = l.animate(pos, spd).promise();
 				dims_item = c.animate(dims_item, spd).promise();
 				//Display elements
+				var thm = this;
 				$.when(pos, dims_item).done(function() {
-					var c_tag_cont = c.find('.slb_template_tag_item_content');
 					//Hide loading indicator
 					loader.fadeOut(spd, function() {
 						//Display content
-						c_tag_cont.fadeIn(function() {
+						c.find( thm.get_tag_selector('item', 'content') ).fadeIn(function() {
 							//Show UI
 							c_tag.show();
 							//Show details
