@@ -144,27 +144,27 @@ var Base = {
 	},
 	
 	/**
-	 * Attach member to object
+	 * Attach new member to instance
+	 * Member can be property (value) or method
 	 * @param string name Member name
-	 * @param mixed Member data
-	 * > obj: Member inherits from base object
-	 * > other: Simple data object
+	 * @param object data Member data
+	 * @param bool simple (optional) Save new member as data object or new class instance (Default: new instance)
 	 */
 	attach: function(member, data, simple) {
-		simple = ( typeof simple === undefined ) ? false : !!simple;
-		if ( $.type(member) === 'string' && $.isPlainObject(data) ) {
-			//Add initial member
-			var obj = {};
-			if ( simple ) {
-				//Simple object
-				obj[member] = $.extend({}, data);
-				$.extend(this, obj);
-			} else {
-				//Add new instance object
+		//Validate
+		simple = ( typeof simple === 'undefined' ) ? false : !!simple;
+		//Add member to instance
+		if ( 'string' === $.type(member) ) {
+			//Prepare member value
+			if ( $.isPlainObject(data) && !simple ) {
+				//Set parent reference for attached instance
 				data['_parent'] = this;
-				var C = this.Class.extend(data);
-				this[member] = new C();
+				//Define new class
+				data = this.Class.extend(data);
 			}
+			//Save member to current instance
+			//Initialize new instance if data is a class
+			this[member] = ( 'function' === $.type(data) ) ? new data() : data; 
 		}
 	},
 	
