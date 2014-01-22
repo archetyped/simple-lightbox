@@ -3,7 +3,7 @@
  * @package SLB
  * @author Archetyped
  */
-if ( typeof(jQuery) !== 'undefined' ){(function($) {
+if ( typeof jQuery !== 'undefined' ){(function($) {
 
 /**
  * Extendible class
@@ -13,6 +13,11 @@ if ( typeof(jQuery) !== 'undefined' ){(function($) {
 var c_init = false;
 var Class = function() {};
 
+/**
+ * Create class that extends another class
+ * @param object members Child class' properties
+ * @return function New class
+ */
 Class.extend = function(members) {
 	var _super = this.prototype;
 	
@@ -30,7 +35,12 @@ Class.extend = function(members) {
 		}
 	}
 	
-	//Copy members
+	/**
+	 * Create class method with access to super class method
+	 * @param string nm Method name
+	 * @param function fn Class method
+	 * @return function Class method with access to super class method
+	 */
 	var make_handler = function(nm, fn) {
 		return function() {
 			//Cache super variable
@@ -45,28 +55,31 @@ Class.extend = function(members) {
 			return ret;
 		};
 	};
+	//Copy properties to Class
 	for ( name in members ) {
-		//Evaluate function members (if overwriting super class method)
+		//Add access to super class method to methods
 		if ( 'function' === typeof members[name] && 'function' === typeof _super[name] ) {
 			proto[name] = make_handler(name, members[name]);
 		} else {
-			val = members[name];
-			if ( $.isPlainObject(members[name]) ) {
-				val = $.extend({}, members[name]);
-			}
-			proto[name] = val;
+			//Transfer properties
+			//Objects are copied, not referenced
+			proto[name] = ( $.isPlainObject(members[name]) ) ? $.extend({}, members[name]) : members[name];
 		}
 	}
 	
-	//Constructor
+	/**
+	 * Class constructor
+	 * Supports pre-construction initilization (`Class._init()`)
+	 * Supports passing constructor for new classes (`Class._c()`)
+	 */
 	function Class() {
 		if ( !c_init ) {
-			//Private init
-			if ( this._init ) {
+			//Private initialization
+			if ( 'function' === typeof this._init ) {
 				this._init.apply(this, arguments);
 			}
 			//Main Constructor
-			if ( this._c ) {
+			if ( 'function' === typeof this._c ) {
 				this._c.apply(this, arguments);
 			}
 		}
@@ -79,6 +92,7 @@ Class.extend = function(members) {
 	//Set constructor
 	Class.prototype.constructor = Class;
 	
+	//Set extender
 	Class.extend = this.extend;
 	
 	//Return function
