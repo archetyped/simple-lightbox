@@ -216,15 +216,6 @@ var Base = {
 		_base: null,
 		_parent: null,
 		
-		/* Constants */
-		
-		string:	'string',
-		bool:	'boolean',
-		array:	'array',
-		obj:	'object',
-		func:	'function',
-		num:	'number',
-		
 		/* Methods */
 		
 		get_base: function() {
@@ -383,10 +374,10 @@ var Base = {
 			var ret = false;
 			if ( this.is_set(value) && null !== value && this.is_set(type) ) {
 				switch ( $.type(type) ) {
-					case this.func:
+					case 'function':
 						ret = ( value instanceof type ) ? true : false;
 						break;
-					case this.string:
+					case 'string':
 						ret = ( $.type(value) === type ) ? true : false;
 						break;
 					default:
@@ -396,30 +387,30 @@ var Base = {
 			}
 			
 			//Validate empty values
-			if ( ret && ( $.type(nonempty) !== this.bool || nonempty ) ) {
+			if ( ret && ( $.type(nonempty) !== 'boolean' || nonempty ) ) {
 				ret = !this.is_empty(value);
 			}
 			return ret;
 		},
 		
 		is_string: function(value, nonempty) {
-			return this.is_type(value, this.string, nonempty);
+			return this.is_type(value, 'string', nonempty);
 		},
 		
 		is_array: function(value, nonempty) {
-			return ( this.is_type(value, this.array, nonempty) );
+			return ( this.is_type(value, 'array', nonempty) );
 		},
 		
 		is_bool: function(value) {
-			return this.is_type(value, this.bool, false);
+			return this.is_type(value, 'boolean', false);
 		},
 		
 		is_obj: function(value, nonempty) {
-			return this.is_type(value, this.obj, nonempty);
+			return this.is_type(value, 'object', nonempty);
 		},
 		
 		is_func: function(value) {
-			return this.is_type(value, this.func, false);
+			return this.is_type(value, 'function', false);
 		},
 		
 		/**
@@ -444,7 +435,7 @@ var Base = {
 		},
 		
 		is_num: function(value, nonempty) {
-			return ( this.is_type(value, this.num, nonempty) && !isNaN(value) );
+			return ( this.is_type(value, 'number', nonempty) && !isNaN(value) );
 		},
 		
 		is_int: function(value, nonempty) {
@@ -474,17 +465,17 @@ var Base = {
 				//Type-based check
 				if ( this.is_type(value, type, false) ) {
 					switch ( type ) {
-						case this.string:
-						case this.array:
+						case 'string':
+						case 'array':
 							if ( value.length === 0 ) {
 								ret = true;
 							}
 							break;
-						case this.obj:
+						case 'object':
 							//Only evaluate literal objects
 							ret = ( $.isPlainObject(value) && !$.map(value, function(v, key) { return key; }).length );
 							break;
-						case this.num:
+						case 'number':
 							ret = ( value === 0 );
 							break;
 					}
