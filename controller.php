@@ -152,7 +152,7 @@ class SLB_Lightbox extends SLB_Base {
 	 * Init Hooks
 	 */
 	public function _hooks_init() {
-		if ( !is_admin() && $this->is_enabled() ) {
+		if ( $this->is_enabled() ) {
 			$priority = $this->util->priority('low');
 			
 			//Init lightbox
@@ -305,7 +305,7 @@ class SLB_Lightbox extends SLB_Base {
 	function is_enabled() {
 		static $ret = null;
 		if ( is_null($ret) ) {
-			$ret = ( $this->options->get_bool('enabled') && !is_feed() ) ? true : false;
+			$ret = ( !is_admin() && $this->options->get_bool('enabled') && !is_feed() ) ? true : false;
 			if ( $ret ) {
 				$opt = '';
 				//Determine option to check
@@ -420,7 +420,7 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	function process_links($content, $group = null) {
 		//Validate
-		if ( !is_string($content) || empty($content) ) {
+		if ( !is_string($content) || empty($content) || ( $this->widget_processing && !$this->options->get_bool('enabled_widget') ) ) {
 			return $content;
 		}
 		//Extract links
@@ -1042,6 +1042,7 @@ class SLB_Lightbox extends SLB_Base {
 	
 	/**
 	 * Reroute widget display handlers to internal method
+	 * 
 	 * @param array $sidebar_widgets List of sidebars & their widgets
 	 * @uses WP Hook `sidebars_widgets` to intercept widget list
 	 * @global $wp_registered_widgets to reroute display callback
@@ -1050,8 +1051,9 @@ class SLB_Lightbox extends SLB_Base {
 	function sidebars_widgets($sidebars_widgets) {
 		global $wp_registered_widgets;
 		static $widgets_processed = false;
-		if ( is_admin() || empty($wp_registered_widgets) || $widgets_processed || !is_object($this->options) || !$this->options->get_bool('enabled_widget') )
-			return $sidebars_widgets; 
+		if ( !$this->is_enabled() || $widgets_processed || empty($wp_registered_widgets) ) {
+			return $sidebars_widgets;
+		}
 		$widgets_processed = true;
 		//Fetch active widgets from all sidebars
 		foreach ( $sidebars_widgets as $sb => $ws ) {
