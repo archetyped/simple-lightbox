@@ -947,6 +947,58 @@ class SLB_Lightbox extends SLB_Base {
 		return ( empty($this->media_items_raw) ) ? false : true; 
 	}
 	
+	/*-** Exclusion **-*/
+	
+	/**
+	 * Get exclusion tags (open/close)
+	 * Example: open => [slb_exclude], close => [/slb_exclude]
+	 * 
+	 * @return object Exclusion tags
+	 */
+	private function get_exclude_tags() {
+		static $tags = null;
+		if ( null == $tags ) {
+			$base = $this->add_prefix('exclude');
+			$tags = (object) array (
+				'open'	=> $this->util->add_wrapper($base),
+				'close'	=> $this->util->add_wrapper($base, '[/', ']')
+			);
+		}
+		return $tags;
+	}
+	
+	/**
+	 * Get exclusion tag ("[slb_exclude]")
+	 * @uses `get_exclude_tags()` to retrieve tag
+	 * 
+	 * @param string $type (optional) Tag to retrieve (open or close)
+	 * @return string Exclusion tag
+	 */
+	private function get_exclude_tag( $type = "open" ) {
+		//Validate
+		$tags = $this->get_exclude_tags();
+		if ( !isset($tags->{$type}) ) {
+			$type = "open";
+		}
+		return $tags->{$type};
+	}
+	
+	/**
+	 * Wrap content in exclusion tags
+	 * @uses `get_exclude_tag()` to wrap content with exclusion tag
+	 * @param string $content (optional) Content to exclude
+	 * @return string Content wrapped in exclusion tags
+	 */
+	private function exclude_wrap($content = "") {
+		//Validate
+		if ( !is_string($content) ) {
+			$content = "";
+		}
+		//Wrap
+		$tags = $this->get_exclude_tags();
+		return $tags->open . $content . $tags->close;
+	}
+	
 	/*-** Grouping **-*/
 	
 	/**
