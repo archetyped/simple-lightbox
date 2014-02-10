@@ -367,7 +367,45 @@ class SLB_Lightbox extends SLB_Base {
 	 * @param $content
 	 * @return string Post content
 	 */
-	function activate_links($content) {
+	public function activate_links($content) {
+		$ex = (object) array (
+			'tags'		=> $this->get_exclude_tags(),
+			'cache'		=> array(),
+			'start'		=> false,
+			'end'		=> false,
+			'ph'		=> $this->util->add_wrapper( $this->add_prefix('exclude_temp'), '{{', '}}' ),
+		);
+		
+		//Handle excluded content
+		$ex->start = strpos($content, $ex->tags->open);
+		if ( false !== $ex->start ) {
+			$ex->offset_start = strlen($ex->tags->open);
+			$ex->offset = $ex->start + $ex->offset_start;
+			$ex->end = strpos($content, $ex->tags->close, $ex->offset);
+			if ( false !== $ex->end ) {
+				$ex->offset_ph = strlen($ex->ph);
+				$ex->offset_end = strlen($ex->tags->close);
+				$ex->tag_values = array_values( (array) $ex->tags);
+				//Strip excluded content
+				while ( false !== $ex->start && false !== $ex->end ) {
+					//Extract content
+					$ex->length = $ex->end + $ex->offset_end - $ex->start;
+					$ex->temp = substr($content, $ex->start, $ex->length);
+					//Cache content (strip tags)
+					$ex->cache[] = str_replace( $ex->tag_values, '', $ex->temp );
+					//Replace with placeholder
+					$content = substr_replace($content, $ex->ph, $ex->start, $ex->length);
+					//Find next tag
+					$ex->offset = $ex->start + $ex->offset_ph;
+					$ex->start = strpos($content, $ex->tags->open, $ex->offset);
+					if ( false !== $ex->start ) {
+						$ex->offset = $ex->start + $ex->offset_start;
+						$ex->end = strpos($content, $ex->tags->close, $ex->offset);
+					}
+				}
+			}
+		}
+
 		$groups = array();
 		$w = $this->group_get_wrapper();
 		$g_ph_f = '[%s]';
@@ -406,6 +444,16 @@ class SLB_Lightbox extends SLB_Base {
 			}
 			//Replace placeholder with processed content
 			$content = str_replace($g_ph, $w->open . $this->process_links($g_content, 'gallery_' . $group) . $w->close, $content);
+		}
+		
+		//Restore excluded content
+		if ( !empty($ex->cache) ) {
+			$ex->parts = explode($ex->ph, $content, count($ex->cache) + 1);
+			$ex->cache[] = '';
+			$content = '';
+			foreach ( $ex->parts as $idx => $part ) {
+				$content .= $part . $ex->cache[$idx];
+			}
 		}
 		return $content;
 	}
@@ -585,6 +633,11 @@ class SLB_Lightbox extends SLB_Base {
 			$link_new = '<a ' . $this->util->build_attribute_string($attrs) . '>';
 			$content = str_replace($link, $link_new, $content);
 		}
+		//Handle widget content
+		if ( $this->widget_processing ) {
+			$content = $this->exclude_wrap($content);
+		}
+		
 		return $content;
 	}
 
@@ -947,6 +1000,58 @@ class SLB_Lightbox extends SLB_Base {
 		return ( empty($this->media_items_raw) ) ? false : true; 
 	}
 	
+	/*-** Exclusion **-*/
+	
+	/**
+	 * Get exclusion tags (open/close)
+	 * Example: open => [slb_exclude], close => [/slb_exclude]
+	 * 
+	 * @return object Exclusion tags
+	 */
+	private function get_exclude_tags() {
+		static $tags = null;
+		if ( null == $tags ) {
+			$base = $this->add_prefix('exclude');
+			$tags = (object) array (
+				'open'	=> $this->util->add_wrapper($base),
+				'close'	=> $this->util->add_wrapper($base, '[/', ']')
+			);
+		}
+		return $tags;
+	}
+	
+	/**
+	 * Get exclusion tag ("[slb_exclude]")
+	 * @uses `get_exclude_tags()` to retrieve tag
+	 * 
+	 * @param string $type (optional) Tag to retrieve (open or close)
+	 * @return string Exclusion tag
+	 */
+	private function get_exclude_tag( $type = "open" ) {
+		//Validate
+		$tags = $this->get_exclude_tags();
+		if ( !isset($tags->{$type}) ) {
+			$type = "open";
+		}
+		return $tags->{$type};
+	}
+	
+	/**
+	 * Wrap content in exclusion tags
+	 * @uses `get_exclude_tag()` to wrap content with exclusion tag
+	 * @param string $content (optional) Content to exclude
+	 * @return string Content wrapped in exclusion tags
+	 */
+	private function exclude_wrap($content = "") {
+		//Validate
+		if ( !is_string($content) ) {
+			$content = "";
+		}
+		//Wrap
+		$tags = $this->get_exclude_tags();
+		return $tags->open . $content . $tags->close;
+	}
+	
 	/*-** Grouping **-*/
 	
 	/**
@@ -1102,8 +1207,8 @@ class SLB_Lightbox extends SLB_Base {
 		//Call original callback
 		call_user_func_array($cb, $params);
 		//Flush output buffer
-		echo $this->widget_process_links(ob_get_clean(), $wid);
 		$this->widget_processing = false;
+		echo $this->activate_links(ob_get_clean(), $wid);
 	}
 	
 	/**
