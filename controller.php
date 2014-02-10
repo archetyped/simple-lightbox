@@ -79,7 +79,8 @@ class SLB_Lightbox extends SLB_Base {
 
 	/**
 	 * Used to track if widget is currently being processed or not
-	 * @var bool
+	 * Set to Widget ID currently being processed
+	 * @var bool|string
 	 */
 	var $widget_processing = false;
 
@@ -1201,18 +1202,44 @@ class SLB_Lightbox extends SLB_Base {
 		if ( !isset($w[$this->widget_callback_orig]) || !($cb = $w[$this->widget_callback_orig]) || !is_callable($cb) )
 			return false;
 		$params = func_get_args();
-		$this->widget_processing = true;
+		$this->widget_processing = $wid;
+		//Set Group ID filter
+		$cb = $this->m('widget_group_id');
+		$hook = 'get_group_id';
+		$this->util->add_filter($hook, $cb);
 		//Start output buffer
 		ob_start();
 		//Call original callback
 		call_user_func_array($cb, $params);
+		//Unset Group ID filter
+		$this->util->remove_filter($hook, $cb);
 		//Flush output buffer
 		$this->widget_processing = false;
-		echo $this->activate_links(ob_get_clean(), $wid);
+		echo $this->activate_links(ob_get_clean());
+	}
+	
+	/**
+	 * Generate group ID for widget
+	 * Should only be called when widget is being processed
+	 * @param array $group_segments Strings used to build group ID
+	 * @return array Group segments with Current Widget ID added
+	 */
+	public function widget_group_id($group_segments) {
+		//Only process when widget is being processed
+		if ( !!$this->widget_processing ) {
+			//Clear group segments
+			$group_segments = array();
+			//Add group ID
+			if ( $this->options->get_bool('group_widget') ) {
+				$group_segments[] = $this->widget_processing;
+			}
+		}
+		return $group_segments;
 	}
 	
 	/**
 	 * Process links in widget content
+	 * @deprecated
 	 * @param string $content Widget content
 	 * @return string Processed widget content
 	 * @uses process_links() to process links
