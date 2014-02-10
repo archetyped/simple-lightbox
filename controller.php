@@ -79,7 +79,8 @@ class SLB_Lightbox extends SLB_Base {
 
 	/**
 	 * Used to track if widget is currently being processed or not
-	 * @var bool
+	 * Set to Widget ID currently being processed
+	 * @var bool|string
 	 */
 	var $widget_processing = false;
 
@@ -165,6 +166,11 @@ class SLB_Lightbox extends SLB_Base {
 			add_filter('get_post_galleries', $this->m('activate_galleries'), $priority);
 			$this->util->add_filter('validate_uri_regex', $this->m('validate_uri_regex_default'), 1);
 			
+			//Grouping
+			if ( $this->options->get_bool('group_post') ) {
+				$this->util->add_filter('get_group_id', $this->m('post_group_id'), 1);	
+			}
+			
 			//Gallery wrapping
 			add_filter('the_content', $this->m('gallery_wrap'), 1);
 			add_filter('the_content', $this->m('gallery_unwrap'), $priority + 1);
@@ -172,6 +178,19 @@ class SLB_Lightbox extends SLB_Base {
 			//Widgets
 			add_filter('sidebars_widgets', $this->m('sidebars_widgets'));
 		}
+	}
+	
+	/**
+	 * Add post ID to link group ID
+	 * @uses `SLB::get_group_id` filter
+	 * @param array $group_segments Group ID segments
+	 * @return array Modified group ID segments
+	 */
+	public function post_group_id($group_segments) {
+		$post = get_post();
+		//Prepend post ID to group ID
+		array_unshift($group_segments, $post->ID);
+		return $group_segments;
 	}
 	
 	/**
@@ -468,7 +487,7 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	function process_links($content, $group = null) {
 		//Validate
-		if ( !is_string($content) || empty($content) || ( $this->widget_processing && !$this->options->get_bool('enabled_widget') ) ) {
+		if ( !is_string($content) || empty($content) || ( !!$this->widget_processing && !$this->options->get_bool('enabled_widget') ) ) {
 			return $content;
 		}
 		//Extract links
@@ -593,23 +612,24 @@ class SLB_Lightbox extends SLB_Base {
 				continue;
 			}
 			
-			//Set group (if necessary)
+			//Set group (if enabled)
 			if ( $g_props->enabled ) {
+				$group = array();
 				//Get preset group attribute
-				$g = ( $this->has_attribute($attrs, $g_props->attr) ) ? $this->get_attribute($attrs, $g_props->attr) : ''; 
+				$g = ( $this->has_attribute($attrs, $g_props->attr) ) ? $this->get_attribute($attrs, $g_props->attr) : '';
 				if ( is_string($g) && ($g = trim($g)) && !empty($g) ) {
-					$group = $g;
-				} else {
-					$group = $g_props->base;
+					$group[] = $g;
+				} elseif ( !empty($g_props->base) ) {
+					$group[] = $g_props->base;
 				}
-				//Group links by post?
-				if ( !$this->widget_processing && $this->options->get_bool('group_post') ) {
-					global $post;
-					$group = ( !empty($group) ) ? implode('_', array($post->ID, $group)) : $post->ID;
-				}
+				
+				$group = $this->util->apply_filters('get_group_id', $group);
+				
 				//Default group
-				if ( empty($group) ) {
+				if ( empty($group) || !is_array($group) ) {
 					$group = $this->get_prefix();
+				} else {
+					$group = implode('_', $group);
 				}
 				
 				//Set group attribute
@@ -634,7 +654,7 @@ class SLB_Lightbox extends SLB_Base {
 			$content = str_replace($link, $link_new, $content);
 		}
 		//Handle widget content
-		if ( $this->widget_processing ) {
+		if ( !!$this->widget_processing && 'the_content' == current_filter() ) {
 			$content = $this->exclude_wrap($content);
 		}
 		
@@ -1201,18 +1221,52 @@ class SLB_Lightbox extends SLB_Base {
 		if ( !isset($w[$this->widget_callback_orig]) || !($cb = $w[$this->widget_callback_orig]) || !is_callable($cb) )
 			return false;
 		$params = func_get_args();
-		$this->widget_processing = true;
+		$this->widget_processing = $wid;
+		//Set Group ID filter
+		$filter = (object) array (
+			'hook'	=> 'get_group_id',
+			'cb'	=> $this->m('widget_group_id'),
+		);
+		$this->util->add_filter($filter->hook, $filter->cb);
 		//Start output buffer
 		ob_start();
 		//Call original callback
 		call_user_func_array($cb, $params);
+		//Unset Group ID filter
 		//Flush output buffer
+		$out = ob_get_clean();
+		if ( $this->options->get_bool('enabled_widget') ) {
+			$out = $this->activate_links($out);
+		}
+		$this->util->remove_filter($filter->hook, $filter->cb);
+		//Stop processing widget
 		$this->widget_processing = false;
-		echo $this->activate_links(ob_get_clean(), $wid);
+		//Output widget
+		echo $out;
+	}
+	
+	/**
+	 * Generate group ID for widget
+	 * Should only be called when widget is being processed
+	 * @param array $group_segments Strings used to build group ID
+	 * @return array Group segments with Current Widget ID added
+	 */
+	public function widget_group_id($group_segments) {
+		//Only process when widget is being processed
+		if ( !!$this->widget_processing ) {
+			//Clear group segments
+			$group_segments = array();
+			//Add group ID
+			if ( $this->options->get_bool('group_widget') ) {
+				$group_segments[] = $this->widget_processing;
+			}
+		}
+		return $group_segments;
 	}
 	
 	/**
 	 * Process links in widget content
+	 * @deprecated
 	 * @param string $content Widget content
 	 * @return string Processed widget content
 	 * @uses process_links() to process links
