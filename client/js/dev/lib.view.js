@@ -1938,10 +1938,11 @@ var Viewer = {
 		//Validate theme
 		var vt = 'theme_valid';
 		var valid = true;
-		if ( !this.has_attribute(vt)) {
-			valid = this.set_attribute(vt, ( this.get_theme() && this.get_theme().get_template().get_layout(false) ) );
-		} else {
+		if ( this.has_attribute(vt)) {
 			valid = this.get_attribute(vt, true);
+		} else {
+			valid = ( this.get_theme() && this.get_theme().get_template().get_layout(false) !== "" ) ? true : false;
+			this.set_attribute(vt, valid);
 		}
 		
 		if ( !valid ) {
@@ -2284,7 +2285,7 @@ var Viewer = {
 		this.slideshow_stop();
 		this.keys_disable();
 		//Clear for next item
-		this.get_status('item_working', true).resolve();
+		this.unlock();
 	},
 	
 	/* Content */

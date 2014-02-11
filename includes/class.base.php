@@ -83,7 +83,7 @@ class SLB_Base {
 	 * 
 	 * Array is processed and converted to an object on init
 	 */
-	var $client_files = array(
+	private $client_files = array (
 		'scripts'	=> array(),
 		'styles'	=> array()
 	);
@@ -243,19 +243,27 @@ class SLB_Base {
 	/**
 	 * Initialize client files
 	 */
-	protected function _client_files() {
+	protected function _client_files($files = null) {
+		//Validation
+		if ( !is_array($files) || empty($files) ) {
+			return false;
+		} 
 		foreach ( $this->client_files as $key => $val ) {
-			if ( empty($val) && isset($this->{$key}) )
-				$this->client_files[$key] =& $this->{$key};
-			$g =& $this->client_files[$key];
-			if ( is_array($g) && !empty($g) ) {
-				$g = $this->util->parse_client_files($g, $key);
+			if ( isset($files[$key]) && is_array($files[$key]) || !empty($files[$key]) ) {
+				$this->client_files[$key] = $this->util->parse_client_files($files[$key], $key);
 			}
 			//Remove empty file groups
-			if ( empty($g) )
+			if ( empty($this->client_files[$key]) ) {
 				unset($this->client_files[$key]);
+			}
 		}
-
+		
+		
+		//Stop if no files are set for registration
+		if ( empty($this->client_files) ) {
+			return false;
+		}
+		
 		//Register
 		add_action('init', $this->m('register_client_files'));
 		
@@ -263,7 +271,7 @@ class SLB_Base {
 		$hk_prfx = ( ( is_admin() ) ? 'admin' : 'wp' );
 		$hk_enqueue = $hk_prfx . '_enqueue_scripts' ;
 		$hk_enqueue_ft = $hk_prfx . '_footer';
-		add_action($hk_enqueue, $this->m('enqueue_client_files'));
+		add_action($hk_enqueue, $this->m('enqueue_client_files'), 10, 0);
 		add_action($hk_enqueue_ft, $this->m('enqueue_client_files_footer'), 1);
 	}
 	
@@ -306,19 +314,27 @@ class SLB_Base {
 	 * @return void
 	 */
 	function enqueue_client_files($footer = false) {
+		//Validate
+		if ( !is_bool($footer) ) {
+			$footer = false;
+		}
 		//Enqueue files
 		foreach ( $this->client_files as $type => $files ) {
 			$func = $this->get_client_files_handler($type, 'enqueue');
 			if ( !$func ) {
 				continue;
 			}
-			foreach ( $files as $f ) {
-				//Skip shadow files
-				if ( !$f->enqueue ) {
+			foreach ( $files as $fkey => $f ) {
+				//Skip previously-enqueued files and shadow files
+				if ( $f->enqueued || !$f->enqueue ) {
 					continue;
 				}
 				//Enqueue files only for current location (header/footer)
-				if ( isset($f->in_footer) && $f->in_footer != $footer ) {
+				if ( isset($f->in_footer) ) {
+					if ( $f->in_footer != $footer ) {
+						continue;
+					}
+				} elseif ( $footer ) {
 					continue;
 				}
 				$load = true;
@@ -346,9 +362,10 @@ class SLB_Base {
 						}
 					}
 				}
-				
 				//Load valid file
 				if ( $load ) {
+					//Mark file as enqueued
+					$this->client_files[$type]->{$fkey}->enqueued = true;
 					$func($f->id);
 				}
 			}
