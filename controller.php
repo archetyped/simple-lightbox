@@ -1220,28 +1220,33 @@ class SLB_Lightbox extends SLB_Base {
 		if ( !isset($w[$this->widget_callback_orig]) || !($cb = $w[$this->widget_callback_orig]) || !is_callable($cb) )
 			return false;
 		$params = func_get_args();
+		//Start processing widget output
 		$this->widget_processing = $wid;
-		//Set Group ID filter
-		$filter = (object) array (
-			'hook'	=> 'get_group_id',
-			'cb'	=> $this->m('widget_group_id'),
-		);
-		$this->util->add_filter($filter->hook, $filter->cb);
-		//Start output buffer
-		ob_start();
-		//Call original callback
-		call_user_func_array($cb, $params);
-		//Unset Group ID filter
-		//Flush output buffer
-		$out = ob_get_clean();
+		// Buffer output for further processing if enabled
 		if ( $this->options->get_bool('enabled_widget') ) {
-			$out = $this->activate_links($out);
+			//Set Group ID filter
+			$filter = (object) array (
+				'hook'	=> 'get_group_id',
+				'cb'	=> $this->m('widget_group_id'),
+			);
+			$this->util->add_filter($filter->hook, $filter->cb);
+			//Start output buffer
+			ob_start();
+			//Call original callback
+			call_user_func_array($cb, $params);
+			//Flush output buffer
+			$out = $this->activate_links(ob_get_clean());
+			//Unset Group ID filter
+			$this->util->remove_filter($filter->hook, $filter->cb);
+			//Output widget
+			echo $out;
 		}
-		$this->util->remove_filter($filter->hook, $filter->cb);
+		// Simply execute widget's original callback if processing disabled
+		else {
+			call_user_func_array($cb, $params);
+		}
 		//Stop processing widget
 		$this->widget_processing = false;
-		//Output widget
-		echo $out;
 	}
 	
 	/**
