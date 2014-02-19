@@ -56,6 +56,9 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 3. Dark Theme
 
 == Changelog ==
+= 2.2.2-b1 =
+* Optimize: Widget processing
+
 = 2.2.1 =
 * Fix: Enable/Disable lightbox on certain requests (Danny the Enabler)
 * Fix: Widget links grouped with post links (Rafa's Widgetarian Adventure)
