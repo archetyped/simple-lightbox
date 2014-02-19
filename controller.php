@@ -66,6 +66,12 @@ class SLB_Lightbox extends SLB_Base {
 	/* Widget properties */
 	
 	/**
+	 * IDs widgets that have been processed
+	 * @var array
+	 */
+	var $widgets_processed = array();
+	
+	/**
 	 * Widget callback key
 	 * @var string
 	 */
@@ -176,7 +182,7 @@ class SLB_Lightbox extends SLB_Base {
 			add_filter('the_content', $this->m('gallery_unwrap'), $priority + 1);
 			
 			//Widgets
-			add_filter('sidebars_widgets', $this->m('sidebars_widgets'));
+			add_filter('dynamic_sidebar_params', $this->m('widget_process_setup'), 20);
 		}
 	}
 	
@@ -1166,38 +1172,31 @@ class SLB_Lightbox extends SLB_Base {
 	/*-** Widgets **-*/
 	
 	/**
-	 * Reroute widget display handlers to internal method
+	 * Reroute widget display callback to internal method
+	 * No widget parameters are modified
 	 * 
-	 * @param array $sidebar_widgets List of sidebars & their widgets
-	 * @uses WP Hook `sidebars_widgets` to intercept widget list
-	 * @global $wp_registered_widgets to reroute display callback
-	 * @return array Sidebars and widgets (unmodified)
+	 * @param array $params Widget parameters
+	 * @global $wp_registered_widgets to update display callback
+	 * @return array Updated parameters
 	 */
-	function sidebars_widgets($sidebars_widgets) {
+	function widget_process_setup($params) {
 		global $wp_registered_widgets;
-		static $widgets_processed = false;
-		if ( !$this->is_enabled() || $widgets_processed || empty($wp_registered_widgets) ) {
-			return $sidebars_widgets;
+		$p =& $params[0];
+		$wid = $p['widget_id'];
+		//Validate request
+		if ( !$this->is_enabled() || empty($wp_registered_widgets) || array_key_exists($wid, $this->widgets_processed) ) {
+			return $params;
 		}
-		$widgets_processed = true;
-		//Fetch active widgets from all sidebars
-		foreach ( $sidebars_widgets as $sb => $ws ) {
-			//Skip inactive widgets and empty sidebars
-			if ( 'wp_inactive_widgets' == $sb || empty($ws) || !is_array($ws) )
-				continue;
-			foreach ( $ws as $w ) {
-				if ( isset($wp_registered_widgets[$w]) && isset($wp_registered_widgets[$w][$this->widget_callback]) ) {
-					$wref =& $wp_registered_widgets[$w];
-					//Backup original callback
-					$wref[$this->widget_callback_orig] = $wref[$this->widget_callback];
-					//Reroute callback
-					$wref[$this->widget_callback] = $this->m('widget_callback');
-					unset($wref);
-				}
-			}
-		}
-
-		return $sidebars_widgets;
+		$this->widgets_processed[$wid] = true;
+		//Update callback
+		$wref =& $wp_registered_widgets[$wid];
+		// Backup original callback
+		$wref[$this->widget_callback_orig] = $wref[$this->widget_callback];
+		// Reroute callback
+		$wref[$this->widget_callback] = $this->m('widget_callback');
+		unset($wref);
+		
+		return $params;
 	}
 	
 	/**
