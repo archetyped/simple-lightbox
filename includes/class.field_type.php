@@ -353,9 +353,9 @@ class SLB_Field_Type extends SLB_Field_Base {
 	 * @param string $data Data to pass to layout
 	 */
 	function build($layout = null, $data = null) {
-		$this->util->do_action_ref_array('build_pre', array(&$this));
+		$this->util->do_action_ref_array('build_pre', array($this));
 		echo $this->build_layout($layout, $data);
-		$this->util->do_action_ref_array('build_post', array(&$this));
+		$this->util->do_action_ref_array('build_post', array($this));
 	}
 	
 	/**

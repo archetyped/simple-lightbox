@@ -231,7 +231,7 @@ class SLB_Options extends SLB_Field_Collection {
 	 * @param SLB_Fields $fields Reference to global fields object
 	 * @return void
 	 */
-	function register_fields(&$fields) {
+	function register_fields($fields) {
 		//Layouts
 		$o = $this->get_field_elements();
 		$l =& $o->layout;
@@ -277,7 +277,7 @@ class SLB_Options extends SLB_Field_Collection {
 	 * @param object $fields Collection of default field types
 	 * @return void
 	 */
-	function set_parents(&$fields) {
+	function set_parents($fields) {
 		if ( !is_admin() )
 			return false;
 		$items =& $this->get_items();
