@@ -337,13 +337,13 @@ class SLB_Base_Collection extends SLB_Base {
 	function build($build_vars = array()) {
 		//Parse vars
 		$this->parse_build_vars($build_vars);
-		$this->util->do_action_ref_array('build_init', array(&$this));
+		$this->util->do_action_ref_array('build_init', array($this));
 		//Pre-build output
-		$this->util->do_action_ref_array('build_pre', array(&$this));
+		$this->util->do_action_ref_array('build_pre', array($this));
 		//Build groups
 		$this->build_groups();
 		//Post-build output
-		$this->util->do_action_ref_array('build_post', array(&$this));
+		$this->util->do_action_ref_array('build_post', array($this));
 	}
 	
 	/**

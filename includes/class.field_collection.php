@@ -383,11 +383,11 @@ class SLB_Field_Collection extends SLB_Field_Base {
 			return false;
 		}
 		
-		$this->util->do_action_ref_array('build_items_pre', array(&$this));
+		$this->util->do_action_ref_array('build_items_pre', array($this));
 		foreach ( $items as $item ) {
 			$item->build();
 		}
-		$this->util->do_action_ref_array('build_items_post', array(&$this));
+		$this->util->do_action_ref_array('build_items_post', array($this));
 	}
 	
 	/* Group */
@@ -646,7 +646,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	 * @uses self::build_vars to determine groups to build
 	 */
 	function build_groups() {
-		$this->util->do_action_ref_array('build_groups_pre', array(&$this));
+		$this->util->do_action_ref_array('build_groups_pre', array($this));
 		
 		//Get groups to build
 		$groups = ( !empty($this->build_vars['groups']) ) ? $this->build_vars['groups'] : array_keys($this->get_groups(array('sort' => 'priority')));
@@ -661,7 +661,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 			}
 		}
 		
-		$this->util->do_action_ref_array('build_groups_post', array(&$this));
+		$this->util->do_action_ref_array('build_groups_post', array($this));
 	}
 
 	/**
@@ -678,13 +678,13 @@ class SLB_Field_Collection extends SLB_Field_Base {
 		}
 		
 		//Pre action
-		$this->util->do_action_ref_array('build_group_pre', array(&$this, $group));
+		$this->util->do_action_ref_array('build_group_pre', array($this, $group));
 		
 		//Build items
 		$this->build_items($group);
 		
 		//Post action
-		$this->util->do_action_ref_array('build_group_post', array(&$this, $group));
+		$this->util->do_action_ref_array('build_group_post', array($this, $group));
 	}
 
 	/* Collection */
@@ -696,13 +696,13 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	function build($build_vars = array()) {
 		//Parse vars
 		$this->parse_build_vars($build_vars);
-		$this->util->do_action_ref_array('build_init', array(&$this));
+		$this->util->do_action_ref_array('build_init', array($this));
 		//Pre-build output
-		$this->util->do_action_ref_array('build_pre', array(&$this));
+		$this->util->do_action_ref_array('build_pre', array($this));
 		//Build groups
 		$this->build_groups();
 		//Post-build output
-		$this->util->do_action_ref_array('build_post', array(&$this));
+		$this->util->do_action_ref_array('build_post', array($this));
 	}
 	
 	/**

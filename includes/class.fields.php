@@ -123,10 +123,10 @@ class SLB_Fields extends SLB_Field_Collection {
 		$this->add($span);
 		
 		//Enable plugins to modify (add, remove, etc.) field types
-		$this->util->do_action_ref_array('register_fields', array(&$this), false);
+		$this->util->do_action_ref_array('register_fields', array($this), false);
 		
 		//Signal completion of field registration
-		$this->util->do_action_ref_array('fields_registered', array(&$this), false);
+		$this->util->do_action_ref_array('fields_registered', array($this), false);
 	}
 	
 	/* Placeholder handlers */
@@ -143,10 +143,10 @@ class SLB_Fields extends SLB_Field_Collection {
 		$this->register_placeholder('checked', $this->m('process_placeholder_checked'));
 		
 		//Allow other code to register placeholders
-		$this->util->do_action_ref_array('register_field_placeholders', array(&$this), false);
+		$this->util->do_action_ref_array('register_field_placeholders', array($this), false);
 		
 		//Signal completion of field placeholder registration
-		$this->util->do_action_ref_array('field_placeholders_registered', array(&$this), false);
+		$this->util->do_action_ref_array('field_placeholders_registered', array($this), false);
 	}
 	
 	/**
