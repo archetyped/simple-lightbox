@@ -182,7 +182,7 @@ class SLB_Lightbox extends SLB_Base {
 			add_filter('the_content', $this->m('gallery_unwrap'), $priority + 1);
 			
 			//Widgets
-			add_filter('dynamic_sidebar_params', $this->m('widget_process_setup'), 20);
+			add_filter('dynamic_sidebar_params', $this->m('widget_process_setup'), PHP_INT_MAX);
 		}
 	}
 	

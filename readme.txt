@@ -56,6 +56,10 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 3. Dark Theme
 
 == Changelog ==
+= 2.2.2-b2 =
+* Optimize: Widget processing
+* Optimize: Remove call-time-pass-by-references
+
 = 2.2.2-b1 =
 * Optimize: Widget processing
 
