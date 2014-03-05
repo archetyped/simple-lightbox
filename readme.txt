@@ -56,6 +56,21 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 3. Dark Theme
 
 == Changelog ==
+= 2.3.0-b1 =
+* Add: Production versions of client-side code (JS)
+* Add: Dev mode
+* Add: Theme breakpoints
+* Optimize: Simplified client-side dependency detection
+* Optimize: JS standardization
+* Optimize: JS:Admin
+* Optimize: JS:Image Handler
+* Optimize: JS:Template Tags (UI, Item)
+* Optimize: Default Theme transitions
+* Optimize: Grunt cleanup
+* Optimize: Grunt path abstraction
+* Optimize: Grunt task loading
+* Optimize: Grunt selective file compilation
+
 = 2.2.2 =
 * Optimize: Widget processing
 * Optimize: Remove call-time-pass-by-references
