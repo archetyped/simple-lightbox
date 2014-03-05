@@ -66,6 +66,12 @@ class SLB_Lightbox extends SLB_Base {
 	/* Widget properties */
 	
 	/**
+	 * IDs widgets that have been processed
+	 * @var array
+	 */
+	var $widgets_processed = array();
+	
+	/**
 	 * Widget callback key
 	 * @var string
 	 */
@@ -79,7 +85,8 @@ class SLB_Lightbox extends SLB_Base {
 
 	/**
 	 * Used to track if widget is currently being processed or not
-	 * @var bool
+	 * Set to Widget ID currently being processed
+	 * @var bool|string
 	 */
 	var $widget_processing = false;
 
@@ -154,7 +161,7 @@ class SLB_Lightbox extends SLB_Base {
 	 * Init Hooks
 	 */
 	public function _hooks_init() {
-		if ( !is_admin() && $this->is_enabled() ) {
+		if ( $this->is_enabled() ) {
 			$priority = $this->util->priority('low');
 			
 			//Init lightbox
@@ -167,13 +174,31 @@ class SLB_Lightbox extends SLB_Base {
 			add_filter('get_post_galleries', $this->m('activate_galleries'), $priority);
 			$this->util->add_filter('validate_uri_regex', $this->m('validate_uri_regex_default'), 1);
 			
+			//Grouping
+			if ( $this->options->get_bool('group_post') ) {
+				$this->util->add_filter('get_group_id', $this->m('post_group_id'), 1);	
+			}
+			
 			//Gallery wrapping
 			add_filter('the_content', $this->m('gallery_wrap'), 1);
 			add_filter('the_content', $this->m('gallery_unwrap'), $priority + 1);
 			
 			//Widgets
-			add_filter('sidebars_widgets', $this->m('sidebars_widgets'));
+			add_filter('dynamic_sidebar_params', $this->m('widget_process_setup'), PHP_INT_MAX);
 		}
+	}
+	
+	/**
+	 * Add post ID to link group ID
+	 * @uses `SLB::get_group_id` filter
+	 * @param array $group_segments Group ID segments
+	 * @return array Modified group ID segments
+	 */
+	public function post_group_id($group_segments) {
+		$post = get_post();
+		//Prepend post ID to group ID
+		array_unshift($group_segments, $post->ID);
+		return $group_segments;
 	}
 	
 	/**
@@ -307,7 +332,7 @@ class SLB_Lightbox extends SLB_Base {
 	function is_enabled() {
 		static $ret = null;
 		if ( is_null($ret) ) {
-			$ret = ( $this->options->get_bool('enabled') && !is_feed() ) ? true : false;
+			$ret = ( !is_admin() && $this->options->get_bool('enabled') && !is_feed() ) ? true : false;
 			if ( $ret ) {
 				$opt = '';
 				//Determine option to check
@@ -369,7 +394,45 @@ class SLB_Lightbox extends SLB_Base {
 	 * @param $content
 	 * @return string Post content
 	 */
-	function activate_links($content) {
+	public function activate_links($content) {
+		$ex = (object) array (
+			'tags'		=> $this->get_exclude_tags(),
+			'cache'		=> array(),
+			'start'		=> false,
+			'end'		=> false,
+			'ph'		=> $this->util->add_wrapper( $this->add_prefix('exclude_temp'), '{{', '}}' ),
+		);
+		
+		//Handle excluded content
+		$ex->start = strpos($content, $ex->tags->open);
+		if ( false !== $ex->start ) {
+			$ex->offset_start = strlen($ex->tags->open);
+			$ex->offset = $ex->start + $ex->offset_start;
+			$ex->end = strpos($content, $ex->tags->close, $ex->offset);
+			if ( false !== $ex->end ) {
+				$ex->offset_ph = strlen($ex->ph);
+				$ex->offset_end = strlen($ex->tags->close);
+				$ex->tag_values = array_values( (array) $ex->tags);
+				//Strip excluded content
+				while ( false !== $ex->start && false !== $ex->end ) {
+					//Extract content
+					$ex->length = $ex->end + $ex->offset_end - $ex->start;
+					$ex->temp = substr($content, $ex->start, $ex->length);
+					//Cache content (strip tags)
+					$ex->cache[] = str_replace( $ex->tag_values, '', $ex->temp );
+					//Replace with placeholder
+					$content = substr_replace($content, $ex->ph, $ex->start, $ex->length);
+					//Find next tag
+					$ex->offset = $ex->start + $ex->offset_ph;
+					$ex->start = strpos($content, $ex->tags->open, $ex->offset);
+					if ( false !== $ex->start ) {
+						$ex->offset = $ex->start + $ex->offset_start;
+						$ex->end = strpos($content, $ex->tags->close, $ex->offset);
+					}
+				}
+			}
+		}
+
 		$groups = array();
 		$w = $this->group_get_wrapper();
 		$g_ph_f = '[%s]';
@@ -409,6 +472,16 @@ class SLB_Lightbox extends SLB_Base {
 			//Replace placeholder with processed content
 			$content = str_replace($g_ph, $w->open . $this->process_links($g_content, 'gallery_' . $group) . $w->close, $content);
 		}
+		
+		//Restore excluded content
+		if ( !empty($ex->cache) ) {
+			$ex->parts = explode($ex->ph, $content, count($ex->cache) + 1);
+			$ex->cache[] = '';
+			$content = '';
+			foreach ( $ex->parts as $idx => $part ) {
+				$content .= $part . $ex->cache[$idx];
+			}
+		}
 		return $content;
 	}
 	
@@ -422,7 +495,7 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	function process_links($content, $group = null) {
 		//Validate
-		if ( !is_string($content) || empty($content) ) {
+		if ( !is_string($content) || empty($content) || ( !!$this->widget_processing && !$this->options->get_bool('enabled_widget') ) ) {
 			return $content;
 		}
 		//Extract links
@@ -547,23 +620,24 @@ class SLB_Lightbox extends SLB_Base {
 				continue;
 			}
 			
-			//Set group (if necessary)
+			//Set group (if enabled)
 			if ( $g_props->enabled ) {
+				$group = array();
 				//Get preset group attribute
-				$g = ( $this->has_attribute($attrs, $g_props->attr) ) ? $this->get_attribute($attrs, $g_props->attr) : ''; 
+				$g = ( $this->has_attribute($attrs, $g_props->attr) ) ? $this->get_attribute($attrs, $g_props->attr) : '';
 				if ( is_string($g) && ($g = trim($g)) && !empty($g) ) {
-					$group = $g;
-				} else {
-					$group = $g_props->base;
+					$group[] = $g;
+				} elseif ( !empty($g_props->base) ) {
+					$group[] = $g_props->base;
 				}
-				//Group links by post?
-				if ( !$this->widget_processing && $this->options->get_bool('group_post') ) {
-					global $post;
-					$group = ( !empty($group) ) ? implode('_', array($post->ID, $group)) : $post->ID;
-				}
+				
+				$group = $this->util->apply_filters('get_group_id', $group);
+				
 				//Default group
-				if ( empty($group) ) {
+				if ( empty($group) || !is_array($group) ) {
 					$group = $this->get_prefix();
+				} else {
+					$group = implode('_', $group);
 				}
 				
 				//Set group attribute
@@ -587,6 +661,11 @@ class SLB_Lightbox extends SLB_Base {
 			$link_new = '<a ' . $this->util->build_attribute_string($attrs) . '>';
 			$content = str_replace($link, $link_new, $content);
 		}
+		//Handle widget content
+		if ( !!$this->widget_processing && 'the_content' == current_filter() ) {
+			$content = $this->exclude_wrap($content);
+		}
+		
 		return $content;
 	}
 
@@ -949,6 +1028,58 @@ class SLB_Lightbox extends SLB_Base {
 		return ( empty($this->media_items_raw) ) ? false : true; 
 	}
 	
+	/*-** Exclusion **-*/
+	
+	/**
+	 * Get exclusion tags (open/close)
+	 * Example: open => [slb_exclude], close => [/slb_exclude]
+	 * 
+	 * @return object Exclusion tags
+	 */
+	private function get_exclude_tags() {
+		static $tags = null;
+		if ( null == $tags ) {
+			$base = $this->add_prefix('exclude');
+			$tags = (object) array (
+				'open'	=> $this->util->add_wrapper($base),
+				'close'	=> $this->util->add_wrapper($base, '[/', ']')
+			);
+		}
+		return $tags;
+	}
+	
+	/**
+	 * Get exclusion tag ("[slb_exclude]")
+	 * @uses `get_exclude_tags()` to retrieve tag
+	 * 
+	 * @param string $type (optional) Tag to retrieve (open or close)
+	 * @return string Exclusion tag
+	 */
+	private function get_exclude_tag( $type = "open" ) {
+		//Validate
+		$tags = $this->get_exclude_tags();
+		if ( !isset($tags->{$type}) ) {
+			$type = "open";
+		}
+		return $tags->{$type};
+	}
+	
+	/**
+	 * Wrap content in exclusion tags
+	 * @uses `get_exclude_tag()` to wrap content with exclusion tag
+	 * @param string $content (optional) Content to exclude
+	 * @return string Content wrapped in exclusion tags
+	 */
+	private function exclude_wrap($content = "") {
+		//Validate
+		if ( !is_string($content) ) {
+			$content = "";
+		}
+		//Wrap
+		$tags = $this->get_exclude_tags();
+		return $tags->open . $content . $tags->close;
+	}
+	
 	/*-** Grouping **-*/
 	
 	/**
@@ -1043,36 +1174,31 @@ class SLB_Lightbox extends SLB_Base {
 	/*-** Widgets **-*/
 	
 	/**
-	 * Reroute widget display handlers to internal method
-	 * @param array $sidebar_widgets List of sidebars & their widgets
-	 * @uses WP Hook `sidebars_widgets` to intercept widget list
-	 * @global $wp_registered_widgets to reroute display callback
-	 * @return array Sidebars and widgets (unmodified)
+	 * Reroute widget display callback to internal method
+	 * No widget parameters are modified
+	 * 
+	 * @param array $params Widget parameters
+	 * @global $wp_registered_widgets to update display callback
+	 * @return array Updated parameters
 	 */
-	function sidebars_widgets($sidebars_widgets) {
+	function widget_process_setup($params) {
 		global $wp_registered_widgets;
-		static $widgets_processed = false;
-		if ( is_admin() || empty($wp_registered_widgets) || $widgets_processed || !is_object($this->options) || !$this->options->get_bool('enabled_widget') )
-			return $sidebars_widgets; 
-		$widgets_processed = true;
-		//Fetch active widgets from all sidebars
-		foreach ( $sidebars_widgets as $sb => $ws ) {
-			//Skip inactive widgets and empty sidebars
-			if ( 'wp_inactive_widgets' == $sb || empty($ws) || !is_array($ws) )
-				continue;
-			foreach ( $ws as $w ) {
-				if ( isset($wp_registered_widgets[$w]) && isset($wp_registered_widgets[$w][$this->widget_callback]) ) {
-					$wref =& $wp_registered_widgets[$w];
-					//Backup original callback
-					$wref[$this->widget_callback_orig] = $wref[$this->widget_callback];
-					//Reroute callback
-					$wref[$this->widget_callback] = $this->m('widget_callback');
-					unset($wref);
-				}
-			}
+		$p =& $params[0];
+		$wid = $p['widget_id'];
+		//Validate request
+		if ( !$this->is_enabled() || empty($wp_registered_widgets) || array_key_exists($wid, $this->widgets_processed) ) {
+			return $params;
 		}
-
-		return $sidebars_widgets;
+		$this->widgets_processed[$wid] = true;
+		//Update callback
+		$wref =& $wp_registered_widgets[$wid];
+		// Backup original callback
+		$wref[$this->widget_callback_orig] = $wref[$this->widget_callback];
+		// Reroute callback
+		$wref[$this->widget_callback] = $this->m('widget_callback');
+		unset($wref);
+		
+		return $params;
 	}
 	
 	/**
@@ -1096,18 +1222,57 @@ class SLB_Lightbox extends SLB_Base {
 		if ( !isset($w[$this->widget_callback_orig]) || !($cb = $w[$this->widget_callback_orig]) || !is_callable($cb) )
 			return false;
 		$params = func_get_args();
-		$this->widget_processing = true;
-		//Start output buffer
-		ob_start();
-		//Call original callback
-		call_user_func_array($cb, $params);
-		//Flush output buffer
-		echo $this->widget_process_links(ob_get_clean(), $wid);
+		//Start processing widget output
+		$this->widget_processing = $wid;
+		// Buffer output for further processing if enabled
+		if ( $this->options->get_bool('enabled_widget') ) {
+			//Set Group ID filter
+			$filter = (object) array (
+				'hook'	=> 'get_group_id',
+				'cb'	=> $this->m('widget_group_id'),
+			);
+			$this->util->add_filter($filter->hook, $filter->cb);
+			//Start output buffer
+			ob_start();
+			//Call original callback
+			call_user_func_array($cb, $params);
+			//Flush output buffer
+			$out = $this->activate_links(ob_get_clean());
+			//Unset Group ID filter
+			$this->util->remove_filter($filter->hook, $filter->cb);
+			//Output widget
+			echo $out;
+		}
+		// Simply execute widget's original callback if processing disabled
+		else {
+			call_user_func_array($cb, $params);
+		}
+		//Stop processing widget
 		$this->widget_processing = false;
 	}
 	
 	/**
+	 * Generate group ID for widget
+	 * Should only be called when widget is being processed
+	 * @param array $group_segments Strings used to build group ID
+	 * @return array Group segments with Current Widget ID added
+	 */
+	public function widget_group_id($group_segments) {
+		//Only process when widget is being processed
+		if ( !!$this->widget_processing ) {
+			//Clear group segments
+			$group_segments = array();
+			//Add group ID
+			if ( $this->options->get_bool('group_widget') ) {
+				$group_segments[] = $this->widget_processing;
+			}
+		}
+		return $group_segments;
+	}
+	
+	/**
 	 * Process links in widget content
+	 * @deprecated
 	 * @param string $content Widget content
 	 * @return string Processed widget content
 	 * @uses process_links() to process links

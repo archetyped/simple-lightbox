@@ -4327,6 +4327,7 @@ var Template = {
 		var tags = this.get_attribute(a);
 		//Initialize tags
 		if ( !this.util.is_array(tags) ) {
+			console.log('Init tags');
 			tags = [];
 			//Retrieve layout DOM tree
 			var d = this.dom_get();

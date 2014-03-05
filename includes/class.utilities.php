@@ -271,7 +271,7 @@ class SLB_Utilities {
 	
 	/**
 	 * Add wrapper to specified text
-	 * @uses this->get_wrapper() to retrieve wrapper object
+	 * @uses Utilities::get_wrapper() to retrieve wrapper object
 	 * @param string $text Text to wrap
 	 * @param string|array $start (optional) Start text (Array defines both start/end text)
 	 * @param string $end (optional) End text
