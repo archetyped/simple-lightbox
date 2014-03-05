@@ -135,6 +135,36 @@ var Base = {
 	},
 	
 	/**
+	 * Check for child object
+	 * Child object can be multi-level (e.g. Child.Level2child.Level3child)
+	 * 
+	 * @param string child Name of child object
+	 */
+	has_child: function(child) {
+		//Validate
+		if ( !this.util.is_string(child) ) {
+			return false;
+		}
+		
+		children = child.split('.');
+		child = null;
+		var o = this;
+		var x;
+		for ( x = 0; x < children.length; x++ ) {
+			child = children[x];
+			if ( "" === child ) {
+				continue;
+			}
+			if ( this.util.is_obj(o) && o[child] ) {
+				o = o[child];
+			} else {
+				return false;
+			}
+		}
+		return true;
+	},
+	
+	/**
 	 * Get parent object
 	 * @return obj Parent object
 	 */
