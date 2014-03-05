@@ -7,7 +7,7 @@
 
 /* global SLB, postboxes, pagenow */
 
-if ( typeof jQuery !== 'undefined' && typeof SLB !== 'undefined' && SLB.attach ) { (function ($) {
+if ( window.SLB && SLB.attach ) { (function ($) {
 
 SLB.attach('Admin', {
 	/**

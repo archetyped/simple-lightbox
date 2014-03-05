@@ -491,7 +491,7 @@ class SLB_Field_Base extends SLB_Base {
 		}
 		$top = !!$top;
 		$obj =& $this;
-		$obj_path = array(&$this);
+		$obj_path = array($this);
 		$path = array();
 		if ( $top ) {
 			//Iterate through hiearchy to get top-most object
