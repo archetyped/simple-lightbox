@@ -5,11 +5,8 @@
  * @author Archetyped
  */
 /* global SLB */
-if ( typeof(jQuery) !== 'undefined' ){(function ($) {
+if ( window.SLB && SLB.attach ) { (function ($) {
 
-if ( typeof SLB === 'undefined' || !SLB.attach ) {
-	return false;
-}
 
 /*-** Controller **-*/
 

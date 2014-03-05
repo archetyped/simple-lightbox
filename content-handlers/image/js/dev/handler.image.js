@@ -1,4 +1,4 @@
-if ( typeof jQuery !== 'undefined' && typeof SLB !== 'undefined' && SLB.View && SLB.View.extend_content_handler ) {(function($) {
+if ( window.SLB && SLB.View && SLB.View.extend_content_handler ) {(function($) {
 $(document).ready(function() {
 SLB.View.extend_content_handler('image', {
 	/**
