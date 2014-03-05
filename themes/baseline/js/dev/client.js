@@ -1,4 +1,4 @@
-if ( window.SLB && SLB.View && SLB.View.extend_theme ) {(function($) {
+if ( window.SLB && SLB.has_child('View.extend_theme') ) {(function($) {
 $(document).ready(function() {
 SLB.View.extend_theme('slb_baseline', {
 	'breakpoints': {
