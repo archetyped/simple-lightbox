@@ -146,7 +146,7 @@ var Base = {
 			return false;
 		}
 		
-		children = child.split('.');
+		var children = child.split('.');
 		child = null;
 		var o = this;
 		var x;
