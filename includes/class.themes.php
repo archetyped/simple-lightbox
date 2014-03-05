@@ -55,6 +55,8 @@ class SLB_Themes extends SLB_Collection_Controller {
 	 * @param SLB_Themes $themes Themes controller
 	 */
 	function init_defaults($themes) {
+		$js_path = 'js/';
+		$js_path .= ( SLB_DEV ) ? 'dev' : 'prod';
 		$scheme = is_ssl() ? 'https' : 'http';
 		$baseline = $this->add_prefix('baseline');
 		$src_base = $this->util->get_file_url('themes', true);
@@ -62,30 +64,30 @@ class SLB_Themes extends SLB_Collection_Controller {
 			$baseline					=> array (
 				'name'			=> __('Baseline', 'simple-lightbox'),
 				'public'		=> false,
-				'layout'		=> $src_base . '/baseline/layout.html',
+				'layout'		=> "$src_base/baseline/layout.html",
 				'scripts'		=> array (
-					array ( 'base', $src_base . '/baseline/client.js' ),
+					array ( 'base', $src_base . "/baseline/$js_path/client.js" ),
 				),
 				'styles'		=> array (
-					array ( 'base', $src_base . '/baseline/css/style.css' ),
+					array ( 'base', "$src_base/baseline/css/style.css" ),
 				),
 			),
 			$this->get_default_id()		=> array (
 				'name'			=> __('Default (Light)', 'simple-lightbox'),
 				'parent'		=> $baseline,
 				'scripts'		=> array (
-					array ( 'base', $src_base . '/default/client.js' ),
+					array ( 'base', $src_base . "/default/$js_path/client.js" ),
 				),
 				'styles'		=> array (
 					array ( 'font', "$scheme://fonts.googleapis.com/css?family=Yanone+Kaffeesatz" ),
-					array ( 'base', $src_base . '/default/css/style.css' ),
+					array ( 'base', "$src_base/default/css/style.css" ),
 				),
 			),
 			$this->add_prefix('black')	=> array (
 				'name'			=> __('Default (Dark)', 'simple-lightbox'),
 				'parent'		=> $this->get_default_id(),
 				'styles'		=> array (
-					array ( 'base', $src_base . '/black/css/style.css' )
+					array ( 'base', "$src_base/black/css/style.css" )
 				)
 			),
 		);

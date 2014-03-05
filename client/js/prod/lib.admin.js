@@ -1,0 +1,1 @@
+window.SLB&&SLB.attach&&!function($){SLB.attach("Admin",{init:function(){postboxes&&postboxes.add_postbox_toggles(pagenow)}}),$(document).ready(function(){SLB.Admin.init()})}(jQuery);
