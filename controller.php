@@ -657,6 +657,9 @@ class SLB_Lightbox extends SLB_Base {
 			//Cache item attributes
 			$this->cache_media_item($uri, $type, $internal, $props_extra);
 			
+			//Filter attributes
+			$attrs = $this->util->apply_filters('process_link_attributes', $attrs);
+			
 			//Update link in content
 			$link_new = '<a ' . $this->util->build_attribute_string($attrs) . '>';
 			$content = str_replace($link, $link_new, $content);
