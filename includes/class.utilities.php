@@ -1691,7 +1691,7 @@ class SLB_Utilities {
 		$start = array('/* <![CDATA[ */');
 		$end = array('/* ]]> */');
 		if ( $wrap_jquery ) {
-			$start[] = 'if ( typeof(jQuery) !== \'undefined\' ) {(function($){';
+			$start[] = 'if ( !!window.jQuery ) {(function($){';
 			$end[] = '})(jQuery);}';
 			
 			//Add event handler (if necessary)
