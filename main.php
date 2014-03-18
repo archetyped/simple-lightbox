@@ -6,7 +6,7 @@ Description: The highly customizable lightbox for WordPress
 Version: dev (BETA)
 Author: Archetyped
 Author URI: http://archetyped.com
-Support URI: https://github.com/archetyped/simple-lightbox/wiki/Reporting-Issues
+Support URI: https://github.com/archetyped/simple-lightbox/wiki/Feedback-&-Support
 */
 /*
 Copyright 2014 Sol Marchessault (sol@archetyped.com)
