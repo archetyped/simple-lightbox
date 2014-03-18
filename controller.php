@@ -297,7 +297,7 @@ class SLB_Lightbox extends SLB_Base {
 		//Add Support information
 		$support = $this->util->get_plugin_info('SupportURI');
 		if ( !empty($support) ) {
-			$pg_opts->add_content('support', __('Support', 'simple-lightbox'), $this->m('theme_page_callback_support'), 'secondary');
+			$pg_opts->add_content('support', __('Feedback & Support', 'simple-lightbox'), $this->m('theme_page_callback_support'), 'secondary');
 		}
 		
 		//Add Actions
@@ -314,13 +314,13 @@ class SLB_Lightbox extends SLB_Base {
 	 * Support information
 	 */
 	public function theme_page_callback_support() {
-		echo '<p>';
-		_e("Getting support is easy!  Whether you're experiencing an issue or have a feature request, click the button below to get support right now!", 'simple-lightbox');
-		echo '</p>';
-		
-		$lnk_txt = __('Get Support', 'simple-lightbox');
+		// Description
+		$desc = __("<p>Simple Lightbox thrives on your feedback!</p><p>Click the button below to <strong>get help</strong>, <strong>request a feature</strong>, or <strong>provide some feedback</strong>!</p>", 'simple-lightbox');
+		echo $desc;
+		// Link
 		$lnk_uri = $this->util->get_plugin_info('SupportURI');
-		printf('<a href="%s" title="%s" target="_blank" class="button">%s</a>', $lnk_uri, esc_attr($lnk_txt), $lnk_txt);
+		$lnk_txt = __('Get Support &amp; Provide Feedback', 'simple-lightbox');
+		echo $this->util->build_html_link($lnk_uri, $lnk_txt, array('target' => '_blank', 'class' => 'button'));
 	}
 
 	/*-** Functionality **-*/
