@@ -501,24 +501,24 @@ class SLB_Utilities {
 	 * If no command is specified the validation conditions are returned
 	 */
 	public function validate_client_object($obj, $cmd = null) {
-		//Build condition
+		// Get base object
+		$base = $this->get_client_object();
+		
+		// Build condition
 		$sep = '.';
-		$obj = trim( $this->get_client_object($obj) , $sep);
-		$offset = 0;
-		$len = strlen($obj);
-		$pos = $len;
-		$fmt = '(typeof %s != \'undefined\')';
-		$objs = array();
-		//Add segments to array (in reverse)
-		do {
-			$objs[] = sprintf($fmt, substr($obj, 0, $pos));
-			$offset = $pos - $len - 1;
-		} while ( $offset < $len && ( $pos = strrpos($obj, $sep, $offset) ) && $pos !== false );
-		//Format condition
-		$condition = implode(' && ', array_reverse($objs));
+		$obj = trim($obj, $sep);
+		//  Strip base object
+		if ( 0 === strpos($obj, $base . $sep) ) {
+			$obj = substr($obj, strlen($base . $sep));
+		}
+		$fmt = '!!window.%1$s';
+		if ( !empty($obj) ) {
+			$fmt .= ' && %1$s.has_child(\'%2$s\')';
+		}
+		$condition = sprintf($fmt, $base, $obj);
 		
 		//Wrap command in validation
-		if ( is_string($cmd) && !empty($cmd) ) {
+		if ( !empty($cmd) && is_string($cmd) ) {
 			$condition = sprintf('if ( %1$s ) { %2$s }', $condition, $cmd);
 		}
 		return $condition;
@@ -1691,7 +1691,7 @@ class SLB_Utilities {
 		$start = array('/* <![CDATA[ */');
 		$end = array('/* ]]> */');
 		if ( $wrap_jquery ) {
-			$start[] = 'if ( typeof(jQuery) !== \'undefined\' ) {(function($){';
+			$start[] = 'if ( !!window.jQuery ) {(function($){';
 			$end[] = '})(jQuery);}';
 			
 			//Add event handler (if necessary)
