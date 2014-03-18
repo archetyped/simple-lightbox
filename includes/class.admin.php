@@ -553,12 +553,13 @@ class SLB_Admin extends SLB_Base {
 	 */
 	public function plugin_row_meta($plugin_meta, $plugin_file, $plugin_data, $status) {
 		$u = ( is_object($this->parent) && isset($this->parent->util) ) ? $this->parent->util : $this->util;
+		$hook_base = 'admin_plugin_row_meta_';
 		if ( $plugin_file == $u->get_plugin_base_name() ) {
-			//Add metadata
-			//Support
-			$t = __('Get Support', 'simple-lightbox');
+			// Add metadata
+			//  Support
 			$l = $u->get_plugin_info('SupportURI');
 			if ( !empty($l) ) {
+				$t = __( $this->util->apply_filters($hook_base . 'support', 'Get Support'), 'simple-lightbox');
 				$plugin_meta[] = $u->build_html_link($l, $t);
 			}
 		}
