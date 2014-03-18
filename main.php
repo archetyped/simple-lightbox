@@ -9,7 +9,7 @@ Author URI: http://archetyped.com
 Support URI: https://github.com/archetyped/simple-lightbox/wiki/Reporting-Issues
 */
 /*
-Copyright 2013 Sol Marchessault (sol@archetyped.com)
+Copyright 2014 Sol Marchessault (sol@archetyped.com)
 */
 $slb = null;
 /**
