@@ -1,4 +1,4 @@
-if ( window.SLB && SLB.has_child('View.extend_content_handler') ) {(function($) {
+if ( !!window.SLB && SLB.has_child('View.extend_content_handler') ) {(function($) {
 $(document).ready(function() {
 SLB.View.extend_content_handler('image', {
 	/**

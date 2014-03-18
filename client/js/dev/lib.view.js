@@ -5,7 +5,7 @@
  * @author Archetyped
  */
 /* global SLB */
-if ( window.SLB && SLB.attach ) { (function ($) {
+if ( !!window.SLB && !!SLB.attach ) { (function ($) {
 
 
 /*-** Controller **-*/

@@ -1,4 +1,4 @@
-if ( window.SLB && SLB.has_child('View.extend_template_tag_handler') ) {(function($) {
+if ( !!window.SLB && SLB.has_child('View.extend_template_tag_handler') ) {(function($) {
 $(document).ready(function() {
 SLB.View.extend_template_tag_handler('ui', {
 	_hooks : function() {
