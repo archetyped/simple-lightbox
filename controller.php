@@ -152,6 +152,7 @@ class SLB_Lightbox extends SLB_Base {
 
 		/* Admin */
 		add_action('admin_menu', $this->m('admin_menus'));
+		$this->util->add_filter('admin_plugin_row_meta_support', $this->m('admin_plugin_row_meta_support'));
 		
 		/* Init */
 		add_action('wp', $this->m('_hooks_init'));
@@ -321,6 +322,15 @@ class SLB_Lightbox extends SLB_Base {
 		$lnk_uri = $this->util->get_plugin_info('SupportURI');
 		$lnk_txt = __('Get Support &amp; Provide Feedback', 'simple-lightbox');
 		echo $this->util->build_html_link($lnk_uri, $lnk_txt, array('target' => '_blank', 'class' => 'button'));
+	}
+	
+	/**
+	 * Filter support link text in plugin metadata
+	 * @param string $text Original link text
+	 * @return string Modified link text
+	 */
+	public function admin_plugin_row_meta_support($text) {
+		return "Feedback &amp; Support";
 	}
 
 	/*-** Functionality **-*/
