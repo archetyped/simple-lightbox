@@ -175,9 +175,6 @@ class SLB_Lightbox extends SLB_Base {
 			add_filter('get_post_galleries', $this->m('activate_galleries'), $priority);
 			$this->util->add_filter('validate_uri_regex', $this->m('validate_uri_regex_default'), 1);
 			
-			//Media
-			$this->util->add_filter('media_item_properties', $this->m('format_media_properties'));
-			
 			//Grouping
 			if ( $this->options->get_bool('group_post') ) {
 				$this->util->add_filter('get_group_id', $this->m('post_group_id'), 1);	
@@ -977,23 +974,6 @@ class SLB_Lightbox extends SLB_Base {
 	}
 
 	/*-** Media **-*/
-	
-	/**
-	 * Format media item properties
-	 * @param obj $props Media item properties
-	 * @return obj Updated media properties
-	 */
-	public function format_media_properties($props) {
-		// Process only internal items
-		if ( !!$props->internal ) {
-			$f = basename($props->source);
-			// Format title
-			if ( !empty($props->title) && 0 === strpos($f, $props->title) ) {
-				$props->title = '';
-			}
-		}
-		return $props;
-	}
 	
 	/**
 	 * Cache media properties for later processing
