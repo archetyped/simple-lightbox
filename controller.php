@@ -231,13 +231,14 @@ class SLB_Lightbox extends SLB_Base {
 				'slideshow_duration'		=> array('title' => __('Slide Duration (Seconds)', 'simple-lightbox'), 'default' => '6', 'attr' => array('size' => 3, 'maxlength' => 3), 'group' => array('ui', 40), 'in_client' => true),
 				'group_loop'				=> array('title' => __('Loop through items', 'simple-lightbox'),'default' => true, 'group' => array('ui', 50), 'in_client' => true),
 				'ui_overlay_opacity'		=> array('title' => __('Overlay Opacity (0 - 1)', 'simple-lightbox'), 'default' => '0.8', 'attr' => array('size' => 3, 'maxlength' => 3), 'group' => array('ui', 60), 'in_client' => true),
+				'ui_title_default'			=> array('title' => __('Enable default title', 'simple-lightbox'), 'default' => false, 'group' => array('ui', 70), 'in_client' => true),		
 				'txt_loading'				=> array('title' => __('Loading indicator', 'simple-lightbox'), 'default' => 'Loading', 'group' => array('labels', 20)),
 				'txt_close'					=> array('title' => __('Close button', 'simple-lightbox'), 'default' => 'Close', 'group' => array('labels', 10)),
 				'txt_nav_next'				=> array('title' => __('Next Item button', 'simple-lightbox'), 'default' => 'Next', 'group' => array('labels', 30)),
 				'txt_nav_prev'				=> array('title' => __('Previous Item button', 'simple-lightbox'), 'default' => 'Previous', 'group' => array('labels', 40)),
 				'txt_slideshow_start'		=> array('title' => __('Start Slideshow button', 'simple-lightbox'), 'default' => 'Start slideshow', 'group' => array('labels', 50)),
 				'txt_slideshow_stop'		=> array('title' => __('Stop Slideshow button', 'simple-lightbox'),'default' => 'Stop slideshow', 'group' => array('labels', 60)),
-				'txt_group_status'			=> array('title' => __('Slideshow status format', 'simple-lightbox'), 'default' => 'Item %current% of %total%', 'group' => array('labels', 70))		
+				'txt_group_status'			=> array('title' => __('Slideshow status format', 'simple-lightbox'), 'default' => 'Item %current% of %total%', 'group' => array('labels', 70))
 			),
 			'legacy' => array (
 				'header_activation'			=> null,
@@ -827,15 +828,6 @@ class SLB_Lightbox extends SLB_Base {
 		
 		$m_items = $this->media_items = $this->get_cached_media_items();
 		foreach ( $m_items as $uri => $p ) {
-			/*
-			$type = $p->{$props->type};
-			//Initialize bucket (if necessary)
-			if ( !isset($m_bucket[$type]) ) {
-				$m_bucket[$type] = array();
-			}
-			//Add item to bucket
-			$m_bucket[$type][$uri] =& $m_items[$uri];
-			*/
 			//Set aside internal links for additional processing
 			if ( $p->internal && !isset($m_internals[$uri]) ) {
 				$m_internals[$uri] =& $m_items[$uri];
@@ -870,7 +862,7 @@ class SLB_Lightbox extends SLB_Base {
 				}
 			}
 			//Destroy worker vars
-			unset($uris_base, $uris_flat, $q, $pids, $pd);
+			unset($uris_base, $uris_flat, $q, $pids, $pd, $file);
 		}
 		
 		//Process items with attachment IDs
@@ -915,6 +907,7 @@ class SLB_Lightbox extends SLB_Base {
 				foreach ( $atts as $att ) {
 					//Set post data
 					$m = array();
+					
 					//Remap post data to properties
 					foreach ( $props_map as $prop_key => $prop_source ) {
 						$m[$props->{$prop_key}] = $att->{$prop_source};
@@ -947,11 +940,17 @@ class SLB_Lightbox extends SLB_Base {
 					
 					//Save attachment data (post & meta) to original object(s)
 					foreach ( $pids[$att->ID] as $uri ) {
-						$this->media_items[$uri] = (object) array_merge( (array) $m_items[$uri], $m);
+						$this->media_items[$uri] = array_merge( (array) $m_items[$uri], $m);
 					}
+					
 				}
 			}
 			unset($atts, $atts_meta, $m, $a, $uri, $pids, $pids_flat);
+		}
+
+		// Filter media item properties
+		foreach ( $this->media_items as $key => $props ) {
+			$this->media_items[$key] =  $this->util->apply_filters('media_item_properties', (object) $props);
 		}
 
 		//Expand URI variants
