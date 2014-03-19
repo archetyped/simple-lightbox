@@ -1662,6 +1662,7 @@ var Viewer = {
 		autofit: true,
 		overlay_enabled: true,
 		overlay_opacity: '0.8',
+		title_default: false,
 		container: null,
 		slideshow_enabled: true,
 		slideshow_autostart: true,
@@ -1682,7 +1683,7 @@ var Viewer = {
 	_attr_parent: [
 		'theme', 
 		'group_loop', 
-		'ui_autofit', 'ui_animate', 'ui_overlay_opacity', 'ui_labels',
+		'ui_autofit', 'ui_animate', 'ui_overlay_opacity', 'ui_labels', 'ui_title_default',
 		'slideshow_enabled', 'slideshow_autostart', 'slideshow_duration'],
 	
 	_attr_map: {
@@ -1690,7 +1691,8 @@ var Viewer = {
 		'ui_autofit': 'autofit',
 		'ui_animate': 'animate',
 		'ui_overlay_opacity': 'overlay_opacity',
-		'ui_labels': 'labels'
+		'ui_labels': 'labels',
+		'ui_title_default': 'title_default'
 	},
 	
 	/* References */
@@ -3111,6 +3113,22 @@ var Content_Item = {
 		if ( !this.util.is_string(title, false) ) {
 			title = '';
 		}
+		//Strip default title
+		if ( !this.util.is_empty(title) && !this.get_viewer().get_attribute('title_default') ) {
+			var f = this.get_uri('source');
+			var i = f.lastIndexOf('/');
+			if ( -1 !== i ) {
+				f = f.substr(i + 1);
+				i = f.lastIndexOf('.');
+				if ( -1 !== i ) {
+					f = f.substr(0, i);
+				}
+				if ( title === f ) {
+					title = '';
+				}
+			}
+		}
+		
 		
 		//Cache retrieved value
 		this.set_attribute(prop_cached, title);
