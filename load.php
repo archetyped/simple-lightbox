@@ -28,5 +28,11 @@ function slb_autoload($classname) {
 		require $path;
 	}
 }
-
 spl_autoload_register('slb_autoload');
+
+/* Load Assets */
+
+$path = dirname(__FILE__) . '/';
+require_once $path . 'controller.php';
+$GLOBALS['slb'] = new SLB_Lightbox();
+require_once $path . 'functions.php';

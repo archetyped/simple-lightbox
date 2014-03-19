@@ -152,6 +152,7 @@ class SLB_Lightbox extends SLB_Base {
 
 		/* Admin */
 		add_action('admin_menu', $this->m('admin_menus'));
+		$this->util->add_filter('admin_plugin_row_meta_support', $this->m('admin_plugin_row_meta_support'));
 		
 		/* Init */
 		add_action('wp', $this->m('_hooks_init'));
@@ -230,13 +231,14 @@ class SLB_Lightbox extends SLB_Base {
 				'slideshow_duration'		=> array('title' => __('Slide Duration (Seconds)', 'simple-lightbox'), 'default' => '6', 'attr' => array('size' => 3, 'maxlength' => 3), 'group' => array('ui', 40), 'in_client' => true),
 				'group_loop'				=> array('title' => __('Loop through items', 'simple-lightbox'),'default' => true, 'group' => array('ui', 50), 'in_client' => true),
 				'ui_overlay_opacity'		=> array('title' => __('Overlay Opacity (0 - 1)', 'simple-lightbox'), 'default' => '0.8', 'attr' => array('size' => 3, 'maxlength' => 3), 'group' => array('ui', 60), 'in_client' => true),
+				'ui_title_default'			=> array('title' => __('Enable default title', 'simple-lightbox'), 'default' => false, 'group' => array('ui', 70), 'in_client' => true),		
 				'txt_loading'				=> array('title' => __('Loading indicator', 'simple-lightbox'), 'default' => 'Loading', 'group' => array('labels', 20)),
 				'txt_close'					=> array('title' => __('Close button', 'simple-lightbox'), 'default' => 'Close', 'group' => array('labels', 10)),
 				'txt_nav_next'				=> array('title' => __('Next Item button', 'simple-lightbox'), 'default' => 'Next', 'group' => array('labels', 30)),
 				'txt_nav_prev'				=> array('title' => __('Previous Item button', 'simple-lightbox'), 'default' => 'Previous', 'group' => array('labels', 40)),
 				'txt_slideshow_start'		=> array('title' => __('Start Slideshow button', 'simple-lightbox'), 'default' => 'Start slideshow', 'group' => array('labels', 50)),
 				'txt_slideshow_stop'		=> array('title' => __('Stop Slideshow button', 'simple-lightbox'),'default' => 'Stop slideshow', 'group' => array('labels', 60)),
-				'txt_group_status'			=> array('title' => __('Slideshow status format', 'simple-lightbox'), 'default' => 'Item %current% of %total%', 'group' => array('labels', 70))		
+				'txt_group_status'			=> array('title' => __('Slideshow status format', 'simple-lightbox'), 'default' => 'Item %current% of %total%', 'group' => array('labels', 70))
 			),
 			'legacy' => array (
 				'header_activation'			=> null,
@@ -297,7 +299,7 @@ class SLB_Lightbox extends SLB_Base {
 		//Add Support information
 		$support = $this->util->get_plugin_info('SupportURI');
 		if ( !empty($support) ) {
-			$pg_opts->add_content('support', __('Support', 'simple-lightbox'), $this->m('theme_page_callback_support'), 'secondary');
+			$pg_opts->add_content('support', __('Feedback & Support', 'simple-lightbox'), $this->m('theme_page_callback_support'), 'secondary');
 		}
 		
 		//Add Actions
@@ -314,13 +316,22 @@ class SLB_Lightbox extends SLB_Base {
 	 * Support information
 	 */
 	public function theme_page_callback_support() {
-		echo '<p>';
-		_e("Getting support is easy!  Whether you're experiencing an issue or have a feature request, click the button below to get support right now!", 'simple-lightbox');
-		echo '</p>';
-		
-		$lnk_txt = __('Get Support', 'simple-lightbox');
+		// Description
+		$desc = __("<p>Simple Lightbox thrives on your feedback!</p><p>Click the button below to <strong>get help</strong>, <strong>request a feature</strong>, or <strong>provide some feedback</strong>!</p>", 'simple-lightbox');
+		echo $desc;
+		// Link
 		$lnk_uri = $this->util->get_plugin_info('SupportURI');
-		printf('<a href="%s" title="%s" target="_blank" class="button">%s</a>', $lnk_uri, esc_attr($lnk_txt), $lnk_txt);
+		$lnk_txt = __('Get Support &amp; Provide Feedback', 'simple-lightbox');
+		echo $this->util->build_html_link($lnk_uri, $lnk_txt, array('target' => '_blank', 'class' => 'button'));
+	}
+	
+	/**
+	 * Filter support link text in plugin metadata
+	 * @param string $text Original link text
+	 * @return string Modified link text
+	 */
+	public function admin_plugin_row_meta_support($text) {
+		return "Feedback &amp; Support";
 	}
 
 	/*-** Functionality **-*/
@@ -657,6 +668,9 @@ class SLB_Lightbox extends SLB_Base {
 			//Cache item attributes
 			$this->cache_media_item($uri, $type, $internal, $props_extra);
 			
+			//Filter attributes
+			$attrs = $this->util->apply_filters('process_link_attributes', $attrs);
+			
 			//Update link in content
 			$link_new = '<a ' . $this->util->build_attribute_string($attrs) . '>';
 			$content = str_replace($link, $link_new, $content);
@@ -814,15 +828,6 @@ class SLB_Lightbox extends SLB_Base {
 		
 		$m_items = $this->media_items = $this->get_cached_media_items();
 		foreach ( $m_items as $uri => $p ) {
-			/*
-			$type = $p->{$props->type};
-			//Initialize bucket (if necessary)
-			if ( !isset($m_bucket[$type]) ) {
-				$m_bucket[$type] = array();
-			}
-			//Add item to bucket
-			$m_bucket[$type][$uri] =& $m_items[$uri];
-			*/
 			//Set aside internal links for additional processing
 			if ( $p->internal && !isset($m_internals[$uri]) ) {
 				$m_internals[$uri] =& $m_items[$uri];
@@ -857,7 +862,7 @@ class SLB_Lightbox extends SLB_Base {
 				}
 			}
 			//Destroy worker vars
-			unset($uris_base, $uris_flat, $q, $pids, $pd);
+			unset($uris_base, $uris_flat, $q, $pids, $pd, $file);
 		}
 		
 		//Process items with attachment IDs
@@ -902,6 +907,7 @@ class SLB_Lightbox extends SLB_Base {
 				foreach ( $atts as $att ) {
 					//Set post data
 					$m = array();
+					
 					//Remap post data to properties
 					foreach ( $props_map as $prop_key => $prop_source ) {
 						$m[$props->{$prop_key}] = $att->{$prop_source};
@@ -934,11 +940,17 @@ class SLB_Lightbox extends SLB_Base {
 					
 					//Save attachment data (post & meta) to original object(s)
 					foreach ( $pids[$att->ID] as $uri ) {
-						$this->media_items[$uri] = (object) array_merge( (array) $m_items[$uri], $m);
+						$this->media_items[$uri] = array_merge( (array) $m_items[$uri], $m);
 					}
+					
 				}
 			}
 			unset($atts, $atts_meta, $m, $a, $uri, $pids, $pids_flat);
+		}
+
+		// Filter media item properties
+		foreach ( $this->media_items as $key => $props ) {
+			$this->media_items[$key] =  $this->util->apply_filters('media_item_properties', (object) $props);
 		}
 
 		//Expand URI variants
