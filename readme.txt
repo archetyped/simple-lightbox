@@ -56,6 +56,18 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 3. Dark Theme
 
 == Changelog ==
+
+= 2.3.0-b2 =
+* Add: Manual link activation template tag (`slb_activate()`)
+* Add: Option to enable/disable usage of WordPress-generated media title
+* Add: Filter: Link attributes (`slb_process_link_attributes`)
+* Add: Filter: Media properties (`slb_media_item_properties`)
+* Add: Filter: Support link text (`slb_admin_plugin_row_meta_support`)
+* Optimize: Client-side object detection
+* Optimize: Remove deprecated code
+* Optimize: Loading process
+* Update: Support URI, content
+
 = 2.3.0-b1 =
 * Add: Production versions of client-side code (JS)
 * Add: Dev mode
