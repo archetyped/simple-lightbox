@@ -35,3 +35,4 @@ spl_autoload_register('slb_autoload');
 $path = dirname(__FILE__) . '/';
 require_once $path . 'controller.php';
 $GLOBALS['slb'] = new SLB_Lightbox();
+require_once $path . 'functions.php';
