@@ -175,6 +175,9 @@ class SLB_Lightbox extends SLB_Base {
 			add_filter('get_post_galleries', $this->m('activate_galleries'), $priority);
 			$this->util->add_filter('validate_uri_regex', $this->m('validate_uri_regex_default'), 1);
 			
+			//Media
+			$this->util->add_filter('media_item_properties', $this->m('format_media_properties'));
+			
 			//Grouping
 			if ( $this->options->get_bool('group_post') ) {
 				$this->util->add_filter('get_group_id', $this->m('post_group_id'), 1);	
@@ -862,7 +865,7 @@ class SLB_Lightbox extends SLB_Base {
 				}
 			}
 			//Destroy worker vars
-			unset($uris_base, $uris_flat, $q, $pids, $pd);
+			unset($uris_base, $uris_flat, $q, $pids, $pd, $file);
 		}
 		
 		//Process items with attachment IDs
@@ -907,6 +910,7 @@ class SLB_Lightbox extends SLB_Base {
 				foreach ( $atts as $att ) {
 					//Set post data
 					$m = array();
+					
 					//Remap post data to properties
 					foreach ( $props_map as $prop_key => $prop_source ) {
 						$m[$props->{$prop_key}] = $att->{$prop_source};
@@ -939,11 +943,17 @@ class SLB_Lightbox extends SLB_Base {
 					
 					//Save attachment data (post & meta) to original object(s)
 					foreach ( $pids[$att->ID] as $uri ) {
-						$this->media_items[$uri] = (object) array_merge( (array) $m_items[$uri], $m);
+						$this->media_items[$uri] = array_merge( (array) $m_items[$uri], $m);
 					}
+					
 				}
 			}
 			unset($atts, $atts_meta, $m, $a, $uri, $pids, $pids_flat);
+		}
+
+		// Filter media item properties
+		foreach ( $this->media_items as $key => $props ) {
+			$this->media_items[$key] =  $this->util->apply_filters('media_item_properties', (object) $props);
 		}
 
 		//Expand URI variants
@@ -967,6 +977,23 @@ class SLB_Lightbox extends SLB_Base {
 	}
 
 	/*-** Media **-*/
+	
+	/**
+	 * Format media item properties
+	 * @param obj $props Media item properties
+	 * @return obj Updated media properties
+	 */
+	public function format_media_properties($props) {
+		// Process only internal items
+		if ( !!$props->internal ) {
+			$f = basename($props->source);
+			// Format title
+			if ( !empty($props->title) && 0 === strpos($f, $props->title) ) {
+				$props->title = '';
+			}
+		}
+		return $props;
+	}
 	
 	/**
 	 * Cache media properties for later processing
