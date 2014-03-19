@@ -828,15 +828,6 @@ class SLB_Lightbox extends SLB_Base {
 		
 		$m_items = $this->media_items = $this->get_cached_media_items();
 		foreach ( $m_items as $uri => $p ) {
-			/*
-			$type = $p->{$props->type};
-			//Initialize bucket (if necessary)
-			if ( !isset($m_bucket[$type]) ) {
-				$m_bucket[$type] = array();
-			}
-			//Add item to bucket
-			$m_bucket[$type][$uri] =& $m_items[$uri];
-			*/
 			//Set aside internal links for additional processing
 			if ( $p->internal && !isset($m_internals[$uri]) ) {
 				$m_internals[$uri] =& $m_items[$uri];
