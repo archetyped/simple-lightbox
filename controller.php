@@ -553,30 +553,14 @@ class SLB_Lightbox extends SLB_Base {
 			
 			//Parse link attributes
 			$attrs = $this->util->parse_attribute_string($link_new, array('href' => ''));
-			$attrs_legacy = ( isset($attrs['rel']) && !empty($attrs['rel']) ) ? explode(' ', trim($attrs['rel'])) : array();
 			//Get URI
 			$uri->raw = $uri->source = $attrs['href'];
 			
 			//Stop processing invalid links
 			if ( !$this->validate_uri($uri->raw)
 				|| $this->has_attribute($attrs, 'active', false) //Previously-processed
-				|| in_array($this->add_prefix('off'), $attrs_legacy) //Disabled (legacy)
 				) {
 				continue;
-			}
-			
-			//Process legacy attributes
-			if ( !empty($attrs_legacy) ) {
-				//Group
-				if ( $g_props->enabled ) {
-					foreach ( $attrs_legacy as $attr ) {
-						if ( 0 === strpos($attr, $g_props->legacy_prefix) && substr($attr, -1) == $g_props->legacy_suffix ) {
-							$this->set_attribute($attrs, $g_props->attr, substr($attr, strlen($g_props->legacy_prefix), -1));
-							break;
-						}
-					}
-					unset($attr);
-				}
 			}
 			
 			//Check if item links to internal media (attachment)
@@ -822,7 +806,6 @@ class SLB_Lightbox extends SLB_Base {
 		$props_map = array('description' => 'post_content', 'title' => 'post_title', 'caption' => 'post_excerpt');
 
 		//Separate media into buckets by type
-		//$m_bucket = array();
 		$m_internals = array();
 		$type = $id = null;
 		
