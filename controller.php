@@ -414,55 +414,29 @@ class SLB_Lightbox extends SLB_Base {
 			'ph'		=> $this->util->add_wrapper( $this->add_prefix('exclude_temp'), '{{', '}}' ),
 		);
 		
-		global $dbg;
-		$content_temp = $content;
-		$loop = 1;
-		$x = 0;
-		
 		/* Regex */
 		
 		$re = '#\[slb_exclude\](.*?)\[/slb_exclude\]#s';
 		
-		$dbg->timer_start('regex');
-		for ( $x = 0; $x < $loop; $x++ ) : // [O] Regex
-			$ex->cache = array();
-			$content = $content_temp;
-			$matches = null;
-		//Search content
+		$matches = null;
+		// Search content
 		if ( strpos($content, $ex->tags->open) && preg_match_all($re, $content, $matches) ) {
 			foreach ( $matches[1] as $idx => $match ) {
-				//Cache content
+				// Cache content
 				$ex->cache[] = $match;
 			}
-			//Replace with placeholder
+			// Replace with placeholder
+			/*
+			// TODO: Build indexed placeholders 
 			$ph = array();
 			foreach ( $matches[0] as $idx => $match ) {
 				$ph[] = "{{slb_exclude $idx}}";
 			}
-			$content = str_replace($matches[0], $ph, $content);
+			*/
+			$content = str_replace($matches[0], $ex->ph, $content);
 		}
-		endfor; // [X] Regex
-		$dbg->timer_stop('regex');
-		
-		/* Regex replace */
-		
-		$dbg->timer_start('regex_replace');
-		for ( $x = 0; $x < $loop; $x++ ) : // [O] Regex replace
-		$content = $content_temp;
-		$ex->cache = array();
-		$content = preg_replace_callback($re, $this->m('exclude_replace'), $content);
-		endfor; // [X] Regex replace
-		$dbg->timer_stop('regex_replace');
-		
-		$dbg->timer_compare('regex', 'regex_replace');
 		
 		return $content;
-	}
-
-
-	private function exclude_replace($matches) {
-		$this->exclude->cache[] = $matches[1];
-		return $this->exclude->ph;
 	}
 	
 	private function restore_excluded_content($content) {
@@ -530,7 +504,7 @@ class SLB_Lightbox extends SLB_Base {
 		}
 		
 		
-		//$content = $this->restore_excluded_content($content);
+		$content = $this->restore_excluded_content($content);
 
 		return $content;
 	}
