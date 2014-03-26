@@ -416,48 +416,8 @@ class SLB_Lightbox extends SLB_Base {
 		
 		global $dbg;
 		$content_temp = $content;
-		$loop = 100;
+		$loop = 1;
 		$x = 0;
-		
-		/* Standard */
-		
-		$dbg->timer_start('standard');
-		for ( $x = 0; $x < $loop; $x++ ) : // [O] Standard exclude
-		$ex->cache = array();
-		$content = $content_temp;
-		//Handle excluded content
-		$ex->start = strpos($content, $ex->tags->open);
-		if ( false !== $ex->start ) {
-			$ex->offset_start = strlen($ex->tags->open);
-			$ex->offset = $ex->start + $ex->offset_start;
-			$ex->end = strpos($content, $ex->tags->close, $ex->offset);
-			if ( false !== $ex->end ) {
-				$ex->offset_ph = strlen($ex->ph);
-				$ex->offset_end = strlen($ex->tags->close);
-				$ex->tag_values = array_values( (array) $ex->tags);
-				//Strip excluded content
-				while ( false !== $ex->start && false !== $ex->end ) {
-					//Extract content
-					$ex->length = $ex->end + $ex->offset_end - $ex->start;
-					$ex->temp = substr($content, $ex->start, $ex->length);
-					//Cache content (strip tags)
-					$ex->cache[] = str_replace( $ex->tag_values, '', $ex->temp );
-					//Replace with placeholder
-					$content = substr_replace($content, $ex->ph, $ex->start, $ex->length);
-					//Find next tag
-					$ex->offset = $ex->start + $ex->offset_ph;
-					$ex->start = strpos($content, $ex->tags->open, $ex->offset);
-					if ( false !== $ex->start ) {
-						$ex->offset = $ex->start + $ex->offset_start;
-						$ex->end = strpos($content, $ex->tags->close, $ex->offset);
-					}
-				}
-			}
-		}
-		endfor; // [X] Standard exclude
-		$dbg->timer_stop('standard');
-		
-		dbg_print_message('Standard Cached content', $ex->cache);
 		
 		/* Regex */
 		
@@ -484,11 +444,25 @@ class SLB_Lightbox extends SLB_Base {
 		endfor; // [X] Regex
 		$dbg->timer_stop('regex');
 		
-		dbg_print_message('Regex Cached content', $ex->cache);
+		/* Regex replace */
 		
-		$dbg->timer_compare('standard', 'regex');
+		$dbg->timer_start('regex_replace');
+		for ( $x = 0; $x < $loop; $x++ ) : // [O] Regex replace
+		$content = $content_temp;
+		$ex->cache = array();
+		$content = preg_replace_callback($re, $this->m('exclude_replace'), $content);
+		endfor; // [X] Regex replace
+		$dbg->timer_stop('regex_replace');
+		
+		$dbg->timer_compare('regex', 'regex_replace');
 		
 		return $content;
+	}
+
+
+	private function exclude_replace($matches) {
+		$this->exclude->cache[] = $matches[1];
+		return $this->exclude->ph;
 	}
 	
 	private function restore_excluded_content($content) {
