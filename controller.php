@@ -55,6 +55,12 @@ class SLB_Lightbox extends SLB_Base {
 	private $media_items_raw = array();
 	
 	/**
+	 * Manage excluded content
+	 * @var object
+	 */
+	private $exclude = null;
+	
+	/**
 	 * Validated URIs
 	 * Caches validation of parsed URIs
 	 * > Key: URI
@@ -398,15 +404,9 @@ class SLB_Lightbox extends SLB_Base {
 		return $galleries;
 	}
 	
-	/**
-	 * Scans post content for image links and activates them
-	 * 
-	 * Lightbox will not be activated for feeds
-	 * @param $content
-	 * @return string Post content
-	 */
-	public function activate_links($content) {
-		$ex = (object) array (
+	private function exclude_content($content) {
+		// Initialize exclude data
+		$ex = $this->exclude = (object) array (
 			'tags'		=> $this->get_exclude_tags(),
 			'cache'		=> array(),
 			'start'		=> false,
@@ -443,7 +443,33 @@ class SLB_Lightbox extends SLB_Base {
 				}
 			}
 		}
-
+		return $content;
+	}
+	
+	private function restore_excluded_content($content) {
+		$ex = $this->exclude;
+		//Restore excluded content
+		if ( !empty($ex->cache) ) {
+			$ex->parts = explode($ex->ph, $content, count($ex->cache) + 1);
+			$ex->cache[] = '';
+			$content = '';
+			foreach ( $ex->parts as $idx => $part ) {
+				$content .= $part . $ex->cache[$idx];
+			}
+		}
+		return $content;
+	}
+	
+	/**
+	 * Scans post content for image links and activates them
+	 * 
+	 * Lightbox will not be activated for feeds
+	 * @param $content
+	 * @return string Post content
+	 */
+	public function activate_links($content) {
+		$content = $this->exclude_content($content);
+		
 		$groups = array();
 		$w = $this->group_get_wrapper();
 		$g_ph_f = '[%s]';
@@ -484,15 +510,9 @@ class SLB_Lightbox extends SLB_Base {
 			$content = str_replace($g_ph, $w->open . $this->process_links($g_content, 'gallery_' . $group) . $w->close, $content);
 		}
 		
-		//Restore excluded content
-		if ( !empty($ex->cache) ) {
-			$ex->parts = explode($ex->ph, $content, count($ex->cache) + 1);
-			$ex->cache[] = '';
-			$content = '';
-			foreach ( $ex->parts as $idx => $part ) {
-				$content .= $part . $ex->cache[$idx];
-			}
-		}
+		
+		$content = $this->restore_excluded_content($content);
+
 		return $content;
 	}
 	
