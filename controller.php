@@ -414,6 +414,17 @@ class SLB_Lightbox extends SLB_Base {
 			'ph'		=> $this->util->add_wrapper( $this->add_prefix('exclude_temp'), '{{', '}}' ),
 		);
 		
+		global $dbg;
+		$content_temp = $content;
+		$loop = 100;
+		$x = 0;
+		
+		/* Standard */
+		
+		$dbg->timer_start('standard');
+		for ( $x = 0; $x < $loop; $x++ ) : // [O] Standard exclude
+		$ex->cache = array();
+		$content = $content_temp;
 		//Handle excluded content
 		$ex->start = strpos($content, $ex->tags->open);
 		if ( false !== $ex->start ) {
@@ -443,6 +454,40 @@ class SLB_Lightbox extends SLB_Base {
 				}
 			}
 		}
+		endfor; // [X] Standard exclude
+		$dbg->timer_stop('standard');
+		
+		dbg_print_message('Standard Cached content', $ex->cache);
+		
+		/* Regex */
+		
+		$re = '#\[slb_exclude\](.*?)\[/slb_exclude\]#s';
+		
+		$dbg->timer_start('regex');
+		for ( $x = 0; $x < $loop; $x++ ) : // [O] Regex
+			$ex->cache = array();
+			$content = $content_temp;
+			$matches = null;
+		//Search content
+		if ( strpos($content, $ex->tags->open) && preg_match_all($re, $content, $matches) ) {
+			foreach ( $matches[1] as $idx => $match ) {
+				//Cache content
+				$ex->cache[] = $match;
+			}
+			//Replace with placeholder
+			$ph = array();
+			foreach ( $matches[0] as $idx => $match ) {
+				$ph[] = "{{slb_exclude $idx}}";
+			}
+			$content = str_replace($matches[0], $ph, $content);
+		}
+		endfor; // [X] Regex
+		$dbg->timer_stop('regex');
+		
+		dbg_print_message('Regex Cached content', $ex->cache);
+		
+		$dbg->timer_compare('standard', 'regex');
+		
 		return $content;
 	}
 	
@@ -511,7 +556,7 @@ class SLB_Lightbox extends SLB_Base {
 		}
 		
 		
-		$content = $this->restore_excluded_content($content);
+		//$content = $this->restore_excluded_content($content);
 
 		return $content;
 	}
