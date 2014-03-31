@@ -181,6 +181,8 @@ class SLB_Lightbox extends SLB_Base {
 			add_filter('get_post_galleries', $this->m('activate_galleries'), $priority);
 			$this->util->add_filter('pre_process_links', $this->m('exclude_content'));
 			$this->util->add_filter('post_process_links', $this->m('restore_excluded_content'));
+			$this->util->add_filter('pre_process_links', $this->m('exclude_groups'));
+			$this->util->add_filter('post_process_links', $this->m('restore_groups'));
 			$this->util->add_filter('validate_uri_regex', $this->m('validate_uri_regex_default'), 1);
 			
 			//Grouping
@@ -414,36 +416,6 @@ class SLB_Lightbox extends SLB_Base {
 	 * @return string Post content
 	 */
 	public function activate_links($content) {
-		//$content = $this->exclude_content($content);
-		
-		/**
-		$groups = array();
-		$w = $this->group_get_wrapper();
-		$g_ph_f = '[%s]';
-
-		//Strip groups
-		if ( $this->options->get_bool('group_gallery') ) {
-			$groups = array();
-			static $g_idx = 1;
-			$g_end_idx = 0;
-			//Iterate through galleries
-			while ( ($g_start_idx = strpos($content, $w->open, $g_end_idx)) && $g_start_idx !== false 
-					&& ($g_end_idx = strpos($content, $w->close, $g_start_idx)) && $g_end_idx != false ) {
-				$g_start_idx += strlen($w->open);
-				//Extract gallery content & save for processing
-				$g_len = $g_end_idx - $g_start_idx;
-				$groups[$g_idx] = substr($content, $g_start_idx, $g_len);
-				//Replace content with placeholder
-				$g_ph = sprintf($g_ph_f, $g_idx);
-				$content = substr_replace($content, $g_ph, $g_start_idx, $g_len);
-				//Increment gallery count
-				$g_idx++;
-				//Update end index
-				$g_end_idx = $g_start_idx + strlen($w->open);
-			}
-		}
-		*/
-		
 		// Filter content before processing links
 		$content = $this->util->apply_filters('pre_process_links', $content);
 		
@@ -453,21 +425,6 @@ class SLB_Lightbox extends SLB_Base {
 		// Filter content after processing links
 		$content = $this->util->apply_filters('post_process_links', $content);
 		
-		//Reintegrate Groups
-		/*
-		foreach ( $groups as $group => $g_content ) {
-			$g_ph = $w->open . sprintf($g_ph_f, $group) . $w->close;
-			//Skip group if placeholder does not exist in content
-			if ( strpos($content, $g_ph) === false ) {
-				continue;
-			}
-			//Replace placeholder with processed content
-			$content = str_replace($g_ph, $w->open . $this->process_links($g_content, 'gallery_' . $group) . $w->close, $content);
-		}
-		*/
-		
-		//$content = $this->restore_excluded_content($content);
-
 		return $content;
 	}
 	
@@ -1250,12 +1207,8 @@ class SLB_Lightbox extends SLB_Base {
 		if ( !empty($content) )
 			$sc .= $content . '[/' . $tag .']';
 		//Wrap shortcode
-		$sc = $this->exclude_wrap($sc);
-		/*
 		$w = $this->group_get_wrapper();
 		$sc = $w->open . $sc . $w->close;
-		*/
-		dbg_print_message('Wrapped output', $sc);
 		return $sc;
 	}
 	
@@ -1274,6 +1227,58 @@ class SLB_Lightbox extends SLB_Base {
 			$content = str_replace($w->open, '', $content);
 			$content = str_replace($w->close, '', $content);
 		}
+		return $content;
+	}
+	
+	/**
+	 * Exclude grouped content
+	 * @param string $content Content to strip grouped content from
+	 * @return string Content with groups excluded
+	 */
+	public function exclude_groups($content) {
+		/*
+		$groups = array();
+		$w = $this->group_get_wrapper();
+		$g_ph_f = '[%s]';
+
+		//Strip groups
+		if ( $this->options->get_bool('group_gallery') ) {
+			$groups = array();
+			static $g_idx = 1;
+			$g_end_idx = 0;
+			//Iterate through galleries
+			while ( ($g_start_idx = strpos($content, $w->open, $g_end_idx)) && $g_start_idx !== false 
+					&& ($g_end_idx = strpos($content, $w->close, $g_start_idx)) && $g_end_idx != false ) {
+				$g_start_idx += strlen($w->open);
+				//Extract gallery content & save for processing
+				$g_len = $g_end_idx - $g_start_idx;
+				$groups[$g_idx] = substr($content, $g_start_idx, $g_len);
+				//Replace content with placeholder
+				$g_ph = sprintf($g_ph_f, $g_idx);
+				$content = substr_replace($content, $g_ph, $g_start_idx, $g_len);
+				//Increment gallery count
+				$g_idx++;
+				//Update end index
+				$g_end_idx = $g_start_idx + strlen($w->open);
+			}
+		}
+		*/
+		return $content;
+	}
+	
+	public function restore_groups($content) {
+		//Reintegrate Groups
+		/*
+		foreach ( $groups as $group => $g_content ) {
+			$g_ph = $w->open . sprintf($g_ph_f, $group) . $w->close;
+			//Skip group if placeholder does not exist in content
+			if ( strpos($content, $g_ph) === false ) {
+				continue;
+			}
+			//Replace placeholder with processed content
+			$content = str_replace($g_ph, $w->open . $this->process_links($g_content, 'gallery_' . $group) . $w->close, $content);
+		}
+		*/
 		return $content;
 	}
 	
