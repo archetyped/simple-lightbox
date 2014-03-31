@@ -433,6 +433,7 @@ class SLB_Lightbox extends SLB_Base {
 				// Build placeholder
 				$ph[] =	sprintf('{{slb_exclude key="%s"}}', $idx);
 			}
+			unset($midx, $match);
 			// Replace content with placeholder
 			$content = str_replace($matches[0], $ph, $content);
 		}
@@ -440,17 +441,32 @@ class SLB_Lightbox extends SLB_Base {
 		return $content;
 	}
 	
+	/**
+	 * Restore excluded content
+	 * @param string $content Content to restore excluded content to
+	 * @return string Content with excluded content restored
+	 */
 	private function restore_excluded_content($content) {
 		$ex = $this->exclude;
-		//Restore excluded content
-		if ( !empty($ex->cache) ) {
-			$ex->parts = explode($ex->ph, $content, count($ex->cache) + 1);
-			$ex->cache[] = '';
-			$content = '';
-			foreach ( $ex->parts as $idx => $part ) {
-				$content .= $part . $ex->cache[$idx];
+		
+		$re = '#\{\{slb_exclude\s+(.+?)\}\}#s';
+		$matches = null;
+		
+		// Search content for placeholders
+		if ( strpos($content, '{{slb_exclude ') && preg_match_all($re, $content, $matches) ) {
+			// Restore placeholders
+			foreach ( $matches[1] as $idx => $ph ) {
+				// Parse placeholder attributes
+				$attrs = $this->util->parse_attribute_string($ph);
+				// Restore content
+				$key = $attrs['key'] = intval($attrs['key']);
+				if ( isset($ex->cache[$key]) ) {
+					$content = str_replace($matches[0][$idx], $ex->cache[$key], $content);
+				}
 			}
+			unset($midx, $match);
 		}
+		
 		return $content;
 	}
 	
@@ -505,7 +521,7 @@ class SLB_Lightbox extends SLB_Base {
 		}
 		
 		
-		//$content = $this->restore_excluded_content($content);
+		$content = $this->restore_excluded_content($content);
 
 		return $content;
 	}
