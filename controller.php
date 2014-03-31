@@ -404,38 +404,67 @@ class SLB_Lightbox extends SLB_Base {
 		return $galleries;
 	}
 	
-	private function exclude_content($content) {
+	/**
+	 * Retrieve exclude object
+	 * Initialize object properties if necessary
+	 * @return object Exclude properties
+	 */
+	private function get_exclude() {
 		// Initialize exclude data
-		$ex = $this->exclude = (object) array (
-			'tags'		=> $this->get_exclude_tags(),
-			'cache'		=> array(),
-			'start'		=> false,
-			'end'		=> false,
-			'ph'		=> $this->util->add_wrapper( $this->add_prefix('exclude_temp'), '{{', '}}' ),
-		);
+		if ( !is_object($this->exclude) ) {
+			$this->exclude = (object) array (
+				'tags'		=> $this->get_exclude_tags(),
+				'ph'		=> $this->get_exclude_placeholder(),
+				'cache'		=> array(),
+			);
+		}
+		return $this->exclude;
+	}
+	
+	/**
+	 * Build exclude placeholder
+	 * @return object Exclude placeholder properties
+	 */
+	private function get_exclude_placeholder() {
+		static $ph;
+		if ( !is_object($ph) ) {
+			$ph = (object) array (
+				'base'	=> $this->add_prefix('exclude_temp'),
+				'open'	=> '{{',
+				'close'	=> '}}',
+			);
+			$ph->search = '#' . preg_quote($ph->open) . $ph->base . '\s+(.+?)' . preg_quote($ph->close) . '#s';
+		}
+		return $ph;
+	}
+	
+	private function exclude_content($content) {
+		$ex = $this->get_exclude();
 		$cache =& $ex->cache;
 		
 		/* Regex */
 		
-		$re = '#\[slb_exclude\](.*?)\[/slb_exclude\]#s';
-		
 		$matches = null;
 		// Search content
-		if ( strpos($content, $ex->tags->open) && preg_match_all($re, $content, $matches) ) {
+		if ( false !== strpos($content, $ex->tags->open) && preg_match_all($ex->tags->search, $content, $matches) ) {
 			// Determine index
 			$idx = ( !!end($cache) ) ? key($cache) : -1;
 			$ph = array();
+			$ph_fmt = $ex->ph->open . $ex->ph->base . ' key="%s"' . $ex->ph->close;
 			foreach ( $matches[1] as $midx => $match ) {
 				// Update index
 				$idx++;
 				// Cache content
 				$cache[$idx] = $match;
 				// Build placeholder
-				$ph[] =	sprintf('{{slb_exclude key="%s"}}', $idx);
+				$ph[] =	sprintf($ph_fmt, $idx);
 			}
 			unset($midx, $match);
 			// Replace content with placeholder
 			$content = str_replace($matches[0], $ph, $content);
+			
+			// Cleanup
+			unset($matches, $ph);
 		}
 		
 		return $content;
@@ -447,13 +476,11 @@ class SLB_Lightbox extends SLB_Base {
 	 * @return string Content with excluded content restored
 	 */
 	private function restore_excluded_content($content) {
-		$ex = $this->exclude;
-		
-		$re = '#\{\{slb_exclude\s+(.+?)\}\}#s';
-		$matches = null;
+		$ex = $this->get_exclude();
 		
 		// Search content for placeholders
-		if ( strpos($content, '{{slb_exclude ') && preg_match_all($re, $content, $matches) ) {
+		$matches = null;
+		if ( false !== strpos($content, $ex->ph->open . $ex->ph->base) && preg_match_all($ex->ph->search, $content, $matches) ) {
 			// Restore placeholders
 			foreach ( $matches[1] as $idx => $ph ) {
 				// Parse placeholder attributes
@@ -464,7 +491,8 @@ class SLB_Lightbox extends SLB_Base {
 					$content = str_replace($matches[0][$idx], $ex->cache[$key], $content);
 				}
 			}
-			unset($midx, $match);
+			// Cleanup
+			unset($idx, $ph, $matches, $key);
 		}
 		
 		return $content;
@@ -1066,9 +1094,11 @@ class SLB_Lightbox extends SLB_Base {
 		if ( null == $tags ) {
 			$base = $this->add_prefix('exclude');
 			$tags = (object) array (
+				'base'	=> $base,
 				'open'	=> $this->util->add_wrapper($base),
 				'close'	=> $this->util->add_wrapper($base, '[/', ']')
 			);
+			$tags->search ='#' . preg_quote($tags->open) . '(.*?)' . preg_quote($tags->close) . '#s';
 		}
 		return $tags;
 	}
