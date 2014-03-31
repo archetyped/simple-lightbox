@@ -179,6 +179,8 @@ class SLB_Lightbox extends SLB_Base {
 			//Link activation
 			add_filter('the_content', $this->m('activate_links'), $priority);
 			add_filter('get_post_galleries', $this->m('activate_galleries'), $priority);
+			$this->util->add_filter('pre_process_links', $this->m('exclude_content'));
+			$this->util->add_filter('post_process_links', $this->m('restore_excluded_content'));
 			$this->util->add_filter('validate_uri_regex', $this->m('validate_uri_regex_default'), 1);
 			
 			//Grouping
@@ -188,7 +190,7 @@ class SLB_Lightbox extends SLB_Base {
 			
 			//Gallery wrapping
 			add_filter('the_content', $this->m('gallery_wrap'), 1);
-			add_filter('the_content', $this->m('gallery_unwrap'), $priority + 1);
+			//add_filter('the_content', $this->m('gallery_unwrap'), $priority + 1);
 			
 			//Widgets
 			add_filter('dynamic_sidebar_params', $this->m('widget_process_setup'), PHP_INT_MAX);
@@ -412,8 +414,9 @@ class SLB_Lightbox extends SLB_Base {
 	 * @return string Post content
 	 */
 	public function activate_links($content) {
-		$content = $this->exclude_content($content);
+		//$content = $this->exclude_content($content);
 		
+		/**
 		$groups = array();
 		$w = $this->group_get_wrapper();
 		$g_ph_f = '[%s]';
@@ -439,11 +442,19 @@ class SLB_Lightbox extends SLB_Base {
 				$g_end_idx = $g_start_idx + strlen($w->open);
 			}
 		}
+		*/
 		
-		//General link processing
+		// Filter content before processing links
+		$content = $this->util->apply_filters('pre_process_links', $content);
+		
+		// Process links
 		$content = $this->process_links($content);
 		
+		// Filter content after processing links
+		$content = $this->util->apply_filters('post_process_links', $content);
+		
 		//Reintegrate Groups
+		/*
 		foreach ( $groups as $group => $g_content ) {
 			$g_ph = $w->open . sprintf($g_ph_f, $group) . $w->close;
 			//Skip group if placeholder does not exist in content
@@ -453,9 +464,9 @@ class SLB_Lightbox extends SLB_Base {
 			//Replace placeholder with processed content
 			$content = str_replace($g_ph, $w->open . $this->process_links($g_content, 'gallery_' . $group) . $w->close, $content);
 		}
+		*/
 		
-		
-		$content = $this->restore_excluded_content($content);
+		//$content = $this->restore_excluded_content($content);
 
 		return $content;
 	}
@@ -1092,7 +1103,7 @@ class SLB_Lightbox extends SLB_Base {
 	 * @param string $content Content to remove excluded content from
 	 * @return string Updated content
 	 */
-	private function exclude_content($content, $group = null) {
+	public function exclude_content($content, $group = null) {
 		$ex = $this->get_exclude();
 		// Setup cache
 		if ( !is_string($group) || empty($group) ) {
@@ -1135,7 +1146,7 @@ class SLB_Lightbox extends SLB_Base {
 	 * @param string $content Content to restore excluded content to
 	 * @return string Content with excluded content restored
 	 */
-	private function restore_excluded_content($content, $group = null) {
+	public function restore_excluded_content($content, $group = null) {
 		$ex = $this->get_exclude();
 		// Setup cache
 		if ( !is_string($group) || empty($group) ) {
@@ -1239,8 +1250,12 @@ class SLB_Lightbox extends SLB_Base {
 		if ( !empty($content) )
 			$sc .= $content . '[/' . $tag .']';
 		//Wrap shortcode
+		$sc = $this->exclude_wrap($sc);
+		/*
 		$w = $this->group_get_wrapper();
 		$sc = $w->open . $sc . $w->close;
+		*/
+		dbg_print_message('Wrapped output', $sc);
 		return $sc;
 	}
 	
