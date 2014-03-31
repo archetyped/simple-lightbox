@@ -998,9 +998,10 @@ class SLB_Lightbox extends SLB_Base {
 		// Initialize exclude data
 		if ( !is_object($this->exclude) ) {
 			$this->exclude = (object) array (
-				'tags'		=> $this->get_exclude_tags(),
-				'ph'		=> $this->get_exclude_placeholder(),
-				'cache'		=> array(),
+				'tags'			=> $this->get_exclude_tags(),
+				'ph'			=> $this->get_exclude_placeholder(),
+				'group_default'	=> 'default',
+				'cache'			=> array(),
 			);
 		}
 		return $this->exclude;
@@ -1053,8 +1054,18 @@ class SLB_Lightbox extends SLB_Base {
 				'base'	=> $this->add_prefix('exclude_temp'),
 				'open'	=> '{{',
 				'close'	=> '}}',
+				'attrs'	=> array ( 'group' => '', 'key' => '' ),
 			);
-			$ph->search = '#' . preg_quote($ph->open) . $ph->base . '\s+(.+?)' . preg_quote($ph->close) . '#s';
+			// Search Patterns
+			$sub = '(.+?)';
+			$ph->search = '#' . preg_quote($ph->open) . $ph->base . '\s+' . $sub . preg_quote($ph->close) . '#s';
+			$ph->search_group = str_replace($sub, '(group="%s"\s+.?)', $ph->search);
+			// Templates
+			$attr_string = '';
+			foreach ( $ph->attrs as $attr => $val ) {
+				$attr_string .= ' ' . $attr . '="%s"';
+			}
+			$ph->template = $ph->open . $ph->base . $attr_string . $ph->close;
 		}
 		return $ph;
 	}
@@ -1081,9 +1092,16 @@ class SLB_Lightbox extends SLB_Base {
 	 * @param string $content Content to remove excluded content from
 	 * @return string Updated content
 	 */
-	private function exclude_content($content) {
+	private function exclude_content($content, $group = null) {
 		$ex = $this->get_exclude();
-		$cache =& $ex->cache;
+		// Setup cache
+		if ( !is_string($group) || empty($group) ) {
+			$group = $ex->group_default;
+		}
+		if ( !isset($ex->cache[$group]) ) {
+			$ex->cache[$group] = array();
+		}
+		$cache =& $ex->cache[$group];
 		
 		/* Regex */
 		
@@ -1093,14 +1111,13 @@ class SLB_Lightbox extends SLB_Base {
 			// Determine index
 			$idx = ( !!end($cache) ) ? key($cache) : -1;
 			$ph = array();
-			$ph_fmt = $ex->ph->open . $ex->ph->base . ' key="%s"' . $ex->ph->close;
 			foreach ( $matches[1] as $midx => $match ) {
 				// Update index
 				$idx++;
 				// Cache content
 				$cache[$idx] = $match;
 				// Build placeholder
-				$ph[] =	sprintf($ph_fmt, $idx);
+				$ph[] =	sprintf($ex->ph->template, $group, $idx);
 			}
 			unset($midx, $match);
 			// Replace content with placeholder
@@ -1118,8 +1135,17 @@ class SLB_Lightbox extends SLB_Base {
 	 * @param string $content Content to restore excluded content to
 	 * @return string Content with excluded content restored
 	 */
-	private function restore_excluded_content($content) {
+	private function restore_excluded_content($content, $group = null) {
 		$ex = $this->get_exclude();
+		// Setup cache
+		if ( !is_string($group) || empty($group) ) {
+			$group = $ex->group_default;
+		}
+		// Nothing to restore if cache group doesn't exist
+		if ( !isset($ex->cache[$group]) ) {
+			return $content;
+		}
+		$cache =& $ex->cache[$group];
 		
 		// Search content for placeholders
 		$matches = null;
@@ -1127,11 +1153,15 @@ class SLB_Lightbox extends SLB_Base {
 			// Restore placeholders
 			foreach ( $matches[1] as $idx => $ph ) {
 				// Parse placeholder attributes
-				$attrs = $this->util->parse_attribute_string($ph);
+				$attrs = $this->util->parse_attribute_string($ph, $ex->ph->attrs);
+				// Validate
+				if ( $attrs['group'] !== $group ) {
+					continue;
+				}
 				// Restore content
 				$key = $attrs['key'] = intval($attrs['key']);
-				if ( isset($ex->cache[$key]) ) {
-					$content = str_replace($matches[0][$idx], $ex->cache[$key], $content);
+				if ( isset($cache[$key]) ) {
+					$content = str_replace($matches[0][$idx], $cache[$key], $content);
 				}
 			}
 			// Cleanup
