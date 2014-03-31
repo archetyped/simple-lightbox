@@ -405,100 +405,6 @@ class SLB_Lightbox extends SLB_Base {
 	}
 	
 	/**
-	 * Retrieve exclude object
-	 * Initialize object properties if necessary
-	 * @return object Exclude properties
-	 */
-	private function get_exclude() {
-		// Initialize exclude data
-		if ( !is_object($this->exclude) ) {
-			$this->exclude = (object) array (
-				'tags'		=> $this->get_exclude_tags(),
-				'ph'		=> $this->get_exclude_placeholder(),
-				'cache'		=> array(),
-			);
-		}
-		return $this->exclude;
-	}
-	
-	/**
-	 * Build exclude placeholder
-	 * @return object Exclude placeholder properties
-	 */
-	private function get_exclude_placeholder() {
-		static $ph;
-		if ( !is_object($ph) ) {
-			$ph = (object) array (
-				'base'	=> $this->add_prefix('exclude_temp'),
-				'open'	=> '{{',
-				'close'	=> '}}',
-			);
-			$ph->search = '#' . preg_quote($ph->open) . $ph->base . '\s+(.+?)' . preg_quote($ph->close) . '#s';
-		}
-		return $ph;
-	}
-	
-	private function exclude_content($content) {
-		$ex = $this->get_exclude();
-		$cache =& $ex->cache;
-		
-		/* Regex */
-		
-		$matches = null;
-		// Search content
-		if ( false !== strpos($content, $ex->tags->open) && preg_match_all($ex->tags->search, $content, $matches) ) {
-			// Determine index
-			$idx = ( !!end($cache) ) ? key($cache) : -1;
-			$ph = array();
-			$ph_fmt = $ex->ph->open . $ex->ph->base . ' key="%s"' . $ex->ph->close;
-			foreach ( $matches[1] as $midx => $match ) {
-				// Update index
-				$idx++;
-				// Cache content
-				$cache[$idx] = $match;
-				// Build placeholder
-				$ph[] =	sprintf($ph_fmt, $idx);
-			}
-			unset($midx, $match);
-			// Replace content with placeholder
-			$content = str_replace($matches[0], $ph, $content);
-			
-			// Cleanup
-			unset($matches, $ph);
-		}
-		
-		return $content;
-	}
-	
-	/**
-	 * Restore excluded content
-	 * @param string $content Content to restore excluded content to
-	 * @return string Content with excluded content restored
-	 */
-	private function restore_excluded_content($content) {
-		$ex = $this->get_exclude();
-		
-		// Search content for placeholders
-		$matches = null;
-		if ( false !== strpos($content, $ex->ph->open . $ex->ph->base) && preg_match_all($ex->ph->search, $content, $matches) ) {
-			// Restore placeholders
-			foreach ( $matches[1] as $idx => $ph ) {
-				// Parse placeholder attributes
-				$attrs = $this->util->parse_attribute_string($ph);
-				// Restore content
-				$key = $attrs['key'] = intval($attrs['key']);
-				if ( isset($ex->cache[$key]) ) {
-					$content = str_replace($matches[0][$idx], $ex->cache[$key], $content);
-				}
-			}
-			// Cleanup
-			unset($idx, $ph, $matches, $key);
-		}
-		
-		return $content;
-	}
-	
-	/**
 	 * Scans post content for image links and activates them
 	 * 
 	 * Lightbox will not be activated for feeds
@@ -1084,6 +990,23 @@ class SLB_Lightbox extends SLB_Base {
 	/*-** Exclusion **-*/
 	
 	/**
+	 * Retrieve exclude object
+	 * Initialize object properties if necessary
+	 * @return object Exclude properties
+	 */
+	private function get_exclude() {
+		// Initialize exclude data
+		if ( !is_object($this->exclude) ) {
+			$this->exclude = (object) array (
+				'tags'		=> $this->get_exclude_tags(),
+				'ph'		=> $this->get_exclude_placeholder(),
+				'cache'		=> array(),
+			);
+		}
+		return $this->exclude;
+	}
+	
+	/**
 	 * Get exclusion tags (open/close)
 	 * Example: open => [slb_exclude], close => [/slb_exclude]
 	 * 
@@ -1120,6 +1043,23 @@ class SLB_Lightbox extends SLB_Base {
 	}
 	
 	/**
+	 * Build exclude placeholder
+	 * @return object Exclude placeholder properties
+	 */
+	private function get_exclude_placeholder() {
+		static $ph;
+		if ( !is_object($ph) ) {
+			$ph = (object) array (
+				'base'	=> $this->add_prefix('exclude_temp'),
+				'open'	=> '{{',
+				'close'	=> '}}',
+			);
+			$ph->search = '#' . preg_quote($ph->open) . $ph->base . '\s+(.+?)' . preg_quote($ph->close) . '#s';
+		}
+		return $ph;
+	}
+	
+	/**
 	 * Wrap content in exclusion tags
 	 * @uses `get_exclude_tag()` to wrap content with exclusion tag
 	 * @param string $content (optional) Content to exclude
@@ -1133,6 +1073,72 @@ class SLB_Lightbox extends SLB_Base {
 		//Wrap
 		$tags = $this->get_exclude_tags();
 		return $tags->open . $content . $tags->close;
+	}
+	
+	/**
+	 * Remove excluded content
+	 * Caches content for restoring later
+	 * @param string $content Content to remove excluded content from
+	 * @return string Updated content
+	 */
+	private function exclude_content($content) {
+		$ex = $this->get_exclude();
+		$cache =& $ex->cache;
+		
+		/* Regex */
+		
+		$matches = null;
+		// Search content
+		if ( false !== strpos($content, $ex->tags->open) && preg_match_all($ex->tags->search, $content, $matches) ) {
+			// Determine index
+			$idx = ( !!end($cache) ) ? key($cache) : -1;
+			$ph = array();
+			$ph_fmt = $ex->ph->open . $ex->ph->base . ' key="%s"' . $ex->ph->close;
+			foreach ( $matches[1] as $midx => $match ) {
+				// Update index
+				$idx++;
+				// Cache content
+				$cache[$idx] = $match;
+				// Build placeholder
+				$ph[] =	sprintf($ph_fmt, $idx);
+			}
+			unset($midx, $match);
+			// Replace content with placeholder
+			$content = str_replace($matches[0], $ph, $content);
+			
+			// Cleanup
+			unset($matches, $ph);
+		}
+		
+		return $content;
+	}
+	
+	/**
+	 * Restore excluded content
+	 * @param string $content Content to restore excluded content to
+	 * @return string Content with excluded content restored
+	 */
+	private function restore_excluded_content($content) {
+		$ex = $this->get_exclude();
+		
+		// Search content for placeholders
+		$matches = null;
+		if ( false !== strpos($content, $ex->ph->open . $ex->ph->base) && preg_match_all($ex->ph->search, $content, $matches) ) {
+			// Restore placeholders
+			foreach ( $matches[1] as $idx => $ph ) {
+				// Parse placeholder attributes
+				$attrs = $this->util->parse_attribute_string($ph);
+				// Restore content
+				$key = $attrs['key'] = intval($attrs['key']);
+				if ( isset($ex->cache[$key]) ) {
+					$content = str_replace($matches[0][$idx], $ex->cache[$key], $content);
+				}
+			}
+			// Cleanup
+			unset($idx, $ph, $matches, $key);
+		}
+		
+		return $content;
 	}
 	
 	/*-** Grouping **-*/
