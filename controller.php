@@ -413,6 +413,7 @@ class SLB_Lightbox extends SLB_Base {
 			'end'		=> false,
 			'ph'		=> $this->util->add_wrapper( $this->add_prefix('exclude_temp'), '{{', '}}' ),
 		);
+		$cache =& $ex->cache;
 		
 		/* Regex */
 		
@@ -421,19 +422,19 @@ class SLB_Lightbox extends SLB_Base {
 		$matches = null;
 		// Search content
 		if ( strpos($content, $ex->tags->open) && preg_match_all($re, $content, $matches) ) {
-			foreach ( $matches[1] as $idx => $match ) {
-				// Cache content
-				$ex->cache[] = $match;
-			}
-			// Replace with placeholder
-			/*
-			// TODO: Build indexed placeholders 
+			// Determine index
+			$idx = ( !!end($cache) ) ? key($cache) : -1;
 			$ph = array();
-			foreach ( $matches[0] as $idx => $match ) {
-				$ph[] = "{{slb_exclude $idx}}";
+			foreach ( $matches[1] as $midx => $match ) {
+				// Update index
+				$idx++;
+				// Cache content
+				$cache[$idx] = $match;
+				// Build placeholder
+				$ph[] =	sprintf('{{slb_exclude key="%s"}}', $idx);
 			}
-			*/
-			$content = str_replace($matches[0], $ex->ph, $content);
+			// Replace content with placeholder
+			$content = str_replace($matches[0], $ph, $content);
 		}
 		
 		return $content;
@@ -504,7 +505,7 @@ class SLB_Lightbox extends SLB_Base {
 		}
 		
 		
-		$content = $this->restore_excluded_content($content);
+		//$content = $this->restore_excluded_content($content);
 
 		return $content;
 	}
