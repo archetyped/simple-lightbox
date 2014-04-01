@@ -753,6 +753,7 @@ class SLB_Utilities {
 	
 	/**
 	 * Process specific shortcode(s) in content
+	 * Default: Process all existing shortcodes
 	 * @uses $shortcode_tags - array tag => callback
 	 * @uses do_shortcode()
 	 * 
@@ -762,27 +763,34 @@ class SLB_Utilities {
 	 */
 	public function do_shortcode($content, $shortcode = null) {
 		global $shortcode_tags;
-		// Cast to array
-		$shortcode = (array) $shortcode;
-		// Backup and reset shortcode handlers
-		$tags_temp = $shortcode_tags;
-		$shortcode_tags = array();
-		// Register specified tags
-		foreach ( $shortcode as $key => $val ) {
-			if ( is_string($key) && is_callable($val) ) {
-				// Tag w/custom callback
-				$shortcode_tags[$key] = $val;
-			} elseif ( is_int($key) && is_string($val) && isset($tags_temp[$val]) ) {
-				// Tag with default callback
-				$shortcode_tags[$val] = $tags_temp[$val];
+		
+		// Process custom shortcodes
+		if ( !is_null($shortcode) ) {
+			// Cast to array
+			$shortcode = (array) $shortcode;
+			// Backup and reset shortcode handlers
+			$tags_temp = $shortcode_tags;
+			$shortcode_tags = array();
+			// Register specified tags
+			foreach ( $shortcode as $key => $val ) {
+				if ( is_string($key) && is_callable($val) ) {
+					// Tag w/custom callback
+					$shortcode_tags[$key] = $val;
+				} elseif ( is_int($key) && is_string($val) && isset($tags_temp[$val]) ) {
+					// Tag with default callback
+					$shortcode_tags[$val] = $tags_temp[$val];
+				}
 			}
 		}
+		
 		// Process shortcodes in content
 		$content = do_shortcode($content);
 		
 		// Restore default shortcode handlers
-		$shortcode_tags = $tags_temp;
-		unset($tags_temp);
+		if ( isset($tags_temp) ) {
+			$shortcode_tags = $tags_temp;
+			unset($tags_temp);
+		}
 		
 		return $content;
 	}
@@ -1677,7 +1685,7 @@ class SLB_Utilities {
 		$ret = '';
 		$args_default = array(
 			'tag'			=> '',
-			'wrap'			=> true,
+			'wrap'			=> false,
 			'content'		=> '',
 			'attributes'	=> array(),
 			'format'		=> array(),
@@ -1772,7 +1780,6 @@ class SLB_Utilities {
 	public function build_html_element($args) {
 		$args_default = array(
 			'tag'			=> 'span',
-			'wrap'			=> true,
 			'content'		=> '',
 			'attributes'	=> array()
 		);
@@ -1844,6 +1851,6 @@ class SLB_Utilities {
 		if ( is_string($id) && !empty($id) ) {
 			$attributes['id'] = $this->add_prefix($id);
 		}
-		return $this->build_html_element(array('tag' => 'script', 'content' => $content, 'attributes' => $attributes)) . PHP_EOL;
+		return $this->build_html_element(array('tag' => 'script', 'content' => $content, 'wrap' => true, 'attributes' => $attributes)) . PHP_EOL;
 	}
 }
