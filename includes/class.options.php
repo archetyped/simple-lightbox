@@ -589,10 +589,12 @@ class SLB_Options extends SLB_Field_Collection {
 		//Define groups built
 		if ( !empty($groups_built) ) {
 			echo $this->util->build_html_element(array(
-				'tag'	=> 'input',
-				'type'	=> 'hidden',
-				'value'	=> implode(',', $groups_built),
-				'name'	=> $this->get_id('formatted') . '_groups[]'
+				'tag'			=> 'input',
+				'attributes'	=> array (
+					'type'	=> 'hidden',
+					'value'	=> implode(',', $groups_built),
+					'name'	=> $this->get_id('formatted') . '_groups[]'
+				),
 			));
 		}
 	}
