@@ -208,30 +208,44 @@ class SLB_Utilities {
 	/* Wrapped Values */
 	
 	/**
-	 * Returns validated object of start/end wrapper values
+	 * Create wrapper object
+	 * Properties
+	 *   > start
+	 *   > end
 	 * @param string|array $start Start text (Can also be array defining start & end values)
 	 * @param string $end (optional) End text
 	 * If $end not defined, then $start is used
 	 * @return obj Wrapper
 	 */
 	function get_wrapper($start = null, $end = null) {
-		//Return pre-built wrapper
+		// Validate existing wrapper
 		if ( is_object($start) && isset($start->start) && isset($start->end) )
 			return $start;
-		//Default wrapper
-		if ( is_null($start) && is_null($end) )
-			$start = array('[', ']');
-		$wrapper = compact('start', 'end');
-		if ( is_array($start) && count($start) > 1 ) {
-			$wrapper['start'] = $start[0];
-			$wrapper['end'] = $start[1];
-		}
-		if ( !is_string($wrapper['start']) || empty($wrapper['start'] ) )
-			$wrapper['start'] = '';
-		if ( !is_string($wrapper['end']) || empty($wrapper['end']) )
-			$wrapper['end'] = $wrapper['start'];
 		
-		return (object) $wrapper;
+		// Initialize wrapper
+		$w = array (
+			'start'		=> '[',
+			'end'		=> ']',
+		);
+		
+		if ( !empty($start) ) {
+			if ( is_string($start) ) {
+				$w['start'] = $start;
+			} elseif ( is_array($start) ) {
+				$start = array_values($start);
+				if ( is_string($start) ) {
+					$w['start'] = $start[0];
+				}
+				if ( isset($start[1]) && is_string($start[1]) ) {
+					$w['end'] = $start[1];
+				}
+			}
+		}
+		if ( is_string($end) ) {
+			$w['end'] = $end;
+		}
+		
+		return (object) $w;
 	}
 	
 	/**
@@ -244,11 +258,11 @@ class SLB_Utilities {
 	function has_wrapper($text, $start = null, $end = null) {
 		if ( !is_string($text) || empty($text) )
 			return false;
-		//Validate wrapper)
+		//Validate wrapper
 		$w = $this->get_wrapper($start, $end);
 		
 		//Check for wrapper
-		return ( substr($text, 0, 1) == $w->start && substr($text, -1, 1) == $w->end ) ? true : false;
+		return ( substr($text, 0, strlen($w->start)) == $w->start && substr($text, -1, strlen($w->end)) == $w->end ) ? true : false;
 	}
 	
 	/**
