@@ -781,15 +781,11 @@ class SLB_Utilities {
 	 * @return string Shortcode tag
 	 */
 	public function make_shortcode($tag, $attr = null, $content = null) {
-		//Rebuild shortcode
-		$ret = '[' . $tag;
-		if ( is_array($attr) && !empty($attr) ) {
-			$ret .= ' ' . $this->build_attribute_string($attr);
-		}
-		$ret .= ']';
-		if ( is_string($content) && !empty($content) )
-			$ret .= $content . '[/' . $tag .']';
-		return $ret;
+		return $this->build_element(array (
+			'tag'			=> $tag,
+			'attributes'	=> $attr,
+			'content'		=> $content,
+		));
 	}
 
 	/* Meta */
@@ -1659,6 +1655,61 @@ class SLB_Utilities {
 	}
 	
 	/**
+	 * Build generic element
+	 * @param array $args
+	 * @return string Element output
+	 */
+	public function build_element($args = array()) {
+		$ret = '';
+		$args_default = array(
+			'tag'			=> '',
+			'wrap'			=> true,
+			'content'		=> '',
+			'attributes'	=> array(),
+			'format'		=> array(),
+		);
+		$format_default = array(
+			'open'	=> '[%s]',
+			'close'	=> '[/%s]',
+		);
+		$args = wp_parse_args($args, $args_default);
+		$args['format'] = wp_parse_args($args['format'], $format_default);
+		
+		//Validate
+		if ( !is_string($args['tag']) || empty($args['tag']) ) {
+			return $ret;
+		}
+		
+		// Collect attributes
+		$attr_exclude = array( 'content', 'tag', 'wrap', 'attributes', 'format' );
+		$attr_extra = array_diff_key($args, array_fill_keys($attr_exclude, null));
+		if ( !empty($attr_extra) ) {
+			//Merge attributes
+			$args['attributes'] = wp_parse_args($attr_extra, $args['attributes']);
+			//Remove attributes from top-level arguments
+			$args = array_diff_key($args, $attr_extra);
+		}
+		
+		$args = (object) $args;
+		
+		$args->attributes = $this->build_attribute_string($args->attributes);
+		if ( strlen($args->attributes) > 0 ) {
+			$args->attributes = ' ' . $args->attributes;
+		}
+		
+		// Build output
+		$args->format = (object) $args->format;
+		$ret = sprintf( $args->format->open, $args->tag . $args->attributes);
+		
+		// Wrap content if necessary
+		if ( $args->wrap || ( is_string($args->contnet) && !empty($args->content) ) ) {
+			$ret .= $args->content . sprintf( $args->format->close, $args->tag);
+		}
+
+		return $ret;
+	}
+	
+	/**
 	 * Parse string of attributes into array
 	 * For XML/XHTML tag attributes
 	 * @param string $txt Attribute text (Can be full tag or just attributes)
@@ -1693,9 +1744,10 @@ class SLB_Utilities {
 	 */
 	function build_attribute_string($attr) {
 		$ret = '';
-		if ( is_object($attr) )
+		if ( is_object($attr) ) {
 			$attr = (array) $attr;
-		if ( is_array($attr) ) {
+		}
+		if ( is_array($attr) && !empty($attr) ) {
 			array_map('esc_attr', $attr);
 			$attr_str = array();
 			foreach ( $attr as $key => $val ) {
@@ -1704,6 +1756,29 @@ class SLB_Utilities {
 			$ret = implode(' ', $attr_str);
 		}
 		return $ret;
+	}
+	
+	/* HTML */	
+
+	/**
+	 * Generate HTML element based on values
+	 * @param $args Element arguments
+	 * @return string Generated HTML element
+	 */
+	public function build_html_element($args) {
+		$args_default = array(
+			'tag'			=> 'span',
+			'wrap'			=> true,
+			'content'		=> '',
+			'attributes'	=> array()
+		);
+		$args = wp_parse_args($args, $args_default);
+		$args['format'] = array(
+			'open'		=> '<%s>',
+			'close'		=> '</%s>',
+		);
+		// Build element
+		return $this->build_element($args);
 	}
 	
 	/**
@@ -1766,52 +1841,5 @@ class SLB_Utilities {
 			$attributes['id'] = $this->add_prefix($id);
 		}
 		return $this->build_html_element(array('tag' => 'script', 'content' => $content, 'attributes' => $attributes)) . PHP_EOL;
-	}
-	
-	/**
-	 * Generate HTML element based on values
-	 * @param $args Element arguments
-	 * @return string Generated HTML element
-	 */
-	function build_html_element($args) {
-		$defaults = array(
-						'tag'			=> 'span',
-						'wrap'			=> true,
-						'content'		=> '',
-						'attributes'	=> array()
-						);
-		$el_start = '<';
-		$el_end = '>';
-		$el_close = '/';
-		$args = wp_parse_args($args, $defaults);
-		//Collect attributes
-		$attr_exclude = array( 'content', 'tag', 'wrap', 'attributes' );
-		$attr_extra = array_diff_key($args, array_fill_keys($attr_exclude, null));
-		if ( count($attr_extra) ) {
-			//Merge attributes
-			$args['attributes'] = wp_parse_args($attr_extra, $args['attributes']);
-			//Remove attributes from top-level arguments
-			$args = array_diff_key($args, $attr_extra);
-		}
-		extract($args, EXTR_SKIP);
-		$content = trim($content);
-		
-		
-		if ( !$wrap && strlen($content) > 0 )
-			$wrap = true;
-		
-		$attributes = $this->build_attribute_string($attributes);
-		if ( strlen($attributes) > 0 )
-			$attributes = ' ' . $attributes;
-			
-		$ret = $el_start . $tag . $attributes;
-		
-		if ( $wrap )
-			$ret .= $el_end . $content . $el_start . $el_close . $tag;
-		else
-			$ret .= ' ' . $el_close;
-
-		$ret .= $el_end;
-		return $ret;	
 	}
 }
