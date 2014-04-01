@@ -1680,16 +1680,6 @@ class SLB_Utilities {
 			return $ret;
 		}
 		
-		// Collect attributes
-		$attr_exclude = array( 'content', 'tag', 'wrap', 'attributes', 'format' );
-		$attr_extra = array_diff_key($args, array_fill_keys($attr_exclude, null));
-		if ( !empty($attr_extra) ) {
-			//Merge attributes
-			$args['attributes'] = wp_parse_args($attr_extra, $args['attributes']);
-			//Remove attributes from top-level arguments
-			$args = array_diff_key($args, $attr_extra);
-		}
-		
 		$args = (object) $args;
 		
 		$args->attributes = $this->build_attribute_string($args->attributes);
