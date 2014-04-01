@@ -60,6 +60,11 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	private $exclude = null;
 	
+	private $groups = array (
+		'auto'		=> 0,
+		'manual'	=> array(),
+	);
+	
 	/**
 	 * Validated URIs
 	 * Caches validation of parsed URIs
@@ -176,13 +181,16 @@ class SLB_Lightbox extends SLB_Base {
 			$this->util->add_action('footer_script', $this->m('client_init'), 1);
 			$this->util->add_filter('footer_script', $this->m('client_script_media'), 2);
 			
-			//Link activation
+			// Link activation
 			add_filter('the_content', $this->m('activate_links'), $priority);
 			add_filter('get_post_galleries', $this->m('activate_galleries'), $priority);
+			//  Content exclusion
 			$this->util->add_filter('pre_process_links', $this->m('exclude_content'));
+			$this->util->add_filter('pre_exclude_content', $this->m('exclude_shortcodes'));
 			$this->util->add_filter('post_process_links', $this->m('restore_excluded_content'));
-			$this->util->add_filter('pre_process_links', $this->m('exclude_groups'));
-			$this->util->add_filter('post_process_links', $this->m('restore_groups'));
+			$this->util->add_filter('post_process_links', $this->m('activate_groups'));
+			//$this->util->add_filter('pre_process_links', $this->m('exclude_groups'));
+			//$this->util->add_filter('post_process_links', $this->m('restore_groups'));
 			$this->util->add_filter('validate_uri_regex', $this->m('validate_uri_regex_default'), 1);
 			
 			//Grouping
@@ -1041,10 +1049,10 @@ class SLB_Lightbox extends SLB_Base {
 	/**
 	 * Wrap content in exclusion tags
 	 * @uses `get_exclude_tag()` to wrap content with exclusion tag
-	 * @param string $content (optional) Content to exclude
+	 * @param string $content Content to exclude
 	 * @return string Content wrapped in exclusion tags
 	 */
-	private function exclude_wrap($content = "") {
+	private function exclude_wrap($content) {
 		//Validate
 		if ( !is_string($content) ) {
 			$content = "";
@@ -1070,11 +1078,11 @@ class SLB_Lightbox extends SLB_Base {
 			$ex->cache[$group] = array();
 		}
 		$cache =& $ex->cache[$group];
+
+		$content = $this->util->apply_filters('pre_exclude_content', $content);
 		
-		/* Regex */
-		
-		$matches = null;
 		// Search content
+		$matches = null;
 		if ( false !== strpos($content, $ex->tags->open) && preg_match_all($ex->tags->search, $content, $matches) ) {
 			// Determine index
 			$idx = ( !!end($cache) ) ? key($cache) : -1;
@@ -1096,6 +1104,34 @@ class SLB_Lightbox extends SLB_Base {
 		}
 		
 		return $content;
+	}
+	
+	/**
+	 * Exclude shortcodes from link activation
+	 * @param string $content Content to exclude shortcodes from
+	 * @return string Content with shortcodes excluded
+	 */
+	public function exclude_shortcodes($content) {
+		// Get shortcodes to exclude
+		$shortcodes = $this->util->apply_filters('exclude_shortcodes', array( $this->add_prefix('group') ));
+		// Set callback
+		$shortcodes = array_fill_keys($shortcodes, $this->m('exclude_shortcodes_handler'));
+		return $this->util->do_shortcode($content, $shortcodes);
+	}
+	
+	/**
+	 * Wrap shortcode in exclude tags
+	 * @uses Util->make_shortcode() to rebuild original shortcode
+	 * 
+	 * @param array $attr Shortcode attributes
+	 * @param string $content Content enclosed in shortcode
+	 * @param string $tag Shortcode name
+	 * @return string Excluded shortcode
+	 */
+	public function exclude_shortcodes_handler($attr, $content, $tag) {
+		$code = $this->util->make_shortcode($tag, $attr, $content);
+		// Exclude shortcode
+		return $this->exclude_wrap($code);
 	}
 	
 	/**
@@ -1156,7 +1192,7 @@ class SLB_Lightbox extends SLB_Base {
 	/**
 	 * Wraps shortcodes for automatic grouping
 	 * @uses `the_content` Filter hook
-	 * @uses group_shortcodes_callback to Wrap shortcodes for grouping
+	 * @uses group_shortcodes_handler to Wrap shortcodes for grouping
 	 * @param string $content Post content
 	 * @return string Modified post content
 	 */
@@ -1167,22 +1203,52 @@ class SLB_Lightbox extends SLB_Base {
 		// Setup shortcodes to wrap
 		$shortcodes = $this->util->apply_filters('group_shortcodes', array( 'gallery', 'nggallery' ));
 		// Set custom callback
-		$shortcodes = array_fill_keys($shortcodes, $this->m('group_shortcodes_callback'));
+		$shortcodes = array_fill_keys($shortcodes, $this->m('group_shortcodes_handler'));
 		// Process gallery shortcodes
 		return $this->util->do_shortcode($content, $shortcodes);
 	}
 	
 	/**
-	 * Wraps gallery shortcodes for later processing
+	 * Groups shortcodes for later processing
 	 * @param array $attr Shortcode attributes
 	 * @param string $content Content enclosed in shortcode
 	 * @param string $tag Shortcode name
-	 * @return string Wrapped gallery shortcode
+	 * @return string Grouped shortcode
 	 */
-	function group_shortcodes_callback($attr, $content = null, $tag) {
+	function group_shortcodes_handler($attr, $content, $tag) {
 		$code = $this->util->make_shortcode($tag, $attr, $content);
 		//Wrap shortcode
 		return sprintf( $this->group_get_wrapper(), $code);
+	}
+	
+	/**
+	 * Activate groups in content
+	 * @param string $content Content to activate
+	 * @return string Updated content
+	 */
+	public function activate_groups($content) {
+		return $this->util->do_shortcode($content, array( $this->add_prefix('group') => $this->m('activate_groups_handler') ) );
+	}
+
+	/**
+	 * Groups shortcodes for later processing
+	 * @param array $attr Shortcode attributes
+	 * @param string $content Content enclosed in shortcode
+	 * @param string $tag Shortcode name
+	 * @return string Grouped shortcode
+	 */
+	function activate_groups_handler($attr, $content, $tag) {
+		// Get Group ID
+		//  Custom group
+		if ( isset($attr['id']) ) {
+			$group = $attr['id'];
+			trim($group);
+		}
+		//  Automatically-generated group
+		if ( empty($group) ) {
+			$group = 'auto_' . ++$this->groups['auto'];
+		}
+		return $this->process_links($content, $group);
 	}
 	
 	/**
@@ -1190,7 +1256,7 @@ class SLB_Lightbox extends SLB_Base {
 	 * @uses `the_content` filter hook
 	 * @param $content Post content
 	 * @return string Modified post content
-	 */
+	 * @deprecated
 	function gallery_unwrap($content) {
 		//Stop processing if option not enabled
 		if ( !$this->options->get_bool('group_gallery') )
@@ -1202,14 +1268,14 @@ class SLB_Lightbox extends SLB_Base {
 		}
 		return $content;
 	}
+	*/
 	
 	/**
 	 * Exclude grouped content
 	 * @param string $content Content to strip grouped content from
 	 * @return string Content with groups excluded
-	 */
+	 * @deprecated
 	public function exclude_groups($content) {
-		/*
 		$groups = array();
 		$w = $this->group_get_wrapper();
 		$g_ph_f = '[%s]';
@@ -1235,13 +1301,14 @@ class SLB_Lightbox extends SLB_Base {
 				$g_end_idx = $g_start_idx + strlen($w->open);
 			}
 		}
-		*/
 		return $content;
 	}
+	*/
 	
+	/**
+	 * @deprecated
 	public function restore_groups($content) {
 		//Reintegrate Groups
-		/*
 		foreach ( $groups as $group => $g_content ) {
 			$g_ph = $w->open . sprintf($g_ph_f, $group) . $w->close;
 			//Skip group if placeholder does not exist in content
@@ -1251,9 +1318,9 @@ class SLB_Lightbox extends SLB_Base {
 			//Replace placeholder with processed content
 			$content = str_replace($g_ph, $w->open . $this->process_links($g_content, 'gallery_' . $group) . $w->close, $content);
 		}
-		*/
 		return $content;
 	}
+	*/
 	
 	/*-** Widgets **-*/
 	
