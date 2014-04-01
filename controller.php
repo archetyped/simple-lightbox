@@ -1150,8 +1150,8 @@ class SLB_Lightbox extends SLB_Base {
 	function group_get_wrapper() {
 		static $wrapper = null;
 		if (  is_null($wrapper) ) {
-			$start = '<';
-			$end = '>';
+			$start = '[';
+			$end = ']';
 			$terminate = '/';
 			$val = $this->add_prefix('group');
 			//Build properties
