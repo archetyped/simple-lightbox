@@ -184,23 +184,22 @@ class SLB_Lightbox extends SLB_Base {
 			// Link activation
 			add_filter('the_content', $this->m('activate_links'), $priority);
 			add_filter('get_post_galleries', $this->m('activate_galleries'), $priority);
+			$this->util->add_filter('post_process_links', $this->m('activate_groups'));
+			$this->util->add_filter('validate_uri_regex', $this->m('validate_uri_regex_default'), 1);
 			//  Content exclusion
 			$this->util->add_filter('pre_process_links', $this->m('exclude_content'));
 			$this->util->add_filter('pre_exclude_content', $this->m('exclude_shortcodes'));
-			$this->util->add_filter('post_process_links', $this->m('restore_excluded_content'));
-			$this->util->add_filter('post_process_links', $this->m('activate_groups'));
-			//$this->util->add_filter('pre_process_links', $this->m('exclude_groups'));
-			//$this->util->add_filter('post_process_links', $this->m('restore_groups'));
-			$this->util->add_filter('validate_uri_regex', $this->m('validate_uri_regex_default'), 1);
+			$this->util->add_filter('post_process_links', $this->m('restore_excluded_content'), 1);
 			
 			//Grouping
 			if ( $this->options->get_bool('group_post') ) {
 				$this->util->add_filter('get_group_id', $this->m('post_group_id'), 1);	
 			}
 			
-			//Gallery wrapping
-			add_filter('the_content', $this->m('group_shortcodes'), 1);
-			//add_filter('the_content', $this->m('gallery_unwrap'), $priority + 1);
+			//Shortcode grouping
+			if ( $this->options->get_bool('group_gallery') ) {
+				add_filter('the_content', $this->m('group_shortcodes'), 1);
+			}
 			
 			//Widgets
 			add_filter('dynamic_sidebar_params', $this->m('widget_process_setup'), PHP_INT_MAX);
@@ -1197,9 +1196,6 @@ class SLB_Lightbox extends SLB_Base {
 	 * @return string Modified post content
 	 */
 	function group_shortcodes($content) {
-		//Stop processing if option not enabled
-		if ( !$this->options->get_bool('group_gallery') )
-			return $content;
 		// Setup shortcodes to wrap
 		$shortcodes = $this->util->apply_filters('group_shortcodes', array( 'gallery', 'nggallery' ));
 		// Set custom callback
@@ -1250,77 +1246,6 @@ class SLB_Lightbox extends SLB_Base {
 		}
 		return $this->process_links($content, $group);
 	}
-	
-	/**
-	 * Removes wrapping from galleries
-	 * @uses `the_content` filter hook
-	 * @param $content Post content
-	 * @return string Modified post content
-	 * @deprecated
-	function gallery_unwrap($content) {
-		//Stop processing if option not enabled
-		if ( !$this->options->get_bool('group_gallery') )
-			return $content;
-		$w = $this->group_get_wrapper();
-		if ( strpos($content, $w->open) !== false ) {
-			$content = str_replace($w->open, '', $content);
-			$content = str_replace($w->close, '', $content);
-		}
-		return $content;
-	}
-	*/
-	
-	/**
-	 * Exclude grouped content
-	 * @param string $content Content to strip grouped content from
-	 * @return string Content with groups excluded
-	 * @deprecated
-	public function exclude_groups($content) {
-		$groups = array();
-		$w = $this->group_get_wrapper();
-		$g_ph_f = '[%s]';
-
-		//Strip groups
-		if ( $this->options->get_bool('group_gallery') ) {
-			$groups = array();
-			static $g_idx = 1;
-			$g_end_idx = 0;
-			//Iterate through galleries
-			while ( ($g_start_idx = strpos($content, $w->open, $g_end_idx)) && $g_start_idx !== false 
-					&& ($g_end_idx = strpos($content, $w->close, $g_start_idx)) && $g_end_idx != false ) {
-				$g_start_idx += strlen($w->open);
-				//Extract gallery content & save for processing
-				$g_len = $g_end_idx - $g_start_idx;
-				$groups[$g_idx] = substr($content, $g_start_idx, $g_len);
-				//Replace content with placeholder
-				$g_ph = sprintf($g_ph_f, $g_idx);
-				$content = substr_replace($content, $g_ph, $g_start_idx, $g_len);
-				//Increment gallery count
-				$g_idx++;
-				//Update end index
-				$g_end_idx = $g_start_idx + strlen($w->open);
-			}
-		}
-		return $content;
-	}
-	*/
-	
-	/**
-	 * @deprecated
-	public function restore_groups($content) {
-		//Reintegrate Groups
-		foreach ( $groups as $group => $g_content ) {
-			$g_ph = $w->open . sprintf($g_ph_f, $group) . $w->close;
-			//Skip group if placeholder does not exist in content
-			if ( strpos($content, $g_ph) === false ) {
-				continue;
-			}
-			//Replace placeholder with processed content
-			$content = str_replace($g_ph, $w->open . $this->process_links($g_content, 'gallery_' . $group) . $w->close, $content);
-		}
-		return $content;
-	}
-	*/
 	
 	/*-** Widgets **-*/
 	
