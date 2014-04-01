@@ -191,7 +191,7 @@ class SLB_Lightbox extends SLB_Base {
 			}
 			
 			//Gallery wrapping
-			add_filter('the_content', $this->m('gallery_wrap'), 1);
+			add_filter('the_content', $this->m('group_shortcodes'), 1);
 			//add_filter('the_content', $this->m('gallery_unwrap'), $priority + 1);
 			
 			//Widgets
@@ -1143,55 +1143,33 @@ class SLB_Lightbox extends SLB_Base {
 	
 	/**
 	 * Builds wrapper for grouping
-	 * @return object Wrapper properties
-	 *  > open
-	 *  > close
+	 * @return string Format for wrapping content in group
 	 */
 	function group_get_wrapper() {
-		static $wrapper = null;
-		if (  is_null($wrapper) ) {
-			$start = '[';
-			$end = ']';
-			$terminate = '/';
-			$val = $this->add_prefix('group');
-			//Build properties
-			$wrapper = array(
-				'open' => $start . $val . $end,
-				'close' => $start . $terminate . $val . $end
-			);
-			//Convert to object
-			$wrapper = (object) $wrapper;
+		static $fmt = null;
+		if ( is_null($fmt) ) {
+			$fmt = $this->util->make_shortcode($this->add_prefix('group'), null, '%s');
 		}
-		return $wrapper;
+		return $fmt;
 	}
 	
 	/**
-	 * Wraps galleries for grouping
+	 * Wraps shortcodes for automatic grouping
 	 * @uses `the_content` Filter hook
-	 * @uses gallery_wrap_callback to Wrap shortcodes for grouping
+	 * @uses group_shortcodes_callback to Wrap shortcodes for grouping
 	 * @param string $content Post content
 	 * @return string Modified post content
 	 */
-	function gallery_wrap($content) {
+	function group_shortcodes($content) {
 		//Stop processing if option not enabled
 		if ( !$this->options->get_bool('group_gallery') )
 			return $content;
-		global $shortcode_tags;
-		//Save default shortcode handlers to temp variable
-		$sc_temp = $shortcode_tags;
-		//Find gallery shortcodes
-		$shortcodes = array('gallery', 'nggallery');
-		$m = $this->m('gallery_wrap_callback');
-		$shortcode_tags = array();
-		foreach ( $shortcodes as $tag ) {
-			$shortcode_tags[$tag] = $m;
-		}
-		//Wrap gallery shortcodes
-		$content = do_shortcode($content);
-		//Restore default shortcode handlers
-		$shortcode_tags = $sc_temp;
-		
-		return $content;
+		// Setup shortcodes to wrap
+		$shortcodes = $this->util->apply_filters('group_shortcodes', array( 'gallery', 'nggallery' ));
+		// Set custom callback
+		$shortcodes = array_fill_keys($shortcodes, $this->m('group_shortcodes_callback'));
+		// Process gallery shortcodes
+		return $this->util->do_shortcode($content, $shortcodes);
 	}
 	
 	/**
@@ -1201,15 +1179,10 @@ class SLB_Lightbox extends SLB_Base {
 	 * @param string $tag Shortcode name
 	 * @return string Wrapped gallery shortcode
 	 */
-	function gallery_wrap_callback($attr, $content = null, $tag) {
-		//Rebuild shortcode
-		$sc = '[' . $tag . ' ' . $this->util->build_attribute_string($attr) . ']';
-		if ( !empty($content) )
-			$sc .= $content . '[/' . $tag .']';
+	function group_shortcodes_callback($attr, $content = null, $tag) {
+		$code = $this->util->make_shortcode($tag, $attr, $content);
 		//Wrap shortcode
-		$w = $this->group_get_wrapper();
-		$sc = $w->open . $sc . $w->close;
-		return $sc;
+		return sprintf( $this->group_get_wrapper(), $code);
 	}
 	
 	/**
