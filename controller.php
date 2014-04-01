@@ -60,6 +60,11 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	private $exclude = null;
 	
+	private $groups = array (
+		'auto'		=> 0,
+		'manual'	=> array(),
+	);
+	
 	/**
 	 * Validated URIs
 	 * Caches validation of parsed URIs
@@ -176,19 +181,25 @@ class SLB_Lightbox extends SLB_Base {
 			$this->util->add_action('footer_script', $this->m('client_init'), 1);
 			$this->util->add_filter('footer_script', $this->m('client_script_media'), 2);
 			
-			//Link activation
+			// Link activation
 			add_filter('the_content', $this->m('activate_links'), $priority);
 			add_filter('get_post_galleries', $this->m('activate_galleries'), $priority);
+			$this->util->add_filter('post_process_links', $this->m('activate_groups'));
 			$this->util->add_filter('validate_uri_regex', $this->m('validate_uri_regex_default'), 1);
+			//  Content exclusion
+			$this->util->add_filter('pre_process_links', $this->m('exclude_content'));
+			$this->util->add_filter('pre_exclude_content', $this->m('exclude_shortcodes'));
+			$this->util->add_filter('post_process_links', $this->m('restore_excluded_content'), 1);
 			
 			//Grouping
 			if ( $this->options->get_bool('group_post') ) {
 				$this->util->add_filter('get_group_id', $this->m('post_group_id'), 1);	
 			}
 			
-			//Gallery wrapping
-			add_filter('the_content', $this->m('gallery_wrap'), 1);
-			add_filter('the_content', $this->m('gallery_unwrap'), $priority + 1);
+			//Shortcode grouping
+			if ( $this->options->get_bool('group_gallery') ) {
+				add_filter('the_content', $this->m('group_shortcodes'), 1);
+			}
 			
 			//Widgets
 			add_filter('dynamic_sidebar_params', $this->m('widget_process_setup'), PHP_INT_MAX);
@@ -412,51 +423,15 @@ class SLB_Lightbox extends SLB_Base {
 	 * @return string Post content
 	 */
 	public function activate_links($content) {
-		$content = $this->exclude_content($content);
+		// Filter content before processing links
+		$content = $this->util->apply_filters('pre_process_links', $content);
 		
-		$groups = array();
-		$w = $this->group_get_wrapper();
-		$g_ph_f = '[%s]';
-
-		//Strip groups
-		if ( $this->options->get_bool('group_gallery') ) {
-			$groups = array();
-			static $g_idx = 1;
-			$g_end_idx = 0;
-			//Iterate through galleries
-			while ( ($g_start_idx = strpos($content, $w->open, $g_end_idx)) && $g_start_idx !== false 
-					&& ($g_end_idx = strpos($content, $w->close, $g_start_idx)) && $g_end_idx != false ) {
-				$g_start_idx += strlen($w->open);
-				//Extract gallery content & save for processing
-				$g_len = $g_end_idx - $g_start_idx;
-				$groups[$g_idx] = substr($content, $g_start_idx, $g_len);
-				//Replace content with placeholder
-				$g_ph = sprintf($g_ph_f, $g_idx);
-				$content = substr_replace($content, $g_ph, $g_start_idx, $g_len);
-				//Increment gallery count
-				$g_idx++;
-				//Update end index
-				$g_end_idx = $g_start_idx + strlen($w->open);
-			}
-		}
-		
-		//General link processing
+		// Process links
 		$content = $this->process_links($content);
 		
-		//Reintegrate Groups
-		foreach ( $groups as $group => $g_content ) {
-			$g_ph = $w->open . sprintf($g_ph_f, $group) . $w->close;
-			//Skip group if placeholder does not exist in content
-			if ( strpos($content, $g_ph) === false ) {
-				continue;
-			}
-			//Replace placeholder with processed content
-			$content = str_replace($g_ph, $w->open . $this->process_links($g_content, 'gallery_' . $group) . $w->close, $content);
-		}
+		// Filter content after processing links
+		$content = $this->util->apply_filters('post_process_links', $content);
 		
-		
-		$content = $this->restore_excluded_content($content);
-
 		return $content;
 	}
 	
@@ -1073,10 +1048,10 @@ class SLB_Lightbox extends SLB_Base {
 	/**
 	 * Wrap content in exclusion tags
 	 * @uses `get_exclude_tag()` to wrap content with exclusion tag
-	 * @param string $content (optional) Content to exclude
+	 * @param string $content Content to exclude
 	 * @return string Content wrapped in exclusion tags
 	 */
-	private function exclude_wrap($content = "") {
+	private function exclude_wrap($content) {
 		//Validate
 		if ( !is_string($content) ) {
 			$content = "";
@@ -1092,7 +1067,7 @@ class SLB_Lightbox extends SLB_Base {
 	 * @param string $content Content to remove excluded content from
 	 * @return string Updated content
 	 */
-	private function exclude_content($content, $group = null) {
+	public function exclude_content($content, $group = null) {
 		$ex = $this->get_exclude();
 		// Setup cache
 		if ( !is_string($group) || empty($group) ) {
@@ -1102,11 +1077,11 @@ class SLB_Lightbox extends SLB_Base {
 			$ex->cache[$group] = array();
 		}
 		$cache =& $ex->cache[$group];
+
+		$content = $this->util->apply_filters('pre_exclude_content', $content);
 		
-		/* Regex */
-		
-		$matches = null;
 		// Search content
+		$matches = null;
 		if ( false !== strpos($content, $ex->tags->open) && preg_match_all($ex->tags->search, $content, $matches) ) {
 			// Determine index
 			$idx = ( !!end($cache) ) ? key($cache) : -1;
@@ -1131,11 +1106,39 @@ class SLB_Lightbox extends SLB_Base {
 	}
 	
 	/**
+	 * Exclude shortcodes from link activation
+	 * @param string $content Content to exclude shortcodes from
+	 * @return string Content with shortcodes excluded
+	 */
+	public function exclude_shortcodes($content) {
+		// Get shortcodes to exclude
+		$shortcodes = $this->util->apply_filters('exclude_shortcodes', array( $this->add_prefix('group') ));
+		// Set callback
+		$shortcodes = array_fill_keys($shortcodes, $this->m('exclude_shortcodes_handler'));
+		return $this->util->do_shortcode($content, $shortcodes);
+	}
+	
+	/**
+	 * Wrap shortcode in exclude tags
+	 * @uses Util->make_shortcode() to rebuild original shortcode
+	 * 
+	 * @param array $attr Shortcode attributes
+	 * @param string $content Content enclosed in shortcode
+	 * @param string $tag Shortcode name
+	 * @return string Excluded shortcode
+	 */
+	public function exclude_shortcodes_handler($attr, $content, $tag) {
+		$code = $this->util->make_shortcode($tag, $attr, $content);
+		// Exclude shortcode
+		return $this->exclude_wrap($code);
+	}
+	
+	/**
 	 * Restore excluded content
 	 * @param string $content Content to restore excluded content to
 	 * @return string Content with excluded content restored
 	 */
-	private function restore_excluded_content($content, $group = null) {
+	public function restore_excluded_content($content, $group = null) {
 		$ex = $this->get_exclude();
 		// Setup cache
 		if ( !is_string($group) || empty($group) ) {
@@ -1175,91 +1178,73 @@ class SLB_Lightbox extends SLB_Base {
 	
 	/**
 	 * Builds wrapper for grouping
-	 * @return object Wrapper properties
-	 *  > open
-	 *  > close
+	 * @return string Format for wrapping content in group
 	 */
 	function group_get_wrapper() {
-		static $wrapper = null;
-		if (  is_null($wrapper) ) {
-			$start = '<';
-			$end = '>';
-			$terminate = '/';
-			$val = $this->add_prefix('group');
-			//Build properties
-			$wrapper = array(
-				'open' => $start . $val . $end,
-				'close' => $start . $terminate . $val . $end
-			);
-			//Convert to object
-			$wrapper = (object) $wrapper;
+		static $fmt = null;
+		if ( is_null($fmt) ) {
+			$fmt = $this->util->make_shortcode($this->add_prefix('group'), null, '%s');
 		}
-		return $wrapper;
+		return $fmt;
 	}
 	
 	/**
-	 * Wraps galleries for grouping
+	 * Wraps shortcodes for automatic grouping
 	 * @uses `the_content` Filter hook
-	 * @uses gallery_wrap_callback to Wrap shortcodes for grouping
+	 * @uses group_shortcodes_handler to Wrap shortcodes for grouping
 	 * @param string $content Post content
 	 * @return string Modified post content
 	 */
-	function gallery_wrap($content) {
-		//Stop processing if option not enabled
-		if ( !$this->options->get_bool('group_gallery') )
-			return $content;
-		global $shortcode_tags;
-		//Save default shortcode handlers to temp variable
-		$sc_temp = $shortcode_tags;
-		//Find gallery shortcodes
-		$shortcodes = array('gallery', 'nggallery');
-		$m = $this->m('gallery_wrap_callback');
-		$shortcode_tags = array();
-		foreach ( $shortcodes as $tag ) {
-			$shortcode_tags[$tag] = $m;
-		}
-		//Wrap gallery shortcodes
-		$content = do_shortcode($content);
-		//Restore default shortcode handlers
-		$shortcode_tags = $sc_temp;
-		
-		return $content;
+	function group_shortcodes($content) {
+		// Setup shortcodes to wrap
+		$shortcodes = $this->util->apply_filters('group_shortcodes', array( 'gallery', 'nggallery' ));
+		// Set custom callback
+		$shortcodes = array_fill_keys($shortcodes, $this->m('group_shortcodes_handler'));
+		// Process gallery shortcodes
+		return $this->util->do_shortcode($content, $shortcodes);
 	}
 	
 	/**
-	 * Wraps gallery shortcodes for later processing
+	 * Groups shortcodes for later processing
 	 * @param array $attr Shortcode attributes
 	 * @param string $content Content enclosed in shortcode
 	 * @param string $tag Shortcode name
-	 * @return string Wrapped gallery shortcode
+	 * @return string Grouped shortcode
 	 */
-	function gallery_wrap_callback($attr, $content = null, $tag) {
-		//Rebuild shortcode
-		$sc = '[' . $tag . ' ' . $this->util->build_attribute_string($attr) . ']';
-		if ( !empty($content) )
-			$sc .= $content . '[/' . $tag .']';
+	function group_shortcodes_handler($attr, $content, $tag) {
+		$code = $this->util->make_shortcode($tag, $attr, $content);
 		//Wrap shortcode
-		$w = $this->group_get_wrapper();
-		$sc = $w->open . $sc . $w->close;
-		return $sc;
+		return sprintf( $this->group_get_wrapper(), $code);
 	}
 	
 	/**
-	 * Removes wrapping from galleries
-	 * @uses `the_content` filter hook
-	 * @param $content Post content
-	 * @return string Modified post content
+	 * Activate groups in content
+	 * @param string $content Content to activate
+	 * @return string Updated content
 	 */
-	function gallery_unwrap($content) {
-		//Stop processing if option not enabled
-		if ( !$this->options->get_bool('group_gallery') )
-			return $content;
-		$w = $this->group_get_wrapper();
-		if ( strpos($content, $w->open) !== false ) {
-			$content = str_replace($w->open, '', $content);
-			$content = str_replace($w->close, '', $content);
+	public function activate_groups($content) {
+		return $this->util->do_shortcode($content, array( $this->add_prefix('group') => $this->m('activate_groups_handler') ) );
+	}
+
+	/**
+	 * Groups shortcodes for later processing
+	 * @param array $attr Shortcode attributes
+	 * @param string $content Content enclosed in shortcode
+	 * @param string $tag Shortcode name
+	 * @return string Grouped shortcode
+	 */
+	function activate_groups_handler($attr, $content, $tag) {
+		// Get Group ID
+		//  Custom group
+		if ( isset($attr['id']) ) {
+			$group = $attr['id'];
+			trim($group);
 		}
-		return $content;
+		//  Automatically-generated group
+		if ( empty($group) ) {
+			$group = 'auto_' . ++$this->groups['auto'];
+		}
+		return $this->process_links($content, $group);
 	}
 	
 	/*-** Widgets **-*/
