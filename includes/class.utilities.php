@@ -1692,7 +1692,7 @@ class SLB_Utilities {
 		$ret = sprintf( $args->format->open, $args->tag . $args->attributes);
 		
 		// Wrap content if necessary
-		if ( $args->wrap || ( is_string($args->contnet) && !empty($args->content) ) ) {
+		if ( $args->wrap || ( is_string($args->content) && !empty($args->content) ) ) {
 			$ret .= $args->content . sprintf( $args->format->close, $args->tag);
 		}
 
@@ -1789,7 +1789,7 @@ class SLB_Utilities {
 	 * @param $url Stylesheet URL
 	 * @return string Stylesheet element
 	 */
-	function build_stylesheet_element($url = '') {
+	function build_stylesheet_element($url) {
 		$attributes = array('href' => $url, 'type' => 'text/css', 'rel' => 'stylesheet');
 		return $this->build_html_element(array('tag' => 'link', 'wrap' => false, 'attributes' => $attributes));
 	}
