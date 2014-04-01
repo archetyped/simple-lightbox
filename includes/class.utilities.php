@@ -585,7 +585,6 @@ class SLB_Utilities {
 		return true;
 	}
 	
-	/* Hooks */
 	
 	/**
 	 * Retrieve parent object
@@ -609,7 +608,9 @@ class SLB_Utilities {
 	function get_parent_property($prop, $default = '') {
 		$p =& $this->get_parent();
 		return ( !!$p && property_exists($p, $prop) ) ? $p->{$prop} : $default; 
-	}	
+	}
+	
+	/* Hooks */
 	
 	/**
 	 * Retrieve formatted name for internal hooks
@@ -732,6 +733,63 @@ class SLB_Utilities {
 	 */
 	function remove_filter($tag, $function_to_remove, $priority = 10, $accepted_args = 1, $hook_prefix = true) {
 		return remove_filter($this->get_hook($tag, $hook_prefix), $function_to_remove, $priority, $accepted_args);
+	}
+	
+	/* Shortcode */
+	
+	/**
+	 * Process specific shortcode(s) in content
+	 * @uses $shortcode_tags - array tag => callback
+	 * @uses do_shortcode()
+	 * 
+	 * @param string $content Content to process for shortcodes
+	 * @param string|array $shortcode Single tag or array of tags to process
+	 *  > Associative array sets temporary callbacks for shortcodes (`tag => callback`)
+	 */
+	public function do_shortcode($content, $shortcode = null) {
+		global $shortcode_tags;
+		// Cast to array
+		$shortcode = (array) $shortcode;
+		// Backup and reset shortcode handlers
+		$tags_temp = $shortcode_tags;
+		$shortcode_tags = array();
+		// Register specified tags
+		foreach ( $shortcode as $key => $val ) {
+			if ( is_string($key) && is_callable($val) ) {
+				// Tag w/custom callback
+				$shortcode_tags[$key] = $val;
+			} elseif ( is_int($key) && is_string($val) && isset($tags_temp[$val]) ) {
+				// Tag with default callback
+				$shortcode_tags[$val] = $tags_temp[$val];
+			}
+		}
+		// Process shortcodes in content
+		$content = do_shortcode($content);
+		
+		// Restore default shortcode handlers
+		$shortcode_tags = $tags_temp;
+		unset($tags_temp);
+		
+		return $content;
+	}
+	
+	/**
+	 * Build shortcode tag
+	 * @param string $tag Shortcode base
+	 * @param array (optional) $attr Shortcode attributes
+	 * @param string (optional) $content Shortcode content
+	 * @return string Shortcode tag
+	 */
+	public function make_shortcode($tag, $attr = null, $content = null) {
+		//Rebuild shortcode
+		$ret = '[' . $tag;
+		if ( is_array($attr) && !empty($attr) ) {
+			$ret .= ' ' . $this->build_attribute_string($attr);
+		}
+		$ret .= ']';
+		if ( is_string($content) && !empty($content) )
+			$ret .= $content . '[/' . $tag .']';
+		return $ret;
 	}
 
 	/* Meta */
