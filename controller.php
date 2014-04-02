@@ -861,8 +861,10 @@ class SLB_Lightbox extends SLB_Base {
 					}
 					
 					//Save attachment data (post & meta) to original object(s)
-					foreach ( $pids[$att->ID] as $uri ) {
-						$this->media_items[$uri] = array_merge( (array) $m_items[$uri], $m);
+					if ( isset($pids[$att->ID]) ) {
+						foreach ( $pids[$att->ID] as $uri ) {
+							$this->media_items[$uri] = array_merge( (array) $m_items[$uri], $m);
+						}
 					}
 					
 				}
