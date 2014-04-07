@@ -1,7 +1,5 @@
-(function($) {
+if ( !!window.SLB && SLB.has_child('View.extend_content_handler') ) {(function($) {
 $(document).ready(function() {
-if ( typeof SLB == 'undefined' || typeof SLB.View == 'undefined' || typeof SLB.View.extend_content_handler == 'undefined' )
-	return false;
 SLB.View.extend_content_handler('image', {
 	/**
 	 * Render images
@@ -12,14 +10,12 @@ SLB.View.extend_content_handler('image', {
 	render: function(item, dfr) {
 		//Create image object
 		var img = new Image();
-		var type = this;
 		//Set load event
-		var handler = function(e) {
+		var handler = function() {
 			//Save Data
 			item.set_data(img);
 			//Set attributes
-			var dim = {'width': img.width, 'height': img.height};
-			item.set_attribute('dimensions', dim);
+			item.set_attribute('dimensions', {'width': img.width, 'height': img.height});
 			//Build output
 			var out = $('<img />', {'src': item.get_uri()});
 			//Resolve deferred
@@ -36,3 +32,4 @@ SLB.View.extend_content_handler('image', {
 });
 });
 })(jQuery);
+}

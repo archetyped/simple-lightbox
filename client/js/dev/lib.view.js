@@ -5,11 +5,8 @@
  * @author Archetyped
  */
 /* global SLB */
-if ( jQuery ){(function ($) {
+if ( !!window.SLB && !!SLB.attach ) { (function ($) {
 
-if ( typeof SLB === 'undefined' || !SLB.attach ) {
-	return false;
-}
 
 /*-** Controller **-*/
 
@@ -555,7 +552,7 @@ var View = {
 		}
 		hdl = this.get_content_handler(id);
 		//Add new content handler
-		if ( null == hdl ) {
+		if ( null === hdl ) {
 			var hdls = this.get_content_handlers();
 			hdls[id] = hdl = new this.Content_Handler(id, attr);
 		}
@@ -718,6 +715,10 @@ var View = {
 		if ( this.util.in_obj(attr, 'styles') ) {
 			this.load_styles(attr.styles);
 		}
+		//Set hooks
+		if ( this.util.in_obj(attr, '_hooks') ) {
+			attr._hooks.call(hdl);
+		}
 		return hdl;
 	},
 	
@@ -831,7 +832,7 @@ var Component = {
 	 * > Key: string Event type
 	 * > Value: array Handlers
 	 */
-	_events: null,
+	_events: {},
 	
 	/**
 	 * Status management
@@ -858,7 +859,7 @@ var Component = {
 		this.set_id(id);
 		//Save init attributes
 		this._attr_init = attributes;
-		this.register_hooks();
+		this._hooks();
 	},
 	
 	_set_parent: function() {
@@ -870,7 +871,7 @@ var Component = {
 	 * Register hooks on init
 	 * Placeholder method to be overridden by child classes
 	 */
-	register_hooks: function() {},
+	_hooks: function() {},
 	
 	/* Methods */
 	
@@ -1661,6 +1662,7 @@ var Viewer = {
 		autofit: true,
 		overlay_enabled: true,
 		overlay_opacity: '0.8',
+		title_default: false,
 		container: null,
 		slideshow_enabled: true,
 		slideshow_autostart: true,
@@ -1681,7 +1683,7 @@ var Viewer = {
 	_attr_parent: [
 		'theme', 
 		'group_loop', 
-		'ui_autofit', 'ui_animate', 'ui_overlay_opacity', 'ui_labels',
+		'ui_autofit', 'ui_animate', 'ui_overlay_opacity', 'ui_labels', 'ui_title_default',
 		'slideshow_enabled', 'slideshow_autostart', 'slideshow_duration'],
 	
 	_attr_map: {
@@ -1689,7 +1691,8 @@ var Viewer = {
 		'ui_autofit': 'autofit',
 		'ui_animate': 'animate',
 		'ui_overlay_opacity': 'overlay_opacity',
-		'ui_labels': 'labels'
+		'ui_labels': 'labels',
+		'ui_title_default': 'title_default'
 	},
 	
 	/* References */
@@ -1725,7 +1728,7 @@ var Viewer = {
 	
 	/* Init */
 	
-	register_hooks: function() {
+	_hooks: function() {
 		var t = this;
 		this
 			.on(['item-prev', 'item-next'], function() {
@@ -2575,7 +2578,7 @@ var Group = {
 	
 	/* Init */
 	
-	register_hooks: function() {
+	_hooks: function() {
 		var t = this;
 		this.on(['item-prev', 'item-next'], function() {
 			t.trigger('item-change');
@@ -3110,6 +3113,22 @@ var Content_Item = {
 		if ( !this.util.is_string(title, false) ) {
 			title = '';
 		}
+		//Strip default title
+		if ( !this.util.is_empty(title) && !this.get_viewer().get_attribute('title_default') ) {
+			var f = this.get_uri('source');
+			var i = f.lastIndexOf('/');
+			if ( -1 !== i ) {
+				f = f.substr(i + 1);
+				i = f.lastIndexOf('.');
+				if ( -1 !== i ) {
+					f = f.substr(0, i);
+				}
+				if ( title === f ) {
+					title = '';
+				}
+			}
+		}
+		
 		
 		//Cache retrieved value
 		this.set_attribute(prop_cached, title);
@@ -3167,7 +3186,7 @@ var Content_Item = {
 	in_gallery: function(gType) {
 		var type = this.gallery_type();
 		//No gallery
-		if ( null == type ) {
+		if ( null === type ) {
 			return false;
 		}
 		//Boolean check
@@ -3355,8 +3374,32 @@ var Modeled_Component = {
 			}
 		}
 		//Check standard attributes as fallback
-		if ( null == ret ) {
+		if ( null === ret ) {
 			ret = this._super(key, def, enforce_type);
+		}
+		return ret;
+	},
+	
+	/**
+	 * Get attribute recursively
+	 * Merges objects from ancestors together
+	 * @see Component.get_attribute() for more information
+	 */
+	get_attribute_recursive: function(key, def, enforce_type) {
+		var ret = this.get_attribute(key,  def, true, enforce_type);
+		if ( this.util.is_obj(ret) ) {
+			//Merge ancestor objects
+			var models = this.get_ancestors(false);
+			ret = [ret];
+			var t = this;
+			$.each(models, function(idx, model) {
+				if ( key in model && t.util.is_obj(model[key]) ) {
+					ret.push(model[key]);
+				}
+			});
+			//Merge transition handlers into current theme
+			ret.push({});
+			ret = $.extend.apply($, ret.reverse());
 		}
 		return ret;
 	},
@@ -3580,6 +3623,8 @@ var Theme = {
 		return ret;
 	},
 	
+	/* Tags */
+	
 	/**
 	 * Retrieve tags from template
 	 * All tags will be retrieved by default
@@ -3599,6 +3644,17 @@ var Theme = {
 	 */
 	dom_get_tag: function(tag, prop) {
 		return $(this.get_template().dom_get_tag(tag, prop));
+	},
+	
+	/**
+	 * Retrieve template tag CSS selector
+	 * @uses Template.get_tag_selector()
+	 * @param name string Tag name
+	 * @param prop string Tag Property
+	 * @return string Template tag CSS selector
+	 */
+	get_tag_selector: function(name, prop) {
+		return this.get_template().get_tag_selector(name, prop);
 	},
 	
 	/* Model */
@@ -3872,6 +3928,30 @@ var Theme = {
 		return dims;
 	},
 	
+	/**
+	 * Retrieve all breakpoints
+	 * @return object Breakpoints
+	 */
+	get_breakpoints: function() {
+		return this.get_attribute_recursive('breakpoints');
+	},
+	
+	/**
+	 * Get breakpoint value
+	 * @param string target Breakpoint target
+	 * @return int Breakpoint value (pixels)
+	 */
+	get_breakpoint: function(target) {
+		var ret = 0;
+		if ( this.util.is_string(target) ) {
+			var b = this.get_attribute_recursive('breakpoints');
+			if ( this.util.is_obj(b) && target in b ) {
+				ret = b[target];
+			}
+		}
+		return ret;
+	},
+	
 	/* Output */
 	
 	/**
@@ -4021,6 +4101,24 @@ var Template = {
 		this._super('', attributes);
 	},
 	
+	_hooks: function() {
+		//TODO: Refactor to event that can save retrieved tags
+		//(`dom_init` event called during attribute initialization so tags are not saved)
+		this.on('dom_init', function(ev) {
+			//Init tag handlers
+			var tags = this.get_tags(null, null, true);
+			var names = [];
+			var t = this;
+			$.each(tags, function(idx, tag) {
+				var name = tag.get_name();
+				if ( -1 === $.inArray(name, names) ) {
+					names.push(name);
+					tag.get_handler().trigger(ev.type, {template: t});
+				}
+			});
+		});
+	},
+	
 	get_theme: function() {
 		var ret = this.get_component('theme', true, false, false);
 		return ret;
@@ -4147,7 +4245,7 @@ var Template = {
 		//Create DOM structure from raw template
 		var dom = $(l);
 		//Find hard-coded tag nodes
-		var tag_temp = new View.Template_Tag();
+		var tag_temp = this.get_tag_temp();
 		var cls = tag_temp.get_class();
 		var cls_new = ['x', cls].join('_');
 		$(tag_temp.get_selector(), dom).each(function() {
@@ -4205,7 +4303,7 @@ var Template = {
 	},
 	
 	get_tag_attribute: function() {
-		return this.get_parent().get_component_temp(View.Template_Tag).dom_get_attribute();
+		return this.get_tag_temp().dom_get_attribute();
 	},
 	
 	/**
@@ -4231,9 +4329,15 @@ var Template = {
 	 * Template is parsed if tags not set
 	 * @param string name (optional) Tag type to retrieve instances of
 	 * @param string prop (optional) Tag property to retrieve instances of
+	 * @param bool isolate (optional) Do not save retrieved tags, only fetch and return (Default: TRUE)
 	 * @return array Template_Tag instances
 	 */
-	get_tags: function(name, prop) {
+	get_tags: function(name, prop, isolate) {
+		//Validate
+		if ( !this.util.is_bool(isolate) ) {
+			isolate = false;
+		}
+		//Setup
 		var a = 'tags';
 		var tags = this.get_attribute(a);
 		//Initialize tags
@@ -4253,18 +4357,23 @@ var Template = {
 				if ( tag.has_handler() ) {
 					//Add tag to array
 					tags.push(tag);
-					//Connect tag to DOM node
-					tag.dom_set(el);
-					//Set classes
-					el.addClass(tag.get_classes(' '));
+					if ( !isolate ) {
+						//Connect tag to DOM node
+						tag.dom_set(el);
+						//Set classes
+						el.addClass(tag.get_classes(' '));
+					}
 				}
 				//Clear data attribute
-				el.removeAttr(attr);
+				if ( !isolate ) {
+					el.removeAttr(attr);
+				}
 			});
-			//Save tags
-			this.set_attribute(a, tags, false);
+			if ( !isolate ) {
+				//Save tags
+				this.set_attribute(a, tags, false);
+			}
 		}
-		tags = this.get_attribute(a, [], false);
 		//Filter tags by parameters
 		if ( !this.util.is_empty(tags) && this.util.is_string(name) ) {
 			//Normalize
@@ -4295,6 +4404,35 @@ var Template = {
 		return ( this.get_tags().length > 0 ) ? true : false;
 	},
 	
+	/**
+	 * Retrieve temporary tag instance
+	 * @return Template_Tag Temporary tag
+	 */
+	get_tag_temp: function() {
+		return this.get_parent().get_component_temp(View.Template_Tag);
+	},
+	
+	/**
+	 * Retrieve Template tag CSS selector
+	 * @uses Template.get_tag_temp() to retrieve temporary tag instance
+	 * @uses Template_Tag.get_selector() to retrieve selector
+	 * @param name string Tag name
+	 * @param prop string Tag Property
+	 * @return string Template Tag CSS selector
+	 */
+	get_tag_selector: function(name, prop) {
+		if ( !this.util.is_string(name) ) {
+			name = '';
+		}
+		if ( !this.util.is_string(prop) ) {
+			prop = '';
+		}
+		var tag = this.get_tag_temp();
+		tag.set_attribute('name', name);
+		tag.set_attribute('prop', prop);
+		return tag.get_selector('full');
+	},
+	
 	/*-** DOM **-*/
 	
 	/**
@@ -4303,6 +4441,7 @@ var Template = {
 	dom_init: function() {
 		//Create DOM object from parsed layout
 		this.dom_set(this.get_layout());
+		this.trigger('dom_init');
 	},
 	
 	/**
@@ -4481,21 +4620,27 @@ var Template_Tag = {
 	 */
 	get_class: function(level) {
 		var cls = '';
+		//Build base
 		switch ( level ) {
 			case 'tag' :
 				//Tag name
-				cls = this.add_ns(this.get_name());
+				cls = this.get_name();
 				break;
 			case 'full' :
 				//Tag name + property
-				cls = this.add_ns([this.get_name(), this.get_prop()].join('_'));
-				break;
-			default :
-				//General
-				cls = this.get_ns(); 
+				var parts = [this.get_name(), this.get_prop()];
+				var a = [];
+				var i;
+				for ( i = 0; i < parts.length; i++ ) {
+					if ( this.util.is_string(parts[i]) ) {
+						a.push(parts[i]);
+					}
+				}
+				cls = a.join('_');
 				break;
 		}
-		return cls;
+		//Format & return
+		return ( !this.util.is_string(cls) ) ? this.get_ns() : this.add_ns(cls);
 	},
 	
 	/**
@@ -4504,7 +4649,15 @@ var Template_Tag = {
 	 * @return string Tag selector
 	 */
 	get_selector: function(level) {
-		return '.' + this.get_class(level);
+		//Get base
+		var ret = this.get_class(level);
+		//Format
+		if ( this.util.is_string(ret) ) {
+			ret = '.' + ret;
+		} else {
+			ret = '';
+		}
+		return ret;
 	}
 };
 
@@ -4534,16 +4687,7 @@ var Template_Tag_Handler = {
 	render: function(item, instance) {
 		var dfr = $.Deferred();
 		//Pass to attribute method
-		var ret = this.call_attribute('render', item, instance);
-		//Check for promise
-		if ( this.util.is_promise(ret) ) {
-			ret.done(function(output) {
-				dfr.resolve(output);
-			});
-		} else {
-			//Resolve non-promises immediately
-			dfr.resolve(ret);
-		}
+		this.call_attribute('render', item, instance, dfr);
 		//Return promise
 		return dfr.promise();
 	},

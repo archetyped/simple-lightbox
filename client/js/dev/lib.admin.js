@@ -7,13 +7,9 @@
 
 /* global SLB, postboxes, pagenow */
 
-if ( jQuery ){(function ($) {
+if ( !!window.SLB && !!SLB.attach ) { (function ($) {
 
-if ( !SLB || !SLB.attach ) {
-	return false;
-}
-
-var Admin = {
+SLB.attach('Admin', {
 	/**
 	 * Initialization routines 
 	 */
@@ -22,9 +18,7 @@ var Admin = {
 			postboxes.add_postbox_toggles(pagenow);
 		}
 	},
-};
-
-SLB.attach('Admin', Admin);
+});
 
 $(document).ready(function() {
 	SLB.Admin.init();

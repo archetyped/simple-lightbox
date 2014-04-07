@@ -208,30 +208,44 @@ class SLB_Utilities {
 	/* Wrapped Values */
 	
 	/**
-	 * Returns validated object of start/end wrapper values
+	 * Create wrapper object
+	 * Properties
+	 *   > start
+	 *   > end
 	 * @param string|array $start Start text (Can also be array defining start & end values)
 	 * @param string $end (optional) End text
 	 * If $end not defined, then $start is used
 	 * @return obj Wrapper
 	 */
 	function get_wrapper($start = null, $end = null) {
-		//Return pre-built wrapper
+		// Validate existing wrapper
 		if ( is_object($start) && isset($start->start) && isset($start->end) )
 			return $start;
-		//Default wrapper
-		if ( is_null($start) && is_null($end) )
-			$start = array('[', ']');
-		$wrapper = compact('start', 'end');
-		if ( is_array($start) && count($start) > 1 ) {
-			$wrapper['start'] = $start[0];
-			$wrapper['end'] = $start[1];
-		}
-		if ( !is_string($wrapper['start']) || empty($wrapper['start'] ) )
-			$wrapper['start'] = '';
-		if ( !is_string($wrapper['end']) || empty($wrapper['end']) )
-			$wrapper['end'] = $wrapper['start'];
 		
-		return (object) $wrapper;
+		// Initialize wrapper
+		$w = array (
+			'start'		=> '[',
+			'end'		=> ']',
+		);
+		
+		if ( !empty($start) ) {
+			if ( is_string($start) ) {
+				$w['start'] = $start;
+			} elseif ( is_array($start) ) {
+				$start = array_values($start);
+				if ( is_string($start) ) {
+					$w['start'] = $start[0];
+				}
+				if ( isset($start[1]) && is_string($start[1]) ) {
+					$w['end'] = $start[1];
+				}
+			}
+		}
+		if ( is_string($end) ) {
+			$w['end'] = $end;
+		}
+		
+		return (object) $w;
 	}
 	
 	/**
@@ -244,11 +258,11 @@ class SLB_Utilities {
 	function has_wrapper($text, $start = null, $end = null) {
 		if ( !is_string($text) || empty($text) )
 			return false;
-		//Validate wrapper)
+		//Validate wrapper
 		$w = $this->get_wrapper($start, $end);
 		
 		//Check for wrapper
-		return ( substr($text, 0, 1) == $w->start && substr($text, -1, 1) == $w->end ) ? true : false;
+		return ( substr($text, 0, strlen($w->start)) == $w->start && substr($text, -1, strlen($w->end)) == $w->end ) ? true : false;
 	}
 	
 	/**
@@ -501,24 +515,24 @@ class SLB_Utilities {
 	 * If no command is specified the validation conditions are returned
 	 */
 	public function validate_client_object($obj, $cmd = null) {
-		//Build condition
+		// Get base object
+		$base = $this->get_client_object();
+		
+		// Build condition
 		$sep = '.';
-		$obj = trim( $this->get_client_object($obj) , $sep);
-		$offset = 0;
-		$len = strlen($obj);
-		$pos = $len;
-		$fmt = '(typeof %s != \'undefined\')';
-		$objs = array();
-		//Add segments to array (in reverse)
-		do {
-			$objs[] = sprintf($fmt, substr($obj, 0, $pos));
-			$offset = $pos - $len - 1;
-		} while ( $offset < $len && ( $pos = strrpos($obj, $sep, $offset) ) && $pos !== false );
-		//Format condition
-		$condition = implode(' && ', array_reverse($objs));
+		$obj = trim($obj, $sep);
+		//  Strip base object
+		if ( 0 === strpos($obj, $base . $sep) ) {
+			$obj = substr($obj, strlen($base . $sep));
+		}
+		$fmt = '!!window.%1$s';
+		if ( !empty($obj) ) {
+			$fmt .= ' && %1$s.has_child(\'%2$s\')';
+		}
+		$condition = sprintf($fmt, $base, $obj);
 		
 		//Wrap command in validation
-		if ( is_string($cmd) && !empty($cmd) ) {
+		if ( !empty($cmd) && is_string($cmd) ) {
 			$condition = sprintf('if ( %1$s ) { %2$s }', $condition, $cmd);
 		}
 		return $condition;
@@ -585,7 +599,6 @@ class SLB_Utilities {
 		return true;
 	}
 	
-	/* Hooks */
 	
 	/**
 	 * Retrieve parent object
@@ -609,7 +622,9 @@ class SLB_Utilities {
 	function get_parent_property($prop, $default = '') {
 		$p =& $this->get_parent();
 		return ( !!$p && property_exists($p, $prop) ) ? $p->{$prop} : $default; 
-	}	
+	}
+	
+	/* Hooks */
 	
 	/**
 	 * Retrieve formatted name for internal hooks
@@ -732,6 +747,67 @@ class SLB_Utilities {
 	 */
 	function remove_filter($tag, $function_to_remove, $priority = 10, $accepted_args = 1, $hook_prefix = true) {
 		return remove_filter($this->get_hook($tag, $hook_prefix), $function_to_remove, $priority, $accepted_args);
+	}
+	
+	/* Shortcode */
+	
+	/**
+	 * Process specific shortcode(s) in content
+	 * Default: Process all existing shortcodes
+	 * @uses $shortcode_tags - array tag => callback
+	 * @uses do_shortcode()
+	 * 
+	 * @param string $content Content to process for shortcodes
+	 * @param string|array $shortcode Single tag or array of tags to process
+	 *  > Associative array sets temporary callbacks for shortcodes (`tag => callback`)
+	 */
+	public function do_shortcode($content, $shortcode = null) {
+		global $shortcode_tags;
+		
+		// Process custom shortcodes
+		if ( !is_null($shortcode) ) {
+			// Cast to array
+			$shortcode = (array) $shortcode;
+			// Backup and reset shortcode handlers
+			$tags_temp = $shortcode_tags;
+			$shortcode_tags = array();
+			// Register specified tags
+			foreach ( $shortcode as $key => $val ) {
+				if ( is_string($key) && is_callable($val) ) {
+					// Tag w/custom callback
+					$shortcode_tags[$key] = $val;
+				} elseif ( is_int($key) && is_string($val) && isset($tags_temp[$val]) ) {
+					// Tag with default callback
+					$shortcode_tags[$val] = $tags_temp[$val];
+				}
+			}
+		}
+		
+		// Process shortcodes in content
+		$content = do_shortcode($content);
+		
+		// Restore default shortcode handlers
+		if ( isset($tags_temp) ) {
+			$shortcode_tags = $tags_temp;
+			unset($tags_temp);
+		}
+		
+		return $content;
+	}
+	
+	/**
+	 * Build shortcode tag
+	 * @param string $tag Shortcode base
+	 * @param array (optional) $attr Shortcode attributes
+	 * @param string (optional) $content Shortcode content
+	 * @return string Shortcode tag
+	 */
+	public function make_shortcode($tag, $attr = null, $content = null) {
+		return $this->build_element(array (
+			'tag'			=> $tag,
+			'attributes'	=> $attr,
+			'content'		=> $content,
+		));
 	}
 
 	/* Meta */
@@ -1601,6 +1677,51 @@ class SLB_Utilities {
 	}
 	
 	/**
+	 * Build generic element
+	 * @param array $args
+	 * @return string Element output
+	 */
+	public function build_element($args = array()) {
+		$ret = '';
+		$args_default = array(
+			'tag'			=> '',
+			'wrap'			=> false,
+			'content'		=> '',
+			'attributes'	=> array(),
+			'format'		=> array(),
+		);
+		$format_default = array(
+			'open'	=> '[%s]',
+			'close'	=> '[/%s]',
+		);
+		$args = wp_parse_args($args, $args_default);
+		$args['format'] = wp_parse_args($args['format'], $format_default);
+		
+		//Validate
+		if ( !is_string($args['tag']) || empty($args['tag']) ) {
+			return $ret;
+		}
+		
+		$args = (object) $args;
+		
+		$args->attributes = $this->build_attribute_string($args->attributes);
+		if ( strlen($args->attributes) > 0 ) {
+			$args->attributes = ' ' . $args->attributes;
+		}
+		
+		// Build output
+		$args->format = (object) $args->format;
+		$ret = sprintf( $args->format->open, $args->tag . $args->attributes);
+		
+		// Wrap content if necessary
+		if ( $args->wrap || ( is_string($args->content) && !empty($args->content) ) ) {
+			$ret .= $args->content . sprintf( $args->format->close, $args->tag);
+		}
+
+		return $ret;
+	}
+	
+	/**
 	 * Parse string of attributes into array
 	 * For XML/XHTML tag attributes
 	 * @param string $txt Attribute text (Can be full tag or just attributes)
@@ -1635,9 +1756,10 @@ class SLB_Utilities {
 	 */
 	function build_attribute_string($attr) {
 		$ret = '';
-		if ( is_object($attr) )
+		if ( is_object($attr) ) {
 			$attr = (array) $attr;
-		if ( is_array($attr) ) {
+		}
+		if ( is_array($attr) && !empty($attr) ) {
 			array_map('esc_attr', $attr);
 			$attr_str = array();
 			foreach ( $attr as $key => $val ) {
@@ -1646,6 +1768,28 @@ class SLB_Utilities {
 			$ret = implode(' ', $attr_str);
 		}
 		return $ret;
+	}
+	
+	/* HTML */	
+
+	/**
+	 * Generate HTML element based on values
+	 * @param $args Element arguments
+	 * @return string Generated HTML element
+	 */
+	public function build_html_element($args) {
+		$args_default = array(
+			'tag'			=> 'span',
+			'content'		=> '',
+			'attributes'	=> array()
+		);
+		$args = wp_parse_args($args, $args_default);
+		$args['format'] = array(
+			'open'		=> '<%s>',
+			'close'		=> '</%s>',
+		);
+		// Build element
+		return $this->build_element($args);
 	}
 	
 	/**
@@ -1666,7 +1810,7 @@ class SLB_Utilities {
 	 * @param $url Stylesheet URL
 	 * @return string Stylesheet element
 	 */
-	function build_stylesheet_element($url = '') {
+	function build_stylesheet_element($url) {
 		$attributes = array('href' => $url, 'type' => 'text/css', 'rel' => 'stylesheet');
 		return $this->build_html_element(array('tag' => 'link', 'wrap' => false, 'attributes' => $attributes));
 	}
@@ -1691,7 +1835,7 @@ class SLB_Utilities {
 		$start = array('/* <![CDATA[ */');
 		$end = array('/* ]]> */');
 		if ( $wrap_jquery ) {
-			$start[] = 'if ( jQuery ){(function($){';
+			$start[] = 'if ( !!window.jQuery ) {(function($){';
 			$end[] = '})(jQuery);}';
 			
 			//Add event handler (if necessary)
@@ -1707,53 +1851,6 @@ class SLB_Utilities {
 		if ( is_string($id) && !empty($id) ) {
 			$attributes['id'] = $this->add_prefix($id);
 		}
-		return $this->build_html_element(array('tag' => 'script', 'content' => $content, 'attributes' => $attributes)) . PHP_EOL;
-	}
-	
-	/**
-	 * Generate HTML element based on values
-	 * @param $args Element arguments
-	 * @return string Generated HTML element
-	 */
-	function build_html_element($args) {
-		$defaults = array(
-						'tag'			=> 'span',
-						'wrap'			=> true,
-						'content'		=> '',
-						'attributes'	=> array()
-						);
-		$el_start = '<';
-		$el_end = '>';
-		$el_close = '/';
-		$args = wp_parse_args($args, $defaults);
-		//Collect attributes
-		$attr_exclude = array( 'content', 'tag', 'wrap', 'attributes' );
-		$attr_extra = array_diff_key($args, array_fill_keys($attr_exclude, null));
-		if ( count($attr_extra) ) {
-			//Merge attributes
-			$args['attributes'] = wp_parse_args($attr_extra, $args['attributes']);
-			//Remove attributes from top-level arguments
-			$args = array_diff_key($args, $attr_extra);
-		}
-		extract($args, EXTR_SKIP);
-		$content = trim($content);
-		
-		
-		if ( !$wrap && strlen($content) > 0 )
-			$wrap = true;
-		
-		$attributes = $this->build_attribute_string($attributes);
-		if ( strlen($attributes) > 0 )
-			$attributes = ' ' . $attributes;
-			
-		$ret = $el_start . $tag . $attributes;
-		
-		if ( $wrap )
-			$ret .= $el_end . $content . $el_start . $el_close . $tag;
-		else
-			$ret .= ' ' . $el_close;
-
-		$ret .= $el_end;
-		return $ret;	
+		return $this->build_html_element(array('tag' => 'script', 'content' => $content, 'wrap' => true, 'attributes' => $attributes)) . PHP_EOL;
 	}
 }
