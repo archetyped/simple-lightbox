@@ -516,7 +516,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 		
 		//Get group ID
 		if ( is_string($group) ) {
-			$group = array($group);
+			$group = array($group, $priority);
 		}
 		list($gid, $priority) = $group;
 		$gid = trim(sanitize_title_with_dashes($gid));
