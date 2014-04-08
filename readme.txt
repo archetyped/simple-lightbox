@@ -57,8 +57,12 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 
 == Changelog ==
 
+= 2.3.1 =
+* Fix: WordPress version requirement
+* Optimize: Field collection group parsing
+
 = 2.3.0 =
-[Full Release Notes][r2.3.0]
+[Full Release Notes](http://archetyped.com/lab/slb-2-3-0 "Simple Lightbox 2.3.0")
 
 * Update: WordPress 3.9 support
 * Update: Support URI, content
@@ -290,5 +294,3 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 
 = 1.0 =
 * Initial release
-
-[r2.3.0]: http://archetyped.com/lab/slb-2-3-0 "Simple Lightbox 2.3.0"
