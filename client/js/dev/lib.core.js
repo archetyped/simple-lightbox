@@ -327,11 +327,12 @@ var Utilities =  {
 	 * @param string val Value to add prefix to
 	 * @param string sep (optional) Separator (Default: `_`)
 	 * @param bool (optional) once If text should only be prefixed once (Default: true)
+	 * @return string Original value with prefix removed
 	 */
 	remove_prefix: function(val, sep, once) {
 		//Validate parameters
 		if ( !this.is_string(val, true) ) {
-			return val;
+			return '';
 		}
 		//Default values
 		sep = this.get_sep(sep);
