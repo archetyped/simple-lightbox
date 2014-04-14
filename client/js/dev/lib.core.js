@@ -199,6 +199,15 @@ var Base = {
 	},
 	
 	/**
+	 * Check if instance is set as a base
+	 * @uses base
+	 * @return bool TRUE if object is set as a base
+	 */
+	is_base: function() {
+		return !!this.base;
+	},
+	
+	/**
 	 * Get parent instance
 	 * @uses `Base._parent` property
 	 * @return obj Parent instance
@@ -219,14 +228,22 @@ var Utilities =  {
 	
 	/* Methods */
 	
+	/**
+	 * Get base ancestor
+	 * @return obj Base ancestor
+	 */
 	get_base: function() {
 		if ( !this._base ) {
 			var p = this.get_parent();
-			var p_last = null;
-			//Iterate through parents
-			while ( !p.base && p_last !== p && p._parent ) {
-				p_last = p;
-				p = p._parent;
+			var p_prev = null;
+			var methods = ['is_base', 'get_parent'];
+			// Find base ancestor
+			// Either oldest ancestor or object explicitly set as a base
+			while ( ( p_prev !== p ) && this.is_method(p, methods) && !p.is_base() ) {
+				// Save previous parent
+				p_prev = p;
+				// Get new parent
+				p = p.get_parent();
 			}
 			//Set base
 			this._base = p;
@@ -234,6 +251,10 @@ var Utilities =  {
 		return this._base;
 	},
 	
+	/**
+	 * Get parent object
+	 * @return obj Parent object
+	 */
 	get_parent: function() {
 		return this._parent;
 	},
