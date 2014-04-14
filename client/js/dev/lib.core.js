@@ -285,7 +285,8 @@ var Utilities =  {
 	 * @return string Prefix
 	 */
 	get_prefix: function() {
-		return ( this.is_string(this.get_parent().prefix) ) ? this.get_parent().prefix : '';
+		var p = this.get_parent();
+		return ( p.prefix && this.is_string(p.prefix, false) ) ? p.prefix : '';
 	},
 	
 	/**
