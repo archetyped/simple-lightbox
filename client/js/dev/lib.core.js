@@ -213,6 +213,11 @@ var Base = {
 	 * @return obj Parent instance
 	 */
 	get_parent: function() {
+		var p = this._parent;
+		// Validate
+		if ( !p ) {
+			this._parent = {};
+		}
 		return this._parent;
 	}
 };
@@ -256,6 +261,11 @@ var Utilities =  {
 	 * @return obj Parent object
 	 */
 	get_parent: function() {
+		var p = this._parent;
+		// Validate
+		if ( !p ) {
+			this._parent = {};
+		}
 		return this._parent;
 	},
 	
