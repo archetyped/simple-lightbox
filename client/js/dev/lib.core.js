@@ -410,15 +410,22 @@ var Utilities =  {
 		return ( typeof val !== 'undefined' );
 	},
 	
-	is_type: function(value, type, nonempty) {
+	/**
+	 * Validate data type
+	 * @param mixed val Value to validate
+	 * @param mixed type Data type to compare with (function gets for instance, string checks data type)
+	 * @param bool nonempty (optional) Check for empty value? (Default: TRUE)
+	 * @return bool TRUE if Value matches specified data type
+	 */
+	is_type: function(val, type, nonempty) {
 		var ret = false;
-		if ( this.is_set(value) && null !== value && this.is_set(type) ) {
+		if ( this.is_set(val) && null !== val && this.is_set(type) ) {
 			switch ( $.type(type) ) {
 				case 'function':
-					ret = ( value instanceof type ) ? true : false;
+					ret = ( val instanceof type ) ? true : false;
 					break;
 				case 'string':
-					ret = ( $.type(value) === type ) ? true : false;
+					ret = ( $.type(val) === type ) ? true : false;
 					break;
 				default:
 					ret = false;
@@ -427,8 +434,8 @@ var Utilities =  {
 		}
 		
 		//Validate empty values
-		if ( ret && ( $.type(nonempty) !== 'boolean' || nonempty ) ) {
-			ret = !this.is_empty(value);
+		if ( ret && ( !this.is_set(nonempty) || !!nonempty ) ) {
+			ret = !this.is_empty(val);
 		}
 		return ret;
 	},
