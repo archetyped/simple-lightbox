@@ -375,12 +375,12 @@ var Utilities =  {
 	 * @return array Context
 	 */
 	get_context: function() {
-		//Valid context
+		// Validate
 		var b = this.get_base();
 		if ( !$.isArray(b.context) ) {
 			b.context = [];
 		}
-		//Return context
+		// Return context
 		return b.context;
 	},
 			
@@ -392,15 +392,11 @@ var Utilities =  {
 	 * @return bool TRUE if context exists, FALSE otherwise
 	 */
 	is_context: function(ctx) {
-		var ret = false;
 		//Validate context
-		if ( typeof ctx === 'string' ) {
+		if ( this.is_string(ctx) ) {
 			ctx = [ctx];
 		}
-		if ( $.isArray(ctx) && this.arr_intersect(this.get_context(), ctx).length ) {
-			ret = true;
-		}
-		return ret;
+		return ( this.is_array(ctx) && this.arr_intersect(this.get_context(), ctx).length > 0 );
 	},
 	
 	/* Helpers */
