@@ -257,16 +257,22 @@ var Utilities =  {
 	},
 	
 	/**
-	 * Get parent object
-	 * @return obj Parent object
+	 * Get parent object or parent property value
+	 * @param string prop (optional) Property to retrieve
+	 * @return obj Parent object or property value
 	 */
-	get_parent: function() {
-		var p = this._parent;
+	get_parent: function(prop) {
+		var ret = this._parent;
 		// Validate
-		if ( !p ) {
-			this._parent = {};
+		if ( !ret ) {
+			// Set default parent value
+			ret = this._parent = {};
 		}
-		return this._parent;
+		// Get parent property
+		if ( this.is_string(prop) ) {
+			ret = ( this.in_obj(ret, prop) ) ? ret[prop] : null;
+		}
+		return ret;
 	},
 	
 	/**
