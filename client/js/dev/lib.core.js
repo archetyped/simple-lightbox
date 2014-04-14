@@ -400,9 +400,14 @@ var Utilities =  {
 	},
 	
 	/* Helpers */
-
-	is_set: function(value) {
-		return ( $.type(value) !== 'undefined' ) ? true : false;
+	
+	/**
+	 * Check if value is set/defined
+	 * @param mixed val Value to check
+	 * @return bool TRUE if value is defined
+	 */
+	is_set: function(val) {
+		return ( typeof val !== 'undefined' );
 	},
 	
 	is_type: function(value, type, nonempty) {
