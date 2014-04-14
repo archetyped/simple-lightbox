@@ -379,7 +379,12 @@ class SLB_Lightbox extends SLB_Base {
 				}
 			}
 		}
-		return $ret;
+		// Filter return value
+		if ( !is_admin() ) {
+			$ret = $this->util->apply_filters('is_enabled', $ret);
+		}
+		// Return value (force boolean)
+		return !!$ret;
 	}
 	
 	/**
