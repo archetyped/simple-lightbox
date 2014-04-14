@@ -299,7 +299,7 @@ var Utilities =  {
 	 * Check if string is prefixed
 	 */
 	has_prefix: function(val, sep) {
-		return ( this.is_string(val) && val.indexOf(this.get_prefix() + this.get_sep(sep)) === 0 );
+		return ( this.is_string(val) && 0 === val.indexOf(this.get_prefix() + this.get_sep(sep)) );
 	},
 	
 	/**
