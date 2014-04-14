@@ -266,7 +266,8 @@ var Utilities =  {
 	 * @return string Separator text
 	 */
 	get_sep: function(sep) {
-		return ( this.is_string(sep, false) ) ? sep : '_';
+		var sep_default = '_';
+		return ( this.is_string(sep, false) ) ? sep : sep_default;
 	},
 	
 	/**
