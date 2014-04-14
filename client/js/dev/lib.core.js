@@ -496,24 +496,6 @@ var Base = {
 		},
 		
 		/**
-		 * Check if object is a jQuery.Deferred instance
-		 */
-		is_deferred: function(obj) {
-			return ( this.is_promise(obj) && this.is_method(obj, ['resolve', 'reject', 'promise']));
-		},
-		
-		/**
-		 * Validate specified value's data type and return default value if necessary
-		 * Data type of default value is used to determine data type
-		 * @param mixed val Value to check
-		 * @param mixed def Default value
-		 * @return mixed Valid value 
-		 */
-		validate: function(val, def) {
-			return ( this.is_type(val, def, true) ) ? val : def;
-		},
-		
-		/**
 		 * Return formatted string
 		 */
 		format: function(fmt, val) {
