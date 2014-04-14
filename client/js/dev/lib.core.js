@@ -352,22 +352,20 @@ var Utilities =  {
 	
 	/*
 	 * Get attribute name
-	 * @param string val Attribute's base name
+	 * @param string attr_base Attribute's base name
+	 * @return string Fully-formed attribute name
 	 */
-	get_attribute: function(val) {
+	get_attribute: function(attr_base) {
 		//Setup
 		var sep = '-';
 		var top = 'data';
 		//Validate
-		var pre = [top, this.get_prefix()].join(sep);
-		if ( !this.is_string(val, false) ) {
-			return pre; 
-		}
+		var attr = [top, this.get_prefix()].join(sep);
 		//Process
-		if ( val.indexOf(pre + sep) === -1 ) {
-			val = [pre, val].join(sep);
+		if ( this.is_string(attr_base) && 0 !== attr_base.indexOf(attr + sep) ) {
+			attr = [attr, attr_base].join(sep);
 		}
-		return val;
+		return attr;
 	},
 	
 	/* Request */
