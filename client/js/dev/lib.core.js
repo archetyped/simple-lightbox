@@ -138,7 +138,7 @@ var Base = {
 	 * @param obj p Parent instance
 	 */
 	_set_parent: function(p) {
-		if ( 'undefined' !== typeof p ) {
+		if ( this.util.is_set(p) ) {
 			this._parent = p;
 		}
 		this.util._parent = this;
@@ -591,13 +591,17 @@ var Utilities =  {
 						ret = ( value == 0 ); // jshint ignore:line
 						break;
 					case 'object':
-						if ( Object.getOwnPropertyNames ) {
-							ret = ( Object.getOwnPropertyNames(value).length === 0 ); 
-						} else if ( value.hasOwnProperty ) {
-							for ( var key in value ) {
-								if ( value.hasOwnProperty(key) ) {
-									ret = false;
-									break;
+						if ( !$.isPlainObject(value) ) {
+							ret = false;
+						} else {
+							if ( Object.getOwnPropertyNames ) {
+								ret = ( Object.getOwnPropertyNames(value).length === 0 ); 
+							} else if ( value.hasOwnProperty ) {
+								for ( var key in value ) {
+									if ( value.hasOwnProperty(key) ) {
+										ret = false;
+										break;
+									}
 								}
 							}
 						}
@@ -779,7 +783,6 @@ var Core = {
 	 * Set variables, DOM, etc.
 	 */
 	setup_client: function() {
-		/* Quick Hide */
 		$('html').addClass(this.util.get_prefix());
 	}
 };
