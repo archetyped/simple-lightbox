@@ -1,5 +1,4 @@
 if ( !!window.SLB && SLB.has_child('View.extend_theme') ) {(function($) {
-$(document).ready(function() {
 SLB.View.extend_theme('slb_default', {
 	/**
 	 * Transition event handlers
@@ -180,7 +179,6 @@ SLB.View.extend_theme('slb_default', {
 			return dfr.promise();
 		}
 	}
-});
 });
 })(jQuery);
 }
