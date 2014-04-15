@@ -1,5 +1,4 @@
-if ( !!window.SLB && SLB.has_child('View.extend_template_tag_handler') ) {(function($) {
-$(document).ready(function() {
+if ( !!window.SLB && SLB.has_child('View.extend_template_tag_handler') ) {(function() {
 SLB.View.extend_template_tag_handler('ui', {
 	_hooks : function() {
 		this.on('dom_init', function(ev) {
@@ -8,6 +7,7 @@ SLB.View.extend_template_tag_handler('ui', {
 	},
 	events_init: function(ev) {
 		var v = ev.data.template.get_theme().get_viewer();
+		var thm = v.get_theme();
 		// Add event handlers
 		v.on('events-complete', function(ev, v) {
 			// Register event handlers
@@ -15,29 +15,29 @@ SLB.View.extend_template_tag_handler('ui', {
 			/* Close */
 			
 			// Close button
-			v.get_theme().dom_get_tag('ui', 'close').click(function() {
+			thm.dom_get_tag('ui', 'close').click(function() {
 				return v.close();
 			});
 			
 			/* Navigation */
 			
-			v.get_theme().dom_get_tag('ui', 'nav_next').click(function() {
+			thm.dom_get_tag('ui', 'nav_next').click(function() {
 				v.item_next();
 			});
-			v.get_theme().dom_get_tag('ui', 'nav_prev').click(function() {
+			thm.dom_get_tag('ui', 'nav_prev').click(function() {
 				v.item_prev();
 			});
 			
 			/* Slideshow */
 			
-			v.get_theme().dom_get_tag('ui', 'slideshow_control').click(function() {
+			thm.dom_get_tag('ui', 'slideshow_control').click(function() {
 				v.slideshow_toggle();
 			});
 		});
 		
 		v.on('slideshow-toggle', function(ev, v) {
 			// Update slideshow control tag
-			var tags = v.get_theme().get_tags('ui', 'slideshow_control');
+			var tags = thm.get_tags('ui', 'slideshow_control');
 			if ( tags.length ) {
 				// Renderer
 				var render_tag = function(tag) {
@@ -102,6 +102,4 @@ SLB.View.extend_template_tag_handler('ui', {
 		}
 	}
 });
-});
-})(jQuery);
-}
+})();}
