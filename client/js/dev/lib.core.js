@@ -4,6 +4,7 @@
  * @author Archetyped
  */
 if ( window.jQuery ){(function($) {
+'use strict';
 
 /**
  * Extendible class
@@ -137,7 +138,7 @@ var Base = {
 	 * @param obj p Parent instance
 	 */
 	_set_parent: function(p) {
-		if ( 'undefined' !== typeof p ) {
+		if ( this.util.is_set(p) ) {
 			this._parent = p;
 		}
 		this.util._parent = this;
@@ -292,7 +293,7 @@ var Utilities =  {
 	 */
 	get_prefix: function() {
 		var p = this.get_parent('prefix');
-		return ( this.is_string(p) ) ? p : '';
+		return ( this.is_string(p, false) ) ? p : '';
 	},
 	
 	/**
@@ -590,13 +591,17 @@ var Utilities =  {
 						ret = ( value == 0 ); // jshint ignore:line
 						break;
 					case 'object':
-						if ( Object.getOwnPropertyNames ) {
-							ret = ( Object.getOwnPropertyNames(value).length === 0 ); 
-						} else if ( value.hasOwnProperty ) {
-							for ( var key in value ) {
-								if ( value.hasOwnProperty(key) ) {
-									ret = false;
-									break;
+						if ( !$.isPlainObject(value) ) {
+							ret = false;
+						} else {
+							if ( Object.getOwnPropertyNames ) {
+								ret = ( Object.getOwnPropertyNames(value).length === 0 ); 
+							} else if ( value.hasOwnProperty ) {
+								for ( var key in value ) {
+									if ( value.hasOwnProperty(key) ) {
+										ret = false;
+										break;
+									}
 								}
 							}
 						}
@@ -756,7 +761,9 @@ Base.attach('util', Utilities, true);
  */
 var SLB_Base = Class.extend(Base);
 
-// Init global object
+/**
+ * Core
+ */
 var Core = {
 	/* Properties */
 	
@@ -772,18 +779,14 @@ var Core = {
 	/* Methods */
 	
 	/**
-	 * Setup client
+	 * Init
 	 * Set variables, DOM, etc.
 	 */
-	setup_client: function() {
-		/* Quick Hide */
+	_init: function() {
+		this._super();
 		$('html').addClass(this.util.get_prefix());
 	}
 };
 var SLB_Core = SLB_Base.extend(Core);
-
-this.SLB = new SLB_Core();
-
-this.SLB.setup_client();
-
+window.SLB = new SLB_Core();
 })(jQuery);}
