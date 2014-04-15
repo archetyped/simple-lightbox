@@ -440,22 +440,55 @@ var Utilities =  {
 		return ret;
 	},
 	
+	/**
+	 * Check if value is a string
+	 * @uses is_type()
+	 * @param mixed value Value to check
+	 * @param bool nonempty (optional) Check for empty value? (Default: TRUE)
+	 * @return bool TRUE if value is a valid string
+	 */
 	is_string: function(value, nonempty) {
 		return this.is_type(value, 'string', nonempty);
 	},
 	
+	/**
+	 * Check if value is an array
+	 * @uses is_type()
+	 * @param mixed value Value to check
+	 * @param bool nonempty (optional) Check for empty value? (Default: TRUE)
+	 * @return bool TRUE if value is a valid array
+	 */
 	is_array: function(value, nonempty) {
 		return ( this.is_type(value, 'array', nonempty) );
 	},
 	
+	/**
+	 * Check if value is a boolean
+	 * @uses is_type()
+	 * @param mixed value Value to check
+	 * @return bool TRUE if value is a valid boolean
+	 */
 	is_bool: function(value) {
 		return this.is_type(value, 'boolean', false);
 	},
 	
+	/**
+	 * Check if value is an object
+	 * @uses is_type()
+	 * @param mixed value Value to check
+	 * @param bool nonempty (optional) Check for empty value? (Default: TRUE)
+	 * @return bool TRUE if value is a valid object
+	 */
 	is_obj: function(value, nonempty) {
 		return this.is_type(value, 'object', nonempty);
 	},
 	
+	/**
+	 * Check if value is a function
+	 * @uses is_type()
+	 * @param mixed value Value to check
+	 * @return bool TRUE if value is a valid function
+	 */
 	is_func: function(value) {
 		return this.is_type(value, 'function', false);
 	},
@@ -481,14 +514,35 @@ var Utilities =  {
 		return ret;
 	},
 	
+	/**
+	 * Check if value is a number
+	 * @uses is_type()
+	 * @param mixed value Value to check
+	 * @param bool nonempty (optional) Check for empty value? (Default: TRUE)
+	 * @return bool TRUE if value is a valid number
+	 */
 	is_num: function(value, nonempty) {
 		return ( this.is_type(value, 'number', nonempty) && !isNaN(value) );
 	},
 	
+	/**
+	 * Check if value is a integer
+	 * @uses is_type()
+	 * @param mixed value Value to check
+	 * @param bool nonempty (optional) Check for empty value? (Default: TRUE)
+	 * @return bool TRUE if value is a valid integer
+	 */
 	is_int: function(value, nonempty) {
 		return ( this.is_num(value, nonempty) && Math.floor(value) === value );
 	},
 	
+	/**
+	 * Check if value is scalar
+	 * @uses is_type()
+	 * @param mixed value Value to check
+	 * @param bool nonempty (optional) Check for empty value? (Default: TRUE)
+	 * @return bool TRUE if value is scalar
+	 */
 	is_scalar: function(value, nonempty) {
 		return ( this.is_num(value, nonempty) || this.is_string(value, nonempty) || this.is_bool(value, nonempty) );
 	},
@@ -536,7 +590,9 @@ var Utilities =  {
 	/**
 	 * Check if object is a jQuery.Promise instance
 	 * Will also match (but not guarantee) jQuery.Deferred instances
-	 * @return bool TRUE if object is Promise/Deferred, FALSE otherwise
+	 * @uses is_method()
+	 * @param obj obj Object to check 
+	 * @return bool TRUE if object is Promise/Deferred
 	 */
 	is_promise: function(obj) {
 		return ( this.is_obj(obj) && this.is_method(obj, ['then', 'done', 'always', 'fail', 'pipe']) );
