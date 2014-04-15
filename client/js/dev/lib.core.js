@@ -21,13 +21,13 @@ var Class = function() {};
 Class.extend = function(members) {
 	var _super = this.prototype;
 	
-	//Copy instance to prototype
+	// Copy instance to prototype
 	c_init = true;
 	var proto = new this();
 	c_init = false;
 	
 	var val, name; 
-	//Scrub prototype objects (Decouple from super class)
+	// Scrub prototype objects (Decouple from super class)
 	for ( name in proto ) {
 		if ( $.isPlainObject(proto[name]) ) {
 			val = $.extend({}, proto[name]);
@@ -43,26 +43,26 @@ Class.extend = function(members) {
 	 */
 	var make_handler = function(nm, fn) {
 		return function() {
-			//Cache super variable
+			// Cache super variable
 			var tmp = this._super;
-			//Set variable to super class method
+			// Set variable to super class method
 			this._super = _super[nm];
-			//Call method
+			// Call method
 			var ret = fn.apply(this, arguments);
-			//Restore super variable
+			// Restore super variable
 			this._super = tmp;
-			//Return value
+			// Return value
 			return ret;
 		};
 	};
-	//Copy properties to Class
+	// Copy properties to Class
 	for ( name in members ) {
-		//Add access to super class method to methods
+		// Add access to super class method to methods
 		if ( 'function' === typeof members[name] && 'function' === typeof _super[name] ) {
 			proto[name] = make_handler(name, members[name]);
 		} else {
-			//Transfer properties
-			//Objects are copied, not referenced
+			// Transfer properties
+			// Objects are copied, not referenced
 			proto[name] = ( $.isPlainObject(members[name]) ) ? $.extend({}, members[name]) : members[name];
 		}
 	}
@@ -74,11 +74,11 @@ Class.extend = function(members) {
 	 */
 	function Class() {
 		if ( !c_init ) {
-			//Private initialization
+			// Private initialization
 			if ( 'function' === typeof this._init ) {
 				this._init.apply(this, arguments);
 			}
-			//Main Constructor
+			// Main Constructor
 			if ( 'function' === typeof this._c ) {
 				this._c.apply(this, arguments);
 			}
@@ -86,16 +86,16 @@ Class.extend = function(members) {
 	}
 	
 	
-	//Populate new prototype
+	// Populate new prototype
 	Class.prototype = proto;
 	
-	//Set constructor
+	// Set constructor
 	Class.prototype.constructor = Class;
 	
-	//Set extender
+	// Set extender
 	Class.extend = this.extend;
 	
-	//Return function
+	// Return function
 	return Class;
 };
 
@@ -151,19 +151,19 @@ var Base = {
 	 * @param bool simple (optional) Save new member as data object or new class instance (Default: new instance)
 	 */
 	attach: function(member, data, simple) {
-		//Validate
+		// Validate
 		simple = ( typeof simple === 'undefined' ) ? false : !!simple;
-		//Add member to instance
+		// Add member to instance
 		if ( 'string' === $.type(member) ) {
-			//Prepare member value
+			// Prepare member value
 			if ( $.isPlainObject(data) && !simple ) {
-				//Set parent reference for attached instance
+				// Set parent reference for attached instance
 				data['_parent'] = this;
-				//Define new class
+				// Define new class
 				data = this.Class.extend(data);
 			}
-			//Save member to current instance
-			//Initialize new instance if data is a class
+			// Save member to current instance
+			// Initialize new instance if data is a class
 			this[member] = ( 'function' === $.type(data) ) ? new data() : data; 
 		}
 	},
@@ -175,7 +175,7 @@ var Base = {
 	 * @param string child Name of child object
 	 */
 	has_child: function(child) {
-		//Validate
+		// Validate
 		if ( !this.util.is_string(child) ) {
 			return false;
 		}
@@ -250,7 +250,7 @@ var Utilities =  {
 				// Get new parent
 				p = p.get_parent();
 			}
-			//Set base
+			// Set base
 			this._base = p;
 		}
 		return this._base;
@@ -309,9 +309,9 @@ var Utilities =  {
 	 * @param bool (optional) once If text should only be prefixed once (Default: TRUE)
 	 */
 	add_prefix: function(val, sep, once) {
-		//Validate
+		// Validate
 		if ( !this.is_string(val) ) {
-			//Return prefix if value to add prefix to is empty
+			// Return prefix if value to add prefix to is empty
 			return this.get_prefix();
 		}
 		sep = this.get_sep(sep);
@@ -330,18 +330,18 @@ var Utilities =  {
 	 * @return string Original value with prefix removed
 	 */
 	remove_prefix: function(val, sep, once) {
-		//Validate parameters
+		// Validate parameters
 		if ( !this.is_string(val, true) ) {
 			return '';
 		}
-		//Default values
+		// Default values
 		sep = this.get_sep(sep);
 		if ( !this.is_bool(once) ) {
 			once = true;
 		}
-		//Check if string is prefixed
+		// Check if string is prefixed
 		if ( this.has_prefix(val, sep) ) {
-			//Remove prefix
+			// Remove prefix
 			var prfx = this.get_prefix() + sep;
 			do {
 				val = val.substr(prfx.length);
@@ -356,12 +356,12 @@ var Utilities =  {
 	 * @return string Fully-formed attribute name
 	 */
 	get_attribute: function(attr_base) {
-		//Setup
+		// Setup
 		var sep = '-';
 		var top = 'data';
-		//Validate
+		// Validate
 		var attr = [top, this.get_prefix()].join(sep);
-		//Process
+		// Process
 		if ( this.is_string(attr_base) && 0 !== attr_base.indexOf(attr + sep) ) {
 			attr = [attr, attr_base].join(sep);
 		}
@@ -392,7 +392,7 @@ var Utilities =  {
 	 * @return bool TRUE if context exists, FALSE otherwise
 	 */
 	is_context: function(ctx) {
-		//Validate context
+		// Validate context
 		if ( this.is_string(ctx) ) {
 			ctx = [ctx];
 		}
@@ -433,7 +433,7 @@ var Utilities =  {
 			}
 		}
 		
-		//Validate empty values
+		// Validate empty values
 		if ( ret && ( !this.is_set(nonempty) || !!nonempty ) ) {
 			ret = !this.is_empty(val);
 		}
@@ -643,7 +643,7 @@ var Utilities =  {
 		if ( arguments.length < 2 || fmt.indexOf(ph) === -1 ) {
 			return strip(fmt);
 		}
-		//Get replacement values
+		// Get replacement values
 		params = Array.prototype.slice.call(arguments, 1);
 		val = null;
 		// Clean parameters
@@ -653,7 +653,7 @@ var Utilities =  {
 			}
 		}
 		
-		//Replace all placeholders at once if single parameter set
+		// Replace all placeholders at once if single parameter set
 		if ( params.length === 1 ) {
 			fmt = fmt.replace(ph, params[0].toString());
 		} else {
@@ -666,7 +666,7 @@ var Utilities =  {
 				fmt = fmt.substr(0, pos) + params[idx].toString() + fmt.substr(pos + rlen);
 				idx++;
 			}
-			//Remove any remaining placeholders
+			// Remove any remaining placeholders
 			fmt = strip(fmt);
 		}
 		return fmt;
@@ -694,7 +694,7 @@ var Utilities =  {
 			for ( var x = 0; x < key.length; x++ ) {
 				val = key[x];
 				ret = ( this.is_string(val) && ( val in obj ) ) ? true : false;
-				//Stop processing if conditions have been met
+				// Stop processing if conditions have been met
 				if ( ( !all && ret ) || ( all && !ret ) ) {
 					break;
 				}
@@ -743,7 +743,7 @@ var Utilities =  {
 				ret.push(base[x]);
 			}
 		}
-		//Return intersection results
+		// Return intersection results
 		return ret;
 	}
 };
@@ -756,7 +756,7 @@ Base.attach('util', Utilities, true);
  */
 var SLB_Base = Class.extend(Base);
 
-//Init global object
+// Init global object
 var Core = {
 	/* Properties */
 	
