@@ -293,7 +293,7 @@ var Utilities =  {
 	 */
 	get_prefix: function() {
 		var p = this.get_parent('prefix');
-		return ( this.is_string(p) ) ? p : '';
+		return ( this.is_string(p, false) ) ? p : '';
 	},
 	
 	/**
