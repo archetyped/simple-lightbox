@@ -676,16 +676,18 @@ var Utilities =  {
 	 * Checks if key(s) exist in an object
 	 * @param object obj Object to check
 	 * @param string|array key Key(s) to check for in object
-	 * @return bool TRUE if key(s) exist in object, FALSE otherwise
+	 * @param bool all (optional) All keys must exist in object? (Default: TRUE) 
+	 * @return bool TRUE if key(s) exist in object
 	 */
 	in_obj: function(obj, key, all) {
-		//Validate
+		// Validate
 		if ( !this.is_bool(all) ) {
 			all = true;
 		}
 		if ( this.is_string(key) ) {
 			key = [key];
 		}
+		// Check for keys
 		var ret = false;
 		if ( this.is_obj(obj) && this.is_array(key) ) {
 			var val;
