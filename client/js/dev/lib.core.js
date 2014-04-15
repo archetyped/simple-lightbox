@@ -556,33 +556,50 @@ var Utilities =  {
 	 * Checks if value is empty
 	 * @param mixed value Value to check
 	 * @param string type (optional) Data type
-	 * @return bool TRUE if value is empty, FALSE if not empty
+	 * @return bool TRUE if value is empty
 	 */
 	is_empty: function(value, type) {
 		var ret = false;
-		//Initial check for empty value
-		if ( !this.is_set(value) || null === value || false === value ) {
+		// Check Undefined
+		if ( !this.is_set(value) ) {
 			ret = true;
 		} else {
-			//Validate type
+			// Check standard values
+			var empties = [null, "", false, 0];
+			var x = 0;
+			while ( !ret && x < empties.length ) {
+				ret = ( empties[x] === value );
+				x++;
+			}
+		}
+		
+		// Advanced check
+		if ( !ret ) {
+			// Validate type
 			if ( !this.is_set(type) ) {
 				type = $.type(value);
 			}
-			//Type-based check
+			// Type-based check
 			if ( this.is_type(value, type, false) ) {
 				switch ( type ) {
 					case 'string':
 					case 'array':
-						if ( value.length === 0 ) {
-							ret = true;
-						}
-						break;
-					case 'object':
-						//Only evaluate literal objects
-						ret = ( $.isPlainObject(value) && !$.map(value, function(v, key) { return key; }).length );
+						ret = ( value.length === 0 );
 						break;
 					case 'number':
-						ret = ( value === 0 );
+						ret = ( value == 0 ); // jshint ignore:line
+						break;
+					case 'object':
+						if ( Object.getOwnPropertyNames ) {
+							ret = ( Object.getOwnPropertyNames(value).length === 0 ); 
+						} else if ( value.hasOwnProperty ) {
+							for ( var key in value ) {
+								if ( value.hasOwnProperty(key) ) {
+									ret = false;
+									break;
+								}
+							}
+						}
 						break;
 				}
 			} else {
