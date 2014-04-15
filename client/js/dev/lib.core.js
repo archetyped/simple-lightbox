@@ -756,7 +756,9 @@ Base.attach('util', Utilities, true);
  */
 var SLB_Base = Class.extend(Base);
 
-// Init global object
+/**
+ * Core
+ */
 var Core = {
 	/* Properties */
 	
@@ -782,8 +784,8 @@ var Core = {
 };
 var SLB_Core = SLB_Base.extend(Core);
 
-this.SLB = new SLB_Core();
+window.SLB = new SLB_Core();
 
-this.SLB.setup_client();
+window.SLB.setup_client();
 
 })(jQuery);}
