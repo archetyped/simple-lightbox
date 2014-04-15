@@ -1,5 +1,4 @@
-if ( !!window.SLB && SLB.has_child('View.extend_template_tag_handler') ) {(function($) {
-$(document).ready(function() {
+if ( !!window.SLB && SLB.has_child('View.extend_template_tag_handler') ) {(function() {
 SLB.View.extend_template_tag_handler('item', {
 	/**
 	 * Render Item tag 
@@ -23,6 +22,5 @@ SLB.View.extend_template_tag_handler('item', {
 		return dfr.promise();
 	}
 });
-});
-})(jQuery);
+})();
 }
