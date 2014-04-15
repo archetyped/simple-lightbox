@@ -1,5 +1,4 @@
 if ( !!window.SLB && SLB.has_child('View.extend_content_handler') ) {(function($) {
-$(document).ready(function() {
 SLB.View.extend_content_handler('image', {
 	/**
 	 * Render images
@@ -29,7 +28,6 @@ SLB.View.extend_content_handler('image', {
 		// Return promise
 		return dfr.promise();
 	}
-});
 });
 })(jQuery);
 }
