@@ -622,35 +622,52 @@ var Utilities =  {
 	
 	/**
 	 * Return formatted string
+	 * @param string fmt Format template
+	 * @param string val Replacement value (Multiple parameters may be set)
+	 * @return string Formatted string
 	 */
 	format: function(fmt, val) {
+		// Validate format
 		if ( !this.is_string(fmt) ) {
 			return '';
 		}
-		var params = [],
-			ph = '%s';
-		//Stop processing if no replacement values specified or format string contains no placeholders
+		var params = [];
+		var ph = '%s';
+		/**
+		 * Clean string (remove placeholders)
+		 */
+		var strip = function(txt) {
+			return ( txt.indexOf(ph) !== -1 ) ? txt.replace(ph, '') : txt;
+		};
+		// Stop processing if no replacement values specified or format string contains no placeholders
 		if ( arguments.length < 2 || fmt.indexOf(ph) === -1 ) {
-			return fmt;
+			return strip(fmt);
 		}
 		//Get replacement values
 		params = Array.prototype.slice.call(arguments, 1);
 		val = null;
-		//Replace placeholders in string with parameters
+		// Clean parameters
+		for ( var x = 0; x < params.length; x++ ) {
+			if ( !this.is_scalar(params[x], false) ) {
+				params[x] = '';
+			}
+		}
 		
 		//Replace all placeholders at once if single parameter set
 		if ( params.length === 1 ) {
 			fmt = fmt.replace(ph, params[0].toString());
 		} else {
-			var idx = 0,
-				len = params.length,
-				pos = 0;
-			while ( ( pos = fmt.indexOf(ph) ) && idx < len ) {
-				fmt = fmt.substr(0, pos) + params[idx].toString() + fmt.substr(pos + ph.length);
+			var idx = 0; // Current replacement index
+			var len = params.length; // Number of replacements
+			var rlen = ph.length; // Placeholder length
+			var pos = 0; // Current placeholder position (in format template)
+			while ( ( pos = fmt.indexOf(ph) ) && pos !== -1 && idx < len ) {
+				// Replace current placeholder with respective parameter
+				fmt = fmt.substr(0, pos) + params[idx].toString() + fmt.substr(pos + rlen);
 				idx++;
 			}
 			//Remove any remaining placeholders
-			fmt = fmt.replace(ph, '');
+			fmt = strip(fmt);
 		}
 		return fmt;
 	},
