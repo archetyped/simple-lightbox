@@ -4,6 +4,7 @@
  * @author Archetyped
  */
 if ( window.jQuery ){(function($) {
+'use strict';
 
 /**
  * Extendible class
