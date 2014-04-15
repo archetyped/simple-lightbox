@@ -704,39 +704,45 @@ var Utilities =  {
 	},
 	
 	/**
-	 * Find common elements of 2 arrays
+	 * Find common elements of 2 or more arrays
 	 * @param array arr1 First array
-	 * @param array arr2 Second array
-	 * @return array Elements common to both arrays
+	 * @param array arr2 Second array (additional arrays can be passed as well)
+	 * @return array Elements common to all
 	 */
 	arr_intersect: function(arr1, arr2) {
 		var ret = [];
-		if ( arr1 === arr2 ) {
-			return arr2;
-		}
-		if ( !$.isArray(arr2) || !arr2.length || !arr1.length ) {
-			return ret;
-		}
-		//Compare elements in arrays
-		var a1;
-		var a2;
-		var val;
-		if ( arr1.length < arr2.length ) {
-			a1 = arr1;
-			a2 = arr2;
-		} else {
-			a1 = arr2;
-			a2 = arr1;
-		}
-
-		for ( var x = 0; x < a1.length; x++ ) {
-			//Add mutual elements into intersection array
-			val = a1[x];
-			if ( a2.indexOf(val) !== -1 && ret.indexOf(val) === -1 ) {
-				ret.push(val);
+		// Get arrays
+		var params = Array.prototype.slice.call(arguments);
+		// Clean arrays
+		var arrs = [];
+		var x;
+		for ( x = 0; x < params.length; x++ ) {
+			if ( this.is_array(params[x], false) ) {
+				arrs.push(params[x]);
 			}
 		}
-		
+		// Stop processing if no valid arrays to compare
+		if ( arrs.length < 2 ) {
+			return ret;
+		}
+		params = arr1 = arr2 = null;
+		// Find common elements in arrays
+		var base = arrs.shift();
+		var add;
+		var sub;
+		for ( x = 0; x < base.length; x++ ) {
+			add = true;
+			// Check other arrays for element match
+			for ( sub = 0; sub < arrs.length; sub++ ) {
+				if ( arrs[sub].indexOf(base[x]) === -1 ) {
+					add = false;
+					break;
+				}
+			}
+			if ( add ) {
+				ret.push(base[x]);
+			}
+		}
 		//Return intersection results
 		return ret;
 	}
