@@ -523,7 +523,11 @@ var Utilities =  {
 	 * @return bool TRUE if value is a valid number
 	 */
 	is_num: function(value, nonempty) {
-		return ( this.is_type(value, 'number', nonempty) && !isNaN(value) );
+		var f = {
+			'nan': ( Number.isNaN ) ? Number.isNaN : isNaN,
+			'finite': ( Number.isFinite ) ? Number.isFinite : isFinite
+		};
+		return ( this.is_type(value, 'number', nonempty) && !f.nan(value) && f.finite(value) );
 	},
 	
 	/**
@@ -538,14 +542,14 @@ var Utilities =  {
 	},
 	
 	/**
-	 * Check if value is scalar
+	 * Check if value is scalar (string, number, boolean)
 	 * @uses is_type()
 	 * @param mixed value Value to check
 	 * @param bool nonempty (optional) Check for empty value? (Default: TRUE)
 	 * @return bool TRUE if value is scalar
 	 */
 	is_scalar: function(value, nonempty) {
-		return ( this.is_num(value, nonempty) || this.is_string(value, nonempty) || this.is_bool(value, nonempty) );
+		return ( this.is_num(value, nonempty) || this.is_string(value, nonempty) || this.is_bool(value) );
 	},
 	
 	/**
