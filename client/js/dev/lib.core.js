@@ -779,17 +779,14 @@ var Core = {
 	/* Methods */
 	
 	/**
-	 * Setup client
+	 * Init
 	 * Set variables, DOM, etc.
 	 */
-	setup_client: function() {
+	_init: function() {
+		this._super();
 		$('html').addClass(this.util.get_prefix());
 	}
 };
 var SLB_Core = SLB_Base.extend(Core);
-
 window.SLB = new SLB_Core();
-
-window.SLB.setup_client();
-
 })(jQuery);}
