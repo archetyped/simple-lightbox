@@ -617,7 +617,7 @@ var Utilities =  {
 	 * @return bool TRUE if object is Promise/Deferred
 	 */
 	is_promise: function(obj) {
-		return ( this.is_obj(obj) && this.is_method(obj, ['then', 'done', 'always', 'fail', 'pipe']) );
+		return ( this.is_method(obj, ['then', 'done', 'always', 'fail', 'pipe']) );
 	},
 	
 	/**
