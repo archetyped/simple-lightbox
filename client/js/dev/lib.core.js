@@ -199,432 +199,561 @@ var Base = {
 	},
 	
 	/**
+	 * Check if instance is set as a base
+	 * @uses base
+	 * @return bool TRUE if object is set as a base
+	 */
+	is_base: function() {
+		return !!this.base;
+	},
+	
+	/**
 	 * Get parent instance
 	 * @uses `Base._parent` property
 	 * @return obj Parent instance
 	 */
 	get_parent: function() {
+		var p = this._parent;
+		// Validate
+		if ( !p ) {
+			this._parent = {};
+		}
 		return this._parent;
+	}
+};
+
+/**
+ * Utility methods
+ */
+var Utilities =  {
+	/* Properties  */
+	
+	_base: null,
+	_parent: null,
+	
+	/* Methods */
+	
+	/**
+	 * Get base ancestor
+	 * @return obj Base ancestor
+	 */
+	get_base: function() {
+		if ( !this._base ) {
+			var p = this.get_parent();
+			var p_prev = null;
+			var methods = ['is_base', 'get_parent'];
+			// Find base ancestor
+			// Either oldest ancestor or object explicitly set as a base
+			while ( ( p_prev !== p ) && this.is_method(p, methods) && !p.is_base() ) {
+				// Save previous parent
+				p_prev = p;
+				// Get new parent
+				p = p.get_parent();
+			}
+			//Set base
+			this._base = p;
+		}
+		return this._base;
 	},
 	
 	/**
-	 * Utility methods
+	 * Get parent object or parent property value
+	 * @param string prop (optional) Property to retrieve
+	 * @return obj Parent object or property value
 	 */
-	util: {
-		/* Properties  */
-		
-		_base: null,
-		_parent: null,
-		
-		/* Constants */
-		
-		string:	'string',
-		bool:	'boolean',
-		array:	'array',
-		obj:	'object',
-		func:	'function',
-		num:	'number',
-		
-		/* Methods */
-		
-		get_base: function() {
-			if ( !this._base ) {
-				var p = this.get_parent();
-				var p_last = null;
-				//Iterate through parents
-				while ( !p.base && p_last !== p && p._parent ) {
-					p_last = p;
-					p = p._parent;
-				}
-				//Set base
-				this._base = p;
-			}
-			return this._base;
-		},
-		
-		get_parent: function() {
-			return this._parent;
-		},
-		
-		/**
-		 * Retrieve valid separator
-		 * If supplied argument is not a valid separator, use default separator
-		 * @param string (optional) sep Separator text
-		 * @return string Separator text
-		 */
-		get_sep: function(sep) {
-			return ( this.is_string(sep, false) ) ? sep : '_';
-		},
-		
-		/**
-		 * Retrieve prefix
-		 * @return string Prefix
-		 */
-		get_prefix: function() {
-			return ( this.is_string(this.get_parent().prefix) ) ? this.get_parent().prefix : '';
-		},
-		
-		/**
-		 * Check if string is prefixed
-		 */
-		has_prefix: function(val, sep) {
-			return ( this.is_string(val) && val.indexOf(this.get_prefix() + this.get_sep(sep)) === 0 );
-		},
-		
-		/**
-		 * Add Prefix to a string
-		 * @param string val Value to add prefix to
-		 * @param string sep (optional) Separator (Default: `_`)
-		 * @param bool (optional) once If text should only be prefixed once (Default: TRUE)
-		 */
-		add_prefix: function(val, sep, once) {
-			//Validate
-			if ( !this.is_string(val) ) {
-				//Return prefix if value to add prefix to is empty
-				return this.get_prefix();
-			}
-			sep = this.get_sep(sep);
-			if ( !this.is_bool(once) ) {
-				once = true;
-			}
-			
-			return ( once && this.has_prefix(val, sep) ) ? val : [this.get_prefix(), val].join(sep);
-		},
-		
-		/**
-		 * Remove Prefix from a string
-		 * @param string val Value to add prefix to
-		 * @param string sep (optional) Separator (Default: `_`)
-		 * @param bool (optional) once If text should only be prefixed once (Default: true)
-		 */
-		remove_prefix: function(val, sep, once) {
-			//Validate parameters
-			if ( !this.is_string(val, true) ) {
-				return val;
-			}
-			//Default values
-			sep = this.get_sep(sep);
-			if ( !this.is_bool(once) ) {
-				once = true;
-			}
-			//Check if string is prefixed
-			if ( this.has_prefix(val, sep) ) {
-				//Remove prefix
-				var prfx = this.get_prefix() + sep;
-				do {
-					val = val.substr(prfx.length);
-				} while ( !once && this.has_prefix(val, sep) );
-			}
-			return val;
-		},
-		
-		/*
-		 * Get attribute name
-		 * @param string val Attribute's base name
-		 */
-		get_attribute: function(val) {
-			//Setup
-			var sep = '-';
-			var top = 'data';
-			//Validate
-			var pre = [top, this.get_prefix()].join(sep);
-			if ( !this.is_string(val, false) ) {
-				return pre; 
-			}
-			//Process
-			if ( val.indexOf(pre + sep) === -1 ) {
-				val = [pre, val].join(sep);
-			}
-			return val;
-		},
-		
-		/* Request */
-		
-		/**
-		 * Retrieve valid context
-		 * @return array Context
-		 */
-		get_context: function() {
-			//Valid context
-			var b = this.get_base();
-			if ( !$.isArray(b.context) ) {
-				b.context = [];
-			}
-			//Return context
-			return b.context;
-		},
-				
-		/**
-		 * Check if a context exists in current request
-		 * If multiple contexts are supplied, result will be TRUE if at least ONE context exists
-		 * 
-		 * @param string|array ctx Context to check for
-		 * @return bool TRUE if context exists, FALSE otherwise
-		 */
-		is_context: function(ctx) {
-			var ret = false;
-			//Validate context
-			if ( typeof ctx === 'string' ) {
-				ctx = [ctx];
-			}
-			if ( $.isArray(ctx) && this.arr_intersect(this.get_context(), ctx).length ) {
-				ret = true;
-			}
-			return ret;
-		},
-		
-		/* Helpers */
-
-		is_set: function(value) {
-			return ( $.type(value) !== 'undefined' ) ? true : false;
-		},
-		
-		is_type: function(value, type, nonempty) {
-			var ret = false;
-			if ( this.is_set(value) && null !== value && this.is_set(type) ) {
-				switch ( $.type(type) ) {
-					case this.func:
-						ret = ( value instanceof type ) ? true : false;
-						break;
-					case this.string:
-						ret = ( $.type(value) === type ) ? true : false;
-						break;
-					default:
-						ret = false;
-						break;
-				}
-			}
-			
-			//Validate empty values
-			if ( ret && ( $.type(nonempty) !== this.bool || nonempty ) ) {
-				ret = !this.is_empty(value);
-			}
-			return ret;
-		},
-		
-		is_string: function(value, nonempty) {
-			return this.is_type(value, this.string, nonempty);
-		},
-		
-		is_array: function(value, nonempty) {
-			return ( this.is_type(value, this.array, nonempty) );
-		},
-		
-		is_bool: function(value) {
-			return this.is_type(value, this.bool, false);
-		},
-		
-		is_obj: function(value, nonempty) {
-			return this.is_type(value, this.obj, nonempty);
-		},
-		
-		is_func: function(value) {
-			return this.is_type(value, this.func, false);
-		},
-		
-		/**
-		 * Checks if an object has a method
-		 * @param obj Object to check
-		 * @param string|array Names of methods to check for
-		 * @return bool TRUE if method(s) exist, FALSE otherwise
-		 */
-		is_method: function(obj, value) {
-			var ret = false;
-			if ( this.is_string(value) ) {
-				value = [value];
-			}
-			if ( this.in_obj(obj, value) ) {
-				var t = this;
-				$.each(value, function(idx, val) {
-					ret = ( t.is_func(obj[val]) ) ? true : false;
-					return ret;
-				});
-			}
-			return ret;
-		},
-		
-		is_num: function(value, nonempty) {
-			return ( this.is_type(value, this.num, nonempty) && !isNaN(value) );
-		},
-		
-		is_int: function(value, nonempty) {
-			return ( this.is_num(value, nonempty) && Math.floor(value) === value );
-		},
-		
-		is_scalar: function(value, nonempty) {
-			return ( this.is_num(value, nonempty) || this.is_string(value, nonempty) || this.is_bool(value, nonempty) );
-		},
-		
-		/**
-		 * Checks if value is empty
-		 * @param mixed value Value to check
-		 * @param string type (optional) Data type
-		 * @return bool TRUE if value is empty, FALSE if not empty
-		 */
-		is_empty: function(value, type) {
-			var ret = false;
-			//Initial check for empty value
-			if ( !this.is_set(value) || null === value || false === value ) {
-				ret = true;
-			} else {
-				//Validate type
-				if ( !this.is_set(type) ) {
-					type = $.type(value);
-				}
-				//Type-based check
-				if ( this.is_type(value, type, false) ) {
-					switch ( type ) {
-						case this.string:
-						case this.array:
-							if ( value.length === 0 ) {
-								ret = true;
-							}
-							break;
-						case this.obj:
-							//Only evaluate literal objects
-							ret = ( $.isPlainObject(value) && !$.map(value, function(v, key) { return key; }).length );
-							break;
-						case this.num:
-							ret = ( value === 0 );
-							break;
-					}
-				} else {
-					ret = true;
-				}
-			}
-			return ret;
-		},
-		
-		/**
-		 * Check if object is a jQuery.Promise instance
-		 * Will also match (but not guarantee) jQuery.Deferred instances
-		 * @return bool TRUE if object is Promise/Deferred, FALSE otherwise
-		 */
-		is_promise: function(obj) {
-			return ( this.is_obj(obj) && this.is_method(obj, ['then', 'done', 'always', 'fail', 'pipe']) );
-		},
-		
-		/**
-		 * Check if object is a jQuery.Deferred instance
-		 */
-		is_deferred: function(obj) {
-			return ( this.is_promise(obj) && this.is_method(obj, ['resolve', 'reject', 'promise']));
-		},
-		
-		/**
-		 * Validate specified value's data type and return default value if necessary
-		 * Data type of default value is used to determine data type
-		 * @param mixed val Value to check
-		 * @param mixed def Default value
-		 * @return mixed Valid value 
-		 */
-		validate: function(val, def) {
-			return ( this.is_type(val, def, true) ) ? val : def;
-		},
-		
-		/**
-		 * Return formatted string
-		 */
-		format: function(fmt, val) {
-			if ( !this.is_string(fmt) ) {
-				return '';
-			}
-			var params = [],
-				ph = '%s';
-			//Stop processing if no replacement values specified or format string contains no placeholders
-			if ( arguments.length < 2 || fmt.indexOf(ph) === -1 ) {
-				return fmt;
-			}
-			//Get replacement values
-			params = Array.prototype.slice.call(arguments, 1);
-			val = null;
-			//Replace placeholders in string with parameters
-			
-			//Replace all placeholders at once if single parameter set
-			if ( params.length === 1 ) {
-				fmt = fmt.replace(ph, params[0].toString());
-			} else {
-				var idx = 0,
-					len = params.length,
-					pos = 0;
-				while ( ( pos = fmt.indexOf(ph) ) && idx < len ) {
-					fmt = fmt.substr(0, pos) + params[idx].toString() + fmt.substr(pos + ph.length);
-					idx++;
-				}
-				//Remove any remaining placeholders
-				fmt = fmt.replace(ph, '');
-			}
-			return fmt;
-		},
-		
-		/**
-		 * Checks if key(s) exist in an object
-		 * @param object obj Object to check
-		 * @param string|array key Key(s) to check for in object
-		 * @return bool TRUE if key(s) exist in object, FALSE otherwise
-		 */
-		in_obj: function(obj, key, all) {
-			//Validate
-			if ( !this.is_bool(all) ) {
-				all = true;
-			}
-			if ( this.is_string(key) ) {
-				key = [key];
-			}
-			var ret = false;
-			if ( this.is_obj(obj) && this.is_array(key) ) {
-				var val;
-				for ( var x = 0; x < key.length; x++ ) {
-					val = key[x];
-					ret = ( this.is_string(val) && ( val in obj ) ) ? true : false;
-					//Stop processing if conditions have been met
-					if ( ( !all && ret ) || ( all && !ret ) ) {
-						break;
-					}
-				}
-			}
-			return ret;
-		},
-		
-		/**
-		 * Find common elements of 2 arrays
-		 * @param array arr1 First array
-		 * @param array arr2 Second array
-		 * @return array Elements common to both arrays
-		 */
-		arr_intersect: function(arr1, arr2) {
-			var ret = [];
-			if ( arr1 === arr2 ) {
-				return arr2;
-			}
-			if ( !$.isArray(arr2) || !arr2.length || !arr1.length ) {
-				return ret;
-			}
-			//Compare elements in arrays
-			var a1;
-			var a2;
-			var val;
-			if ( arr1.length < arr2.length ) {
-				a1 = arr1;
-				a2 = arr2;
-			} else {
-				a1 = arr2;
-				a2 = arr1;
-			}
+	get_parent: function(prop) {
+		var ret = this._parent;
+		// Validate
+		if ( !ret ) {
+			// Set default parent value
+			ret = this._parent = {};
+		}
+		// Get parent property
+		if ( this.is_string(prop) ) {
+			ret = ( this.in_obj(ret, prop) ) ? ret[prop] : null;
+		}
+		return ret;
+	},
 	
-			for ( var x = 0; x < a1.length; x++ ) {
-				//Add mutual elements into intersection array
-				val = a1[x];
-				if ( a2.indexOf(val) !== -1 && ret.indexOf(val) === -1 ) {
-					ret.push(val);
+	/**
+	 * Retrieve valid separator
+	 * If supplied argument is not a valid separator, use default separator
+	 * @param string (optional) sep Separator text
+	 * @return string Separator text
+	 */
+	get_sep: function(sep) {
+		var sep_default = '_';
+		return ( this.is_string(sep, false) ) ? sep : sep_default;
+	},
+	
+	/**
+	 * Retrieve prefix
+	 * @return string Prefix
+	 */
+	get_prefix: function() {
+		var p = this.get_parent('prefix');
+		return ( this.is_string(p) ) ? p : '';
+	},
+	
+	/**
+	 * Check if string is prefixed
+	 */
+	has_prefix: function(val, sep) {
+		return ( this.is_string(val) && 0 === val.indexOf(this.get_prefix() + this.get_sep(sep)) );
+	},
+	
+	/**
+	 * Add Prefix to a string
+	 * @param string val Value to add prefix to
+	 * @param string sep (optional) Separator (Default: `_`)
+	 * @param bool (optional) once If text should only be prefixed once (Default: TRUE)
+	 */
+	add_prefix: function(val, sep, once) {
+		//Validate
+		if ( !this.is_string(val) ) {
+			//Return prefix if value to add prefix to is empty
+			return this.get_prefix();
+		}
+		sep = this.get_sep(sep);
+		if ( !this.is_bool(once) ) {
+			once = true;
+		}
+		
+		return ( once && this.has_prefix(val, sep) ) ? val : [this.get_prefix(), val].join(sep);
+	},
+	
+	/**
+	 * Remove Prefix from a string
+	 * @param string val Value to add prefix to
+	 * @param string sep (optional) Separator (Default: `_`)
+	 * @param bool (optional) once If text should only be prefixed once (Default: true)
+	 * @return string Original value with prefix removed
+	 */
+	remove_prefix: function(val, sep, once) {
+		//Validate parameters
+		if ( !this.is_string(val, true) ) {
+			return '';
+		}
+		//Default values
+		sep = this.get_sep(sep);
+		if ( !this.is_bool(once) ) {
+			once = true;
+		}
+		//Check if string is prefixed
+		if ( this.has_prefix(val, sep) ) {
+			//Remove prefix
+			var prfx = this.get_prefix() + sep;
+			do {
+				val = val.substr(prfx.length);
+			} while ( !once && this.has_prefix(val, sep) );
+		}
+		return val;
+	},
+	
+	/*
+	 * Get attribute name
+	 * @param string attr_base Attribute's base name
+	 * @return string Fully-formed attribute name
+	 */
+	get_attribute: function(attr_base) {
+		//Setup
+		var sep = '-';
+		var top = 'data';
+		//Validate
+		var attr = [top, this.get_prefix()].join(sep);
+		//Process
+		if ( this.is_string(attr_base) && 0 !== attr_base.indexOf(attr + sep) ) {
+			attr = [attr, attr_base].join(sep);
+		}
+		return attr;
+	},
+	
+	/* Request */
+	
+	/**
+	 * Retrieve valid context
+	 * @return array Context
+	 */
+	get_context: function() {
+		// Validate
+		var b = this.get_base();
+		if ( !$.isArray(b.context) ) {
+			b.context = [];
+		}
+		// Return context
+		return b.context;
+	},
+			
+	/**
+	 * Check if a context exists in current request
+	 * If multiple contexts are supplied, result will be TRUE if at least ONE context exists
+	 * 
+	 * @param string|array ctx Context to check for
+	 * @return bool TRUE if context exists, FALSE otherwise
+	 */
+	is_context: function(ctx) {
+		//Validate context
+		if ( this.is_string(ctx) ) {
+			ctx = [ctx];
+		}
+		return ( this.is_array(ctx) && this.arr_intersect(this.get_context(), ctx).length > 0 );
+	},
+	
+	/* Helpers */
+	
+	/**
+	 * Check if value is set/defined
+	 * @param mixed val Value to check
+	 * @return bool TRUE if value is defined
+	 */
+	is_set: function(val) {
+		return ( typeof val !== 'undefined' );
+	},
+	
+	/**
+	 * Validate data type
+	 * @param mixed val Value to validate
+	 * @param mixed type Data type to compare with (function gets for instance, string checks data type)
+	 * @param bool nonempty (optional) Check for empty value? (Default: TRUE)
+	 * @return bool TRUE if Value matches specified data type
+	 */
+	is_type: function(val, type, nonempty) {
+		var ret = false;
+		if ( this.is_set(val) && null !== val && this.is_set(type) ) {
+			switch ( $.type(type) ) {
+				case 'function':
+					ret = ( val instanceof type ) ? true : false;
+					break;
+				case 'string':
+					ret = ( $.type(val) === type ) ? true : false;
+					break;
+				default:
+					ret = false;
+					break;
+			}
+		}
+		
+		//Validate empty values
+		if ( ret && ( !this.is_set(nonempty) || !!nonempty ) ) {
+			ret = !this.is_empty(val);
+		}
+		return ret;
+	},
+	
+	/**
+	 * Check if value is a string
+	 * @uses is_type()
+	 * @param mixed value Value to check
+	 * @param bool nonempty (optional) Check for empty value? (Default: TRUE)
+	 * @return bool TRUE if value is a valid string
+	 */
+	is_string: function(value, nonempty) {
+		return this.is_type(value, 'string', nonempty);
+	},
+	
+	/**
+	 * Check if value is an array
+	 * @uses is_type()
+	 * @param mixed value Value to check
+	 * @param bool nonempty (optional) Check for empty value? (Default: TRUE)
+	 * @return bool TRUE if value is a valid array
+	 */
+	is_array: function(value, nonempty) {
+		return ( this.is_type(value, 'array', nonempty) );
+	},
+	
+	/**
+	 * Check if value is a boolean
+	 * @uses is_type()
+	 * @param mixed value Value to check
+	 * @return bool TRUE if value is a valid boolean
+	 */
+	is_bool: function(value) {
+		return this.is_type(value, 'boolean', false);
+	},
+	
+	/**
+	 * Check if value is an object
+	 * @uses is_type()
+	 * @param mixed value Value to check
+	 * @param bool nonempty (optional) Check for empty value? (Default: TRUE)
+	 * @return bool TRUE if value is a valid object
+	 */
+	is_obj: function(value, nonempty) {
+		return this.is_type(value, 'object', nonempty);
+	},
+	
+	/**
+	 * Check if value is a function
+	 * @uses is_type()
+	 * @param mixed value Value to check
+	 * @return bool TRUE if value is a valid function
+	 */
+	is_func: function(value) {
+		return this.is_type(value, 'function', false);
+	},
+	
+	/**
+	 * Checks if an object has a method
+	 * @param obj obj Object to check
+	 * @param string|array key Name(s) of methods to check for
+	 * @return bool TRUE if method(s) exist, FALSE otherwise
+	 */
+	is_method: function(obj, key) {
+		var ret = false;
+		if ( this.is_string(key) ) {
+			key = [key];
+		}
+		if ( this.in_obj(obj, key) ) {
+			ret = true;
+			var x = 0;
+			while ( ret && x < key.length ) {
+				ret = this.is_func(obj[key[x]]);
+				x++;
+			}
+		}
+		return ret;
+	},
+	
+	/**
+	 * Check if value is a number
+	 * @uses is_type()
+	 * @param mixed value Value to check
+	 * @param bool nonempty (optional) Check for empty value? (Default: TRUE)
+	 * @return bool TRUE if value is a valid number
+	 */
+	is_num: function(value, nonempty) {
+		var f = {
+			'nan': ( Number.isNaN ) ? Number.isNaN : isNaN,
+			'finite': ( Number.isFinite ) ? Number.isFinite : isFinite
+		};
+		return ( this.is_type(value, 'number', nonempty) && !f.nan(value) && f.finite(value) );
+	},
+	
+	/**
+	 * Check if value is a integer
+	 * @uses is_type()
+	 * @param mixed value Value to check
+	 * @param bool nonempty (optional) Check for empty value? (Default: TRUE)
+	 * @return bool TRUE if value is a valid integer
+	 */
+	is_int: function(value, nonempty) {
+		return ( this.is_num(value, nonempty) && Math.floor(value) === value );
+	},
+	
+	/**
+	 * Check if value is scalar (string, number, boolean)
+	 * @uses is_type()
+	 * @param mixed value Value to check
+	 * @param bool nonempty (optional) Check for empty value? (Default: TRUE)
+	 * @return bool TRUE if value is scalar
+	 */
+	is_scalar: function(value, nonempty) {
+		return ( this.is_num(value, nonempty) || this.is_string(value, nonempty) || this.is_bool(value) );
+	},
+	
+	/**
+	 * Checks if value is empty
+	 * @param mixed value Value to check
+	 * @param string type (optional) Data type
+	 * @return bool TRUE if value is empty
+	 */
+	is_empty: function(value, type) {
+		var ret = false;
+		// Check Undefined
+		if ( !this.is_set(value) ) {
+			ret = true;
+		} else {
+			// Check standard values
+			var empties = [null, "", false, 0];
+			var x = 0;
+			while ( !ret && x < empties.length ) {
+				ret = ( empties[x] === value );
+				x++;
+			}
+		}
+		
+		// Advanced check
+		if ( !ret ) {
+			// Validate type
+			if ( !this.is_set(type) ) {
+				type = $.type(value);
+			}
+			// Type-based check
+			if ( this.is_type(value, type, false) ) {
+				switch ( type ) {
+					case 'string':
+					case 'array':
+						ret = ( value.length === 0 );
+						break;
+					case 'number':
+						ret = ( value == 0 ); // jshint ignore:line
+						break;
+					case 'object':
+						if ( Object.getOwnPropertyNames ) {
+							ret = ( Object.getOwnPropertyNames(value).length === 0 ); 
+						} else if ( value.hasOwnProperty ) {
+							for ( var key in value ) {
+								if ( value.hasOwnProperty(key) ) {
+									ret = false;
+									break;
+								}
+							}
+						}
+						break;
+				}
+			} else {
+				ret = true;
+			}
+		}
+		return ret;
+	},
+	
+	/**
+	 * Check if object is a jQuery.Promise instance
+	 * Will also match (but not guarantee) jQuery.Deferred instances
+	 * @uses is_method()
+	 * @param obj obj Object to check 
+	 * @return bool TRUE if object is Promise/Deferred
+	 */
+	is_promise: function(obj) {
+		return ( this.is_method(obj, ['then', 'done', 'always', 'fail', 'pipe']) );
+	},
+	
+	/**
+	 * Return formatted string
+	 * @param string fmt Format template
+	 * @param string val Replacement value (Multiple parameters may be set)
+	 * @return string Formatted string
+	 */
+	format: function(fmt, val) {
+		// Validate format
+		if ( !this.is_string(fmt) ) {
+			return '';
+		}
+		var params = [];
+		var ph = '%s';
+		/**
+		 * Clean string (remove placeholders)
+		 */
+		var strip = function(txt) {
+			return ( txt.indexOf(ph) !== -1 ) ? txt.replace(ph, '') : txt;
+		};
+		// Stop processing if no replacement values specified or format string contains no placeholders
+		if ( arguments.length < 2 || fmt.indexOf(ph) === -1 ) {
+			return strip(fmt);
+		}
+		//Get replacement values
+		params = Array.prototype.slice.call(arguments, 1);
+		val = null;
+		// Clean parameters
+		for ( var x = 0; x < params.length; x++ ) {
+			if ( !this.is_scalar(params[x], false) ) {
+				params[x] = '';
+			}
+		}
+		
+		//Replace all placeholders at once if single parameter set
+		if ( params.length === 1 ) {
+			fmt = fmt.replace(ph, params[0].toString());
+		} else {
+			var idx = 0; // Current replacement index
+			var len = params.length; // Number of replacements
+			var rlen = ph.length; // Placeholder length
+			var pos = 0; // Current placeholder position (in format template)
+			while ( ( pos = fmt.indexOf(ph) ) && pos !== -1 && idx < len ) {
+				// Replace current placeholder with respective parameter
+				fmt = fmt.substr(0, pos) + params[idx].toString() + fmt.substr(pos + rlen);
+				idx++;
+			}
+			//Remove any remaining placeholders
+			fmt = strip(fmt);
+		}
+		return fmt;
+	},
+	
+	/**
+	 * Checks if key(s) exist in an object
+	 * @param object obj Object to check
+	 * @param string|array key Key(s) to check for in object
+	 * @param bool all (optional) All keys must exist in object? (Default: TRUE) 
+	 * @return bool TRUE if key(s) exist in object
+	 */
+	in_obj: function(obj, key, all) {
+		// Validate
+		if ( !this.is_bool(all) ) {
+			all = true;
+		}
+		if ( this.is_string(key) ) {
+			key = [key];
+		}
+		// Check for keys
+		var ret = false;
+		if ( this.is_obj(obj) && this.is_array(key) ) {
+			var val;
+			for ( var x = 0; x < key.length; x++ ) {
+				val = key[x];
+				ret = ( this.is_string(val) && ( val in obj ) ) ? true : false;
+				//Stop processing if conditions have been met
+				if ( ( !all && ret ) || ( all && !ret ) ) {
+					break;
 				}
 			}
-			
-			//Return intersection results
+		}
+		return ret;
+	},
+	
+	/**
+	 * Find common elements of 2 or more arrays
+	 * @param array arr1 First array
+	 * @param array arr2 Second array (additional arrays can be passed as well)
+	 * @return array Elements common to all
+	 */
+	arr_intersect: function(arr1, arr2) {
+		var ret = [];
+		// Get arrays
+		var params = Array.prototype.slice.call(arguments);
+		// Clean arrays
+		var arrs = [];
+		var x;
+		for ( x = 0; x < params.length; x++ ) {
+			if ( this.is_array(params[x], false) ) {
+				arrs.push(params[x]);
+			}
+		}
+		// Stop processing if no valid arrays to compare
+		if ( arrs.length < 2 ) {
 			return ret;
 		}
+		params = arr1 = arr2 = null;
+		// Find common elements in arrays
+		var base = arrs.shift();
+		var add;
+		var sub;
+		for ( x = 0; x < base.length; x++ ) {
+			add = true;
+			// Check other arrays for element match
+			for ( sub = 0; sub < arrs.length; sub++ ) {
+				if ( arrs[sub].indexOf(base[x]) === -1 ) {
+					add = false;
+					break;
+				}
+			}
+			if ( add ) {
+				ret.push(base[x]);
+			}
+		}
+		//Return intersection results
+		return ret;
 	}
 };
+
+// Attach Utilities
+Base.attach('util', Utilities, true);
+
+/**
+ * SLB Base Class
+ */
 var SLB_Base = Class.extend(Base);
 
 //Init global object
