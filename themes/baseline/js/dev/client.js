@@ -1,5 +1,4 @@
-if ( !!window.SLB && SLB.has_child('View.extend_theme') ) {(function($) {
-$(document).ready(function() {
+if ( !!window.SLB && SLB.has_child('View.extend_theme') ) {(function() {
 SLB.View.extend_theme('slb_baseline', {
 	'breakpoints': {
 		'small': 480,
@@ -34,6 +33,5 @@ SLB.View.extend_theme('slb_baseline', {
 		return m;
 	}
 });
-});
-})(jQuery);
+})();
 }
