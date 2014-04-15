@@ -495,21 +495,22 @@ var Utilities =  {
 	
 	/**
 	 * Checks if an object has a method
-	 * @param obj Object to check
-	 * @param string|array Names of methods to check for
+	 * @param obj obj Object to check
+	 * @param string|array key Name(s) of methods to check for
 	 * @return bool TRUE if method(s) exist, FALSE otherwise
 	 */
-	is_method: function(obj, value) {
+	is_method: function(obj, key) {
 		var ret = false;
-		if ( this.is_string(value) ) {
-			value = [value];
+		if ( this.is_string(key) ) {
+			key = [key];
 		}
-		if ( this.in_obj(obj, value) ) {
-			var t = this;
-			$.each(value, function(idx, val) {
-				ret = ( t.is_func(obj[val]) ) ? true : false;
-				return ret;
-			});
+		if ( this.in_obj(obj, key) ) {
+			ret = true;
+			var x = 0;
+			while ( ret && x < key.length ) {
+				ret = this.is_func(obj[key[x]]);
+				x++;
+			}
 		}
 		return ret;
 	},
