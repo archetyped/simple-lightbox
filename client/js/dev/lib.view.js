@@ -40,18 +40,10 @@ var View = {
 	/* Component Collections */
 	
 	viewers: {},
-	items: [],
+	content_items: [],
 	content_handlers: {},
 	groups: {},
 	template_tags: {},
-	
-	/**
-	 * Collection/Data type mapping
-	 * > Key: Collection name
-	 * > Value: Data type
-	 * @var object
-	 */
-	collections: {},
 	
 	/**
 	 * Temporary component instances
@@ -116,15 +108,6 @@ var View = {
 	 * Initialize Components
 	 */
 	init_components: function() {
-		this.collections = {
-			'viewers':				this.Viewer,
-			'items':				this.Content_Item,
-			'content_handlers':		this.Content_Handler,
-			'groups':				this.Group,
-			'themes':				this.Theme,
-			'template_tags':		this.Template_Tag
-		};
-		
 		this.component_defaults = [
 			this.Viewer
 		];
@@ -183,18 +166,17 @@ var View = {
 	
 	/**
 	 * Retrieve collection of components of specified type
-	 * @param function type Component type
+	 * @param func type Component type
 	 * @return object|array|null Component collection (NULL if invalid)
 	 */
 	get_components: function(type) {
 		var ret = null;
-		if ( this.util.is_func(type) ) {
-			// Determine collection
-			for ( var coll in this.collections ) {
-				if ( type === this.collections[coll] && coll in this ) {
-					ret = this[coll];
-					break;
-				}
+		if ( this.is_component(type) ) {
+			// Determine collection based on component slug
+			var coll = type.prototype._slug + 's';
+			// Check if collection exists
+			if ( coll in this ) {
+				ret = this[coll];
 			}
 		}
 		return ret;
