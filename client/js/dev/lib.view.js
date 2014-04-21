@@ -162,15 +162,14 @@ var View = {
 	
 	/* Components */
 
-	component_make_default: function(type) {
-		var ret = false;
-		for ( var x = 0; x < this.component_defaults.length; x++ ) {
-			if ( type === this.component_defaults[x] ) {
-				ret = true;
-				break;
-			}
-		}
-		return ret;
+	/**
+	 * Check if default component instance can be created
+	 * @uses View.component_defaults
+	 * @param func type Component type to check
+	 * @return bool TRUE if default component instance creation is allowed
+	 */
+	can_make_default_component: function(type) {
+		return ( -1 !== this.component_defaults.indexOf(type) );
 	},
 	
 	/**
@@ -230,7 +229,7 @@ var View = {
 		
 		// Default: Create default component
 		if ( this.util.is_empty(ret) ) {
-			if ( this.util.is_string(id) || this.component_make_default(type) ) {
+			if ( this.util.is_string(id) || this.can_make_default_component(type) ) {
 				ret = this.add_component(type, id);
 			}
 		}
@@ -251,7 +250,7 @@ var View = {
 			return false;
 		}
 		// Validate request
-		if ( this.util.is_empty(id) && !this.component_make_default(type) ) {
+		if ( this.util.is_empty(id) && !this.can_make_default_component(type) ) {
 			return false;
 		}
 		// Defaults
