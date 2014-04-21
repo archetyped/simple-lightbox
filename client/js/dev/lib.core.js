@@ -517,6 +517,36 @@ var Utilities =  {
 	},
 	
 	/**
+	 * Check if object is instance of a class
+	 * @param obj obj Instance object
+	 * @param obj parent Class to compare with
+	 * @return bool TRUE if object is instance of class
+	 */
+	is_instance: function(obj, parent) {
+		if ( !this.is_func(parent) ) {
+			return false;
+		}
+		return ( this.is_obj(obj) && ( obj instanceof parent ) );
+	},
+	
+	/**
+	 * Check if object is class
+	 * Optionally check if class is sub-class of another class
+	 * @param func cls Class to check
+	 * @param func parent (optional) parent class
+	 * @return bool TRUE if object is valid class (and sub-class if parent is specified)
+	 */
+	is_class: function(cls, parent) {
+		// Validate class
+		var ret = ( this.is_func(cls) && ( 'prototype' in cls ) );
+		// Check parent class
+		if ( ret && this.is_set(parent) ) {
+			ret = this.is_instance(cls.prototype, parent);
+		}
+		return ret;
+	},
+	
+	/**
 	 * Check if value is a number
 	 * @uses is_type()
 	 * @param mixed value Value to check
