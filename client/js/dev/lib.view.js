@@ -74,9 +74,20 @@ var View = {
 	/* Init */
 	
 	/**
+	 * Instance initialization
+	 */
+	_init: function() {
+		this._super();
+		// Component References
+		this.init_refs();
+		// Components
+		this.init_components();
+	},
+	
+	/**
 	 * Update component references in component definitions
 	 */
-	update_refs: function() {
+	init_refs: function() {
 		var r;
 		var ref;
 		var prop;
@@ -99,9 +110,24 @@ var View = {
 				}
 			}
 		}
+	},
+	
+	/**
+	 * Initialize Components
+	 */
+	init_components: function() {
+		this.collections = {
+			'viewers':				this.Viewer,
+			'items':				this.Content_Item,
+			'content_handlers':		this.Content_Handler,
+			'groups':				this.Group,
+			'themes':				this.Theme,
+			'template_tags':		this.Template_Tag
+		};
 		
-		/* Initialize components */
-		this.init_components();
+		this.component_defaults = [
+			this.Viewer
+		];
 	},
 	
 	/**
@@ -127,22 +153,6 @@ var View = {
 			// Items
 			t.init_items();
 		});
-	},
-	
-	init_components: function() {
-		this.collections = {
-			'viewers':				this.Viewer,
-			'items':				this.Content_Item,
-			'content_handlers':		this.Content_Handler,
-			'groups':				this.Group,
-			'themes':				this.Theme,
-			'template_tags':		this.Template_Tag
-		};
-		
-		this.component_defaults = [
-			this.Viewer
-		];
-	
 	},
 	
 	/* Components */
@@ -4730,5 +4740,4 @@ View.Template_Tag_Handler = Component.extend(Template_Tag_Handler);
 
 // Attach to global object
 View = SLB.attach('View', View);
-View.update_refs();
 })(jQuery);}
