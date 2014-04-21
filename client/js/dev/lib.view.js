@@ -73,27 +73,28 @@ var View = {
 	
 	/* Init */
 	
+	/**
+	 * Update component references in component definitions
+	 */
 	update_refs: function() {
-		var c;
 		var r;
 		var ref;
-		for ( var p in this ) {
-			if ( !this.util.is_func(this[p]) || !( '_refs' in this[p].prototype ) ) {
+		var prop;
+		for ( prop in this ) {
+			prop = this[prop];
+			// Process only components
+			if ( !this.util.is_class(prop, this.Component) ) {
 				continue;
 			}
-			// Set component
-			c = this[p];
-			if ( !this.util.is_empty(c.prototype._refs) ) {
-				for ( r in c.prototype._refs ) {
-					ref = c.prototype._refs[r];
-					if ( this.util.is_func(ref) ) {
-						continue;
-					}
+			// Update component references
+			if ( !this.util.is_empty(prop.prototype._refs) ) {
+				for ( r in prop.prototype._refs ) {
+					ref = prop.prototype._refs[r];
 					if ( this.util.is_string(ref) && ref in this ) {
-						ref = c.prototype._refs[r] = this[ref];
+						ref = prop.prototype._refs[r] = this[ref];
 					}
-					if ( !this.util.is_func(ref) ) {
-						delete c.prototype_refs[r];
+					if ( !this.util.is_class(ref) ) {
+						delete prop.prototype_refs[r];
 					}
 				}
 			}
