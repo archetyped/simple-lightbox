@@ -4729,7 +4729,6 @@ View.Template_Tag_Handler = Component.extend(Template_Tag_Handler);
 /* Update References */
 
 // Attach to global object
-SLB.attach('View', View);
-View = SLB.View;
+View = SLB.attach('View', View);
 View.update_refs();
 })(jQuery);}
