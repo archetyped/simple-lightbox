@@ -150,8 +150,10 @@ var Base = {
 	 * @param string name Member name
 	 * @param object data Member data
 	 * @param bool simple (optional) Save new member as data object or new class instance (Default: new instance)
+	 * @return obj Attached object
 	 */
 	attach: function(member, data, simple) {
+		var ret = data;
 		// Validate
 		simple = ( typeof simple === 'undefined' ) ? false : !!simple;
 		// Add member to instance
@@ -165,8 +167,10 @@ var Base = {
 			}
 			// Save member to current instance
 			// Initialize new instance if data is a class
-			this[member] = ( 'function' === $.type(data) ) ? new data() : data; 
+			this[member] = ( 'function' === $.type(data) ) ? new data() : data;
+			ret = this[member];
 		}
+		return ret;
 	},
 	
 	/**
