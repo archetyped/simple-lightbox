@@ -7,7 +7,6 @@
 /* global SLB */
 if ( !!window.SLB && !!SLB.attach ) { (function ($) {
 
-
 /*-** Controller **-*/
 
 var View = {
@@ -140,7 +139,7 @@ var View = {
 		};
 		
 		this.component_defaults = [
-			this.Viewer,
+			this.Viewer
 		];
 	
 	},
