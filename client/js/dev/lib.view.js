@@ -94,7 +94,7 @@ var View = {
 		for ( prop in this ) {
 			prop = this[prop];
 			// Process only components
-			if ( !this.util.is_class(prop, this.Component) ) {
+			if ( !this.is_component(prop) ) {
 				continue;
 			}
 			// Update component references
