@@ -173,13 +173,12 @@ var View = {
 	},
 	
 	/**
-	 * Validates component type
-	 * @param function comp Component type to check
-	 * @return bool TRUE if param is valid component, FALSE otherwise
+	 * Check if object is valid component class
+	 * @param func comp Component to check
+	 * @return bool TRUE if object is valid component class
 	 */
-	check_component: function(comp) {
-		// Validate component type
-		return ( this.util.is_func(comp) && ('_slug' in comp.prototype ) && ( comp.prototype instanceof (this.Component) ) ) ? true : false;
+	is_component: function(comp) {
+		return ( this.util.is_class(comp, this.Component) || this.util.is_instance(comp, this.Component) );
 	},
 	
 	/**
@@ -298,7 +297,7 @@ var View = {
 	 */
 	add_component_temp: function(type) {
 		var ret = null;
-		if ( this.check_component(type) ) {
+		if ( this.is_component(type) ) {
 			// Create new instance
 			ret = new type('');
 			// Save to collection
@@ -323,7 +322,7 @@ var View = {
 	 * @return bool TRUE if temp instance exists, FALSE otherwise 
 	 */
 	has_component_temp: function(type) {
-		return ( this.check_component(type) && ( type.prototype._slug in this.component_temps ) ) ? true : false;
+		return ( this.is_component(type) && ( type.prototype._slug in this.component_temps ) ) ? true : false;
 	},
 	
 	/* Properties */
