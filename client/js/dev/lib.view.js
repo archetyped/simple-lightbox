@@ -131,13 +131,18 @@ var View = {
 	},
 	
 	/**
-	 * Initialization
+	 * Client Initialization
+	 * @param obj options Global options
 	 */
 	init: function(options) {
 		var t = this;
+		// Defer initialization until all components loaded
 		$.when.apply($, this.loading).always(function() {
 			// Set options
 			$.extend(true, t.options, options);
+			
+			/* Event handlers */
+			
 			// History
 			$(window).on('popstate', function(e) {
 				var state = e.originalEvent.state;
