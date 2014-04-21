@@ -178,7 +178,7 @@ var View = {
 	 * @return bool TRUE if object is valid component class
 	 */
 	is_component: function(comp) {
-		return ( this.util.is_class(comp, this.Component) || this.util.is_instance(comp, this.Component) );
+		return ( this.util.is_class(comp, this.Component) );
 	},
 	
 	/**
