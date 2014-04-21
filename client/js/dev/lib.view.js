@@ -39,11 +39,13 @@ var View = {
 	
 	/* Component Collections */
 	
+	/*
 	viewers: {},
 	content_items: [],
 	content_handlers: {},
 	groups: {},
 	template_tags: {},
+	*/
 	
 	/**
 	 * Temporary component instances
@@ -167,17 +169,18 @@ var View = {
 	/**
 	 * Retrieve collection of components of specified type
 	 * @param func type Component type
-	 * @return object|array|null Component collection (NULL if invalid)
+	 * @return object Component collection (Default: Empty object)
 	 */
 	get_components: function(type) {
-		var ret = null;
+		var ret = {};
 		if ( this.is_component(type) ) {
 			// Determine collection based on component slug
 			var coll = type.prototype._slug + 's';
-			// Check if collection exists
-			if ( coll in this ) {
-				ret = this[coll];
+			// Create default collection
+			if ( ! ( coll in this ) ) {
+				this[coll] = {};
 			}
+			ret = this[coll];
 		}
 		return ret;
 	},
