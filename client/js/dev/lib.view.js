@@ -508,6 +508,7 @@ var View = {
 	
 	/**
 	 * Cache item instance
+	 * @uses View.get_items() to retrieve item cache
 	 * @param Content_Item item Item to cache
 	 * @return Content_item Item instance
 	 */
@@ -523,6 +524,10 @@ var View = {
 	
 	/* Content Handler */
 	
+	/**
+	 * Retrieve content handlers
+	 * @return object Content handlers
+	 */
 	get_content_handlers: function() {
 		return this.get_components(this.Content_Handler);
 	},
@@ -534,7 +539,7 @@ var View = {
 	 */
 	get_content_handler: function(item) {
 		// Determine handler to retrieve
-		var type = ( this.util.is_type(item, this.Content_Item) ) ? item.get_attribute('type', '') : item.toString();
+		var type = ( this.util.is_instance(item, this.Content_Item) ) ? item.get_attribute('type', '') : item.toString();
 		// Retrieve handler
 		var types = this.get_content_handlers();
 		return ( type in types ) ? types[type] : null;
@@ -544,10 +549,10 @@ var View = {
 	 * Add/Update Content Handler
 	 * @param string id Handler ID
 	 * @param obj attr Handler attributes
-	 * @return obj|bool Handler instance (FALSE on failure)
+	 * @return obj|null Handler instance (NULL on failure)
 	 */
 	extend_content_handler: function(id, attr) {
-		var hdl = false;
+		var hdl = null;
 		if ( !this.util.is_string(id) || !this.util.is_obj(attr) ) {
 			return hdl;
 		}
