@@ -580,15 +580,15 @@ var View = {
 	 * @param string g Group ID
 	 *  > If group with same ID already set, new group replaces existing one
 	 * @param object attrs (optional) Group attributes
+	 * @return Group New group
 	 */
 	add_group: function(g, attrs) {
 		// Create new group
 		g = new this.Group(g, attrs);
 		// Cache group
-		if ( this.util.is_string(g.get_id()) ) {
-			var groups = this.get_groups();
-			groups[g.get_id()] = g;
-		}
+		this.get_groups()[g.get_id()] = g;
+
+		return g;
 	},
 	
 	/**
