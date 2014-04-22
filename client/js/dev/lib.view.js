@@ -474,14 +474,14 @@ var View = {
 			item = $(ref).data(key);
 		}
 		// Cached item (index)
-		else if ( this.util.is_int(ref, false) ) {
+		else if ( this.util.is_string(ref, false) ) {
 			var items = this.get_items();
-			if ( items.length > ref ) {
+			if ( ref in items ) {
 				item = items[ref];
 			}
 		}
 		// Create default item instance
-		if ( !this.util.is_type(item, this.Content_Item) ) {
+		if ( !this.util.is_instance(item, this.Content_Item) ) {
 			item = this.add_item(ref);
 		}
 		return item;
@@ -508,24 +508,17 @@ var View = {
 	
 	/**
 	 * Cache item instance
-	 * @uses this.items to store cached items
 	 * @param Content_Item item Item to cache
-	 * @return int Index of item in cache
+	 * @return Content_item Item instance
 	 */
 	save_item: function(item) {
-		var ret = -1; 
 		if ( !this.util.is_instance(item, this.Content_Item) ) {
-			return ret;
+			return item;
 		}
-		var items = this.get_items();
-		// Check if item exists in collection
-		ret = $.inArray(item, items);
-		// Cache item
-		if ( -1 === ret ) {
-			ret = items.push(item) - 1;
-		}
-		// Return item index in cache
-		return ret;
+		// Save item
+		this.get_items()[item.get_id()] = item;
+		// Return item instance
+		return item;
 	},
 	
 	/* Content Handler */
@@ -2000,7 +1993,7 @@ var Viewer = {
 	history_handle: function(e) {
 		var state = e.originalEvent.state;
 		// Load item
-		if ( this.util.is_int(state.item, false) ) {
+		if ( this.util.is_string(state.item, false) ) {
 			this.get_parent().get_item(state.item).show({'event': e});
 			this.trigger('item-change');
 		} else {
@@ -2041,7 +2034,7 @@ var Viewer = {
 				history.replaceState(state, null);
 			}
 			// Always: Save item state
-			state.item = this.get_parent().save_item(item);
+			state.item = this.get_parent().save_item(item).get_id();
 			state.count = ++count;
 			history.pushState(state, '');
 		} else {
