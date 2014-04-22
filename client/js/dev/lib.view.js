@@ -37,6 +37,12 @@ var View = {
 	 */
 	loading: [],
 	
+	/**
+	 * Cache
+	 * @var object
+	 */
+	cache: {},
+	
 	/* Component Collections */
 	
 	/*
@@ -177,10 +183,10 @@ var View = {
 			// Determine collection based on component slug
 			var coll = type.prototype._slug + 's';
 			// Create default collection
-			if ( ! ( coll in this ) ) {
-				this[coll] = {};
+			if ( ! ( coll in this.cache ) ) {
+				this.cache[coll] = {};
 			}
-			ret = this[coll];
+			ret = this.cache[coll];
 		}
 		return ret;
 	},
@@ -435,6 +441,10 @@ var View = {
 		$(document).on('click', sel, handler);
 	},
 	
+	/**
+	 * Retrieve cached items
+	 * @return obj Items collection
+	 */
 	get_items: function() {
 		return this.get_components(this.Content_Item);
 	},
@@ -504,7 +514,7 @@ var View = {
 	 */
 	save_item: function(item) {
 		var ret = -1; 
-		if ( !this.util.is_type(item, this.Content_Item) ) {
+		if ( !this.util.is_instance(item, this.Content_Item) ) {
 			return ret;
 		}
 		var items = this.get_items();
