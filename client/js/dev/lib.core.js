@@ -238,6 +238,8 @@ var Utilities =  {
 	
 	/* Methods */
 	
+	/* Connections */
+	
 	/**
 	 * Get base ancestor
 	 * @return obj Base ancestor
@@ -279,6 +281,8 @@ var Utilities =  {
 		}
 		return ret;
 	},
+	
+	/* Prefix */
 	
 	/**
 	 * Retrieve valid separator
@@ -354,6 +358,8 @@ var Utilities =  {
 		}
 		return val;
 	},
+	
+	/* Attributes */
 	
 	/*
 	 * Get attribute name
@@ -784,6 +790,21 @@ var Utilities =  {
 		}
 		// Return intersection results
 		return ret;
+	},
+	
+	/**
+	 * Generates a GUID string.
+	 * @returns string The generated GUID.
+	 * @example af8a8416-6e18-a307-bd9c-f2c947bbb3aa
+	 * @author Slavik Meltser (slavik@meltser.info).
+	 * @link http://slavik.meltser.info/?p=142
+	 */
+	guid: function() {
+	    function _p8(s) {
+	        var p = (Math.random().toString(16)+"000000000").substr(2,8);
+	        return s ? "-" + p.substr(0,4) + "-" + p.substr(4,4) : p ;
+	    }
+	    return _p8() + _p8(true) + _p8(true) + _p8();
 	}
 };
 
