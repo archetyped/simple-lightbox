@@ -602,19 +602,15 @@ var View = {
 	
 	/**
 	 * Retrieve specified group
+	 * New group created if not yet set
+	 * @uses View.has_group()
+	 * @uses View.add_group()
+	 * @uses View.get_groups()
 	 * @param string g Group ID
-	 * @return object|null Group instance (NULL if group does not exist)
+	 * @return Group Group instance
 	 */
 	get_group: function(g) {
-		if ( this.util.is_string(g) ) {
-			if ( !this.has_group(g) ) {
-				// Add new group (if necessary)
-				this.add_group(g);
-			}
-			// Retrieve group
-			g = this.get_groups()[g];
-		}
-		return ( this.util.is_type(g, this.Group) ) ? g : null;
+		return ( !this.has_group(g) ) ? this.add_group(g) : this.get_groups()[g];
 	},
 	
 	/**
