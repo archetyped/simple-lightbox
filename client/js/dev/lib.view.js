@@ -955,7 +955,7 @@ var Component = {
 	 * @param string id Unique ID
 	 */
 	set_id: function(id) {
-		this.id = ( this.check_id(id) ) ? id : this.util.guid();
+		this.id = ( this.check_id(id, true) ) ? id : this.util.guid();
 	},
 	
 	/**
