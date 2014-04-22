@@ -378,7 +378,7 @@ var View = {
 		// Create viewer
 		var v = new this.Viewer(id, options);
 		// Add to collection
-		this.viewers[v.get_id()] = v;
+		this.get_viewers()[v.get_id()] = v;
 		// Return viewer
 		return v;
 	},
@@ -388,7 +388,7 @@ var View = {
 	 * @return obj Viewer instances
 	 */
 	get_viewers: function() {
-		return this.viewers;
+		return this.get_components(this.Viewer);
 	},
 	
 	/**
@@ -586,9 +586,10 @@ var View = {
 	add_group: function(g, attrs) {
 		// Create new group
 		g = new this.Group(g, attrs);
-		// Add group to collection
+		// Cache group
 		if ( this.util.is_string(g.get_id()) ) {
-			this.groups[g.get_id()] = g;
+			var groups = this.get_groups();
+			groups[g.get_id()] = g;
 		}
 	},
 	
@@ -598,7 +599,7 @@ var View = {
 	 * @return object Registered groups
 	 */
 	get_groups: function() {
-		return this.groups;
+		return this.get_components(this.Group);
 	},
 	
 	/**
