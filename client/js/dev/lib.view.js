@@ -619,7 +619,7 @@ var View = {
 	 * @return bool TRUE if group exists, FALSE otherwise
 	 */
 	has_group: function(g) {
-		return ( this.util.is_string(g) && ( g in this.get_groups() ) ) ? true : false;
+		return ( this.util.is_string(g) && ( g in this.get_groups() ) );
 	},
 	
 	/* Theme */
