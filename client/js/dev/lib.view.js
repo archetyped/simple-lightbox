@@ -949,10 +949,12 @@ var Component = {
 	
 	/**
 	 * Set instance ID
+	 * Generates random GUID if no valid ID provided
+	 * @uses Utilities.guid()
 	 * @param string id Unique ID
 	 */
 	set_id: function(id) {
-		this.id = ( this.check_id(id) ) ? id : '';
+		this.id = ( this.check_id(id) ) ? id : this.util.guid();
 	},
 	
 	/**
