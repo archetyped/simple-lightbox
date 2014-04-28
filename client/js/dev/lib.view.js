@@ -368,16 +368,9 @@ var View = {
 	 * @param obj options Viewer options
 	 */
 	add_viewer: function(id, options) {
-		// Validate
-		if ( !this.util.is_string(id) ) {
-			return false;
-		}
-		if ( !this.util.is_obj(options, false) ) {
-			options = {};
-		}
 		// Create viewer
 		var v = new this.Viewer(id, options);
-		// Add to collection
+		// Save viewer
 		this.get_viewers()[v.get_id()] = v;
 		// Return viewer
 		return v;
@@ -861,7 +854,9 @@ var Component = {
 		// Set ID
 		this.set_id(id);
 		// Save init attributes
-		this._attr_init = attributes;
+		if ( this.util.is_obj(attributes) ) {
+			this._attr_init = attributes;
+		}
 		this._hooks();
 	},
 	
