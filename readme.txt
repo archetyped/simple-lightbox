@@ -3,7 +3,7 @@ Contributors: Archetyped
 Donate link: http://gum.co/slb-donate
 License: GPLv2
 Tags: lightbox, gallery, photography, images, theme, template, style
-Requires at least: 3.8.1
+Requires at least: 3.9
 Tested up to: 3.9
 Stable tag: trunk
 
@@ -56,6 +56,11 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 3. Dark Theme
 
 == Changelog ==
+
+= 2.4.0 (Beta 1) =
+* Add: Set group via `slb_activate()`
+* Add: Set group via `activate_links()`
+* Add: `slb_is_enabled` filter
 
 = 2.3.1 =
 * Fix: WordPress version requirement
