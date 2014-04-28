@@ -379,7 +379,12 @@ class SLB_Lightbox extends SLB_Base {
 				}
 			}
 		}
-		return $ret;
+		// Filter return value
+		if ( !is_admin() ) {
+			$ret = $this->util->apply_filters('is_enabled', $ret);
+		}
+		// Return value (force boolean)
+		return !!$ret;
 	}
 	
 	/**
@@ -422,12 +427,12 @@ class SLB_Lightbox extends SLB_Base {
 	 * @param $content
 	 * @return string Post content
 	 */
-	public function activate_links($content) {
+	public function activate_links($content, $group = null) {
 		// Filter content before processing links
 		$content = $this->util->apply_filters('pre_process_links', $content);
 		
 		// Process links
-		$content = $this->process_links($content);
+		$content = $this->process_links($content, $group);
 		
 		// Filter content after processing links
 		$content = $this->util->apply_filters('post_process_links', $content);

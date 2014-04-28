@@ -13,12 +13,12 @@
  * @param string $content
  * @return string Updated content with activated links
  */
-function slb_activate($content) {
+function slb_activate($content, $group = null) {
 	// Validate
 	if ( empty($content) ) {
 		return $content;
 	}
 	// Activate links
-	$content = $GLOBALS['slb']->activate_links($content);
+	$content = $GLOBALS['slb']->activate_links($content, $group);
 	return $content;
 }
