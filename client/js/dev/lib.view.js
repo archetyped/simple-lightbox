@@ -366,6 +366,7 @@ var View = {
 	 * Add viewer instance to collection
 	 * @param string id Viewer ID
 	 * @param obj options Viewer options
+	 * @return Viewer New viewer instance
 	 */
 	add_viewer: function(id, options) {
 		// Create viewer
@@ -406,7 +407,8 @@ var View = {
 			v = this.util.add_prefix('default');
 			// Create default viewer if necessary
 			if ( !this.has_viewer(v) ) {
-				this.add_viewer(v);
+				v = this.add_viewer(v);
+				v = v.get_id();
 			}
 		}
 		return this.get_viewers()[v];
