@@ -433,7 +433,7 @@ var View = {
 		// Get activated links
 		var sel = this.util.format('a[href][%s="%s"]', this.util.get_attribute('active'), 1);
 		// Add event handler
-		$(document).on('click', sel, handler);
+		$(document).on('click', sel, null, handler);
 	},
 	
 	/**
@@ -488,17 +488,16 @@ var View = {
 	 * @return Content_Item New item instance
 	 */
 	add_item: function(el) {
-		var item = new this.Content_Item(el);
-		return item;
+		return ( new this.Content_Item(el) );
 	},
 	
 	/**
 	 * Display item in viewer
 	 * @param obj el DOM element representing item
+	 * @return bool Display result (TRUE if item displayed without issues) 
 	 */
 	show_item: function(el) {
-		var ret = this.get_item(el).show();
-		return ret;
+		return this.get_item(el).show();
 	},
 	
 	/**
@@ -622,8 +621,7 @@ var View = {
 	/**
 	 * Add/Update theme
 	 * @param string name Theme name
-	 * @param obj attr Theme options
-	 * > Multiple attribute parameters are merged
+	 * @param obj attr (optional) Theme options
 	 * @return obj Theme model
 	 */
 	extend_theme: function(id, attr) {
@@ -639,10 +637,8 @@ var View = {
 		
 		// Create default attributes for new theme
 		if ( this.util.is_empty(model) ) {
-			// Default
-			model = {'parent': null, 'id': id};
-			// Save theme model
-			this.Theme.prototype._models[id] = model;
+			// Save default model
+			model = this.save_theme_model( {'parent': null, 'id': id} );
 		}
 		
 		// Add custom attributes
@@ -660,7 +656,7 @@ var View = {
 		}
 		
 		// Link parent model
-		if ( this.util.is_string(model.parent) ) {
+		if ( !this.util.is_obj(model.parent) ) {
 			model.parent = this.get_theme_model(model.parent);
 		}
 		
@@ -686,6 +682,20 @@ var View = {
 	get_theme_model: function(id) {
 		var ms = this.get_theme_models();
 		return ( this.util.in_obj(ms, id) ) ? ms[id] : {};
+	},
+	
+	/**
+	 * Save theme model
+	 * @uses View.get_theme_models() to retrieve Theme model collection
+	 * @param obj Theme model to save
+	 * @return obj Saved model
+	 */
+	save_theme_model: function(model) {
+		if ( this.util.in_obj(model, 'id') && this.util.is_string(model.id) ) {
+			// Save model
+			this.get_theme_models()[model.id] = model;
+		}
+		return model;
 	},
 	
 	/**
