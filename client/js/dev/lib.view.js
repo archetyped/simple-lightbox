@@ -622,7 +622,7 @@ var View = {
 	 * Add/Update theme
 	 * @param string name Theme name
 	 * @param obj attr (optional) Theme options
-	 * @return obj Theme model
+	 * @return obj|bool Theme model
 	 */
 	extend_theme: function(id, attr) {
 		// Validate
@@ -705,19 +705,19 @@ var View = {
 	 * @return obj|bool Handler instance (FALSE on failure)
 	 */
 	extend_template_tag_handler: function(id, attr) {
-		var hdl = false;
 		if ( !this.util.is_string(id) || !this.util.is_obj(attr) ) {
-			return hdl;
+			return false;
 		}
+		var hdl;
 		var hdls = this.get_template_tag_handlers(); 
-		// Add new content handler
-		if ( !this.util.in_obj(hdls, id) ) {
-			hdls[id] = hdl = new this.Template_Tag_Handler(id, attr);
-		}
-		// Update existing handler
-		else {
+		if ( this.util.in_obj(hdls, id) ) {
+			// Update existing handler
 			hdl = hdls[id];
 			hdl.set_attributes(attr);
+		} else {
+			// Add new content handler
+			hdl = new this.Template_Tag_Handler(id, attr);
+			hdls[hdl.get_id()] = hdl;
 		}
 		// Load styles
 		if ( this.util.in_obj(attr, 'styles') ) {
@@ -741,16 +741,12 @@ var View = {
 	/**
 	 * Retrieve template tag handler
 	 * @param string id ID of tag handler to retrieve
-	 * @return Template_Tag_Handler Tag Handler instance (new instance for invalid ID)
+	 * @return Template_Tag_Handler|null Tag Handler instance (NULL for invalid ID)
 	 */
 	get_template_tag_handler: function(id) {
 		var handlers = this.get_template_tag_handlers();
-		// Retrieve existing handler
-		if ( this.util.is_string(id) && ( id in handlers ) ) {
-			return handlers[id];
-		}
-		// Default: Return empty handler
-		return new this.Template_Tag_Handler(id, {});
+		// Retrieve existing handler or return new handler
+		return ( this.util.in_obj(handlers, id) ) ? handlers[id] : null; 
 	},
 	
 	/**
@@ -759,11 +755,16 @@ var View = {
 	 */
 	load_styles: function(styles) {
 		if ( this.util.is_array(styles) ) {
-			var out = '';
-			$.each(styles, function(i, style) {
-				out += '<link rel="stylesheet" type="text/css" href="' + style.uri + '" />';
-			});
-			$('head').append(out);
+			var out = [];
+			var style;
+			for ( var x = 0; x < styles.length; x++ ) {
+				style = styles[x];
+				if ( !this.util.in_obj(style, 'uri') || !this.util.is_string(style.uri) ) {
+					continue;
+				}
+				out.push('<link rel="stylesheet" type="text/css" href="' + style.uri + '" />');
+			}
+			$('head').append(out.join(''));
 		}
 	}
 };
