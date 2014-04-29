@@ -7,7 +7,6 @@
 /* global SLB */
 if ( !!window.SLB && !!SLB.attach ) { (function ($) {
 
-
 /*-** Controller **-*/
 
 var View = {
@@ -38,21 +37,21 @@ var View = {
 	 */
 	loading: [],
 	
+	/**
+	 * Cache
+	 * @var object
+	 */
+	cache: {},
+	
 	/* Component Collections */
 	
+	/*
 	viewers: {},
-	items: [],
+	content_items: [],
 	content_handlers: {},
 	groups: {},
 	template_tags: {},
-	
-	/**
-	 * Collection/Data type mapping
-	 * > Key: Collection name
-	 * > Value: Data type
-	 * @var object
-	 */
-	collections: {},
+	*/
 	
 	/**
 	 * Temporary component instances
@@ -74,44 +73,67 @@ var View = {
 	
 	/* Init */
 	
-	update_refs: function() {
-		var c;
-		var r;
-		var ref;
-		for ( var p in this ) {
-			if ( !this.util.is_func(this[p]) || !( '_refs' in this[p].prototype ) ) {
-				continue;
-			}
-			// Set component
-			c = this[p];
-			if ( !this.util.is_empty(c.prototype._refs) ) {
-				for ( r in c.prototype._refs ) {
-					ref = c.prototype._refs[r];
-					if ( this.util.is_func(ref) ) {
-						continue;
-					}
-					if ( this.util.is_string(ref) && ref in this ) {
-						ref = c.prototype._refs[r] = this[ref];
-					}
-					if ( !this.util.is_func(ref) ) {
-						delete c.prototype_refs[r];
-					}
-				}
-			}
-		}
-		
-		/* Initialize components */
+	/**
+	 * Instance initialization
+	 */
+	_init: function() {
+		this._super();
+		// Component References
+		this.init_refs();
+		// Components
 		this.init_components();
 	},
 	
 	/**
-	 * Initialization
+	 * Update component references in component definitions
+	 */
+	init_refs: function() {
+		var r;
+		var ref;
+		var prop;
+		for ( prop in this ) {
+			prop = this[prop];
+			// Process only components
+			if ( !this.is_component(prop) ) {
+				continue;
+			}
+			// Update component references
+			if ( !this.util.is_empty(prop.prototype._refs) ) {
+				for ( r in prop.prototype._refs ) {
+					ref = prop.prototype._refs[r];
+					if ( this.util.is_string(ref) && ref in this ) {
+						ref = prop.prototype._refs[r] = this[ref];
+					}
+					if ( !this.util.is_class(ref) ) {
+						delete prop.prototype_refs[r];
+					}
+				}
+			}
+		}
+	},
+	
+	/**
+	 * Initialize Components
+	 */
+	init_components: function() {
+		this.component_defaults = [
+			this.Viewer
+		];
+	},
+	
+	/**
+	 * Client Initialization
+	 * @param obj options Global options
 	 */
 	init: function(options) {
 		var t = this;
+		// Defer initialization until all components loaded
 		$.when.apply($, this.loading).always(function() {
 			// Set options
 			$.extend(true, t.options, options);
+			
+			/* Event handlers */
+			
 			// History
 			$(window).on('popstate', function(e) {
 				var state = e.originalEvent.state;
@@ -129,60 +151,42 @@ var View = {
 		});
 	},
 	
-	init_components: function() {
-		this.collections = {
-			'viewers':				this.Viewer,
-			'items':				this.Content_Item,
-			'content_handlers':		this.Content_Handler,
-			'groups':				this.Group,
-			'themes':				this.Theme,
-			'template_tags':		this.Template_Tag
-		};
-		
-		this.component_defaults = [
-			this.Viewer,
-		];
-	
-	},
-	
 	/* Components */
 
-	component_make_default: function(type) {
-		var ret = false;
-		for ( var x = 0; x < this.component_defaults.length; x++ ) {
-			if ( type === this.component_defaults[x] ) {
-				ret = true;
-				break;
-			}
-		}
-		return ret;
+	/**
+	 * Check if default component instance can be created
+	 * @uses View.component_defaults
+	 * @param func type Component type to check
+	 * @return bool TRUE if default component instance creation is allowed
+	 */
+	can_make_default_component: function(type) {
+		return ( -1 !== this.component_defaults.indexOf(type) );
 	},
 	
 	/**
-	 * Validates component type
-	 * @param function comp Component type to check
-	 * @return bool TRUE if param is valid component, FALSE otherwise
+	 * Check if object is valid component class
+	 * @param func comp Component to check
+	 * @return bool TRUE if object is valid component class
 	 */
-	check_component: function(comp) {
-		// Validate component type
-		return ( this.util.is_func(comp) && ('_slug' in comp.prototype ) && ( comp.prototype instanceof (this.Component) ) ) ? true : false;
+	is_component: function(comp) {
+		return ( this.util.is_class(comp, this.Component) );
 	},
 	
 	/**
 	 * Retrieve collection of components of specified type
-	 * @param function type Component type
-	 * @return object|array|null Component collection (NULL if invalid)
+	 * @param func type Component type
+	 * @return object Component collection (Default: Empty object)
 	 */
 	get_components: function(type) {
-		var ret = null;
-		if ( this.util.is_func(type) ) {
-			// Determine collection
-			for ( var coll in this.collections ) {
-				if ( type === this.collections[coll] && coll in this ) {
-					ret = this[coll];
-					break;
-				}
+		var ret = {};
+		if ( this.is_component(type) ) {
+			// Determine collection based on component slug
+			var coll = type.prototype._slug + 's';
+			// Create default collection
+			if ( ! ( coll in this.cache ) ) {
+				this.cache[coll] = {};
 			}
+			ret = this.cache[coll];
 		}
 		return ret;
 	},
@@ -215,7 +219,7 @@ var View = {
 		
 		// Default: Create default component
 		if ( this.util.is_empty(ret) ) {
-			if ( this.util.is_string(id) || this.component_make_default(type) ) {
+			if ( this.util.is_string(id) || this.can_make_default_component(type) ) {
 				ret = this.add_component(type, id);
 			}
 		}
@@ -236,7 +240,7 @@ var View = {
 			return false;
 		}
 		// Validate request
-		if ( this.util.is_empty(id) && !this.component_make_default(type) ) {
+		if ( this.util.is_empty(id) && !this.can_make_default_component(type) ) {
 			return false;
 		}
 		// Defaults
@@ -284,7 +288,7 @@ var View = {
 	 */
 	add_component_temp: function(type) {
 		var ret = null;
-		if ( this.check_component(type) ) {
+		if ( this.is_component(type) ) {
 			// Create new instance
 			ret = new type('');
 			// Save to collection
@@ -309,7 +313,7 @@ var View = {
 	 * @return bool TRUE if temp instance exists, FALSE otherwise 
 	 */
 	has_component_temp: function(type) {
-		return ( this.check_component(type) && ( type.prototype._slug in this.component_temps ) ) ? true : false;
+		return ( this.is_component(type) && ( type.prototype._slug in this.component_temps ) ) ? true : false;
 	},
 	
 	/* Properties */
@@ -362,19 +366,13 @@ var View = {
 	 * Add viewer instance to collection
 	 * @param string id Viewer ID
 	 * @param obj options Viewer options
+	 * @return Viewer New viewer instance
 	 */
 	add_viewer: function(id, options) {
-		// Validate
-		if ( !this.util.is_string(id) ) {
-			return false;
-		}
-		if ( !this.util.is_obj(options, false) ) {
-			options = {};
-		}
 		// Create viewer
 		var v = new this.Viewer(id, options);
-		// Add to collection
-		this.viewers[v.get_id()] = v;
+		// Save viewer
+		this.get_viewers()[v.get_id()] = v;
 		// Return viewer
 		return v;
 	},
@@ -384,7 +382,7 @@ var View = {
 	 * @return obj Viewer instances
 	 */
 	get_viewers: function() {
-		return this.viewers;
+		return this.get_components(this.Viewer);
 	},
 	
 	/**
@@ -409,7 +407,8 @@ var View = {
 			v = this.util.add_prefix('default');
 			// Create default viewer if necessary
 			if ( !this.has_viewer(v) ) {
-				this.add_viewer(v);
+				v = this.add_viewer(v);
+				v = v.get_id();
 			}
 		}
 		return this.get_viewers()[v];
@@ -434,9 +433,13 @@ var View = {
 		// Get activated links
 		var sel = this.util.format('a[href][%s="%s"]', this.util.get_attribute('active'), 1);
 		// Add event handler
-		$(document).on('click', sel, handler);
+		$(document).on('click', sel, null, handler);
 	},
 	
+	/**
+	 * Retrieve cached items
+	 * @return obj Items collection
+	 */
 	get_items: function() {
 		return this.get_components(this.Content_Item);
 	},
@@ -466,14 +469,14 @@ var View = {
 			item = $(ref).data(key);
 		}
 		// Cached item (index)
-		else if ( this.util.is_int(ref, false) ) {
+		else if ( this.util.is_string(ref, false) ) {
 			var items = this.get_items();
-			if ( items.length > ref ) {
+			if ( ref in items ) {
 				item = items[ref];
 			}
 		}
 		// Create default item instance
-		if ( !this.util.is_type(item, this.Content_Item) ) {
+		if ( !this.util.is_instance(item, this.Content_Item) ) {
 			item = this.add_item(ref);
 		}
 		return item;
@@ -485,43 +488,40 @@ var View = {
 	 * @return Content_Item New item instance
 	 */
 	add_item: function(el) {
-		var item = new this.Content_Item(el);
-		return item;
+		return ( new this.Content_Item(el) );
 	},
 	
 	/**
 	 * Display item in viewer
 	 * @param obj el DOM element representing item
+	 * @return bool Display result (TRUE if item displayed without issues) 
 	 */
 	show_item: function(el) {
-		var ret = this.get_item(el).show();
-		return ret;
+		return this.get_item(el).show();
 	},
 	
 	/**
 	 * Cache item instance
-	 * @uses this.items to store cached items
+	 * @uses View.get_items() to retrieve item cache
 	 * @param Content_Item item Item to cache
-	 * @return int Index of item in cache
+	 * @return Content_item Item instance
 	 */
 	save_item: function(item) {
-		var ret = -1; 
-		if ( !this.util.is_type(item, this.Content_Item) ) {
-			return ret;
+		if ( !this.util.is_instance(item, this.Content_Item) ) {
+			return item;
 		}
-		var items = this.get_items();
-		// Check if item exists in collection
-		ret = $.inArray(item, items);
-		// Cache item
-		if ( -1 === ret ) {
-			ret = items.push(item) - 1;
-		}
-		// Return item index in cache
-		return ret;
+		// Save item
+		this.get_items()[item.get_id()] = item;
+		// Return item instance
+		return item;
 	},
 	
 	/* Content Handler */
 	
+	/**
+	 * Retrieve content handlers
+	 * @return object Content handlers
+	 */
 	get_content_handlers: function() {
 		return this.get_components(this.Content_Handler);
 	},
@@ -533,7 +533,7 @@ var View = {
 	 */
 	get_content_handler: function(item) {
 		// Determine handler to retrieve
-		var type = ( this.util.is_type(item, this.Content_Item) ) ? item.get_attribute('type', '') : item.toString();
+		var type = ( this.util.is_instance(item, this.Content_Item) ) ? item.get_attribute('type', '') : item.toString();
 		// Retrieve handler
 		var types = this.get_content_handlers();
 		return ( type in types ) ? types[type] : null;
@@ -543,10 +543,10 @@ var View = {
 	 * Add/Update Content Handler
 	 * @param string id Handler ID
 	 * @param obj attr Handler attributes
-	 * @return obj|bool Handler instance (FALSE on failure)
+	 * @return obj|null Handler instance (NULL on failure)
 	 */
 	extend_content_handler: function(id, attr) {
-		var hdl = false;
+		var hdl = null;
 		if ( !this.util.is_string(id) || !this.util.is_obj(attr) ) {
 			return hdl;
 		}
@@ -574,14 +574,15 @@ var View = {
 	 * @param string g Group ID
 	 *  > If group with same ID already set, new group replaces existing one
 	 * @param object attrs (optional) Group attributes
+	 * @return Group New group
 	 */
 	add_group: function(g, attrs) {
 		// Create new group
 		g = new this.Group(g, attrs);
-		// Add group to collection
-		if ( this.util.is_string(g.get_id()) ) {
-			this.groups[g.get_id()] = g;
-		}
+		// Cache group
+		this.get_groups()[g.get_id()] = g;
+
+		return g;
 	},
 	
 	/**
@@ -590,24 +591,20 @@ var View = {
 	 * @return object Registered groups
 	 */
 	get_groups: function() {
-		return this.groups;
+		return this.get_components(this.Group);
 	},
 	
 	/**
 	 * Retrieve specified group
+	 * New group created if not yet set
+	 * @uses View.has_group()
+	 * @uses View.add_group()
+	 * @uses View.get_groups()
 	 * @param string g Group ID
-	 * @return object|null Group instance (NULL if group does not exist)
+	 * @return Group Group instance
 	 */
 	get_group: function(g) {
-		if ( this.util.is_string(g) ) {
-			if ( !this.has_group(g) ) {
-				// Add new group (if necessary)
-				this.add_group(g);
-			}
-			// Retrieve group
-			g = this.get_groups()[g];
-		}
-		return ( this.util.is_type(g, this.Group) ) ? g : null;
+		return ( !this.has_group(g) ) ? this.add_group(g) : this.get_groups()[g];
 	},
 	
 	/**
@@ -616,7 +613,7 @@ var View = {
 	 * @return bool TRUE if group exists, FALSE otherwise
 	 */
 	has_group: function(g) {
-		return ( this.util.is_string(g) && ( g in this.get_groups() ) ) ? true : false;
+		return ( this.util.is_string(g) && ( g in this.get_groups() ) );
 	},
 	
 	/* Theme */
@@ -624,9 +621,8 @@ var View = {
 	/**
 	 * Add/Update theme
 	 * @param string name Theme name
-	 * @param obj attr Theme options
-	 * > Multiple attribute parameters are merged
-	 * @return obj Theme model
+	 * @param obj attr (optional) Theme options
+	 * @return obj|bool Theme model
 	 */
 	extend_theme: function(id, attr) {
 		// Validate
@@ -641,10 +637,8 @@ var View = {
 		
 		// Create default attributes for new theme
 		if ( this.util.is_empty(model) ) {
-			// Default
-			model = {'parent': null, 'id': id};
-			// Save theme model
-			this.Theme.prototype._models[id] = model;
+			// Save default model
+			model = this.save_theme_model( {'parent': null, 'id': id} );
 		}
 		
 		// Add custom attributes
@@ -662,7 +656,7 @@ var View = {
 		}
 		
 		// Link parent model
-		if ( this.util.is_string(model.parent) ) {
+		if ( !this.util.is_obj(model.parent) ) {
 			model.parent = this.get_theme_model(model.parent);
 		}
 		
@@ -691,25 +685,39 @@ var View = {
 	},
 	
 	/**
+	 * Save theme model
+	 * @uses View.get_theme_models() to retrieve Theme model collection
+	 * @param obj Theme model to save
+	 * @return obj Saved model
+	 */
+	save_theme_model: function(model) {
+		if ( this.util.in_obj(model, 'id') && this.util.is_string(model.id) ) {
+			// Save model
+			this.get_theme_models()[model.id] = model;
+		}
+		return model;
+	},
+	
+	/**
 	 * Add/Update Template Tag Handler
 	 * @param string id Handler ID
 	 * @param obj attr Handler attributes
 	 * @return obj|bool Handler instance (FALSE on failure)
 	 */
 	extend_template_tag_handler: function(id, attr) {
-		var hdl = false;
 		if ( !this.util.is_string(id) || !this.util.is_obj(attr) ) {
-			return hdl;
+			return false;
 		}
+		var hdl;
 		var hdls = this.get_template_tag_handlers(); 
-		// Add new content handler
-		if ( !this.util.in_obj(hdls, id) ) {
-			hdls[id] = hdl = new this.Template_Tag_Handler(id, attr);
-		}
-		// Update existing handler
-		else {
+		if ( this.util.in_obj(hdls, id) ) {
+			// Update existing handler
 			hdl = hdls[id];
 			hdl.set_attributes(attr);
+		} else {
+			// Add new content handler
+			hdl = new this.Template_Tag_Handler(id, attr);
+			hdls[hdl.get_id()] = hdl;
 		}
 		// Load styles
 		if ( this.util.in_obj(attr, 'styles') ) {
@@ -733,16 +741,12 @@ var View = {
 	/**
 	 * Retrieve template tag handler
 	 * @param string id ID of tag handler to retrieve
-	 * @return Template_Tag_Handler Tag Handler instance (new instance for invalid ID)
+	 * @return Template_Tag_Handler|null Tag Handler instance (NULL for invalid ID)
 	 */
 	get_template_tag_handler: function(id) {
 		var handlers = this.get_template_tag_handlers();
-		// Retrieve existing handler
-		if ( this.util.is_string(id) && ( id in handlers ) ) {
-			return handlers[id];
-		}
-		// Default: Return empty handler
-		return new this.Template_Tag_Handler(id, {});
+		// Retrieve existing handler or return new handler
+		return ( this.util.in_obj(handlers, id) ) ? handlers[id] : null; 
 	},
 	
 	/**
@@ -751,11 +755,16 @@ var View = {
 	 */
 	load_styles: function(styles) {
 		if ( this.util.is_array(styles) ) {
-			var out = '';
-			$.each(styles, function(i, style) {
-				out += '<link rel="stylesheet" type="text/css" href="' + style.uri + '" />';
-			});
-			$('head').append(out);
+			var out = [];
+			var style;
+			for ( var x = 0; x < styles.length; x++ ) {
+				style = styles[x];
+				if ( !this.util.in_obj(style, 'uri') || !this.util.is_string(style.uri) ) {
+					continue;
+				}
+				out.push('<link rel="stylesheet" type="text/css" href="' + style.uri + '" />');
+			}
+			$('head').append(out.join(''));
 		}
 	}
 };
@@ -858,7 +867,9 @@ var Component = {
 		// Set ID
 		this.set_id(id);
 		// Save init attributes
-		this._attr_init = attributes;
+		if ( this.util.is_obj(attributes) ) {
+			this._attr_init = attributes;
+		}
 		this._hooks();
 	},
 	
@@ -941,10 +952,12 @@ var Component = {
 	
 	/**
 	 * Set instance ID
+	 * Generates random GUID if no valid ID provided
+	 * @uses Utilities.guid()
 	 * @param string id Unique ID
 	 */
 	set_id: function(id) {
-		this.id = ( this.check_id(id) ) ? id : '';
+		this.id = ( this.check_id(id, true) ) ? id : this.util.guid();
 	},
 	
 	/**
@@ -1989,7 +2002,7 @@ var Viewer = {
 	history_handle: function(e) {
 		var state = e.originalEvent.state;
 		// Load item
-		if ( this.util.is_int(state.item, false) ) {
+		if ( this.util.is_string(state.item, false) ) {
 			this.get_parent().get_item(state.item).show({'event': e});
 			this.trigger('item-change');
 		} else {
@@ -2030,7 +2043,7 @@ var Viewer = {
 				history.replaceState(state, null);
 			}
 			// Always: Save item state
-			state.item = this.get_parent().save_item(item);
+			state.item = this.get_parent().save_item(item).get_id();
 			state.count = ++count;
 			history.pushState(state, '');
 		} else {
@@ -4729,7 +4742,5 @@ View.Template_Tag_Handler = Component.extend(Template_Tag_Handler);
 /* Update References */
 
 // Attach to global object
-SLB.attach('View', View);
-View = SLB.View;
-View.update_refs();
+View = SLB.attach('View', View);
 })(jQuery);}

@@ -150,8 +150,10 @@ var Base = {
 	 * @param string name Member name
 	 * @param object data Member data
 	 * @param bool simple (optional) Save new member as data object or new class instance (Default: new instance)
+	 * @return obj Attached object
 	 */
 	attach: function(member, data, simple) {
+		var ret = data;
 		// Validate
 		simple = ( typeof simple === 'undefined' ) ? false : !!simple;
 		// Add member to instance
@@ -165,8 +167,10 @@ var Base = {
 			}
 			// Save member to current instance
 			// Initialize new instance if data is a class
-			this[member] = ( 'function' === $.type(data) ) ? new data() : data; 
+			this[member] = ( 'function' === $.type(data) ) ? new data() : data;
+			ret = this[member];
 		}
+		return ret;
 	},
 	
 	/**
@@ -234,6 +238,8 @@ var Utilities =  {
 	
 	/* Methods */
 	
+	/* Connections */
+	
 	/**
 	 * Get base ancestor
 	 * @return obj Base ancestor
@@ -275,6 +281,8 @@ var Utilities =  {
 		}
 		return ret;
 	},
+	
+	/* Prefix */
 	
 	/**
 	 * Retrieve valid separator
@@ -350,6 +358,8 @@ var Utilities =  {
 		}
 		return val;
 	},
+	
+	/* Attributes */
 	
 	/*
 	 * Get attribute name
@@ -512,6 +522,36 @@ var Utilities =  {
 				ret = this.is_func(obj[key[x]]);
 				x++;
 			}
+		}
+		return ret;
+	},
+	
+	/**
+	 * Check if object is instance of a class
+	 * @param obj obj Instance object
+	 * @param obj parent Class to compare with
+	 * @return bool TRUE if object is instance of class
+	 */
+	is_instance: function(obj, parent) {
+		if ( !this.is_func(parent) ) {
+			return false;
+		}
+		return ( this.is_obj(obj) && ( obj instanceof parent ) );
+	},
+	
+	/**
+	 * Check if object is class
+	 * Optionally check if class is sub-class of another class
+	 * @param func cls Class to check
+	 * @param func parent (optional) parent class
+	 * @return bool TRUE if object is valid class (and sub-class if parent is specified)
+	 */
+	is_class: function(cls, parent) {
+		// Validate class
+		var ret = ( this.is_func(cls) && ( 'prototype' in cls ) );
+		// Check parent class
+		if ( ret && this.is_set(parent) ) {
+			ret = this.is_instance(cls.prototype, parent);
 		}
 		return ret;
 	},
@@ -750,6 +790,21 @@ var Utilities =  {
 		}
 		// Return intersection results
 		return ret;
+	},
+	
+	/**
+	 * Generates a GUID string.
+	 * @returns string The generated GUID.
+	 * @example af8a8416-6e18-a307-bd9c-f2c947bbb3aa
+	 * @author Slavik Meltser (slavik@meltser.info).
+	 * @link http://slavik.meltser.info/?p=142
+	 */
+	guid: function() {
+		function _p8(s) {
+			var p = (Math.random().toString(16)+"000000000").substr(2,8);
+			return s ? "-" + p.substr(0,4) + "-" + p.substr(4,4) : p ;
+		}
+		return _p8() + _p8(true) + _p8(true) + _p8();
 	}
 };
 
