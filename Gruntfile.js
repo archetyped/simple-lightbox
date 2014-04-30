@@ -20,7 +20,7 @@ module.exports = function(grunt) {
 			
 			// JavaScript assets
 			js : {
-				base : 'js', //Base dir
+				base : 'js', // Base dir
 				src : '<%= paths.js.base %>/dev', // Development code
 				dest : '<%= paths.js.base %>/prod', // Production code
 				files_std : '**/<%= paths.js.src %>/**/*.js', // Standard file match
@@ -34,8 +34,8 @@ module.exports = function(grunt) {
 				ext : '.css', // Compiled extension
 				target : '*.scss', // Only Sass files in CWD
 				exclude : '!_*.scss', // Do not process partials
-				base_src : '<%= paths.base %>/<%= paths.sass.src %>', //Base source dir
-				base_dest : '<%= paths.base %>/<%= paths.sass.dest %>', //Base compile dir
+				base_src : '<%= paths.base %>/<%= paths.sass.src %>', // Base source dir
+				base_dest : '<%= paths.base %>/<%= paths.sass.dest %>', // Base compile dir
 			}
 		},
 	});
