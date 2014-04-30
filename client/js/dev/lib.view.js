@@ -851,25 +851,31 @@ var Component = {
 	 */
 	_status: null,
 	
-	/* Public */
-	
-	attributes: false,
-	
 	/**
 	 * Component ID
 	 * @var string
 	 */
-	id: '',
+	_id: '',
+	
+	/* Public */
+	
+	attributes: false,
 	
 	/* Init */
 	
+	/**
+	 * Constructor
+	 * @param string id (optional) Component ID (Default ID will be generated if no valid ID provided)
+	 * @param object attributes (optional) Component attributes
+	 */
 	_c: function(id, attributes) {
 		// Set ID
-		this.set_id(id);
+		this._set_id(id);
 		// Save init attributes
 		if ( this.util.is_obj(attributes) ) {
 			this._attr_init = attributes;
 		}
+		// Call hooks
 		this._hooks();
 	},
 	
@@ -890,6 +896,60 @@ var Component = {
 	/* Methods */
 	
 	/* Properties */
+	
+	/**
+	 * Set instance ID
+	 * Instance ID can only be set once (will not change ID if valid ID already set)
+	 * Generates random GUID if no valid ID provided
+	 * @uses Utilities.guid()
+	 * @param string id Unique ID
+	 * @return string Instance ID
+	 */
+	_set_id: function(id) {
+		// Set ID only once
+		if ( this.util.is_empty(this._id) ) {
+			this._id = ( this.util.is_string(id) ) ? id : this.util.guid();
+		}
+		console.log('Setting ID: %o (%o)', this._id, this._slug);
+		return this._id;
+	},
+	
+	/**
+	 * Retrieve instance ID
+	 * @uses id as ID base
+	 * @uses _slug to add namespace (if necessary)
+	 * @param bool ns (optional) Whether or not to namespace ID (Default: FALSE)
+	 * @return string Instance ID
+	 */
+	get_id: function(ns) {
+		// Get raw ID
+		var id = this._id;
+		// Namespace ID
+		if ( this.util.is_bool(ns) && ns ) {
+			id = this.add_ns(id);
+		}
+		
+		return id;
+	},
+	
+	/**
+	 * Get namespace
+	 * @uses _slug for namespace segment
+	 * @uses Util.add_prefix() to prefix slug
+	 * @return string Component namespace
+	 */
+	get_ns: function() {
+		return this.util.add_prefix(this._slug);
+	},
+	
+	/**
+	 * Add namespace to value
+	 * @param string val Value to namespace
+	 * @return string Namespaced value (Empty string if invalid value provided)
+	 */
+	add_ns: function(val) {
+		return ( this.util.is_string(val) ) ? this.get_ns() + '_' + val : '';
+	},
 	
 	/**
 	 * Retrieve status
@@ -927,77 +987,6 @@ var Component = {
 			val = false;
 		}
 		return val;
-	},
-	
-	/**
-	 * Retrieve instance ID
-	 * @uses id as ID base
-	 * @uses _slug to add namespace (if necessary)
-	 * @param bool ns (optional) Whether or not to namespace ID (Default: FALSE)
-	 * @return string Instance ID
-	 */
-	get_id: function(ns) {
-		// Validate
-		if ( !this.check_id() ) {
-			this.id = '';
-		}
-		var id = this.id;
-		// Namespace ID
-		if ( this.util.is_bool(ns) && ns ) {
-			id = this.add_ns(id);
-		}
-		
-		return id;
-	},
-	
-	/**
-	 * Set instance ID
-	 * Generates random GUID if no valid ID provided
-	 * @uses Utilities.guid()
-	 * @param string id Unique ID
-	 */
-	set_id: function(id) {
-		this.id = ( this.check_id(id, true) ) ? id : this.util.guid();
-	},
-	
-	/**
-	 * Validate ID value
-	 * @param string id (optional) ID value (Default: Component ID)
-	 * @param bool nonempty (optional) TRUE if it should also check for empty strings, FALSE otherwise (Default: FALSE)
-	 * @return bool TRUE if ID is valid, FALSE otherwise
-	 */
-	check_id: function(id, nonempty) {
-		// Validate
-		if ( arguments.length === 1 && this.util.is_bool(arguments[0]) ) {
-			nonempty = arguments[0];
-			id = null;
-		}
-		if ( this.util.is_empty(id) ) {
-			id = this.id;
-		}
-		if ( !this.util.is_bool(nonempty) ) {
-			nonempty = false;
-		}
-		return ( this.util.is_string(id, nonempty) ) ? true : false;
-	},
-	
-	/**
-	 * Get namespace
-	 * @uses _slug for namespace segment
-	 * @uses Util.add_prefix() to prefix slug
-	 * @return string Component namespace
-	 */
-	get_ns: function() {
-		return this.util.add_prefix(this._slug);
-	},
-	
-	/**
-	 * Add namespace to value
-	 * @param string val Value to namespace
-	 * @return string Namespaced value (Empty string if invalid value provided)
-	 */
-	add_ns: function(val) {
-		return ( this.util.is_string(val) ) ? this.get_ns() + '_' + val : '';
 	},
 	
 	/* Components */
@@ -3715,13 +3704,15 @@ var Theme = {
 	 */
 	set_model: function(id) {
 		this.set_attribute('model', this.get_model(id), false);
+		/* @deprecated
 		// Set ID using model attributes (if necessary)
-		if ( !this.check_id(true) ) {
+		if ( !this._check_id(true) ) {
 			var m = this.get_model();
 			if ( 'id' in m ) {
-				this.set_id(m.id);
+				this._set_id(m.id);
 			}
 		}
+		*/
 	},
 	
 	/* Properties */
