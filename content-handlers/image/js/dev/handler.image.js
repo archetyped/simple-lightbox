@@ -1,5 +1,4 @@
 if ( !!window.SLB && SLB.has_child('View.extend_content_handler') ) {(function($) {
-$(document).ready(function() {
 SLB.View.extend_content_handler('image', {
 	/**
 	 * Render images
@@ -8,28 +7,27 @@ SLB.View.extend_content_handler('image', {
 	 * @return obj Promise for rendering process (Resolved when content is loaded)
 	 */
 	render: function(item, dfr) {
-		//Create image object
+		// Create image object
 		var img = new Image();
-		//Set load event
+		// Set load event
 		var handler = function() {
-			//Save Data
+			// Save Data
 			item.set_data(img);
-			//Set attributes
+			// Set attributes
 			item.set_attribute('dimensions', {'width': img.width, 'height': img.height});
-			//Build output
+			// Build output
 			var out = $('<img />', {'src': item.get_uri()});
-			//Resolve deferred
+			// Resolve deferred
 			dfr.resolve(out);
 		};
 		
-		//Attach event handler
+		// Attach event handler
 		$(img).on('load', function(e) { handler(e); });
-		//Load image
+		// Load image
 		img.src = item.get_uri();
-		//Return promise
+		// Return promise
 		return dfr.promise();
 	}
-});
 });
 })(jQuery);
 }

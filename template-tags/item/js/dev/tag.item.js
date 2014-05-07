@@ -1,5 +1,4 @@
-if ( !!window.SLB && SLB.has_child('View.extend_template_tag_handler') ) {(function($) {
-$(document).ready(function() {
+if ( !!window.SLB && SLB.has_child('View.extend_template_tag_handler') ) {(function() {
 SLB.View.extend_template_tag_handler('item', {
 	/**
 	 * Render Item tag 
@@ -8,11 +7,11 @@ SLB.View.extend_template_tag_handler('item', {
 	 * @param obj dfr Promise to be resolved when tag is rendered
 	 */
 	render: function(item, tag, dfr) {
-		//Build method name
+		// Build method name
 		var m = 'get_' + tag.get_prop();
-		//Get data
+		// Get data
 		var ret = ( this.util.is_method(item, m) ) ? item[m]() : item.get_attribute(tag.get_prop(), '');
-		//Handle response
+		// Handle response
 		if ( this.util.is_promise(ret) ) {
 			ret.done(function(output) {
 				dfr.resolve(output);
@@ -23,6 +22,5 @@ SLB.View.extend_template_tag_handler('item', {
 		return dfr.promise();
 	}
 });
-});
-})(jQuery);
+})();
 }

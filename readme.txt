@@ -57,6 +57,14 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 
 == Changelog ==
 
+= 2.4.0 (Beta 2) =
+* JS: Optimize: Core library
+* JS: Optimize: Utilities library
+* JS: Optimize: Default template tags (item, ui)
+* JS: Optimize: Default content handlers (image)
+* JS: Optimize: Default themes (baseline, default)
+* JS: Optimize: View controller
+
 = 2.4.0 (Beta 1) =
 * Add: Set group via `slb_activate()`
 * Add: Set group via `activate_links()`
