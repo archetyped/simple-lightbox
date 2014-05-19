@@ -782,6 +782,12 @@ var Component = {
 	_slug: 'component',
 	
 	/**
+	 * Component namespace
+	 * @var string 
+	 */
+	_ns: null,
+	
+	/**
 	 * Valid component references for current component
 	 * > Key (string): Property name that stores reference
 	 * > Value (function): Data type of component
@@ -910,7 +916,6 @@ var Component = {
 		if ( this.util.is_empty(this._id) ) {
 			this._id = ( this.util.is_string(id) ) ? id : this.util.guid();
 		}
-		console.log('Setting ID: %o (%o)', this._id, this._slug);
 		return this._id;
 	},
 	
@@ -939,7 +944,10 @@ var Component = {
 	 * @return string Component namespace
 	 */
 	get_ns: function() {
-		return this.util.add_prefix(this._slug);
+		if ( null === this._ns ) {
+			this._ns = this.util.add_prefix(this._slug);
+		}
+		return this._ns;
 	},
 	
 	/**
