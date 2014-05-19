@@ -297,6 +297,26 @@ class SLB_Lightbox extends SLB_Base {
 	/* Methods */
 	
 	/*-** Admin **-*/
+	
+	/**
+	 * Display layout data
+	 */
+	public function test_layout_data() {
+		$thms = $this->themes->get(array('include_private' => true));
+		foreach ( $thms as $thm_id => $thm ) {
+			echo '<h4>' . $thm->get_name() . '</h4>';
+			$uri = $thm->get_layout('uri');
+			if ( $this->util->is_uri($uri) ) {
+				echo "URI: <code>$uri</code>";
+				$get = wp_safe_remote_get($uri);
+				echo '<pre>';
+				var_dump($get);
+				echo '</pre>';
+			} else {
+				echo "<em>No layout</em>";
+			}
+		}
+	}
 
 	/**
 	 * Add admin menus
@@ -311,6 +331,7 @@ class SLB_Lightbox extends SLB_Base {
 		);
 		$pg_opts = $this->admin->add_theme_page('options', $lbls_opts)
 			->require_form()
+			->add_content('test_layout', 'Layout Data', $this->m('test_layout_data'), 'primary')
 			->add_content('options', 'Options', $this->options);
 			
 		//Add Support information
