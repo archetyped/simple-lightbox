@@ -302,12 +302,13 @@ class SLB_Lightbox extends SLB_Base {
 	 * Display layout data
 	 */
 	public function test_layout_data() {
+		echo "PHP: <code>" . phpversion() . "</code>";
 		$thms = $this->themes->get(array('include_private' => true));
 		foreach ( $thms as $thm_id => $thm ) {
 			echo '<h4>' . $thm->get_name() . '</h4>';
 			$uri = $thm->get_layout('uri');
 			if ( $this->util->is_uri($uri) ) {
-				echo "URI: <code>$uri</code>";
+				echo "Layout URI: <code>$uri</code>";
 				$get = wp_safe_remote_get($uri);
 				echo '<pre>';
 				var_dump($get);
