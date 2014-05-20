@@ -977,15 +977,16 @@ var Component = {
 	 * Set status
 	 * @param string id Status to retrieve
 	 * @param mixed val Status value (Default: TRUE)
-	 * @return mixed Status value (Default: bool)
+	 * @return mixed Status value
 	 */
 	set_status: function(id, val) {
-		// Validate
+		// Validate ID
 		if ( this.util.is_string(id) ) {
+			// Validate value
 			if ( !this.util.is_set(val) ) {
 				val = true;
 			}
-			// Initialize property
+			// Initialize status collection
 			if ( !this.util.is_obj(this._status, false) ) {
 				this._status = {};
 			}
