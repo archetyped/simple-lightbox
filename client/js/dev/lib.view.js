@@ -1117,6 +1117,16 @@ var Component = {
 		// Return value for confirmation
 		return this[name];
 	},
+	
+	
+	/**
+	 * Clear component reference
+	 * @uses set_component() to clear component
+	 * @param string Component name
+	 */
+	clear_component: function(name) {
+		this.set_component(name, null);
+	},
 
 	/* Attributes */
 	
