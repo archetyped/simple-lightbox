@@ -1133,7 +1133,7 @@ var Component = {
 		
 		// Phase 4: From controller (optional)
 		if ( get_default && this.util.is_empty(c) ) {
-			c = this.get_parent().get_component(ctype);
+			c = this.get_controller().get_component(ctype);
 		}
 		return c;
 	},
@@ -1160,7 +1160,7 @@ var Component = {
 		
 		// Get component from controller if ID supplied
 		if ( this.util.is_string(ref) ) {
-			ref = this.get_parent().get_component(ctype, ref);
+			ref = this.get_controller().get_component(ctype, ref);
 		}
 		
 		if ( !this.util.is_type(ref, ctype) ) {
@@ -1211,7 +1211,7 @@ var Component = {
 	 */
 	init_default_attributes: function() {
 		// Get parent options
-		var opts = this.get_parent().get_options(this._attr_parent);
+		var opts = this.get_controller().get_options(this._attr_parent);
 		if ( this.util.is_obj(opts) ) {
 			// Remap
 			for ( var opt in this._attr_map ) {
@@ -1976,7 +1976,7 @@ var Viewer = {
 		var state = e.originalEvent.state;
 		// Load item
 		if ( this.util.is_string(state.item, false) ) {
-			this.get_parent().get_item(state.item).show({'event': e});
+			this.get_controller().get_item(state.item).show({'event': e});
 			this.trigger('item-change');
 		} else {
 			var count = this.history_get(true);
@@ -2016,7 +2016,7 @@ var Viewer = {
 				history.replaceState(state, null);
 			}
 			// Always: Save item state
-			state.item = this.get_parent().save_item(item).get_id();
+			state.item = this.get_controller().save_item(item).get_id();
 			state.count = ++count;
 			history.pushState(state, '');
 		} else {
@@ -2704,7 +2704,7 @@ var Group = {
 				}
 				item.get_viewer().close();
 			}
-			var i = this.get_parent().get_item(next);
+			var i = this.get_controller().get_item(next);
 			// Update current item
 			this.set_current(i);
 			// Show item
@@ -2724,7 +2724,7 @@ var Group = {
 				}
 				item.get_viewer().close();
 			}
-			var i = this.get_parent().get_item(prev);
+			var i = this.get_controller().get_item(prev);
 			// Update current item
 			this.set_current(i);
 			// Show item
@@ -2945,7 +2945,7 @@ var Content_Item = {
 		// Add asset properties
 		var d = this.dom_get();
 		var key = d.attr('href') || null;
-		var assets = this.get_parent().assets || null;
+		var assets = this.get_controller().assets || null;
 		// Merge asset data with default attributes
 		if ( this.util.is_string(key) ) {
 			var attrs = [{}, this._attr_default, {'permalink': key}];
@@ -3238,7 +3238,7 @@ var Content_Item = {
 	set_group: function(g) {
 		// If group ID set, get object reference
 		if ( this.util.is_string(g) ) {
-			g = this.get_parent().get_group(g);
+			g = this.get_controller().get_group(g);
 		}
 		
 		// Set (or clear) group property
@@ -3256,7 +3256,7 @@ var Content_Item = {
 	get_type: function() {
 		var t = this.get_component('type', false, false, false);
 		if ( !t ) {
-			t = this.set_type(this.get_parent().get_content_handler(this));
+			t = this.set_type(this.get_controller().get_content_handler(this));
 		}
 		return t;
 	},
@@ -3671,7 +3671,7 @@ var Theme = {
 			// Retrieve matching theme model
 			var models = this.get_models();
 			if ( !this.util.is_string(id) ) {
-				id = this.get_parent().get_option('theme_default');
+				id = this.get_controller().get_option('theme_default');
 			}
 			// Select first theme model if specified model is invalid
 			if ( !this.util.in_obj(models, id) ) {
@@ -4400,7 +4400,7 @@ var Template = {
 	 * @return Template_Tag Temporary tag
 	 */
 	get_tag_temp: function() {
-		return this.get_parent().get_component_temp(View.Template_Tag);
+		return this.get_controller().get_component_temp(View.Template_Tag);
 	},
 	
 	/**
