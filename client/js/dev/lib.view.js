@@ -1684,6 +1684,14 @@ var Viewer = {
 	/* References */
 	
 	/**
+	 * Retrieve item instance current attached to viewer
+	 * @return Content_Item|NULL Current item instance
+	 */
+	get_item: function() {
+		return this.get_component('item');
+	},
+	
+	/**
 	 * Set item reference
 	 * Validates item before setting
 	 * @param obj item Content_Item instance
@@ -1698,6 +1706,11 @@ var Viewer = {
 		return ( !this.util.is_empty(i) );
 	},
 	
+	/**
+	 * Clear item from viewer
+	 * Resets item state and removes reference (if necessary)
+	 * @param bool full (optional) Fully remove item? (Default: TRUE)
+	 */
 	clear_item: function(full) {
 		// Validate
 		if ( !this.util.is_bool(full) ) {
@@ -1708,16 +1721,8 @@ var Viewer = {
 			item.reset();
 		}
 		if ( full ) {
-			this.set_item(false);
+			this.clear_component('item');
 		}
-	},
-	
-	/**
-	 * Retrieve item instance current attached to viewer
-	 * @return Content_Item|NULL Current item instance
-	 */
-	get_item: function() {
-		return this.get_component('item');
 	},
 	
 	/**
@@ -2766,7 +2771,7 @@ var Content_Handler = {
 	 * Sets value to NULL
 	 */
 	clear_item: function() {
-		this.item = null;
+		this.clear_component('item');
 	},
 	
 	/* Evaluation */
