@@ -1089,30 +1089,29 @@ var Component = {
 	 * @return object Component (NULL if invalid)
 	 */
 	set_component: function(name, ref, validate) {
-		var clear = null;
+		var invalid = null;
 		// Make sure component property exists
 		if ( !this.has_reference(name) ) {
-			return clear;
+			return invalid;
 		}
-		// Normalize reference
+		 
+		// Validate reference
 		if ( this.util.is_empty(ref) ) {
-			ref = clear;
+			ref = invalid;
+		} else {
+			var ctype = this.get_reference(name);
+			
+			// Get component from controller when ID supplied
+			if ( this.util.is_string(ref, false) ) {
+				ref = this.get_controller().get_component(ctype, ref);
+			}
+			
+			// Validation callback
+			if ( !this.util.is_type(ref, ctype) || ( this.util.is_func(validate) && !validate.call(this, ref) ) ) {
+				ref = invalid;
+			}
 		}
-		var ctype = this.get_reference(name); 
 		
-		// Get component from controller if ID supplied
-		if ( this.util.is_string(ref) ) {
-			ref = this.get_controller().get_component(ctype, ref);
-		}
-		
-		if ( !this.util.is_type(ref, ctype) ) {
-			ref = clear;
-		}
-
-		// Additional validation
-		if ( !this.util.is_empty(ref) && this.util.is_func(validate) && !validate.call(this, ref) ) {
-			ref = clear;
-		}
 		// Set (or clear) component reference
 		this[name] = ref;
 		// Return value for confirmation
