@@ -854,9 +854,13 @@ var Component = {
 	 */
 	_id: '',
 	
-	/* Public */
-	
-	attributes: false,
+	/**
+	 * Component attributes
+	 * @var object
+	 * > Key: Attribute ID
+	 * > Value: Attribute value
+	 */
+	_attributes: false,
 	
 	/* Init */
 	
@@ -1121,7 +1125,7 @@ var Component = {
 	
 	/**
 	 * Clear component reference
-	 * @uses set_component() to clear component
+	 * @uses set_component() to handle component manipulation
 	 * @param string Component name
 	 */
 	clear_component: function(name) {
@@ -1131,14 +1135,16 @@ var Component = {
 	/* Attributes */
 	
 	/**
-	 * Initializes attributes
+	 * Initialize attributes
+	 * @param bool force (optional) Force full initialization of attributes (Default: FALSE)
+	 * @return void
 	 */
 	init_attributes: function(force) {
 		if ( !this.util.is_bool(force) ) {
 			force = false;
 		}
-		if ( force || !this.util.is_obj(this.attributes) ) {
-			this.attributes = {};
+		if ( force || !this.util.is_obj(this._attributes) ) {
+			this._attributes = {};
 			// Build attribute groups
 			var attrs = [{}];
 			attrs.push(this.init_default_attributes());
@@ -1149,7 +1155,7 @@ var Component = {
 				attrs.push(this._attr_init);
 			}
 			// Merge attributes
-			this.attributes = $.extend.apply(null, attrs);
+			this._attributes = $.extend.apply(null, attrs);
 		}
 	},
 	
@@ -1214,7 +1220,7 @@ var Component = {
 		// Initilize attributes
 		this.init_attributes();
 		// Return attributes
-		return this.attributes;
+		return this._attributes;
 	},
 	
 	/**
@@ -1308,7 +1314,7 @@ var Component = {
 		
 		// Merge new/existing attributes
 		if ( this.util.is_obj(attributes) ) {
-			$.extend(this.attributes, attributes);
+			$.extend(this._attributes, attributes);
 		}
 	},
 	
