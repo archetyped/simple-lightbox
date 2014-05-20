@@ -1068,28 +1068,28 @@ var Component = {
 	 *   > Check parent object (controller)
 	 * @uses _containers to check potential container components for references
 	 * @param string cname Component name
-	 * @param bool check_attr (optional) Whether or not to check instance attributes for component (Default: TRUE)
-	 * @param bool get_default (optional) Whether or not to retrieve default object from controller if none exists in current instance (Default: TRUE)
-	 * @param bool recursive (optional) Whether or not to check containers for specified component reference (Default: TRUE) 
+	 * @param object options (optional) Request options
+	 * > check_attr bool Whether or not to check instance attributes for component (Default: TRUE)
+	 * > get_default bool Whether or not to retrieve default object from controller if none exists in current instance (Default: FALSE)
+	 * > recursive bool Whether or not to check containers for specified component reference (Default: FALSE) 
 	 * @return object|null Component reference (NULL if no component found)
 	 */
-	get_component: function(cname, check_attr, get_default, recursive) {
+	get_component: function(cname, options) {
 		var c = null;
 		// Validate request
 		if ( !this.util.is_string(cname) || !( cname in this ) || !this.has_reference(cname) ) {
 			return c;
 		}
 		
-		// Normalize parameters
-		if ( !this.util.is_bool(check_attr) ) {
-			check_attr = true;
-		}
-		if ( !this.util.is_bool(get_default) ) {
-			get_default = true;
-		}
-		if ( !this.util.is_bool(recursive) ) {
-			recursive = true;
-		}
+		// Initialize options
+		var opt_defaults = {
+			check_attr: true,
+			get_default: false,
+			recursive: false
+		};
+		
+		options = $.extend({}, opt_defaults, options);
+		
 		var ctype = this._refs[cname];
 		// Phase 1: Check if component reference previously set
 		if ( this.util.is_type(this[cname], ctype) ) {
@@ -1099,7 +1099,7 @@ var Component = {
 		c = this[cname] = null;
 				
 		// Phase 2: Check attributes
-		if ( check_attr ) {
+		if ( options.check_attr ) {
 			c = this.get_attribute(cname);
 			// Save object-specific component reference
 			if ( !this.util.is_empty(c) ) {
@@ -1108,7 +1108,7 @@ var Component = {
 		}
 
 		// Phase 3: Check Container(s)
-		if ( recursive && this.util.is_empty(c) && this.has_containers() ) {
+		if ( options.recursive && this.util.is_empty(c) && this.has_containers() ) {
 			var containers = this.get_containers();
 			var con = null;
 			for ( var i = 0; i < containers.length; i++ ) {
@@ -1118,7 +1118,7 @@ var Component = {
 					continue;
 				}
 				// Retrieve container
-				con = this.get_component(con, true, false);
+				con = this.get_component(con);
 				if ( this.util.is_empty(con) ) {
 					continue;
 				}
@@ -1132,7 +1132,7 @@ var Component = {
 		}
 		
 		// Phase 4: From controller (optional)
-		if ( get_default && this.util.is_empty(c) ) {
+		if ( options.get_default && this.util.is_empty(c) ) {
 			c = this.get_controller().get_component(ctype);
 		}
 		return c;
@@ -1766,7 +1766,7 @@ var Viewer = {
 	 * @return Content_Item|NULL Current item instance
 	 */
 	get_item: function() {
-		return this.get_component('item', true, false);
+		return this.get_component('item');
 	},
 	
 	/**
@@ -1775,7 +1775,7 @@ var Viewer = {
 	 */
 	get_theme: function() {
 		// Get saved theme
-		var ret = this.get_component('theme', false, false, false);
+		var ret = this.get_component('theme', {check_attr: false});
 		if ( this.util.is_empty(ret) ) {
 			// Theme needs to be initialized
 			ret = this.set_component('theme', new View.Theme(this));
@@ -2794,7 +2794,7 @@ var Content_Handler = {
 	 * @return mixed Content_Item if valid item set, NULL otherwise
 	 */
 	get_item: function() {
-		return this.get_component('item', true, false);
+		return this.get_component('item');
 	},
 	
 	/**
@@ -3191,7 +3191,7 @@ var Content_Item = {
 	/* Viewer */
 	
 	get_viewer: function() {
-		return this.get_component('viewer');
+		return this.get_component('viewer', {get_default: true});
 	},
 	
 	/**
@@ -3215,7 +3215,7 @@ var Content_Item = {
 	get_group: function(set_current) {
 		var prop = 'group';
 		// Check if group reference already set
-		var g = this.get_component(prop, true, false, false);
+		var g = this.get_component(prop);
 		if ( g ) {
 		} else {
 			// Set empty group if no group exists
@@ -3254,7 +3254,7 @@ var Content_Item = {
 	 * @return Content_Handler|null Content Handler of item (NULL no valid type exists)
 	 */
 	get_type: function() {
-		var t = this.get_component('type', false, false, false);
+		var t = this.get_component('type', {check_attr: false});
 		if ( !t ) {
 			t = this.set_type(this.get_controller().get_content_handler(this));
 		}
@@ -3580,7 +3580,7 @@ var Theme = {
 	/* Viewer */
 	
 	get_viewer: function() {
-		return this.get_component('viewer', false, true, false);
+		return this.get_component('viewer', {check_attr: false, get_default: true});
 	},
 	
 	/**
@@ -3602,7 +3602,7 @@ var Theme = {
 	 */
 	get_template: function() {
 		// Get saved template
-		var ret = this.get_component('template', true, false, false);
+		var ret = this.get_component('template');
 		// Template needs to be initialized
 		if ( this.util.is_empty(ret) ) {
 			// Pass model to Template instance
@@ -4111,7 +4111,7 @@ var Template = {
 	},
 	
 	get_theme: function() {
-		var ret = this.get_component('theme', true, false, false);
+		var ret = this.get_component('theme');
 		return ret;
 	},
 	
