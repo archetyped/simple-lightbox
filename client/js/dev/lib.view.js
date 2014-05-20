@@ -789,9 +789,9 @@ var Component = {
 	
 	/**
 	 * Valid component references for current component
+	 * @var object
 	 * > Key (string): Property name that stores reference
 	 * > Value (function): Data type of component
-	 * @var object
 	 */
 	_refs: {},
 	
@@ -998,6 +998,15 @@ var Component = {
 		return val;
 	},
 	
+	/**
+	 * Get controller object
+	 * @uses get_parent() (alias)
+	 * @return object Controller object (SLB.View)
+	 */
+	get_controller: function() {
+		return this.get_parent();
+	},
+	
 	/* Components */
 	
 	/**
@@ -1048,40 +1057,6 @@ var Component = {
 	 */
 	get_reference: function(ref) {
 		return ( this.has_reference(ref) ) ? this._refs[ref] : null;
-	},
-	
-	/**
-	 * Checks if component is valid
-	 * @param obj|string Component instance or ID
-	 *  > If ID is specified then it will check for component on current instance
-	 * @param function|string ctype Component type
-	 *  > If component is an object, then ctype is required
-	 *  > If component is string ID, then ctype is optional (Default: reference type)
-	 *  > If ctype is a function, then it is compared to component directly
-	 *  > If ctype is a string, then the component reference type is retrieved
-	 * @uses get_reference()
-	 * @return bool TRUE if component is valid, FALSE otherwise
-	 */
-	check_component: function(comp, ctype) {
-		// Validate
-		if ( this.util.is_empty(comp) ||
-			( this.util.is_obj(comp) && !this.util.is_func(ctype) ) ||
-			( this.util.is_string(comp) && !this.has_reference(comp) ) ||
-			( this.util.is_empty(ctype) && !this.util.is_string(comp) ) ||
-			( !this.util.is_obj(comp) && !this.util.is_string(comp) )
-		) {
-			return false;
-		}
-		// Get component type
-		if ( !this.util.is_func(ctype) ) {
-			// Component is a string ID
-			ctype = this.get_reference(comp);
-		}
-		// Get component instance
-		if ( this.util.is_string(comp) ) {
-			comp = this.get_component(comp, false);
-		}
-		return this.util.is_type(comp, ctype);
 	},
 	
 	/**
