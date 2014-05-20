@@ -796,15 +796,6 @@ var Component = {
 	_refs: {},
 	
 	/**
-	 * Components that may contain current object
-	 * Used for retrieving data from a parent object
-	 * Example: An Item may be contained by a Group
-	 * > Value (strong): Property name of container component
-	 * @var array
-	 */
-	_containers: [],
-	
-	/**
 	 * Whether DOM element and component are connected in 1:1 relationship
 	 * Some components will be assigned to different DOM elements depending on usage
 	 * @var bool
@@ -1010,28 +1001,6 @@ var Component = {
 	/* Components */
 	
 	/**
-	 * Retrieve component containers
-	 * @uses _container property
-	 * @return array Component containers
-	 */
-	get_containers: function() {
-		// Sanitize property
-		if ( !this.util.is_array(this._containers) ) {
-			this._containers = [];
-		}
-		// Return value
-		return this._containers;
-	},
-	
-	/**
-	 * Check if current object has potential container objects
-	 * @return bool TRUE if containers exist, FALSE otherwise
-	 */
-	has_containers: function() {
-		return ( this.get_containers().length > 0 );
-	},
-	
-	/**
 	 * Check if reference exists in object
 	 * @param string ref Reference ID
 	 * @return bool TRUE if reference exists, FALSE otherwise
@@ -1065,12 +1034,10 @@ var Component = {
 	 *   > Check if top-level property already set
 	 *   > Check attributes
 	 *   > Check parent object (controller)
-	 * @uses _containers to check potential container components for references
 	 * @param string cname Component name
 	 * @param object options (optional) Request options
 	 * > check_attr bool Whether or not to check instance attributes for component (Default: TRUE)
 	 * > get_default bool Whether or not to retrieve default object from controller if none exists in current instance (Default: FALSE)
-	 * > recursive bool Whether or not to check containers for specified component reference (Default: FALSE) 
 	 * @return object|null Component reference (NULL if no component found)
 	 */
 	get_component: function(cname, options) {
@@ -2873,7 +2840,6 @@ var Content_Item = {
 		'group': 'Group',
 		'type': 'Content_Handler'
 	},
-	_containers: ['group'],
 	
 	_attr_default: {
 		source: null,
@@ -3518,8 +3484,6 @@ var Theme = {
 	},
 	_models: {},
 	
-	_containers: ['viewer'],
-	
 	_attr_default: {
 		template: null,
 		model: null
@@ -4023,8 +3987,7 @@ var Template = {
 	_refs: {
 		'theme': 'Theme'
 	},
-	_containers: ['theme'],
-	
+
 	_attr_default: {
 		/**
 		 * URI to layout (raw) file
