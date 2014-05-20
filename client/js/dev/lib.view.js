@@ -1077,7 +1077,7 @@ var Component = {
 	get_component: function(cname, options) {
 		var c = null;
 		// Validate request
-		if ( !this.util.is_string(cname) || !( cname in this ) || !this.has_reference(cname) ) {
+		if ( !this.has_reference(cname) ) {
 			return c;
 		}
 		
@@ -1087,10 +1087,11 @@ var Component = {
 			get_default: false,
 			recursive: false
 		};
-		
 		options = $.extend({}, opt_defaults, options);
 		
+		// Get component type
 		var ctype = this.get_reference(cname);
+		
 		// Phase 1: Check if component reference previously set
 		if ( this.util.is_type(this[cname], ctype) ) {
 			return this[cname];
@@ -1766,7 +1767,7 @@ var Viewer = {
 	 * @return Content_Item|NULL Current item instance
 	 */
 	get_item: function() {
-		return this.get_component('item', {recursive: true});
+		return this.get_component('item');
 	},
 	
 	/**
@@ -2794,7 +2795,7 @@ var Content_Handler = {
 	 * @return mixed Content_Item if valid item set, NULL otherwise
 	 */
 	get_item: function() {
-		return this.get_component('item', {recursive: true});
+		return this.get_component('item');
 	},
 	
 	/**
@@ -3191,7 +3192,7 @@ var Content_Item = {
 	/* Viewer */
 	
 	get_viewer: function() {
-		return this.get_component('viewer', {get_default: true, recursive: true});
+		return this.get_component('viewer', {get_default: true});
 	},
 	
 	/**
