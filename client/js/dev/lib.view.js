@@ -1062,7 +1062,7 @@ var Component = {
 	/**
 	 * Retrieve component reference from current object
 	 * > Procedure:
-	 *   > Check if property already set
+	 *   > Check if top-level property already set
 	 *   > Check attributes
 	 *   > Check container object(s)
 	 *   > Check parent object (controller)
@@ -1090,7 +1090,7 @@ var Component = {
 		
 		options = $.extend({}, opt_defaults, options);
 		
-		var ctype = this._refs[cname];
+		var ctype = this.get_reference(cname);
 		// Phase 1: Check if component reference previously set
 		if ( this.util.is_type(this[cname], ctype) ) {
 			return this[cname];
@@ -1108,7 +1108,7 @@ var Component = {
 		}
 
 		// Phase 3: Check Container(s)
-		if ( options.recursive && this.util.is_empty(c) && this.has_containers() ) {
+		if ( this.util.is_empty(c) && options.recursive && this.has_containers() ) {
 			var containers = this.get_containers();
 			var con = null;
 			for ( var i = 0; i < containers.length; i++ ) {
@@ -1118,7 +1118,7 @@ var Component = {
 					continue;
 				}
 				// Retrieve container
-				con = this.get_component(con);
+				con = this.get_component(con, {recursive: true});
 				if ( this.util.is_empty(con) ) {
 					continue;
 				}
@@ -1132,7 +1132,7 @@ var Component = {
 		}
 		
 		// Phase 4: From controller (optional)
-		if ( options.get_default && this.util.is_empty(c) ) {
+		if ( this.util.is_empty(c) && options.get_default ) {
 			c = this.get_controller().get_component(ctype);
 		}
 		return c;
@@ -1766,7 +1766,7 @@ var Viewer = {
 	 * @return Content_Item|NULL Current item instance
 	 */
 	get_item: function() {
-		return this.get_component('item');
+		return this.get_component('item', {recursive: true});
 	},
 	
 	/**
@@ -2794,7 +2794,7 @@ var Content_Handler = {
 	 * @return mixed Content_Item if valid item set, NULL otherwise
 	 */
 	get_item: function() {
-		return this.get_component('item');
+		return this.get_component('item', {recursive: true});
 	},
 	
 	/**
@@ -3191,7 +3191,7 @@ var Content_Item = {
 	/* Viewer */
 	
 	get_viewer: function() {
-		return this.get_component('viewer', {get_default: true});
+		return this.get_component('viewer', {get_default: true, recursive: true});
 	},
 	
 	/**
