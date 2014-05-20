@@ -1064,7 +1064,6 @@ var Component = {
 	 * > Procedure:
 	 *   > Check if top-level property already set
 	 *   > Check attributes
-	 *   > Check container object(s)
 	 *   > Check parent object (controller)
 	 * @uses _containers to check potential container components for references
 	 * @param string cname Component name
@@ -1084,8 +1083,7 @@ var Component = {
 		// Initialize options
 		var opt_defaults = {
 			check_attr: true,
-			get_default: false,
-			recursive: false
+			get_default: false
 		};
 		options = $.extend({}, opt_defaults, options);
 		
@@ -1107,32 +1105,8 @@ var Component = {
 				c = this.set_component(cname, c);
 			}
 		}
-
-		// Phase 3: Check Container(s)
-		if ( this.util.is_empty(c) && options.recursive && this.has_containers() ) {
-			var containers = this.get_containers();
-			var con = null;
-			for ( var i = 0; i < containers.length; i++ ) {
-				con = containers[i];
-				// Validate container
-				if ( con === cname ) {
-					continue;
-				}
-				// Retrieve container
-				con = this.get_component(con, {recursive: true});
-				if ( this.util.is_empty(con) ) {
-					continue;
-				}
-				// Attempt to retrieve component from container
-				c = con.get_component(cname);
-				// Stop iterating if valid component found
-				if ( !this.util.is_empty(c) ) {
-					break;
-				}
-			}
-		}
 		
-		// Phase 4: From controller (optional)
+		// Phase 3: From controller (optional)
 		if ( this.util.is_empty(c) && options.get_default ) {
 			c = this.get_controller().get_component(ctype);
 		}
