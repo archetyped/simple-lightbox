@@ -43,16 +43,6 @@ var View = {
 	 */
 	cache: {},
 	
-	/* Component Collections */
-	
-	/*
-	viewers: {},
-	content_items: [],
-	content_handlers: {},
-	groups: {},
-	template_tags: {},
-	*/
-	
 	/**
 	 * Temporary component instances
 	 * For use by controller when no component instance is available
@@ -62,12 +52,7 @@ var View = {
 	component_temps: {},
 	
 	/* Options */
-	options: {
-		ui_animate: true,
-		slideshow_enabled: true,
-		slideshow_autostart: false,
-		slideshow_duration: '6'
-	},
+	options: {},
 	
 	/* Methods */
 	
@@ -807,12 +792,26 @@ var Component = {
 	 * @var DOM Element 
 	 */
 	_dom: null,
+	
+		/**
+	 * Component attributes
+	 * @var object
+	 * > Key: Attribute ID
+	 * > Value: Attribute value
+	 */
+	_attributes: false,
 
 	/**
 	 * Default attributes
 	 * @var object
 	 */
 	_attr_default: {},
+	
+	/**
+	 * Flag indicates whether default attributes have previously been parsed
+	 * @var bool
+	 */
+	_attr_default_parsed: false,
 	
 	/**
 	 * Attributes passed to constructor
@@ -853,14 +852,6 @@ var Component = {
 	 * @var string
 	 */
 	_id: '',
-	
-	/**
-	 * Component attributes
-	 * @var object
-	 * > Key: Attribute ID
-	 * > Value: Attribute value
-	 */
-	_attributes: false,
 	
 	/* Init */
 	
@@ -1144,43 +1135,44 @@ var Component = {
 			force = false;
 		}
 		if ( force || !this.util.is_obj(this._attributes) ) {
-			this._attributes = {};
-			// Build attribute groups
-			var attrs = [{}];
-			attrs.push(this.init_default_attributes());
-			if ( this.dom_has() ) {
-				attrs.push(this.get_dom_attributes());
-			}
+			var a = this._attributes = {};
+			// Default attributes
+			$.extend(a, this.init_default_attributes());
+			// Instantiation attributes
 			if ( this.util.is_obj(this._attr_init) ) {
-				attrs.push(this._attr_init);
+				$.extend(a, this._attr_init);
 			}
-			// Merge attributes
-			this._attributes = $.extend.apply(null, attrs);
+			// DOM attributes
+			$.extend(a, this.get_dom_attributes());
 		}
 	},
 	
 	/**
 	 * Generate default attributes for component
-	 * @uses _attr_parent to determine options to retrieve from controller
 	 * @uses View.get_options() to get values from controller
 	 * @uses _attr_map to Remap controller attributes to instance attributes
 	 * @uses _attr_default to Store default attributes
+	 * @return obj Default attributes
 	 */
 	init_default_attributes: function() {
-		// Get parent options
-		var opts = this.get_controller().get_options(this._attr_parent);
-		if ( this.util.is_obj(opts) ) {
-			// Remap
-			for ( var opt in this._attr_map ) {
-				if ( opt in opts ) {
-					// Move value to new property
-					opts[this._attr_map[opt]] = opts[opt];
-					// Delete old property
-					delete opts[opt];
+		// Get options from controller
+		if ( !this._attr_default_parsed && this.util.is_obj(this._attr_map) ) {
+			var opts = this.get_controller().get_options(this.util.obj_keys(this._attr_map));
+			
+			if ( this.util.is_obj(opts) ) {
+				// Remap
+				for ( var opt in this._attr_map ) {
+					if ( opt in opts && null !== this._attr_map[opt]) {
+						// Move value to new property
+						opts[this._attr_map[opt]] = opts[opt];
+						// Delete old property
+						delete opts[opt];
+					}
 				}
+				// Merge with default attributes
+				$.extend(true, this._attr_default, opts);
 			}
-			// Merge with default attributes
-			$.extend(true, this._attr_default, opts);
+			this._attr_default_parsed = true;
 		}
 		return this._attr_default;
 	},
@@ -1611,7 +1603,7 @@ var Viewer = {
 		title_default: false,
 		container: null,
 		slideshow_enabled: true,
-		slideshow_autostart: true,
+		slideshow_autostart: false,
 		slideshow_duration: 2,
 		slideshow_active: false,
 		slideshow_timer: null,
@@ -1626,19 +1618,17 @@ var Viewer = {
 		}
 	},
 	
-	_attr_parent: [
-		'theme', 
-		'group_loop', 
-		'ui_autofit', 'ui_animate', 'ui_overlay_opacity', 'ui_labels', 'ui_title_default',
-		'slideshow_enabled', 'slideshow_autostart', 'slideshow_duration'],
-	
 	_attr_map: {
+		'theme': null,
 		'group_loop': 'loop',
 		'ui_autofit': 'autofit',
 		'ui_animate': 'animate',
 		'ui_overlay_opacity': 'overlay_opacity',
 		'ui_labels': 'labels',
-		'ui_title_default': 'title_default'
+		'ui_title_default': 'title_default',
+		'slideshow_enabled': null,
+		'slideshow_autostart': null,
+		'slideshow_duration': null
 	},
 	
 	/* References */
