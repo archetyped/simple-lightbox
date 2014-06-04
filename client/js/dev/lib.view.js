@@ -793,7 +793,7 @@ var Component = {
 	 */
 	_dom: null,
 	
-		/**
+	/**
 	 * Component attributes
 	 * @var object
 	 * > Key: Attribute ID
@@ -818,12 +818,6 @@ var Component = {
 	 * @var obj
 	 */
 	_attr_init: null,
-	
-	/**
-	 * Attributes to retrieve from parent (controller)
-	 * @var array
-	 */
-	_attr_parent: [],
 	
 	/**
 	 * Defines how parent properties should be remapped to component properties
@@ -1179,23 +1173,24 @@ var Component = {
 	
 	/**
 	 * Retrieve DOM attributes
+	 * @return obj DOM Attributes
 	 */
 	get_dom_attributes: function() {
 		var attrs = {};
-		var el = this.dom_get();
-		if ( el.length ) {
+		var el = this.dom_get(null, {'init': false});
+		if ( el.length > 0 ) {
 			// Get attributes from element
-			var opts = $(el).get(0).attributes;
-			if ( this.util.is_obj(opts) ) {
+			var attrs_full = $(el).get(0).attributes;
+			if ( this.util.is_obj(attrs_full) ) {
 				var attr_prefix = this.util.get_attribute();
-				$.each(opts, function(idx, opt) {
-					if ( opt.name.indexOf( attr_prefix ) === -1 ) {
+				var attr_key;
+				$.each(attrs_full, function(idx, attr) {
+					if ( attr.name.indexOf( attr_prefix ) === -1 ) {
 						return true;
 					}
-					// Process custom attributes
-					// Strip prefix
-					var key = opt.name.substr(attr_prefix.length + 1);
-					attrs[key] = opt.value;
+					// Process custom attributes (Strip prefix)
+					attr_key = attr.name.substr(attr_prefix.length + 1);
+					attrs[attr_key] = attr.value;
 				});
 			}
 		}
@@ -1359,14 +1354,21 @@ var Component = {
 	 * Retrieve attached DOM element
 	 * @uses _dom to retrieve attached DOM element
 	 * @uses dom_put() to insert child element
-	 * @param string element Child element to retrieve
+	 * @param string element (optional) ID of child element to retrieve (Default: Main element)
 	 * @param bool put (optional) Whether to insert element if it does not exist (Default: FALSE)
-	 * @param obj options (optional) Options for creating new object
+	 * @param obj options (optional) Runtime options
 	 * @return obj jQuery DOM element
 	 */
-	dom_get: function(element, put, options) {
+	dom_get: function(element, options) {
+		// Build options
+		var opts_default = {
+			'init': true,
+			'put': false
+		};
+		options = ( this.util.is_obj(options) ) ? $.extend({}, opts_default, options) : opts_default;
+		
 		// Init Component DOM
-		if ( !this.get_status('dom_init') ) {
+		if ( options.init && !this.get_status('dom_init') ) {
 			this.set_status('dom_init');
 			this.dom_init();
 		}
@@ -1377,9 +1379,9 @@ var Component = {
 			// Check for child element
 			if ( ch.length ) {
 				ret = ch;
-			} else if ( this.util.is_bool(put) && put ) {
+			} else if ( true === options.put || this.util.is_obj(options.put) ) {
 				// Insert child element
-				ret = this.dom_put(element, options);
+				ret = this.dom_put(element, options.put);
 			}
 		}
 		return $(ret);
@@ -1407,7 +1409,7 @@ var Component = {
 			return $(r);
 		}
 		// Setup options
-		var strip = ['tag', 'content', 'put_success'];
+		var strip = ['tag', 'content', 'success'];
 		var options = {
 			'tag': 'div',
 			'content': '',
@@ -1432,8 +1434,8 @@ var Component = {
 		// Create element (if necessary)
 		if ( !r.length ) {
 			r = $(this.util.format('<%s />', options.tag), attrs).appendTo(d);
-			if ( r.length && this.util.is_method(options, 'put_success') ) {
-				options['put_success'].call(r, r);
+			if ( r.length && this.util.is_method(options, 'success') ) {
+				options['success'].call(r, r);
 			}
 		}
 		// Set content
@@ -2158,9 +2160,11 @@ var Viewer = {
 	/* Layout */
 	
 	get_layout: function() {
-		var ret = this.dom_get('layout', true, {
-			'put_success': function() {
-				$(this).hide();
+		var ret = this.dom_get('layout', {
+			'put': {
+				'success': function() {
+					$(this).hide();
+				}
 			}
 		});
 		return ret;
@@ -2191,9 +2195,11 @@ var Viewer = {
 		var o = null;
 		var v = this;
 		if ( this.overlay_enabled() ) {
-			o = this.dom_get('overlay', true, {
-				'put_success': function() {
-					$(this).hide().css('opacity', v.get_attribute('overlay_opacity'));
+			o = this.dom_get('overlay', {
+				'put': {
+					'success': function() {
+						$(this).hide().css('opacity', v.get_attribute('overlay_opacity'));
+					}
 				}
 			});
 		}
