@@ -1199,9 +1199,9 @@ var Component = {
 	
 	/**
 	 * Retrieve all instance attributes
-	 * @uses parse_attributes() to initialize attributes (if necessary)
-	 * @uses attributes
-	 * @return obj Attributes
+	 * @uses init_attributes() to initialize attributes (if necessary)
+	 * @uses _attributes object
+	 * @return obj Component attributes
 	 */
 	get_attributes: function() {
 		// Initilize attributes
