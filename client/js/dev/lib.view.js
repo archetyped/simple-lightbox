@@ -1270,6 +1270,7 @@ var Component = {
 	 * Call attribute as method
 	 * @param string attr Attribute to call
 	 * @param arguments (optional) Additional arguments to pass to method
+	 * @return mixed Attribute return value (if attribute is not a function, attribute's value is returned)
 	 */
 	call_attribute: function(attr, args) {
 		attr = this.get_attribute(attr);
