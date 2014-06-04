@@ -1289,7 +1289,7 @@ var Component = {
 	 * @return bool TRUE if exists, FALSE otherwise
 	 */
 	has_attribute: function(key) {
-		return ( key in this.get_attributes() );
+		return ( this.util.is_string(key) && ( key in this.get_attributes() ) );
 	},
 	
 	/**
