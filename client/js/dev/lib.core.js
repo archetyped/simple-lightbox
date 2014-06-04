@@ -749,6 +749,30 @@ var Utilities =  {
 	},
 	
 	/**
+	 * Retrieve an object's keys
+	 * @param obj Object to parse
+	 * @return array List of object's keys
+	 */
+	obj_keys: function(obj) {
+		var keys = [];
+		// Validation
+		if ( !this.is_obj(obj) ) {
+			return keys;
+		}
+		if ( Object.keys ) {
+			keys = Object.keys(obj);
+		} else {
+			var prop;
+			for ( prop in obj ) {
+				if ( obj.hasOwnProperty(prop) ) {
+					keys.push(prop);
+				}
+			}
+		}
+		return keys;
+	},
+	
+	/**
 	 * Find common elements of 2 or more arrays
 	 * @param array arr1 First array
 	 * @param array arr2 Second array (additional arrays can be passed as well)

@@ -43,16 +43,6 @@ var View = {
 	 */
 	cache: {},
 	
-	/* Component Collections */
-	
-	/*
-	viewers: {},
-	content_items: [],
-	content_handlers: {},
-	groups: {},
-	template_tags: {},
-	*/
-	
 	/**
 	 * Temporary component instances
 	 * For use by controller when no component instance is available
@@ -62,12 +52,7 @@ var View = {
 	component_temps: {},
 	
 	/* Options */
-	options: {
-		ui_animate: true,
-		slideshow_enabled: true,
-		slideshow_autostart: false,
-		slideshow_duration: '6'
-	},
+	options: {},
 	
 	/* Methods */
 	
@@ -782,21 +767,18 @@ var Component = {
 	_slug: 'component',
 	
 	/**
-	 * Valid component references for current component
-	 * > Key (string): Property name that stores reference
-	 * > Value (function): Data type of component
-	 * @var object
+	 * Component namespace
+	 * @var string 
 	 */
-	_refs: {},
+	_ns: null,
 	
 	/**
-	 * Components that may contain current object
-	 * Used for retrieving data from a parent object
-	 * Example: An Item may be contained by a Group
-	 * > Value (strong): Property name of container component
-	 * @var array
+	 * Valid component references for current component
+	 * @var object
+	 * > Key (string): Property name that stores reference
+	 * > Value (function): Data type of component
 	 */
-	_containers: [],
+	_refs: {},
 	
 	/**
 	 * Whether DOM element and component are connected in 1:1 relationship
@@ -810,6 +792,14 @@ var Component = {
 	 * @var DOM Element 
 	 */
 	_dom: null,
+	
+	/**
+	 * Component attributes
+	 * @var object
+	 * > Key: Attribute ID
+	 * > Value: Attribute value
+	 */
+	_attributes: false,
 
 	/**
 	 * Default attributes
@@ -818,16 +808,16 @@ var Component = {
 	_attr_default: {},
 	
 	/**
+	 * Flag indicates whether default attributes have previously been parsed
+	 * @var bool
+	 */
+	_attr_default_parsed: false,
+	
+	/**
 	 * Attributes passed to constructor
 	 * @var obj
 	 */
 	_attr_init: null,
-	
-	/**
-	 * Attributes to retrieve from parent (controller)
-	 * @var array
-	 */
-	_attr_parent: [],
 	
 	/**
 	 * Defines how parent properties should be remapped to component properties
@@ -851,25 +841,27 @@ var Component = {
 	 */
 	_status: null,
 	
-	/* Public */
-	
-	attributes: false,
-	
 	/**
 	 * Component ID
 	 * @var string
 	 */
-	id: '',
+	_id: '',
 	
 	/* Init */
 	
+	/**
+	 * Constructor
+	 * @param string id (optional) Component ID (Default ID will be generated if no valid ID provided)
+	 * @param object attributes (optional) Component attributes
+	 */
 	_c: function(id, attributes) {
 		// Set ID
-		this.set_id(id);
+		this._set_id(id);
 		// Save init attributes
 		if ( this.util.is_obj(attributes) ) {
 			this._attr_init = attributes;
 		}
+		// Call hooks
 		this._hooks();
 	},
 	
@@ -892,6 +884,62 @@ var Component = {
 	/* Properties */
 	
 	/**
+	 * Set instance ID
+	 * Instance ID can only be set once (will not change ID if valid ID already set)
+	 * Generates random GUID if no valid ID provided
+	 * @uses Utilities.guid()
+	 * @param string id Unique ID
+	 * @return string Instance ID
+	 */
+	_set_id: function(id) {
+		// Set ID only once
+		if ( this.util.is_empty(this._id) ) {
+			this._id = ( this.util.is_string(id) ) ? id : this.util.guid();
+		}
+		return this._id;
+	},
+	
+	/**
+	 * Retrieve instance ID
+	 * @uses id as ID base
+	 * @uses _slug to add namespace (if necessary)
+	 * @param bool ns (optional) Whether or not to namespace ID (Default: FALSE)
+	 * @return string Instance ID
+	 */
+	get_id: function(ns) {
+		// Get raw ID
+		var id = this._id;
+		// Namespace ID
+		if ( this.util.is_bool(ns) && ns ) {
+			id = this.add_ns(id);
+		}
+		
+		return id;
+	},
+	
+	/**
+	 * Get namespace
+	 * @uses _slug for namespace segment
+	 * @uses Util.add_prefix() to prefix slug
+	 * @return string Component namespace
+	 */
+	get_ns: function() {
+		if ( null === this._ns ) {
+			this._ns = this.util.add_prefix(this._slug);
+		}
+		return this._ns;
+	},
+	
+	/**
+	 * Add namespace to value
+	 * @param string val Value to namespace
+	 * @return string Namespaced value (Empty string if invalid value provided)
+	 */
+	add_ns: function(val) {
+		return ( this.util.is_string(val) ) ? this.get_ns() + '_' + val : '';
+	},
+	
+	/**
 	 * Retrieve status
 	 * @param string id Status to retrieve
 	 * @param bool raw (optional) Retrieve raw value (Default: FALSE)
@@ -909,15 +957,16 @@ var Component = {
 	 * Set status
 	 * @param string id Status to retrieve
 	 * @param mixed val Status value (Default: TRUE)
-	 * @return mixed Status value (Default: bool)
+	 * @return mixed Status value
 	 */
 	set_status: function(id, val) {
-		// Validate
+		// Validate ID
 		if ( this.util.is_string(id) ) {
+			// Validate value
 			if ( !this.util.is_set(val) ) {
 				val = true;
 			}
-			// Initialize property
+			// Initialize status collection
 			if ( !this.util.is_obj(this._status, false) ) {
 				this._status = {};
 			}
@@ -930,99 +979,15 @@ var Component = {
 	},
 	
 	/**
-	 * Retrieve instance ID
-	 * @uses id as ID base
-	 * @uses _slug to add namespace (if necessary)
-	 * @param bool ns (optional) Whether or not to namespace ID (Default: FALSE)
-	 * @return string Instance ID
+	 * Get controller object
+	 * @uses get_parent() (alias)
+	 * @return object Controller object (SLB.View)
 	 */
-	get_id: function(ns) {
-		// Validate
-		if ( !this.check_id() ) {
-			this.id = '';
-		}
-		var id = this.id;
-		// Namespace ID
-		if ( this.util.is_bool(ns) && ns ) {
-			id = this.add_ns(id);
-		}
-		
-		return id;
-	},
-	
-	/**
-	 * Set instance ID
-	 * Generates random GUID if no valid ID provided
-	 * @uses Utilities.guid()
-	 * @param string id Unique ID
-	 */
-	set_id: function(id) {
-		this.id = ( this.check_id(id, true) ) ? id : this.util.guid();
-	},
-	
-	/**
-	 * Validate ID value
-	 * @param string id (optional) ID value (Default: Component ID)
-	 * @param bool nonempty (optional) TRUE if it should also check for empty strings, FALSE otherwise (Default: FALSE)
-	 * @return bool TRUE if ID is valid, FALSE otherwise
-	 */
-	check_id: function(id, nonempty) {
-		// Validate
-		if ( arguments.length === 1 && this.util.is_bool(arguments[0]) ) {
-			nonempty = arguments[0];
-			id = null;
-		}
-		if ( this.util.is_empty(id) ) {
-			id = this.id;
-		}
-		if ( !this.util.is_bool(nonempty) ) {
-			nonempty = false;
-		}
-		return ( this.util.is_string(id, nonempty) ) ? true : false;
-	},
-	
-	/**
-	 * Get namespace
-	 * @uses _slug for namespace segment
-	 * @uses Util.add_prefix() to prefix slug
-	 * @return string Component namespace
-	 */
-	get_ns: function() {
-		return this.util.add_prefix(this._slug);
-	},
-	
-	/**
-	 * Add namespace to value
-	 * @param string val Value to namespace
-	 * @return string Namespaced value (Empty string if invalid value provided)
-	 */
-	add_ns: function(val) {
-		return ( this.util.is_string(val) ) ? this.get_ns() + '_' + val : '';
+	get_controller: function() {
+		return this.get_parent();
 	},
 	
 	/* Components */
-	
-	/**
-	 * Retrieve component containers
-	 * @uses _container property
-	 * @return array Component containers
-	 */
-	get_containers: function() {
-		// Sanitize property
-		if ( !this.util.is_array(this._containers) ) {
-			this._containers = [];
-		}
-		// Return value
-		return this._containers;
-	},
-	
-	/**
-	 * Check if current object has potential container objects
-	 * @return bool TRUE if containers exist, FALSE otherwise
-	 */
-	has_containers: function() {
-		return ( this.get_containers().length > 0 );
-	},
 	
 	/**
 	 * Check if reference exists in object
@@ -1053,71 +1018,34 @@ var Component = {
 	},
 	
 	/**
-	 * Checks if component is valid
-	 * @param obj|string Component instance or ID
-	 *  > If ID is specified then it will check for component on current instance
-	 * @param function|string ctype Component type
-	 *  > If component is an object, then ctype is required
-	 *  > If component is string ID, then ctype is optional (Default: reference type)
-	 *  > If ctype is a function, then it is compared to component directly
-	 *  > If ctype is a string, then the component reference type is retrieved
-	 * @uses get_reference()
-	 * @return bool TRUE if component is valid, FALSE otherwise
-	 */
-	check_component: function(comp, ctype) {
-		// Validate
-		if ( this.util.is_empty(comp) ||
-			( this.util.is_obj(comp) && !this.util.is_func(ctype) ) ||
-			( this.util.is_string(comp) && !this.has_reference(comp) ) ||
-			( this.util.is_empty(ctype) && !this.util.is_string(comp) ) ||
-			( !this.util.is_obj(comp) && !this.util.is_string(comp) )
-		) {
-			return false;
-		}
-		// Get component type
-		if ( !this.util.is_func(ctype) ) {
-			// Component is a string ID
-			ctype = this.get_reference(comp);
-		}
-		// Get component instance
-		if ( this.util.is_string(comp) ) {
-			comp = this.get_component(comp, false);
-		}
-		return this.util.is_type(comp, ctype);
-	},
-	
-	/**
 	 * Retrieve component reference from current object
 	 * > Procedure:
-	 *   > Check if property already set
+	 *   > Check if top-level property already set
 	 *   > Check attributes
-	 *   > Check container object(s)
 	 *   > Check parent object (controller)
-	 * @uses _containers to check potential container components for references
 	 * @param string cname Component name
-	 * @param bool check_attr (optional) Whether or not to check instance attributes for component (Default: TRUE)
-	 * @param bool get_default (optional) Whether or not to retrieve default object from controller if none exists in current instance (Default: TRUE)
-	 * @param bool recursive (optional) Whether or not to check containers for specified component reference (Default: TRUE) 
+	 * @param object options (optional) Request options
+	 * > check_attr bool Whether or not to check instance attributes for component (Default: TRUE)
+	 * > get_default bool Whether or not to retrieve default object from controller if none exists in current instance (Default: FALSE)
 	 * @return object|null Component reference (NULL if no component found)
 	 */
-	get_component: function(cname, check_attr, get_default, recursive) {
+	get_component: function(cname, options) {
 		var c = null;
 		// Validate request
-		if ( !this.util.is_string(cname) || !( cname in this ) || !this.has_reference(cname) ) {
+		if ( !this.has_reference(cname) ) {
 			return c;
 		}
 		
-		// Normalize parameters
-		if ( !this.util.is_bool(check_attr) ) {
-			check_attr = true;
-		}
-		if ( !this.util.is_bool(get_default) ) {
-			get_default = true;
-		}
-		if ( !this.util.is_bool(recursive) ) {
-			recursive = true;
-		}
-		var ctype = this._refs[cname];
+		// Initialize options
+		var opt_defaults = {
+			check_attr: true,
+			get_default: false
+		};
+		options = $.extend({}, opt_defaults, options);
+		
+		// Get component type
+		var ctype = this.get_reference(cname);
+		
 		// Phase 1: Check if component reference previously set
 		if ( this.util.is_type(this[cname], ctype) ) {
 			return this[cname];
@@ -1126,41 +1054,17 @@ var Component = {
 		c = this[cname] = null;
 				
 		// Phase 2: Check attributes
-		if ( check_attr ) {
+		if ( options.check_attr ) {
 			c = this.get_attribute(cname);
 			// Save object-specific component reference
 			if ( !this.util.is_empty(c) ) {
 				c = this.set_component(cname, c);
 			}
 		}
-
-		// Phase 3: Check Container(s)
-		if ( recursive && this.util.is_empty(c) && this.has_containers() ) {
-			var containers = this.get_containers();
-			var con = null;
-			for ( var i = 0; i < containers.length; i++ ) {
-				con = containers[i];
-				// Validate container
-				if ( con === cname ) {
-					continue;
-				}
-				// Retrieve container
-				con = this.get_component(con, true, false);
-				if ( this.util.is_empty(con) ) {
-					continue;
-				}
-				// Attempt to retrieve component from container
-				c = con.get_component(cname);
-				// Stop iterating if valid component found
-				if ( !this.util.is_empty(c) ) {
-					break;
-				}
-			}
-		}
 		
-		// Phase 4: From controller (optional)
-		if ( get_default && this.util.is_empty(c) ) {
-			c = this.get_parent().get_component(ctype);
+		// Phase 3: From controller (optional)
+		if ( this.util.is_empty(c) && options.get_default ) {
+			c = this.get_controller().get_component(ctype);
 		}
 		return c;
 	},
@@ -1174,106 +1078,119 @@ var Component = {
 	 * @return object Component (NULL if invalid)
 	 */
 	set_component: function(name, ref, validate) {
-		var clear = null;
+		var invalid = null;
 		// Make sure component property exists
 		if ( !this.has_reference(name) ) {
-			return clear;
+			return invalid;
 		}
-		// Normalize reference
+		 
+		// Validate reference
 		if ( this.util.is_empty(ref) ) {
-			ref = clear;
+			ref = invalid;
+		} else {
+			var ctype = this.get_reference(name);
+			
+			// Get component from controller when ID supplied
+			if ( this.util.is_string(ref, false) ) {
+				ref = this.get_controller().get_component(ctype, ref);
+			}
+			
+			// Validation callback
+			if ( !this.util.is_type(ref, ctype) || ( this.util.is_func(validate) && !validate.call(this, ref) ) ) {
+				ref = invalid;
+			}
 		}
-		var ctype = this.get_reference(name); 
 		
-		// Get component from controller if ID supplied
-		if ( this.util.is_string(ref) ) {
-			ref = this.get_parent().get_component(ctype, ref);
-		}
-		
-		if ( !this.util.is_type(ref, ctype) ) {
-			ref = clear;
-		}
-
-		// Additional validation
-		if ( !this.util.is_empty(ref) && this.util.is_func(validate) && !validate.call(this, ref) ) {
-			ref = clear;
-		}
 		// Set (or clear) component reference
 		this[name] = ref;
 		// Return value for confirmation
 		return this[name];
 	},
+	
+	
+	/**
+	 * Clear component reference
+	 * @uses set_component() to handle component manipulation
+	 * @param string Component name
+	 */
+	clear_component: function(name) {
+		this.set_component(name, null);
+	},
 
 	/* Attributes */
 	
 	/**
-	 * Initializes attributes
+	 * Initialize attributes
+	 * @param bool force (optional) Force full initialization of attributes (Default: FALSE)
+	 * @return void
 	 */
 	init_attributes: function(force) {
 		if ( !this.util.is_bool(force) ) {
 			force = false;
 		}
-		if ( force || !this.util.is_obj(this.attributes) ) {
-			this.attributes = {};
-			// Build attribute groups
-			var attrs = [{}];
-			attrs.push(this.init_default_attributes());
-			if ( this.dom_has() ) {
-				attrs.push(this.get_dom_attributes());
-			}
+		if ( force || !this.util.is_obj(this._attributes) ) {
+			var a = this._attributes = {};
+			// Default attributes
+			$.extend(a, this.init_default_attributes());
+			// Instantiation attributes
 			if ( this.util.is_obj(this._attr_init) ) {
-				attrs.push(this._attr_init);
+				$.extend(a, this._attr_init);
 			}
-			// Merge attributes
-			this.attributes = $.extend.apply(null, attrs);
+			// DOM attributes
+			$.extend(a, this.get_dom_attributes());
 		}
 	},
 	
 	/**
 	 * Generate default attributes for component
-	 * @uses _attr_parent to determine options to retrieve from controller
 	 * @uses View.get_options() to get values from controller
 	 * @uses _attr_map to Remap controller attributes to instance attributes
 	 * @uses _attr_default to Store default attributes
+	 * @return obj Default attributes
 	 */
 	init_default_attributes: function() {
-		// Get parent options
-		var opts = this.get_parent().get_options(this._attr_parent);
-		if ( this.util.is_obj(opts) ) {
-			// Remap
-			for ( var opt in this._attr_map ) {
-				if ( opt in opts ) {
-					// Move value to new property
-					opts[this._attr_map[opt]] = opts[opt];
-					// Delete old property
-					delete opts[opt];
+		// Get options from controller
+		if ( !this._attr_default_parsed && this.util.is_obj(this._attr_map) ) {
+			var opts = this.get_controller().get_options(this.util.obj_keys(this._attr_map));
+			
+			if ( this.util.is_obj(opts) ) {
+				// Remap
+				for ( var opt in this._attr_map ) {
+					if ( opt in opts && null !== this._attr_map[opt]) {
+						// Move value to new property
+						opts[this._attr_map[opt]] = opts[opt];
+						// Delete old property
+						delete opts[opt];
+					}
 				}
+				// Merge with default attributes
+				$.extend(true, this._attr_default, opts);
 			}
-			// Merge with default attributes
-			$.extend(true, this._attr_default, opts);
+			this._attr_default_parsed = true;
 		}
 		return this._attr_default;
 	},
 	
 	/**
 	 * Retrieve DOM attributes
+	 * @return obj DOM Attributes
 	 */
 	get_dom_attributes: function() {
 		var attrs = {};
-		var el = this.dom_get();
-		if ( el.length ) {
+		var el = this.dom_get(null, {'init': false});
+		if ( el.length > 0 ) {
 			// Get attributes from element
-			var opts = $(el).get(0).attributes;
-			if ( this.util.is_obj(opts) ) {
+			var attrs_full = $(el).get(0).attributes;
+			if ( this.util.is_obj(attrs_full) ) {
 				var attr_prefix = this.util.get_attribute();
-				$.each(opts, function(idx, opt) {
-					if ( opt.name.indexOf( attr_prefix ) === -1 ) {
+				var attr_key;
+				$.each(attrs_full, function(idx, attr) {
+					if ( attr.name.indexOf( attr_prefix ) === -1 ) {
 						return true;
 					}
-					// Process custom attributes
-					// Strip prefix
-					var key = opt.name.substr(attr_prefix.length + 1);
-					attrs[key] = opt.value;
+					// Process custom attributes (Strip prefix)
+					attr_key = attr.name.substr(attr_prefix.length + 1);
+					attrs[attr_key] = attr.value;
 				});
 			}
 		}
@@ -1282,15 +1199,15 @@ var Component = {
 	
 	/**
 	 * Retrieve all instance attributes
-	 * @uses parse_attributes() to initialize attributes (if necessary)
-	 * @uses attributes
-	 * @return obj Attributes
+	 * @uses init_attributes() to initialize attributes (if necessary)
+	 * @uses _attributes object
+	 * @return obj Component attributes
 	 */
 	get_attributes: function() {
 		// Initilize attributes
 		this.init_attributes();
 		// Return attributes
-		return this.attributes;
+		return this._attributes;
 	},
 	
 	/**
@@ -1313,6 +1230,7 @@ var Component = {
 		if ( !this.util.is_bool(enforce_type) ) {
 			enforce_type = true;
 		}
+		
 		// Get attribute value
 		var ret = ( this.has_attribute(key) ) ? this.get_attributes()[key] : def;
 		// Validate type
@@ -1320,19 +1238,23 @@ var Component = {
 			// Convert type
 			// Scalar default
 			if ( this.util.is_scalar(def, false) ) {
-				// Non-scalar attribute
 				if ( !this.util.is_scalar(ret, false) ) {
+					// Non-scalar attribute
 					ret = def;
 				} else if ( this.util.is_string(def, false) ) {
+					// Convert to string
 					ret = ret.toString();
 				} else if ( this.util.is_num(def, false) && !this.util.is_num(ret, false) ) {
+					// Convert to number
 					ret = ( this.util.is_int(def, false) ) ? parseInt(ret) : parseFloat(ret);
 					if ( !this.util.is_num(ret, false) ) {
 						ret = def;
 					}
 				} else if ( this.util.is_bool(def, false) ) {
+					// Convert to boolean
 					ret = ( this.util.is_string(ret) || ( this.util.is_num(ret) ) );
 				} else {
+					// Fallback: Set to default
 					ret = def;
 				}
 			}
@@ -1348,6 +1270,7 @@ var Component = {
 	 * Call attribute as method
 	 * @param string attr Attribute to call
 	 * @param arguments (optional) Additional arguments to pass to method
+	 * @return mixed Attribute return value (if attribute is not a function, attribute's value is returned)
 	 */
 	call_attribute: function(attr, args) {
 		attr = this.get_attribute(attr);
@@ -1366,7 +1289,7 @@ var Component = {
 	 * @return bool TRUE if exists, FALSE otherwise
 	 */
 	has_attribute: function(key) {
-		return ( key in this.get_attributes() );
+		return ( this.util.is_string(key) && ( key in this.get_attributes() ) );
 	},
 	
 	/**
@@ -1375,6 +1298,7 @@ var Component = {
 	 * @param bool full (optional) Whether to fully replace or merge component's attributes with new values (Default: Merge)
 	 */
 	set_attributes: function(attributes, full) {
+		// Validate
 		if ( !this.util.is_bool(full) ) {
 			full = false;
 		}
@@ -1384,7 +1308,7 @@ var Component = {
 		
 		// Merge new/existing attributes
 		if ( this.util.is_obj(attributes) ) {
-			$.extend(this.attributes, attributes);
+			$.extend(this._attributes, attributes);
 		}
 	},
 	
@@ -1393,6 +1317,7 @@ var Component = {
 	 * @uses get_attributes() to retrieve attributes
 	 * @param string key Attribute to set
 	 * @param mixed val Attribute value
+	 * @return mixed Attribute value
 	 */
 	set_attribute: function(key, val) {
 		if ( this.util.is_string(key) && this.util.is_set(val) ) {
@@ -1437,14 +1362,21 @@ var Component = {
 	 * Retrieve attached DOM element
 	 * @uses _dom to retrieve attached DOM element
 	 * @uses dom_put() to insert child element
-	 * @param string element Child element to retrieve
+	 * @param string element (optional) ID of child element to retrieve (Default: Main element)
 	 * @param bool put (optional) Whether to insert element if it does not exist (Default: FALSE)
-	 * @param obj options (optional) Options for creating new object
+	 * @param obj options (optional) Runtime options
 	 * @return obj jQuery DOM element
 	 */
-	dom_get: function(element, put, options) {
+	dom_get: function(element, options) {
+		// Build options
+		var opts_default = {
+			'init': true,
+			'put': false
+		};
+		options = ( this.util.is_obj(options) ) ? $.extend({}, opts_default, options) : opts_default;
+		
 		// Init Component DOM
-		if ( !this.get_status('dom_init') ) {
+		if ( options.init && !this.get_status('dom_init') ) {
 			this.set_status('dom_init');
 			this.dom_init();
 		}
@@ -1455,9 +1387,9 @@ var Component = {
 			// Check for child element
 			if ( ch.length ) {
 				ret = ch;
-			} else if ( this.util.is_bool(put) && put ) {
+			} else if ( true === options.put || this.util.is_obj(options.put) ) {
 				// Insert child element
-				ret = this.dom_put(element, options);
+				ret = this.dom_put(element, options.put);
 			}
 		}
 		return $(ret);
@@ -1485,7 +1417,7 @@ var Component = {
 			return $(r);
 		}
 		// Setup options
-		var strip = ['tag', 'content', 'put_success'];
+		var strip = ['tag', 'content', 'success'];
 		var options = {
 			'tag': 'div',
 			'content': '',
@@ -1510,8 +1442,8 @@ var Component = {
 		// Create element (if necessary)
 		if ( !r.length ) {
 			r = $(this.util.format('<%s />', options.tag), attrs).appendTo(d);
-			if ( r.length && this.util.is_method(options, 'put_success') ) {
-				options['put_success'].call(r, r);
+			if ( r.length && this.util.is_method(options, 'success') ) {
+				options['success'].call(r, r);
 			}
 		}
 		// Set content
@@ -1681,7 +1613,7 @@ var Viewer = {
 		title_default: false,
 		container: null,
 		slideshow_enabled: true,
-		slideshow_autostart: true,
+		slideshow_autostart: false,
 		slideshow_duration: 2,
 		slideshow_active: false,
 		slideshow_timer: null,
@@ -1696,19 +1628,17 @@ var Viewer = {
 		}
 	},
 	
-	_attr_parent: [
-		'theme', 
-		'group_loop', 
-		'ui_autofit', 'ui_animate', 'ui_overlay_opacity', 'ui_labels', 'ui_title_default',
-		'slideshow_enabled', 'slideshow_autostart', 'slideshow_duration'],
-	
 	_attr_map: {
+		'theme': null,
 		'group_loop': 'loop',
 		'ui_autofit': 'autofit',
 		'ui_animate': 'animate',
 		'ui_overlay_opacity': 'overlay_opacity',
 		'ui_labels': 'labels',
-		'ui_title_default': 'title_default'
+		'ui_title_default': 'title_default',
+		'slideshow_enabled': null,
+		'slideshow_autostart': null,
+		'slideshow_duration': null
 	},
 	
 	/* References */
@@ -1760,6 +1690,14 @@ var Viewer = {
 	/* References */
 	
 	/**
+	 * Retrieve item instance current attached to viewer
+	 * @return Content_Item|NULL Current item instance
+	 */
+	get_item: function() {
+		return this.get_component('item');
+	},
+	
+	/**
 	 * Set item reference
 	 * Validates item before setting
 	 * @param obj item Content_Item instance
@@ -1774,6 +1712,11 @@ var Viewer = {
 		return ( !this.util.is_empty(i) );
 	},
 	
+	/**
+	 * Clear item from viewer
+	 * Resets item state and removes reference (if necessary)
+	 * @param bool full (optional) Fully remove item? (Default: TRUE)
+	 */
 	clear_item: function(full) {
 		// Validate
 		if ( !this.util.is_bool(full) ) {
@@ -1784,16 +1727,8 @@ var Viewer = {
 			item.reset();
 		}
 		if ( full ) {
-			this.set_item(false);
+			this.clear_component('item');
 		}
-	},
-	
-	/**
-	 * Retrieve item instance current attached to viewer
-	 * @return Content_Item|NULL Current item instance
-	 */
-	get_item: function() {
-		return this.get_component('item', true, false);
 	},
 	
 	/**
@@ -1802,7 +1737,7 @@ var Viewer = {
 	 */
 	get_theme: function() {
 		// Get saved theme
-		var ret = this.get_component('theme', false, false, false);
+		var ret = this.get_component('theme', {check_attr: false});
 		if ( this.util.is_empty(ret) ) {
 			// Theme needs to be initialized
 			ret = this.set_component('theme', new View.Theme(this));
@@ -2003,7 +1938,7 @@ var Viewer = {
 		var state = e.originalEvent.state;
 		// Load item
 		if ( this.util.is_string(state.item, false) ) {
-			this.get_parent().get_item(state.item).show({'event': e});
+			this.get_controller().get_item(state.item).show({'event': e});
 			this.trigger('item-change');
 		} else {
 			var count = this.history_get(true);
@@ -2043,7 +1978,7 @@ var Viewer = {
 				history.replaceState(state, null);
 			}
 			// Always: Save item state
-			state.item = this.get_parent().save_item(item).get_id();
+			state.item = this.get_controller().save_item(item).get_id();
 			state.count = ++count;
 			history.pushState(state, '');
 		} else {
@@ -2233,9 +2168,11 @@ var Viewer = {
 	/* Layout */
 	
 	get_layout: function() {
-		var ret = this.dom_get('layout', true, {
-			'put_success': function() {
-				$(this).hide();
+		var ret = this.dom_get('layout', {
+			'put': {
+				'success': function() {
+					$(this).hide();
+				}
 			}
 		});
 		return ret;
@@ -2266,9 +2203,11 @@ var Viewer = {
 		var o = null;
 		var v = this;
 		if ( this.overlay_enabled() ) {
-			o = this.dom_get('overlay', true, {
-				'put_success': function() {
-					$(this).hide().css('opacity', v.get_attribute('overlay_opacity'));
+			o = this.dom_get('overlay', {
+				'put': {
+					'success': function() {
+						$(this).hide().css('opacity', v.get_attribute('overlay_opacity'));
+					}
 				}
 			});
 		}
@@ -2731,7 +2670,7 @@ var Group = {
 				}
 				item.get_viewer().close();
 			}
-			var i = this.get_parent().get_item(next);
+			var i = this.get_controller().get_item(next);
 			// Update current item
 			this.set_current(i);
 			// Show item
@@ -2751,7 +2690,7 @@ var Group = {
 				}
 				item.get_viewer().close();
 			}
-			var i = this.get_parent().get_item(prev);
+			var i = this.get_controller().get_item(prev);
 			// Update current item
 			this.set_current(i);
 			// Show item
@@ -2821,7 +2760,7 @@ var Content_Handler = {
 	 * @return mixed Content_Item if valid item set, NULL otherwise
 	 */
 	get_item: function() {
-		return this.get_component('item', true, false);
+		return this.get_component('item');
 	},
 	
 	/**
@@ -2842,7 +2781,7 @@ var Content_Handler = {
 	 * Sets value to NULL
 	 */
 	clear_item: function() {
-		this.item = null;
+		this.clear_component('item');
 	},
 	
 	/* Evaluation */
@@ -2925,7 +2864,6 @@ var Content_Item = {
 		'group': 'Group',
 		'type': 'Content_Handler'
 	},
-	_containers: ['group'],
 	
 	_attr_default: {
 		source: null,
@@ -2972,7 +2910,7 @@ var Content_Item = {
 		// Add asset properties
 		var d = this.dom_get();
 		var key = d.attr('href') || null;
-		var assets = this.get_parent().assets || null;
+		var assets = this.get_controller().assets || null;
 		// Merge asset data with default attributes
 		if ( this.util.is_string(key) ) {
 			var attrs = [{}, this._attr_default, {'permalink': key}];
@@ -3218,7 +3156,7 @@ var Content_Item = {
 	/* Viewer */
 	
 	get_viewer: function() {
-		return this.get_component('viewer');
+		return this.get_component('viewer', {get_default: true});
 	},
 	
 	/**
@@ -3242,7 +3180,7 @@ var Content_Item = {
 	get_group: function(set_current) {
 		var prop = 'group';
 		// Check if group reference already set
-		var g = this.get_component(prop, true, false, false);
+		var g = this.get_component(prop);
 		if ( g ) {
 		} else {
 			// Set empty group if no group exists
@@ -3265,7 +3203,7 @@ var Content_Item = {
 	set_group: function(g) {
 		// If group ID set, get object reference
 		if ( this.util.is_string(g) ) {
-			g = this.get_parent().get_group(g);
+			g = this.get_controller().get_group(g);
 		}
 		
 		// Set (or clear) group property
@@ -3281,9 +3219,9 @@ var Content_Item = {
 	 * @return Content_Handler|null Content Handler of item (NULL no valid type exists)
 	 */
 	get_type: function() {
-		var t = this.get_component('type', false, false, false);
+		var t = this.get_component('type', {check_attr: false});
 		if ( !t ) {
-			t = this.set_type(this.get_parent().get_content_handler(this));
+			t = this.set_type(this.get_controller().get_content_handler(this));
 		}
 		return t;
 	},
@@ -3570,8 +3508,6 @@ var Theme = {
 	},
 	_models: {},
 	
-	_containers: ['viewer'],
-	
 	_attr_default: {
 		template: null,
 		model: null
@@ -3607,7 +3543,7 @@ var Theme = {
 	/* Viewer */
 	
 	get_viewer: function() {
-		return this.get_component('viewer', false, true, false);
+		return this.get_component('viewer', {check_attr: false, get_default: true});
 	},
 	
 	/**
@@ -3629,7 +3565,7 @@ var Theme = {
 	 */
 	get_template: function() {
 		// Get saved template
-		var ret = this.get_component('template', true, false, false);
+		var ret = this.get_component('template');
 		// Template needs to be initialized
 		if ( this.util.is_empty(ret) ) {
 			// Pass model to Template instance
@@ -3698,7 +3634,7 @@ var Theme = {
 			// Retrieve matching theme model
 			var models = this.get_models();
 			if ( !this.util.is_string(id) ) {
-				id = this.get_parent().get_option('theme_default');
+				id = this.get_controller().get_option('theme_default');
 			}
 			// Select first theme model if specified model is invalid
 			if ( !this.util.in_obj(models, id) ) {
@@ -3715,13 +3651,15 @@ var Theme = {
 	 */
 	set_model: function(id) {
 		this.set_attribute('model', this.get_model(id), false);
+		/* @deprecated
 		// Set ID using model attributes (if necessary)
-		if ( !this.check_id(true) ) {
+		if ( !this._check_id(true) ) {
 			var m = this.get_model();
 			if ( 'id' in m ) {
-				this.set_id(m.id);
+				this._set_id(m.id);
 			}
 		}
+		*/
 	},
 	
 	/* Properties */
@@ -4073,8 +4011,7 @@ var Template = {
 	_refs: {
 		'theme': 'Theme'
 	},
-	_containers: ['theme'],
-	
+
 	_attr_default: {
 		/**
 		 * URI to layout (raw) file
@@ -4136,7 +4073,7 @@ var Template = {
 	},
 	
 	get_theme: function() {
-		var ret = this.get_component('theme', true, false, false);
+		var ret = this.get_component('theme');
 		return ret;
 	},
 	
@@ -4425,7 +4362,7 @@ var Template = {
 	 * @return Template_Tag Temporary tag
 	 */
 	get_tag_temp: function() {
-		return this.get_parent().get_component_temp(View.Template_Tag);
+		return this.get_controller().get_component_temp(View.Template_Tag);
 	},
 	
 	/**

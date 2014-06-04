@@ -57,6 +57,15 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 
 == Changelog ==
 
+= 2.4.0 (Beta 3) =
+* JS: Optimize: View Controller
+* JS: Update: Set default ID for components
+* JS: Optimize: Component properties
+* JS: Optimize: Remove unused/deprecated Component methods/properties
+* JS: Optimize: Component references handling
+* JS: Optimize: Component attribute handling
+* JS: Optimize: Component DOM handling
+
 = 2.4.0 (Beta 2) =
 * JS: Optimize: Core library
 * JS: Optimize: Utilities library
