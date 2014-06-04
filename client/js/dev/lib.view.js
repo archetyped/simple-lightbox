@@ -1316,6 +1316,7 @@ var Component = {
 	 * @uses get_attributes() to retrieve attributes
 	 * @param string key Attribute to set
 	 * @param mixed val Attribute value
+	 * @return mixed Attribute value
 	 */
 	set_attribute: function(key, val) {
 		if ( this.util.is_string(key) && this.util.is_set(val) ) {
