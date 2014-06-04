@@ -1230,6 +1230,7 @@ var Component = {
 		if ( !this.util.is_bool(enforce_type) ) {
 			enforce_type = true;
 		}
+		
 		// Get attribute value
 		var ret = ( this.has_attribute(key) ) ? this.get_attributes()[key] : def;
 		// Validate type
@@ -1237,19 +1238,23 @@ var Component = {
 			// Convert type
 			// Scalar default
 			if ( this.util.is_scalar(def, false) ) {
-				// Non-scalar attribute
 				if ( !this.util.is_scalar(ret, false) ) {
+					// Non-scalar attribute
 					ret = def;
 				} else if ( this.util.is_string(def, false) ) {
+					// Convert to string
 					ret = ret.toString();
 				} else if ( this.util.is_num(def, false) && !this.util.is_num(ret, false) ) {
+					// Convert to number
 					ret = ( this.util.is_int(def, false) ) ? parseInt(ret) : parseFloat(ret);
 					if ( !this.util.is_num(ret, false) ) {
 						ret = def;
 					}
 				} else if ( this.util.is_bool(def, false) ) {
+					// Convert to boolean
 					ret = ( this.util.is_string(ret) || ( this.util.is_num(ret) ) );
 				} else {
+					// Fallback: Set to default
 					ret = def;
 				}
 			}
