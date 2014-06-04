@@ -1298,6 +1298,7 @@ var Component = {
 	 * @param bool full (optional) Whether to fully replace or merge component's attributes with new values (Default: Merge)
 	 */
 	set_attributes: function(attributes, full) {
+		// Validate
 		if ( !this.util.is_bool(full) ) {
 			full = false;
 		}
