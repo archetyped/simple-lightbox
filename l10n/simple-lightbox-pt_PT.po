@@ -1,0 +1,237 @@
+# Copyright (C) 2013 
+# This file is distributed under the same license as the  package.
+msgid ""
+msgstr ""
+"Project-Id-Version: Simple-Lightbox\n"
+"Report-Msgid-Bugs-To: https://github.com/archetyped/simple-lightbox/wiki/"
+"Reporting-Issues\n"
+"POT-Creation-Date: 2013-04-16 00:22:28+00:00\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: 2014-09-23 00:15-0000\n"
+"Last-Translator: Pedro Mendonça <ped.gaspar@gmail.com>\n"
+"Language-Team: Pedro Mendonça <ped.gaspar@gmail.com>\n"
+"X-Generator: Poedit 1.6.4\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: pt_PT\n"
+"X-Poedit-SourceCharset: UTF-8\n"
+
+#: includes/class.admin.php:686
+msgid "The settings have been reset"
+msgstr "As configurações foram repostas"
+
+#: includes/class.admin.php:687
+msgid ""
+"<strong class=\"%1$s\">Notice:</strong> This update is a <strong class=\"%1$s"
+"\">Beta version</strong>. It is highly recommended that you test the update "
+"on a test server before updating the plugin on a production server."
+msgstr ""
+"<strong class=\"%1$s\">Nota:</strong> Esta actualização é uma <strong class="
+"\"%1$s\">versão Beta</strong>. É altamente recomendado que teste esta "
+"actualização num servidor de teste antes de actualizar o plugin num servidor "
+"definitivo."
+
+#: includes/class.admin.php:688 includes/class.admin.php:1394
+#: includes/class.admin.php:1443 includes/class.admin.php:1531
+msgid "Access Denied"
+msgstr "Acesso negado"
+
+#: includes/class.admin.php:1318
+msgid "Save Changes"
+msgstr "Guardar Alterações"
+
+#: includes/class.fields.php:2223
+msgid "Default Element"
+msgstr "Elemento Padrão"
+
+#: includes/class.fields.php:2235
+#, fuzzy
+msgid "Default Element (Closed Tag)"
+msgstr "Elemento Padrão (Etiqueta Fechada)"
+
+#: includes/class.fields.php:2243
+msgid "Default Input Element"
+msgstr "Caixa de input padrão"
+
+#: includes/class.fields.php:2251
+msgid "Text Box"
+msgstr "Caixa de Texto"
+
+#: includes/class.fields.php:2282
+msgid "Hidden Field"
+msgstr "Campo Escondido"
+
+#: includes/class.fields.php:2288
+msgid "Select tag"
+msgstr "Seleccionar etiqueta"
+
+#: includes/class.fields.php:2300
+msgid "Inline wrapper"
+msgstr "Invólucro em linha"
+
+#: includes/class.options.php:115
+msgid "Enabled"
+msgstr "Activado"
+
+#: includes/class.options.php:115
+msgid "Disabled"
+msgstr "Desactivado"
+
+#: includes/class.options.php:400
+msgid "Default"
+msgstr "Padrão"
+
+#: includes/class.themes.php:41
+msgid "Theme"
+msgstr "Tema"
+
+#: includes/class.themes.php:61
+msgid "Default (Light)"
+msgstr "Padrão (Light)"
+
+#: includes/class.themes.php:67
+msgid "Default (Dark)"
+msgstr "Padrão (Dark)"
+
+#: model.php:151
+msgid "Activation"
+msgstr "Activação"
+
+#: model.php:152
+msgid "Grouping"
+msgstr "Agrupamento"
+
+#: model.php:153
+msgid "UI"
+msgstr "IU"
+
+#: model.php:154
+msgid "Labels"
+msgstr "Etiquetas"
+
+#: model.php:157
+msgid "Enable Lightbox Functionality"
+msgstr "Activar Funcionalidade Lightbox"
+
+#: model.php:158
+msgid "Enable on Home page"
+msgstr "Activar na Página Inicial"
+
+msgid "Enable on Single Posts"
+msgstr "Activar em Artigos Únicos"
+
+msgid "Enable default title"
+msgstr "Activar título padrão"
+
+#: model.php:159
+msgid "Enable on Posts"
+msgstr "Activar em Artigos"
+
+#: model.php:160
+msgid "Enable on Pages"
+msgstr "Activar em Páginas"
+
+#: model.php:161
+msgid "Enable on Archive Pages (tags, categories, etc.)"
+msgstr "Activar em Páginas de Arquivo (etiquetas, categorias, etc.)"
+
+#: model.php:162
+msgid "Enable for Widgets"
+msgstr "Activar para Widgets"
+
+#: model.php:163
+msgid "Group items (for displaying as a slideshow)"
+msgstr "Agrupar itens (para mostrar em apresentação)"
+
+#: model.php:164
+msgid "Group items by Post (e.g. on pages with multiple posts)"
+msgstr "Agrupar itens por Artigo (p. ex. em páginas com múltiplos artigos)"
+
+#: model.php:165
+msgid "Group gallery items separately"
+msgstr "Agrupar itens de galeria separadamente"
+
+#: model.php:166
+msgid "Group widget items separately"
+msgstr "Agrupar itens de widget separadamente"
+
+#: model.php:167
+msgid "Resize lightbox to fit in window"
+msgstr "Redimensionar lightbox para se ajustar à janela"
+
+#: model.php:168
+msgid "Enable animations"
+msgstr "Activar animações"
+
+#: model.php:169
+msgid "Start Slideshow Automatically"
+msgstr "Iniciar Apresentação Automaticamente"
+
+#: model.php:170
+msgid "Slide Duration (Seconds)"
+msgstr "Duração do Slide (Segundos)"
+
+#: model.php:171
+msgid "Loop through items"
+msgstr "Percorrer itens em loop"
+
+#: model.php:172
+msgid "Overlay Opacity (0 - 1)"
+msgstr "Opacidade do Fundo (0 - 1)"
+
+#: model.php:173
+msgid "Loading indicator"
+msgstr "Indicador de carregamento"
+
+#: model.php:174
+msgid "Close button"
+msgstr "Botão para fechar"
+
+#: model.php:175
+msgid "Next Item button"
+msgstr "Botão para item seguinte"
+
+#: model.php:176
+msgid "Previous Item button"
+msgstr "Botão para item anterior"
+
+#: model.php:177
+msgid "Start Slideshow button"
+msgstr "Botão para iniciar Apresentação"
+
+#: model.php:178
+msgid "Stop Slideshow button"
+msgstr "Botão para parar Apresentação"
+
+#: model.php:179
+msgid "Slideshow status format"
+msgstr "Formato de estado da Apresentação"
+
+#: model.php:228
+msgid "Lightbox"
+msgstr "Lightbox"
+
+#: model.php:229
+msgid "Lightbox Settings"
+msgstr "Configurações do Lightbox"
+
+#: model.php:230
+msgid "Settings"
+msgstr "Configurações"
+
+#: model.php:234
+msgid "Reset"
+msgstr "Repor"
+
+#: model.php:235
+msgid "Are you sure you want to reset settings?"
+msgstr "Tem a certeza que quer repor as configurações?"
+
+#: model.php:236
+msgid "Settings have been reset"
+msgstr "Configurações foram repostas"
+
+#: model.php:237
+msgid "Settings were not reset"
+msgstr "Configurações não foram repostas"
