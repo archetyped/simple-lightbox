@@ -620,7 +620,7 @@ class SLB_Utilities {
 	 * @return mixed Parent property value
 	 */
 	function get_parent_property($prop, $default = '') {
-		$p =& $this->get_parent();
+		$p = $this->get_parent();
 		return ( !!$p && property_exists($p, $prop) ) ? $p->{$prop} : $default; 
 	}
 	
