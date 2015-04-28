@@ -535,7 +535,7 @@ class SLB_Field_Base extends SLB_Base {
 		//Iterate through objects
 		while ( !empty($obj_path) ) {
 			//Get next object
-			$obj =& array_shift($obj_path);
+			$obj = array_shift($obj_path);
 			//Shorten path
 			array_shift($path);
 			//Check for value in object and stop iteration if matching data found
