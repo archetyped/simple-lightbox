@@ -234,7 +234,7 @@ class SLB_Field_Base extends SLB_Base {
 	 * @return mixed Member value if found (Default: empty string)
 	 */
 	function get_parent_value($member, $name = '', $default = '') {
-		$parent =& $this->get_parent();
+		$parent = $this->get_parent();
 		return $this->get_object_value($parent, $member, $name, $default, 'parent');
 	}
 
@@ -598,9 +598,9 @@ class SLB_Field_Base extends SLB_Base {
 
 	/**
 	 * Retrieve field type parent
-	 * @return SLB_Field_Type Reference to parent field
+	 * @return SLB_Field_Type Parent field
 	 */
-	function &get_parent() {
+	function get_parent() {
 		return $this->parent;
 	}
 
