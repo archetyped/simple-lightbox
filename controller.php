@@ -291,7 +291,7 @@ class SLB_Lightbox extends SLB_Base {
 			)
 		);
 		
-		parent::_options($opts);
+		parent::_set_options($opts);
 	}
 
 	/* Methods */
