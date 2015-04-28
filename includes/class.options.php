@@ -280,7 +280,7 @@ class SLB_Options extends SLB_Field_Collection {
 	function set_parents($fields) {
 		if ( !is_admin() )
 			return false;
-		$items =& $this->get_items();
+		$items = &$this->get_items();
 		foreach ( array_keys($items) as $opt ) {
 			$items[$opt]->set_parent();
 		}

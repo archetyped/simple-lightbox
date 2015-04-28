@@ -344,7 +344,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	 * Retrieve reference to items in collection
 	 * @return array Collection items (reference)
 	 */
-	function get_items($group = null, $sort = 'priority') {
+	function &get_items($group = null, $sort = 'priority') {
 		$gset = $this->group_exists($group);
 		if ( $gset ) {
 			$items = $this->get_group_items($group);
