@@ -66,7 +66,7 @@ class SLB_Option extends SLB_Field {
 	 * Sets parent based on default value
 	 */
 	function set_parent($parent = null) {
-		$p =& $this->get_parent();
+		$p = $this->get_parent();
 		if ( empty($parent) && empty($p) ) {
 			$parent = 'text';
 			$d = $this->get_default();
