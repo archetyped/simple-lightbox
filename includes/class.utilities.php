@@ -58,9 +58,9 @@ class SLB_Utilities {
 	
 	/* Constructors */
 	
-	function __construct(&$obj) {
+	function __construct($obj) {
 		if ( is_object($obj) ) {
-			$this->_parent =& $obj;
+			$this->_parent = $obj;
 		}
 	}
 	
