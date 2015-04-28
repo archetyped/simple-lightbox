@@ -388,6 +388,30 @@ class SLB_Lightbox extends SLB_Base {
 	}
 	
 	/**
+	 * Make sure content is valid for processing/activation
+	 * 
+	 * @param string $content Content to validate
+	 * @return bool TRUE if content is valid (FALSE otherwise)
+	 */
+	protected function is_content_valid($content = '') {
+		// Invalid hooks
+		if ( doing_filter('get_the_excerpt') )
+			return false;
+
+		// Non-string value
+		if ( !is_string($content) )
+			return false;
+		
+		// Empty string
+		$content = trim($content);
+		if ( empty($content) )
+			return false;
+		
+		// Content is valid
+		return true;
+	}
+	
+	/**
 	 * Activates galleries extracted from post
 	 * @see get_post_galleries()
 	 * @param array $galleries A list of galleries in post
@@ -428,6 +452,9 @@ class SLB_Lightbox extends SLB_Base {
 	 * @return string Post content
 	 */
 	public function activate_links($content, $group = null) {
+		if ( !$this->is_content_valid($content) ) {
+			return $content;
+		}
 		// Filter content before processing links
 		$content = $this->util->apply_filters('pre_process_links', $content);
 		
@@ -1203,6 +1230,9 @@ class SLB_Lightbox extends SLB_Base {
 	 * @return string Modified post content
 	 */
 	function group_shortcodes($content) {
+		if ( !$this->is_content_valid($content) ) {
+			return $content;
+		}
 		// Setup shortcodes to wrap
 		$shortcodes = $this->util->apply_filters('group_shortcodes', array( 'gallery', 'nggallery' ));
 		// Set custom callback
