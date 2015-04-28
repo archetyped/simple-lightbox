@@ -3,8 +3,8 @@ Contributors: Archetyped
 Donate link: http://gum.co/slb-donate
 License: GPLv2
 Tags: lightbox, gallery, photography, images, theme, template, style
-Requires at least: 3.9
-Tested up to: 3.9
+Requires at least: 4.2.1
+Tested up to: 4.2.1
 Stable tag: trunk
 
 The highly customizable lightbox for WordPress
@@ -57,24 +57,12 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 
 == Changelog ==
 
-= 2.4.0 (Beta 3) =
-* JS: Optimize: View Controller
-* JS: Update: Set default ID for components
-* JS: Optimize: Component properties
-* JS: Optimize: Remove unused/deprecated Component methods/properties
-* JS: Optimize: Component references handling
-* JS: Optimize: Component attribute handling
-* JS: Optimize: Component DOM handling
+= 2.4.0 (RC1) =
 
-= 2.4.0 (Beta 2) =
-* JS: Optimize: Core library
-* JS: Optimize: Utilities library
-* JS: Optimize: Default template tags (item, ui)
-* JS: Optimize: Default content handlers (image)
-* JS: Optimize: Default themes (baseline, default)
-* JS: Optimize: View controller
-
-= 2.4.0 (Beta 1) =
+* Update: WordPress version compatibility (v4.2.1)
+* Optimize: Standardize code
+* Optimize: Do not process excerpt content
+* Optimize: Client-side libraries (Phase 1)
 * Add: Set group via `slb_activate()`
 * Add: Set group via `activate_links()`
 * Add: `slb_is_enabled` filter
