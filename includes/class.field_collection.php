@@ -161,9 +161,9 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	 * @param string|obj $id Unique name for item or item instance
 	 * @param array $properties (optional) Item properties
 	 * @param bool $update (optional) Update or overwrite existing item (Default: FALSE)
-	 * @return object Reference to new item
+	 * @return object Newly-added item
 	 */
-	function &add($id, $properties = array(), $update = false) {
+	function add($id, $properties = array(), $update = false) {
 		$item;
 		$args = func_get_args();
 		//Properties
