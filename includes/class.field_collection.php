@@ -308,7 +308,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 		$this->load_data();
 		$ret = null;
 		if ( $this->has($item) ) {
-			$item =& $this->get($item);
+			$item = $this->get($item);
 			$ret = $item->get_data($context, $top);
 		} else {
 			$ret = parent::get_data($context, $top);
@@ -540,7 +540,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 		//Add Items
 		foreach ( $items as $item ) {
 			//Skip if not in current collection
-			$itm_ref =& $this->get($item);
+			$itm_ref = $this->get($item);
 			if ( !$itm_ref ) {
 				continue;
 			}
@@ -558,7 +558,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 			if ( !isset($items[$priority]) ) {
 				$items[$priority] = array();
 			}
-			$items[$priority][$itm_id] =& $itm_ref;
+			$items[$priority][$itm_id] = $itm_ref;
 		}
 		unset($itm_ref);
 	}
