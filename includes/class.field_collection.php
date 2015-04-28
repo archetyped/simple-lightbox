@@ -161,9 +161,9 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	 * @param string|obj $id Unique name for item or item instance
 	 * @param array $properties (optional) Item properties
 	 * @param bool $update (optional) Update or overwrite existing item (Default: FALSE)
-	 * @return object Reference to new item
+	 * @return object Newly-added item
 	 */
-	function &add($id, $properties = array(), $update = false) {
+	function add($id, $properties = array(), $update = false) {
 		$item;
 		$args = func_get_args();
 		//Properties
@@ -308,7 +308,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 		$this->load_data();
 		$ret = null;
 		if ( $this->has($item) ) {
-			$item =& $this->get($item);
+			$item = $this->get($item);
 			$ret = $item->get_data($context, $top);
 		} else {
 			$ret = parent::get_data($context, $top);
@@ -344,7 +344,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	 * Retrieve reference to items in collection
 	 * @return array Collection items (reference)
 	 */
-	function get_items($group = null, $sort = 'priority') {
+	function &get_items($group = null, $sort = 'priority') {
 		$gset = $this->group_exists($group);
 		if ( $gset ) {
 			$items = $this->get_group_items($group);
@@ -540,7 +540,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 		//Add Items
 		foreach ( $items as $item ) {
 			//Skip if not in current collection
-			$itm_ref =& $this->get($item);
+			$itm_ref = $this->get($item);
 			if ( !$itm_ref ) {
 				continue;
 			}
@@ -558,7 +558,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 			if ( !isset($items[$priority]) ) {
 				$items[$priority] = array();
 			}
-			$items[$priority][$itm_id] =& $itm_ref;
+			$items[$priority][$itm_id] = $itm_ref;
 		}
 		unset($itm_ref);
 	}
