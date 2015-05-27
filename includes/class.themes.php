@@ -47,7 +47,7 @@ class SLB_Themes extends SLB_Collection_Controller {
 			)
 		);
 		
-		parent::_options($opts);
+		parent::_set_options($opts);
 	}
 	
 	/**

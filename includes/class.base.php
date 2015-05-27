@@ -179,9 +179,15 @@ class SLB_Base {
 	
 	/**
 	 * Initialize options
+	 * To be implemented in child classes
+	 */
+	protected function _options() {}
+	
+	/**
+	 * Initialize options
 	 * To be called by child class
 	 */
-	protected function _options($options_config = null) {
+	protected function _set_options($options_config = null) {
 		$class = $this->util->get_class('Options');
 		$key = 'options';
 		if ( $this->shares($key) ) {

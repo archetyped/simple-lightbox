@@ -92,9 +92,10 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 	 * Retrieves handlers sorted by priority
 	 * @see parent::get()
 	 * @uses get_cache()
+	 * @param mixed $args Unused
 	 * @return array Handlers
 	 */
-	public function get() {
+	public function get($args = null) {
 		$items = $this->get_cache();
 		if ( empty($items) ) {
 			//Retrieve items

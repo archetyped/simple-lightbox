@@ -291,7 +291,7 @@ class SLB_Lightbox extends SLB_Base {
 			)
 		);
 		
-		parent::_options($opts);
+		parent::_set_options($opts);
 	}
 
 	/* Methods */
@@ -379,7 +379,36 @@ class SLB_Lightbox extends SLB_Base {
 				}
 			}
 		}
-		return $ret;
+		// Filter return value
+		if ( !is_admin() ) {
+			$ret = $this->util->apply_filters('is_enabled', $ret);
+		}
+		// Return value (force boolean)
+		return !!$ret;
+	}
+	
+	/**
+	 * Make sure content is valid for processing/activation
+	 * 
+	 * @param string $content Content to validate
+	 * @return bool TRUE if content is valid (FALSE otherwise)
+	 */
+	protected function is_content_valid($content = '') {
+		// Invalid hooks
+		if ( doing_filter('get_the_excerpt') )
+			return false;
+
+		// Non-string value
+		if ( !is_string($content) )
+			return false;
+		
+		// Empty string
+		$content = trim($content);
+		if ( empty($content) )
+			return false;
+		
+		// Content is valid
+		return true;
 	}
 	
 	/**
@@ -422,12 +451,15 @@ class SLB_Lightbox extends SLB_Base {
 	 * @param $content
 	 * @return string Post content
 	 */
-	public function activate_links($content) {
+	public function activate_links($content, $group = null) {
+		if ( !$this->is_content_valid($content) ) {
+			return $content;
+		}
 		// Filter content before processing links
 		$content = $this->util->apply_filters('pre_process_links', $content);
 		
 		// Process links
-		$content = $this->process_links($content);
+		$content = $this->process_links($content, $group);
 		
 		// Filter content after processing links
 		$content = $this->util->apply_filters('post_process_links', $content);
@@ -1198,6 +1230,9 @@ class SLB_Lightbox extends SLB_Base {
 	 * @return string Modified post content
 	 */
 	function group_shortcodes($content) {
+		if ( !$this->is_content_valid($content) ) {
+			return $content;
+		}
 		// Setup shortcodes to wrap
 		$shortcodes = $this->util->apply_filters('group_shortcodes', array( 'gallery', 'nggallery' ));
 		// Set custom callback
