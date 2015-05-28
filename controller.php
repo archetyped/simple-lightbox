@@ -496,7 +496,7 @@ class SLB_Lightbox extends SLB_Base {
 		}
 		static $uri_proto = null;
 		if ( empty($uri_proto) ) {
-			$uri_proto = (object) array('raw' => '', 'source' => '');
+			$uri_proto = (object) array('raw' => '', 'source' => '', 'parts' => '');
 		}
 		
 		//Setup group properties
@@ -522,7 +522,6 @@ class SLB_Lightbox extends SLB_Base {
 			//Init vars
 			$pid = 0;
 			$link_new = $link;
-			$internal = false;
 			$q = null;
 			$uri = clone $uri_proto;
 			$type = false;
@@ -531,7 +530,7 @@ class SLB_Lightbox extends SLB_Base {
 			//Parse link attributes
 			$attrs = $this->util->parse_attribute_string($link_new, array('href' => ''));
 			//Get URI
-			$uri->raw = $uri->source = $attrs['href'];
+			$uri->raw = $attrs['href'];
 			
 			//Stop processing invalid links
 			if ( !$this->validate_uri($uri->raw)
@@ -540,21 +539,13 @@ class SLB_Lightbox extends SLB_Base {
 				continue;
 			}
 			
-			//Check if item links to internal media (attachment)
-			if ( 0 === strpos($uri->raw, '/') ) {
-				//Relative URIs are always internal
-				$internal = true;
-				
-				// Build absolute URI from relative URI
-				$uri->source = sprintf('%1$s://%2$s%3$s', $uri_origin['scheme'], $uri_origin['host'], $uri->raw);
-			} else {
-				//Absolute URI
-				$uri_dom = str_replace($protocol, '', strtolower($uri->raw));
-				if ( strpos($uri_dom, $uri_origin['host']) === 0 ) {
-					$internal = true;
-				}
-				unset($uri_dom);
-			}
+			// Handle relative URIs
+			$uri->source = WP_HTTP::make_absolute_url($uri->raw, $uri_origin['scheme'] . '://' . $uri_origin['host']);
+			$relative = ( $uri->source !== $uri->raw ) ? true : false;
+			$uri->parts = parse_url($uri->source);
+			
+			// Handle internal links (e.g. attachments)
+			$internal = ( $relative || $uri->parts['host'] === $uri_origin['host'] ) ? true : false;
 			
 			//Get source URI (e.g. attachments)
 			if ( $internal && is_local_attachment($uri->source) ) {
