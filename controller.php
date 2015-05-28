@@ -486,12 +486,18 @@ class SLB_Lightbox extends SLB_Base {
 		if ( empty($links) ) {
 			return $content;
 		}
-		//Process links
-		$protocol = array('http://', 'https://');
-		$uri_home = strtolower(home_url());
-		$uri_parts = array_fill_keys(array('scheme', 'host', 'path', 'query', 'fragment'), '');
-		$uri_origin = wp_parse_args(parse_url($uri_home), $uri_parts);
-		$qv_att = 'attachment_id';
+		// Process links
+		static $protocol = array('http://', 'https://');
+		static $qv_att = 'attachment_id';
+		static $uri_origin = null;
+		if ( !is_array($uri_origin) ) {
+			$uri_parts = array_fill_keys(array('scheme', 'host', 'path'), '');
+			$uri_origin = wp_parse_args(parse_url( strtolower(home_url()) ), $uri_parts);
+		}
+		static $uri_proto = null;
+		if ( empty($uri_proto) ) {
+			$uri_proto = (object) array('raw' => '', 'source' => '');
+		}
 		
 		//Setup group properties
 		$g_props = (object) array(
@@ -510,8 +516,7 @@ class SLB_Lightbox extends SLB_Base {
 			$this->handlers = new SLB_Content_Handlers($this);
 		}
 		
-		//Iterate through and activate supported links
-		$uri_proto = array('raw' => '', 'source' => '');
+		// Iterate through and activate supported links
 		
 		foreach ( $links as $link ) {
 			//Init vars
@@ -519,7 +524,7 @@ class SLB_Lightbox extends SLB_Base {
 			$link_new = $link;
 			$internal = false;
 			$q = null;
-			$uri = (object) $uri_proto;
+			$uri = clone $uri_proto;
 			$type = false;
 			$props_extra = array();
 			
@@ -539,6 +544,7 @@ class SLB_Lightbox extends SLB_Base {
 			if ( 0 === strpos($uri->raw, '/') ) {
 				//Relative URIs are always internal
 				$internal = true;
+				
 				// Build absolute URI from relative URI
 				$uri->source = sprintf('%1$s://%2$s%3$s', $uri_origin['scheme'], $uri_origin['host'], $uri->raw);
 			} else {
