@@ -489,7 +489,8 @@ class SLB_Lightbox extends SLB_Base {
 		//Process links
 		$protocol = array('http://', 'https://');
 		$uri_home = strtolower(home_url());
-		$domain = str_replace($protocol, '', $uri_home);
+		$uri_parts = array_fill_keys(array('scheme', 'host', 'path', 'query', 'fragment'), '');
+		$uri_origin = wp_parse_args(parse_url($uri_home), $uri_parts);
 		$qv_att = 'attachment_id';
 		
 		//Setup group properties
@@ -538,11 +539,12 @@ class SLB_Lightbox extends SLB_Base {
 			if ( 0 === strpos($uri->raw, '/') ) {
 				//Relative URIs are always internal
 				$internal = true;
-				$uri->source = $uri_home . $uri->raw;
+				// Build absolute URI from relative URI
+				$uri->source = sprintf('%1$s://%2$s%3$s', $uri_origin['scheme'], $uri_origin['host'], $uri->raw);
 			} else {
 				//Absolute URI
 				$uri_dom = str_replace($protocol, '', strtolower($uri->raw));
-				if ( strpos($uri_dom, $domain) === 0 ) {
+				if ( strpos($uri_dom, $uri_origin['host']) === 0 ) {
 					$internal = true;
 				}
 				unset($uri_dom);
