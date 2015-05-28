@@ -486,11 +486,18 @@ class SLB_Lightbox extends SLB_Base {
 		if ( empty($links) ) {
 			return $content;
 		}
-		//Process links
-		$protocol = array('http://', 'https://');
-		$uri_home = strtolower(home_url());
-		$domain = str_replace($protocol, '', $uri_home);
-		$qv_att = 'attachment_id';
+		// Process links
+		static $protocol = array('http://', 'https://');
+		static $qv_att = 'attachment_id';
+		static $uri_origin = null;
+		if ( !is_array($uri_origin) ) {
+			$uri_parts = array_fill_keys(array('scheme', 'host', 'path'), '');
+			$uri_origin = wp_parse_args(parse_url( strtolower(home_url()) ), $uri_parts);
+		}
+		static $uri_proto = null;
+		if ( empty($uri_proto) ) {
+			$uri_proto = (object) array('raw' => '', 'source' => '', 'parts' => '');
+		}
 		
 		//Setup group properties
 		$g_props = (object) array(
@@ -509,23 +516,21 @@ class SLB_Lightbox extends SLB_Base {
 			$this->handlers = new SLB_Content_Handlers($this);
 		}
 		
-		//Iterate through and activate supported links
-		$uri_proto = array('raw' => '', 'source' => '');
+		// Iterate through and activate supported links
 		
 		foreach ( $links as $link ) {
 			//Init vars
 			$pid = 0;
 			$link_new = $link;
-			$internal = false;
 			$q = null;
-			$uri = (object) $uri_proto;
+			$uri = clone $uri_proto;
 			$type = false;
 			$props_extra = array();
 			
 			//Parse link attributes
 			$attrs = $this->util->parse_attribute_string($link_new, array('href' => ''));
 			//Get URI
-			$uri->raw = $uri->source = $attrs['href'];
+			$uri->raw = $attrs['href'];
 			
 			//Stop processing invalid links
 			if ( !$this->validate_uri($uri->raw)
@@ -534,19 +539,13 @@ class SLB_Lightbox extends SLB_Base {
 				continue;
 			}
 			
-			//Check if item links to internal media (attachment)
-			if ( 0 === strpos($uri->raw, '/') ) {
-				//Relative URIs are always internal
-				$internal = true;
-				$uri->source = $uri_home . $uri->raw;
-			} else {
-				//Absolute URI
-				$uri_dom = str_replace($protocol, '', strtolower($uri->raw));
-				if ( strpos($uri_dom, $domain) === 0 ) {
-					$internal = true;
-				}
-				unset($uri_dom);
-			}
+			// Handle relative URIs
+			$uri->source = WP_HTTP::make_absolute_url($uri->raw, $uri_origin['scheme'] . '://' . $uri_origin['host']);
+			$relative = ( $uri->source !== $uri->raw ) ? true : false;
+			$uri->parts = parse_url($uri->source);
+			
+			// Handle internal links (e.g. attachments)
+			$internal = ( $relative || $uri->parts['host'] === $uri_origin['host'] ) ? true : false;
 			
 			//Get source URI (e.g. attachments)
 			if ( $internal && is_local_attachment($uri->source) ) {
