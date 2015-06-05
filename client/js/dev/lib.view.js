@@ -2558,7 +2558,10 @@ var Group = {
 	 * Retrieve group items
 	 */
 	get_items: function() {
-		var items = ( !this.util.is_empty(this.get_id()) ) ? $(this.get_selector()) : this.get_current().dom_get();
+		var items = $(this.get_selector());
+		if ( 0 === items.length && this.has_current() ) {
+			items = this.get_current().dom_get();
+		}
 		return items;
 	},
 	
@@ -2596,14 +2599,24 @@ var Group = {
 		}
 		return ( this.util.is_type(item, View.Content_Item) ) ? this.get_items().index(item.dom_get()) : -1;
 	},
+
+	/**
+	 * Check if current item set in group
+	 * @return bool TRUE if current item is set
+	 */
+	has_current: function() {
+		// Sanitize
+		return ( !this.util.is_empty( this.get_current() ) );
+	},
 	
 	/**
 	 * Retrieve current item
-	 * @return Content_Item Current item
+	 * @uses Group.current
+	 * @return NULL|Content_Item Current item (NULL if current item not set or invalid)
 	 */
 	get_current: function() {
 		// Sanitize
-		if ( !this.util.is_empty(this.current) && !this.util.is_type(this.current, View.Content_Item) ) {
+		if ( null !== this.current && !this.util.is_type(this.current, View.Content_Item) ) {
 			this.current = null;
 		}
 		return this.current;
