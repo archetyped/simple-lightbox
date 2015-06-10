@@ -99,7 +99,14 @@ class SLB_Lightbox extends SLB_Base {
 	 * Set to Widget ID currently being processed
 	 * @var bool|string
 	 */
-	var $widget_processing = false;
+	private $widget_processing = false;
+	
+	/**
+	 * Manage nested widget processing
+	 * Used to avoid premature widget output
+	 * @var int
+	 */
+	private $widget_processing_level = 0;
 
 	/**
 	 * Constructor
@@ -202,8 +209,70 @@ class SLB_Lightbox extends SLB_Base {
 			}
 			
 			//Widgets
-			add_filter('dynamic_sidebar_params', $this->m('widget_process_setup'), PHP_INT_MAX);
+			if ( $this->options->get_bool('enabled_widget') ) {
+				add_action('dynamic_sidebar', $this->m('widget_process_start'), PHP_INT_MAX);
+				add_filter('dynamic_sidebar_params', $this->m('widget_process_inter'), PHP_INT_MAX);
+				add_action('dynamic_sidebar_after', $this->m('widget_process_finish'), PHP_INT_MAX);
+			}
+			//add_filter('dynamic_sidebar_params', $this->m('widget_process_setup'), PHP_INT_MAX);
 		}
+	}
+
+	/**
+	 * Set widget up for processing/activation
+	 * Buffers widget output for further processing
+	 * @param array $widget_args Widget arguments
+	 * @return void
+	 */
+	public function widget_process_start( $widget_args ) {
+		// Do not continue if a widget is currently being processed (avoid nested processing)
+		if ( !!$this->widget_processing ) {
+			return;
+		}
+		// Start widget processing
+		$this->widget_processing = true;
+		// Begin output buffer
+		ob_start();
+	}
+	
+	/**
+	 * Handles inter-widget processing
+	 * After widget output generated, Before next widget starts
+	 * @param array $params New widget parameters
+	 */
+	public function widget_process_inter( $params ) {
+		$this->widget_process_finish();
+		return $params;
+	}
+	
+	/**
+	 * Complete widget processing
+	 * Activate widget output
+	 * @return void
+	 */
+	public function widget_process_finish() {
+		// Stop if no widget is being processed
+		if ( !$this->widget_processing ) {
+			return;
+		}
+		// Set Group ID filter
+		/*
+		$filter = (object) array (
+			'hook'	=> 'get_group_id',
+			'cb'	=> $this->m('widget_group_id'),
+		);
+		$this->util->add_filter($filter->hook, $filter->cb);
+		*/
+		// Activate widget output
+		$out = $this->activate_links(ob_get_clean());
+		// Unset Group ID filter
+		/*
+		$this->util->remove_filter($filter->hook, $filter->cb);
+		*/
+		// End widget processing
+		$this->widget_processing = false;
+		// Output widget
+		echo $out;
 	}
 	
 	/**
