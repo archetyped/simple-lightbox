@@ -279,9 +279,13 @@ class SLB_Lightbox extends SLB_Base {
 	 * @return array Modified group ID segments
 	 */
 	public function post_group_id($group_segments) {
-		$post = get_post();
-		//Prepend post ID to group ID
-		array_unshift($group_segments, $post->ID);
+		if ( in_the_loop() ) {
+			//Prepend post ID to group ID
+			$post = get_post();
+			if ( $post ) {
+				array_unshift($group_segments, $post->ID);
+			}
+		}
 		return $group_segments;
 	}
 	
