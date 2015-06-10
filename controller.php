@@ -102,6 +102,12 @@ class SLB_Lightbox extends SLB_Base {
 	private $widget_processing = false;
 	
 	/**
+	 * Parameters for widget being processed
+	 * @param array
+	 */
+	private $widget_processing_params = null;
+	
+	/**
 	 * Manage nested widget processing
 	 * Used to avoid premature widget output
 	 * @var int
@@ -224,13 +230,14 @@ class SLB_Lightbox extends SLB_Base {
 	 * @param array $widget_args Widget arguments
 	 * @return void
 	 */
-	public function widget_process_start( $widget_args ) {
+	public function widget_process_start($widget_args) {
 		// Do not continue if a widget is currently being processed (avoid nested processing)
 		if ( !!$this->widget_processing ) {
 			return;
 		}
 		// Start widget processing
 		$this->widget_processing = true;
+		$this->widget_processing_params = $widget_args;
 		// Begin output buffer
 		ob_start();
 	}
@@ -255,22 +262,12 @@ class SLB_Lightbox extends SLB_Base {
 		if ( !$this->widget_processing ) {
 			return;
 		}
-		// Set Group ID filter
-		/*
-		$filter = (object) array (
-			'hook'	=> 'get_group_id',
-			'cb'	=> $this->m('widget_group_id'),
-		);
-		$this->util->add_filter($filter->hook, $filter->cb);
-		*/
+		$group = ( $this->options->get_bool('group_widget') && isset($this->widget_processing_params['id']) ) ? $this->widget_processing_params['id'] : null;
 		// Activate widget output
-		$out = $this->activate_links(ob_get_clean());
-		// Unset Group ID filter
-		/*
-		$this->util->remove_filter($filter->hook, $filter->cb);
-		*/
+		$out = $this->activate_links(ob_get_clean(), $group);
 		// End widget processing
 		$this->widget_processing = false;
+		$this->widget_processing_params = null;
 		// Output widget
 		echo $out;
 	}
