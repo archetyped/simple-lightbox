@@ -198,9 +198,11 @@ class SLB_Lightbox extends SLB_Base {
 			
 			//Widgets
 			if ( $this->options->get_bool('enabled_widget') ) {
+				add_action('dynamic_sidebar_before', $this->m('widget_process_nested'));
 				add_action('dynamic_sidebar', $this->m('widget_process_start'), PHP_INT_MAX);
 				add_filter('dynamic_sidebar_params', $this->m('widget_process_inter'), PHP_INT_MAX);
-				add_action('dynamic_sidebar_after', $this->m('widget_process_finish'), PHP_INT_MAX);
+				add_action('dynamic_sidebar_after', $this->m('widget_process_finish'), PHP_INT_MAX - 1);
+				add_action('dynamic_sidebar_after', $this->m('widget_process_nested_finish'), PHP_INT_MAX);
 			}
 		}
 	}
@@ -1296,7 +1298,7 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	public function widget_process_start($widget_args) {
 		// Do not continue if a widget is currently being processed (avoid nested processing)
-		if ( !!$this->widget_processing ) {
+		if ( 0 < $this->widget_processing_level ) {
 			return;
 		}
 		// Start widget processing
@@ -1319,11 +1321,18 @@ class SLB_Lightbox extends SLB_Base {
 	/**
 	 * Complete widget processing
 	 * Activate widget output
+	 * @uses $widget_processing
+	 * @uses $widget_processing_level
+	 * @uses $widget_processing_params
 	 * @return void
 	 */
 	public function widget_process_finish() {
-		// Stop if no widget is being processed
-		if ( !$this->widget_processing ) {
+		/**
+		 * Stop processing on conditions:
+		 * - No widget is being processed
+		 * - Nested widgets
+		 */
+		if ( !$this->widget_processing || 0 < $this->widget_processing_level ) {
 			return;
 		}
 		$group = ( $this->options->get_bool('group_widget') && isset($this->widget_processing_params['id']) ) ? $this->widget_processing_params['id'] : null;
@@ -1334,6 +1343,33 @@ class SLB_Lightbox extends SLB_Base {
 		$this->widget_processing_params = null;
 		// Output widget
 		echo $out;
+	}
+	
+	/**
+	 * Handles nested activation in widgets
+	 * @uses widget_processing
+	 * @uses $widget_processing_level
+	 * @return void
+	 */
+	public function widget_process_nested() {
+		// Stop if no widget is being processed
+		if ( !$this->widget_processing ) {
+			return;
+		}
+		
+		// Increment nesting level
+		$this->widget_processing_level++;
+	}
+	
+	/**
+	 * Mark the end of a nested widget
+	 * @uses $widget_processing_level
+	 */
+	public function widget_process_nested_finish() {
+		// Decrement nesting level
+		if ( 0 < $this->widget_processing_level ) {
+			$this->widget_processing_level--;
+		}
 	}
 	
 	/*-** Helpers **-*/
