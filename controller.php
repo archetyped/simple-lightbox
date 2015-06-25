@@ -203,6 +203,9 @@ class SLB_Lightbox extends SLB_Base {
 				add_filter('dynamic_sidebar_params', $this->m('widget_process_inter'), PHP_INT_MAX);
 				add_action('dynamic_sidebar_after', $this->m('widget_process_finish'), PHP_INT_MAX - 1);
 				add_action('dynamic_sidebar_after', $this->m('widget_process_nested_finish'), PHP_INT_MAX);
+			} else {
+				add_action('dynamic_sidebar_before', $this->m('widget_block_start'));
+				add_action('dynamic_sidebar_after', $this->m('widget_block_finish'));
 			}
 		}
 	}
@@ -413,7 +416,7 @@ class SLB_Lightbox extends SLB_Base {
 			return false;
 		
 		// Content is valid
-		return true;
+		return $this->util->apply_filters('is_content_valid', true, $content);
 	}
 	
 	/**
@@ -1370,6 +1373,29 @@ class SLB_Lightbox extends SLB_Base {
 		if ( 0 < $this->widget_processing_level ) {
 			$this->widget_processing_level--;
 		}
+	}
+	
+	/**
+	 * Begin blocking widget activation
+	 * @return void
+	 */
+	public function widget_block_start() {
+		$this->util->add_filter('is_content_valid', $this->m('widget_block_handle'));
+	}
+	
+	/**
+	 * Stop blocking widget activation
+	 * @return void
+	 */
+	public function widget_block_finish() {
+		$this->util->remove_filter('is_content_valid', $this->m('widget_block_handle'));
+	}
+	
+	/**
+	 * Handle widget activation blocking
+	 */
+	public function widget_block_handle($is_content_valid) {
+		return false;
 	}
 	
 	/*-** Helpers **-*/
