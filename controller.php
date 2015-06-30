@@ -203,6 +203,9 @@ class SLB_Lightbox extends SLB_Base {
 				add_filter('dynamic_sidebar_params', $this->m('widget_process_inter'), PHP_INT_MAX);
 				add_action('dynamic_sidebar_after', $this->m('widget_process_finish'), PHP_INT_MAX - 1);
 				add_action('dynamic_sidebar_after', $this->m('widget_process_nested_finish'), PHP_INT_MAX);
+			} else {
+				add_action('dynamic_sidebar_before', $this->m('widget_block_start'));
+				add_action('dynamic_sidebar_after', $this->m('widget_block_finish'));
 			}
 		}
 	}
@@ -398,7 +401,7 @@ class SLB_Lightbox extends SLB_Base {
 	 * @param string $content Content to validate
 	 * @return bool TRUE if content is valid (FALSE otherwise)
 	 */
-	protected function is_content_valid($content = '') {
+	protected function is_content_valid($content) {
 		// Invalid hooks
 		if ( doing_filter('get_the_excerpt') )
 			return false;
@@ -413,7 +416,7 @@ class SLB_Lightbox extends SLB_Base {
 			return false;
 		
 		// Content is valid
-		return true;
+		return $this->util->apply_filters('is_content_valid', true, $content);
 	}
 	
 	/**
@@ -453,10 +456,12 @@ class SLB_Lightbox extends SLB_Base {
 	 * Scans post content for image links and activates them
 	 * 
 	 * Lightbox will not be activated for feeds
-	 * @param $content
+	 * @param string $content Content to activate
+	 * @param string (optonal) $group Group ID for content
 	 * @return string Post content
 	 */
 	public function activate_links($content, $group = null) {
+		// Validate content
 		if ( !$this->is_content_valid($content) ) {
 			return $content;
 		}
@@ -480,11 +485,7 @@ class SLB_Lightbox extends SLB_Base {
 	 * @param string (optional) $group Group to add links to (Default: none)
 	 * @return string Content with processed links 
 	 */
-	function process_links($content, $group = null) {
-		//Validate
-		if ( !is_string($content) || empty($content) || ( !!$this->widget_processing && !$this->options->get_bool('enabled_widget') ) ) {
-			return $content;
-		}
+	protected function process_links($content, $group = null) {
 		//Extract links
 		$links = $this->get_links($content, true);
 		//Do not process content without links
@@ -1304,6 +1305,10 @@ class SLB_Lightbox extends SLB_Base {
 		// Start widget processing
 		$this->widget_processing = true;
 		$this->widget_processing_params = $widget_args;
+		// Enable widget grouping
+		if ( $this->options->get_bool('group_widget') ) {
+			$this->util->add_filter('get_group_id', $this->m('widget_group_id'));
+		}
 		// Begin output buffer
 		ob_start();
 	}
@@ -1330,19 +1335,38 @@ class SLB_Lightbox extends SLB_Base {
 		/**
 		 * Stop processing on conditions:
 		 * - No widget is being processed
-		 * - Nested widgets
+		 * - Processing a nested widget
 		 */
 		if ( !$this->widget_processing || 0 < $this->widget_processing_level ) {
 			return;
 		}
-		$group = ( $this->options->get_bool('group_widget') && isset($this->widget_processing_params['id']) ) ? $this->widget_processing_params['id'] : null;
 		// Activate widget output
-		$out = $this->activate_links(ob_get_clean(), $group);
+		$out = $this->activate_links(ob_get_clean());
+		
+		// Clear grouping callback
+		if ( $this->options->get_bool('group_widget') ) {
+			$this->util->remove_filter('get_group_id', $this->m('widget_group_id'));
+		}
 		// End widget processing
 		$this->widget_processing = false;
 		$this->widget_processing_params = null;
 		// Output widget
 		echo $out;
+	}
+	
+	/**
+	 * Add widget ID to link group ID
+	 * Widget ID precedes all other group segments
+	 * @uses `SLB::get_group_id` filter
+	 * @param array $group_segments Group ID segments
+	 * @return array Modified group ID segments
+	 */
+	public function widget_group_id($group_segments) {
+		// Add current widget ID to group ID
+		if ( isset($this->widget_processing_params['id']) ) {
+			array_unshift($group_segments, $this->widget_processing_params['id']);
+		}
+		return $group_segments;
 	}
 	
 	/**
@@ -1370,6 +1394,29 @@ class SLB_Lightbox extends SLB_Base {
 		if ( 0 < $this->widget_processing_level ) {
 			$this->widget_processing_level--;
 		}
+	}
+	
+	/**
+	 * Begin blocking widget activation
+	 * @return void
+	 */
+	public function widget_block_start() {
+		$this->util->add_filter('is_content_valid', $this->m('widget_block_handle'));
+	}
+	
+	/**
+	 * Stop blocking widget activation
+	 * @return void
+	 */
+	public function widget_block_finish() {
+		$this->util->remove_filter('is_content_valid', $this->m('widget_block_handle'));
+	}
+	
+	/**
+	 * Handle widget activation blocking
+	 */
+	public function widget_block_handle($is_content_valid) {
+		return false;
 	}
 	
 	/*-** Helpers **-*/
