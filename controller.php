@@ -1339,6 +1339,7 @@ class SLB_Lightbox extends SLB_Base {
 		$group = ( $this->options->get_bool('group_widget') && isset($this->widget_processing_params['id']) ) ? $this->widget_processing_params['id'] : null;
 		// Activate widget output
 		$out = $this->activate_links(ob_get_clean(), $group);
+		dbg_print_message('Widget group: ' . $group);
 		// End widget processing
 		$this->widget_processing = false;
 		$this->widget_processing_params = null;
