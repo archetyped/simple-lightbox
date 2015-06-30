@@ -1305,6 +1305,10 @@ class SLB_Lightbox extends SLB_Base {
 		// Start widget processing
 		$this->widget_processing = true;
 		$this->widget_processing_params = $widget_args;
+		// Enable widget grouping
+		if ( $this->options->get_bool('group_widget') ) {
+			$this->util->add_filter('get_group_id', $this->m('widget_group_id'));
+		}
 		// Begin output buffer
 		ob_start();
 	}
@@ -1336,15 +1340,33 @@ class SLB_Lightbox extends SLB_Base {
 		if ( !$this->widget_processing || 0 < $this->widget_processing_level ) {
 			return;
 		}
-		$group = ( $this->options->get_bool('group_widget') && isset($this->widget_processing_params['id']) ) ? $this->widget_processing_params['id'] : null;
 		// Activate widget output
-		$out = $this->activate_links(ob_get_clean(), $group);
-		dbg_print_message('Widget group: ' . $group);
+		$out = $this->activate_links(ob_get_clean());
+		
+		// Clear grouping callback
+		if ( $this->options->get_bool('group_widget') ) {
+			$this->util->remove_filter('get_group_id', $this->m('widget_group_id'));
+		}
 		// End widget processing
 		$this->widget_processing = false;
 		$this->widget_processing_params = null;
 		// Output widget
 		echo $out;
+	}
+	
+	/**
+	 * Add widget ID to link group ID
+	 * Widget ID precedes all other group segments
+	 * @uses `SLB::get_group_id` filter
+	 * @param array $group_segments Group ID segments
+	 * @return array Modified group ID segments
+	 */
+	public function widget_group_id($group_segments) {
+		// Add current widget ID to group ID
+		if ( isset($this->widget_processing_params['id']) ) {
+			array_unshift($group_segments, $this->widget_processing_params['id']);
+		}
+		return $group_segments;
 	}
 	
 	/**
