@@ -401,7 +401,7 @@ class SLB_Lightbox extends SLB_Base {
 	 * @param string $content Content to validate
 	 * @return bool TRUE if content is valid (FALSE otherwise)
 	 */
-	protected function is_content_valid($content = '') {
+	protected function is_content_valid($content) {
 		// Invalid hooks
 		if ( doing_filter('get_the_excerpt') )
 			return false;
@@ -456,10 +456,12 @@ class SLB_Lightbox extends SLB_Base {
 	 * Scans post content for image links and activates them
 	 * 
 	 * Lightbox will not be activated for feeds
-	 * @param $content
+	 * @param string $content Content to activate
+	 * @param string (optonal) $group Group ID for content
 	 * @return string Post content
 	 */
 	public function activate_links($content, $group = null) {
+		// Validate content
 		if ( !$this->is_content_valid($content) ) {
 			return $content;
 		}
@@ -483,11 +485,7 @@ class SLB_Lightbox extends SLB_Base {
 	 * @param string (optional) $group Group to add links to (Default: none)
 	 * @return string Content with processed links 
 	 */
-	function process_links($content, $group = null) {
-		//Validate
-		if ( !is_string($content) || empty($content) || ( !!$this->widget_processing && !$this->options->get_bool('enabled_widget') ) ) {
-			return $content;
-		}
+	protected function process_links($content, $group = null) {
 		//Extract links
 		$links = $this->get_links($content, true);
 		//Do not process content without links
@@ -1333,7 +1331,7 @@ class SLB_Lightbox extends SLB_Base {
 		/**
 		 * Stop processing on conditions:
 		 * - No widget is being processed
-		 * - Nested widgets
+		 * - Processing a nested widget
 		 */
 		if ( !$this->widget_processing || 0 < $this->widget_processing_level ) {
 			return;
