@@ -632,11 +632,16 @@ var Utilities =  {
 						break;
 					case 'object':
 						if ( !$.isPlainObject(value) ) {
+							// Custom object. Unable to evaluate emptiness further
 							ret = false;
 						} else {
+							// Evaluate plain object
 							if ( Object.getOwnPropertyNames ) {
+								// Modern browser check
 								ret = ( Object.getOwnPropertyNames(value).length === 0 ); 
 							} else if ( value.hasOwnProperty ) {
+								// Legacy browser check
+								ret = true;
 								for ( var key in value ) {
 									if ( value.hasOwnProperty(key) ) {
 										ret = false;

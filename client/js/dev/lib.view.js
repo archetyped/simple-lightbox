@@ -145,7 +145,7 @@ var View = {
 	 * @return bool TRUE if default component instance creation is allowed
 	 */
 	can_make_default_component: function(type) {
-		return ( -1 !== this.component_defaults.indexOf(type) );
+		return ( -1 !== $.inArray(type, this.component_defaults) );
 	},
 	
 	/**
