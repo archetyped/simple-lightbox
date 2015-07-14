@@ -57,6 +57,14 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 
 == Changelog ==
 
+= 2.4.1 =
+
+* Optimize: Widget support
+* Optimize: Relative and internal URI handling
+* Optimize: Link activation performance
+* Fix: Ungrouped items in empty group (Robert & The Lost Group)
+* Fix: IE8 Support (S.Franzis' Legacy)
+
 = 2.4.0 =
 
 * Update: WordPress version compatibility (v4.2.1)
