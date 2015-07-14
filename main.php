@@ -3,13 +3,13 @@
 Plugin Name: Simple Lightbox
 Plugin URI: http://archetyped.com/tools/simple-lightbox/
 Description: The highly customizable lightbox for WordPress
-Version: 2.4.0
+Version: 2.4.1
 Author: Archetyped
 Author URI: http://archetyped.com
 Support URI: https://github.com/archetyped/simple-lightbox/wiki/Feedback-&-Support
 */
 /*
-Copyright 2014 Sol Marchessault (sol@archetyped.com)
+Copyright 2015 Archetyped (support@archetyped.com)
 */
 $slb = null;
 /**

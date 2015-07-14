@@ -77,34 +77,29 @@ class SLB_Lightbox extends SLB_Base {
 	/* Widget properties */
 	
 	/**
-	 * IDs widgets that have been processed
-	 * @var array
-	 */
-	var $widgets_processed = array();
-	
-	/**
-	 * Widget callback key
-	 * @var string
-	 */
-	var $widget_callback = 'callback';
-	
-	/**
-	 * Key to use to store original callback
-	 * @var string
-	 */
-	var $widget_callback_orig = 'callback_orig';
-
-	/**
 	 * Used to track if widget is currently being processed or not
 	 * Set to Widget ID currently being processed
 	 * @var bool|string
 	 */
-	var $widget_processing = false;
+	private $widget_processing = false;
+	
+	/**
+	 * Parameters for widget being processed
+	 * @param array
+	 */
+	private $widget_processing_params = null;
+	
+	/**
+	 * Manage nested widget processing
+	 * Used to avoid premature widget output
+	 * @var int
+	 */
+	private $widget_processing_level = 0;
 
 	/**
 	 * Constructor
 	 */	
-	function __construct() {
+	public function __construct() {
 		parent::__construct();
 		//Init instances
 		$this->fields = new SLB_Fields();
@@ -202,10 +197,19 @@ class SLB_Lightbox extends SLB_Base {
 			}
 			
 			//Widgets
-			add_filter('dynamic_sidebar_params', $this->m('widget_process_setup'), PHP_INT_MAX);
+			if ( $this->options->get_bool('enabled_widget') ) {
+				add_action('dynamic_sidebar_before', $this->m('widget_process_nested'));
+				add_action('dynamic_sidebar', $this->m('widget_process_start'), PHP_INT_MAX);
+				add_filter('dynamic_sidebar_params', $this->m('widget_process_inter'), PHP_INT_MAX);
+				add_action('dynamic_sidebar_after', $this->m('widget_process_finish'), PHP_INT_MAX - 1);
+				add_action('dynamic_sidebar_after', $this->m('widget_process_nested_finish'), PHP_INT_MAX);
+			} else {
+				add_action('dynamic_sidebar_before', $this->m('widget_block_start'));
+				add_action('dynamic_sidebar_after', $this->m('widget_block_finish'));
+			}
 		}
 	}
-	
+
 	/**
 	 * Add post ID to link group ID
 	 * @uses `SLB::get_group_id` filter
@@ -213,9 +217,13 @@ class SLB_Lightbox extends SLB_Base {
 	 * @return array Modified group ID segments
 	 */
 	public function post_group_id($group_segments) {
-		$post = get_post();
-		//Prepend post ID to group ID
-		array_unshift($group_segments, $post->ID);
+		if ( in_the_loop() ) {
+			//Prepend post ID to group ID
+			$post = get_post();
+			if ( $post ) {
+				array_unshift($group_segments, $post->ID);
+			}
+		}
 		return $group_segments;
 	}
 	
@@ -393,7 +401,7 @@ class SLB_Lightbox extends SLB_Base {
 	 * @param string $content Content to validate
 	 * @return bool TRUE if content is valid (FALSE otherwise)
 	 */
-	protected function is_content_valid($content = '') {
+	protected function is_content_valid($content) {
 		// Invalid hooks
 		if ( doing_filter('get_the_excerpt') )
 			return false;
@@ -408,7 +416,7 @@ class SLB_Lightbox extends SLB_Base {
 			return false;
 		
 		// Content is valid
-		return true;
+		return $this->util->apply_filters('is_content_valid', true, $content);
 	}
 	
 	/**
@@ -448,10 +456,12 @@ class SLB_Lightbox extends SLB_Base {
 	 * Scans post content for image links and activates them
 	 * 
 	 * Lightbox will not be activated for feeds
-	 * @param $content
+	 * @param string $content Content to activate
+	 * @param string (optonal) $group Group ID for content
 	 * @return string Post content
 	 */
 	public function activate_links($content, $group = null) {
+		// Validate content
 		if ( !$this->is_content_valid($content) ) {
 			return $content;
 		}
@@ -475,22 +485,25 @@ class SLB_Lightbox extends SLB_Base {
 	 * @param string (optional) $group Group to add links to (Default: none)
 	 * @return string Content with processed links 
 	 */
-	function process_links($content, $group = null) {
-		//Validate
-		if ( !is_string($content) || empty($content) || ( !!$this->widget_processing && !$this->options->get_bool('enabled_widget') ) ) {
-			return $content;
-		}
+	protected function process_links($content, $group = null) {
 		//Extract links
 		$links = $this->get_links($content, true);
 		//Do not process content without links
 		if ( empty($links) ) {
 			return $content;
 		}
-		//Process links
-		$protocol = array('http://', 'https://');
-		$uri_home = strtolower(home_url());
-		$domain = str_replace($protocol, '', $uri_home);
-		$qv_att = 'attachment_id';
+		// Process links
+		static $protocol = array('http://', 'https://');
+		static $qv_att = 'attachment_id';
+		static $uri_origin = null;
+		if ( !is_array($uri_origin) ) {
+			$uri_parts = array_fill_keys(array('scheme', 'host', 'path'), '');
+			$uri_origin = wp_parse_args(parse_url( strtolower(home_url()) ), $uri_parts);
+		}
+		static $uri_proto = null;
+		if ( empty($uri_proto) ) {
+			$uri_proto = (object) array('raw' => '', 'source' => '', 'parts' => '');
+		}
 		
 		//Setup group properties
 		$g_props = (object) array(
@@ -509,23 +522,21 @@ class SLB_Lightbox extends SLB_Base {
 			$this->handlers = new SLB_Content_Handlers($this);
 		}
 		
-		//Iterate through and activate supported links
-		$uri_proto = array('raw' => '', 'source' => '');
+		// Iterate through and activate supported links
 		
 		foreach ( $links as $link ) {
 			//Init vars
 			$pid = 0;
 			$link_new = $link;
-			$internal = false;
 			$q = null;
-			$uri = (object) $uri_proto;
+			$uri = clone $uri_proto;
 			$type = false;
 			$props_extra = array();
 			
 			//Parse link attributes
 			$attrs = $this->util->parse_attribute_string($link_new, array('href' => ''));
 			//Get URI
-			$uri->raw = $uri->source = $attrs['href'];
+			$uri->raw = $attrs['href'];
 			
 			//Stop processing invalid links
 			if ( !$this->validate_uri($uri->raw)
@@ -534,19 +545,13 @@ class SLB_Lightbox extends SLB_Base {
 				continue;
 			}
 			
-			//Check if item links to internal media (attachment)
-			if ( 0 === strpos($uri->raw, '/') ) {
-				//Relative URIs are always internal
-				$internal = true;
-				$uri->source = $uri_home . $uri->raw;
-			} else {
-				//Absolute URI
-				$uri_dom = str_replace($protocol, '', strtolower($uri->raw));
-				if ( strpos($uri_dom, $domain) === 0 ) {
-					$internal = true;
-				}
-				unset($uri_dom);
-			}
+			// Handle relative URIs
+			$uri->source = WP_HTTP::make_absolute_url($uri->raw, $uri_origin['scheme'] . '://' . $uri_origin['host']);
+			$relative = ( $uri->source !== $uri->raw ) ? true : false;
+			$uri->parts = parse_url($uri->source);
+			
+			// Handle internal links (e.g. attachments)
+			$internal = ( $relative || $uri->parts['host'] === $uri_origin['host'] ) ? true : false;
 			
 			//Get source URI (e.g. attachments)
 			if ( $internal && is_local_attachment($uri->source) ) {
@@ -1287,112 +1292,131 @@ class SLB_Lightbox extends SLB_Base {
 	/*-** Widgets **-*/
 	
 	/**
-	 * Reroute widget display callback to internal method
-	 * No widget parameters are modified
-	 * 
-	 * @param array $params Widget parameters
-	 * @global $wp_registered_widgets to update display callback
-	 * @return array Updated parameters
+	 * Set widget up for processing/activation
+	 * Buffers widget output for further processing
+	 * @param array $widget_args Widget arguments
+	 * @return void
 	 */
-	function widget_process_setup($params) {
-		global $wp_registered_widgets;
-		$p =& $params[0];
-		$wid = $p['widget_id'];
-		//Validate request
-		if ( !$this->is_enabled() || empty($wp_registered_widgets) || array_key_exists($wid, $this->widgets_processed) ) {
-			return $params;
+	public function widget_process_start($widget_args) {
+		// Do not continue if a widget is currently being processed (avoid nested processing)
+		if ( 0 < $this->widget_processing_level ) {
+			return;
 		}
-		$this->widgets_processed[$wid] = true;
-		//Update callback
-		$wref =& $wp_registered_widgets[$wid];
-		// Backup original callback
-		$wref[$this->widget_callback_orig] = $wref[$this->widget_callback];
-		// Reroute callback
-		$wref[$this->widget_callback] = $this->m('widget_callback');
-		unset($wref);
-		
+		// Start widget processing
+		$this->widget_processing = true;
+		$this->widget_processing_params = $widget_args;
+		// Enable widget grouping
+		if ( $this->options->get_bool('group_widget') ) {
+			$this->util->add_filter('get_group_id', $this->m('widget_group_id'));
+		}
+		// Begin output buffer
+		ob_start();
+	}
+	
+	/**
+	 * Handles inter-widget processing
+	 * After widget output generated, Before next widget starts
+	 * @param array $params New widget parameters
+	 */
+	public function widget_process_inter( $params ) {
+		$this->widget_process_finish();
 		return $params;
 	}
 	
 	/**
-	 * Widget display handler
-	 * Original widget display handler is called inside of an output buffer & links in output are processed before sending to browser 
-	 * @param array $args Widget instance properties
-	 * @param int (optional) $widget_args Additional widget args (usually the widget's instance number)
-	 * @see WP_Widget::display_callback() for more information
-	 * @see sidebars_widgets() for callback modification
-	 * @global $wp_registered_widgets
-	 * @uses widget_process_links() to Process links in widget content
+	 * Complete widget processing
+	 * Activate widget output
+	 * @uses $widget_processing
+	 * @uses $widget_processing_level
+	 * @uses $widget_processing_params
 	 * @return void
 	 */
-	function widget_callback($args, $widget_args = 1) {
-		global $wp_registered_widgets;
-		$wid = ( isset($args['widget_id']) ) ? $args['widget_id'] : false;
-		//Stop processing if widget data invalid
-		if ( !$wid || !isset($wp_registered_widgets[$wid]) || !($w =& $wp_registered_widgets[$wid]) || !isset($w['id']) || $wid != $w['id'] )
-			return false;
-		//Get original callback
-		if ( !isset($w[$this->widget_callback_orig]) || !($cb = $w[$this->widget_callback_orig]) || !is_callable($cb) )
-			return false;
-		$params = func_get_args();
-		//Start processing widget output
-		$this->widget_processing = $wid;
-		// Buffer output for further processing if enabled
-		if ( $this->options->get_bool('enabled_widget') ) {
-			//Set Group ID filter
-			$filter = (object) array (
-				'hook'	=> 'get_group_id',
-				'cb'	=> $this->m('widget_group_id'),
-			);
-			$this->util->add_filter($filter->hook, $filter->cb);
-			//Start output buffer
-			ob_start();
-			//Call original callback
-			call_user_func_array($cb, $params);
-			//Flush output buffer
-			$out = $this->activate_links(ob_get_clean());
-			//Unset Group ID filter
-			$this->util->remove_filter($filter->hook, $filter->cb);
-			//Output widget
-			echo $out;
+	public function widget_process_finish() {
+		/**
+		 * Stop processing on conditions:
+		 * - No widget is being processed
+		 * - Processing a nested widget
+		 */
+		if ( !$this->widget_processing || 0 < $this->widget_processing_level ) {
+			return;
 		}
-		// Simply execute widget's original callback if processing disabled
-		else {
-			call_user_func_array($cb, $params);
+		// Activate widget output
+		$out = $this->activate_links(ob_get_clean());
+		
+		// Clear grouping callback
+		if ( $this->options->get_bool('group_widget') ) {
+			$this->util->remove_filter('get_group_id', $this->m('widget_group_id'));
 		}
-		//Stop processing widget
+		// End widget processing
 		$this->widget_processing = false;
+		$this->widget_processing_params = null;
+		// Output widget
+		echo $out;
 	}
 	
 	/**
-	 * Generate group ID for widget
-	 * Should only be called when widget is being processed
-	 * @param array $group_segments Strings used to build group ID
-	 * @return array Group segments with Current Widget ID added
+	 * Add widget ID to link group ID
+	 * Widget ID precedes all other group segments
+	 * @uses `SLB::get_group_id` filter
+	 * @param array $group_segments Group ID segments
+	 * @return array Modified group ID segments
 	 */
 	public function widget_group_id($group_segments) {
-		//Only process when widget is being processed
-		if ( !!$this->widget_processing ) {
-			//Clear group segments
-			$group_segments = array();
-			//Add group ID
-			if ( $this->options->get_bool('group_widget') ) {
-				$group_segments[] = $this->widget_processing;
-			}
+		// Add current widget ID to group ID
+		if ( isset($this->widget_processing_params['id']) ) {
+			array_unshift($group_segments, $this->widget_processing_params['id']);
 		}
 		return $group_segments;
 	}
 	
 	/**
-	 * Process links in widget content
-	 * @deprecated
-	 * @param string $content Widget content
-	 * @return string Processed widget content
-	 * @uses process_links() to process links
+	 * Handles nested activation in widgets
+	 * @uses widget_processing
+	 * @uses $widget_processing_level
+	 * @return void
 	 */
-	function widget_process_links($content, $id) {
-		$id = ( $this->options->get_bool('group_widget') ) ? "widget_$id" : null;
-		return $this->process_links($content, $id);
+	public function widget_process_nested() {
+		// Stop if no widget is being processed
+		if ( !$this->widget_processing ) {
+			return;
+		}
+		
+		// Increment nesting level
+		$this->widget_processing_level++;
+	}
+	
+	/**
+	 * Mark the end of a nested widget
+	 * @uses $widget_processing_level
+	 */
+	public function widget_process_nested_finish() {
+		// Decrement nesting level
+		if ( 0 < $this->widget_processing_level ) {
+			$this->widget_processing_level--;
+		}
+	}
+	
+	/**
+	 * Begin blocking widget activation
+	 * @return void
+	 */
+	public function widget_block_start() {
+		$this->util->add_filter('is_content_valid', $this->m('widget_block_handle'));
+	}
+	
+	/**
+	 * Stop blocking widget activation
+	 * @return void
+	 */
+	public function widget_block_finish() {
+		$this->util->remove_filter('is_content_valid', $this->m('widget_block_handle'));
+	}
+	
+	/**
+	 * Handle widget activation blocking
+	 */
+	public function widget_block_handle($is_content_valid) {
+		return false;
 	}
 	
 	/*-** Helpers **-*/
