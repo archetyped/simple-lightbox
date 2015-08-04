@@ -39,16 +39,16 @@ class SLB_Option extends SLB_Field {
 	 * @param $default
 	 */
 	function __construct($id, $title = '', $default = '') {
-		//Normalize properties
+		// Normalize properties
 		$args = func_get_args();
 		$defaults = array ('title' => '', 'default' => '');
 		$props = $this->make_properties($args, $defaults);
-		//Validate
+		// Validate
 		if ( is_scalar($id) )
 			$props['id'] = $id;
 		if ( !is_string($props['title']) )
 			$props['title'] = '';
-		//Send to parent constructor
+		// Send to parent constructor
 		parent::__construct($props);
 	}
 	
@@ -130,7 +130,7 @@ class SLB_Option extends SLB_Field {
 	 * @return mixed Formatted option value 
 	 */
 	function format_default($value, $context = '') {
-		//Get default value
+		// Get default value
 		$d = $this->get_default();
 		if ( empty($d) )
 			return $value;

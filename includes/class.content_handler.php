@@ -70,11 +70,11 @@ class SLB_Content_Handler extends SLB_Component {
 	
 	public function get_attributes() {
 		$ret = array();
-		//Callback
+		// Callback
 		if ( !is_null($this->attributes) ) {
 			$ret = call_user_func($this->attributes);
 		}
-		//Filter
+		// Filter
 		$hook = sprintf('content_handler_%s_attributes', $this->get_id());
 		$ret = $this->util->apply_filters($hook, $ret);
 		return ( is_array($ret) ) ? $ret : array();

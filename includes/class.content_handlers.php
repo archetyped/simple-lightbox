@@ -50,10 +50,10 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 	public function add($id, $props = array(), $priority = 10) {
 		$this->clear_cache();
 		if ( is_string($id) ) {
-			//Initialize new handler
+			// Initialize new handler
 			$handler = new $this->item_type($id, $props);
 		} else {
-			//Remap parameters
+			// Remap parameters
 			$handler = func_get_arg(0);
 			if ( func_num_args() == 2 ) {
 				$priority = func_get_arg(1);
@@ -62,7 +62,7 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 		if ( !is_int($priority) ) {
 			$priority = 10;
 		}
-		//Add to collection
+		// Add to collection
 		return parent::add($handler, array('priority' => $priority));
 	}
 	
@@ -98,7 +98,7 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 	public function get($args = null) {
 		$items = $this->get_cache();
 		if ( empty($items) ) {
-			//Retrieve items
+			// Retrieve items
 			$items = parent::get( array( 'orderby' => array('meta' => 'priority') ) );
 			$this->update_cache($items);
 		}
@@ -119,11 +119,11 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 			$props = $handler->match($uri, $this);
 			if ( !!$props ) {
 				$ret->handler = $handler;
-				//Add handler props
+				// Add handler props
 				if ( is_array($props) ) {
 					$ret->props = $props;
 				}
-				//Save match
+				// Save match
 				$hid = $handler->get_id();
 				if ( !isset($this->request_matches[$hid]) ) {
 					$this->request_matches[$hid] = $handler;
@@ -211,14 +211,14 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 	 * @return bool TRUE if URI is image
 	 */
 	public function match_image($uri, $handlers) {
-		//Sanitize URI
+		// Sanitize URI
 		$qpos = strpos($uri, '?');
 		$uri_source = ( $qpos !== false ) ? substr($uri, 0, $qpos) : $uri;
 		
-		//Standard
+		// Standard
 		$match = ( $this->util->has_file_extension($uri_source, array('jpg', 'jpeg', 'jpe', 'jfif', 'jif', 'gif', 'png')) ) ? true : false;
 		
-		//If match not found, allow third-party matching
+		// If match not found, allow third-party matching
 		if ( !$match ) {
 			$match = $this->util->apply_filters('image_match', $match, $uri);
 		}
@@ -239,7 +239,7 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 	 * Load handler files in client
 	 */
 	public function client_output() {
-		//Get handlers for current request
+		// Get handlers for current request
 		foreach ( $this->request_matches as $handler ) {
 			$handler->enqueue_scripts();
 		}
@@ -255,9 +255,9 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 		$code = array();
 		
 		foreach ( $this->request_matches as $handler ) {
-			//Attributes
+			// Attributes
 			$attrs = $handler->get_attributes();
-			//Styles
+			// Styles
 			$styles = $handler->get_styles(array('uri_format'=>'full'));
 			if ( !empty($styles) ) {
 				$attrs['styles'] = array_values($styles);
@@ -265,12 +265,12 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 			if ( empty($attrs) ) {
 				continue;
 			}
-			//Setup client parameters
+			// Setup client parameters
 			$params = array(
 				sprintf("'%s'", $handler->get_id()),
 				json_encode($attrs),
 			);
-			//Extend handler in client
+			// Extend handler in client
 			$code[] = $this->util->call_client_method('View.extend_content_handler', $params, false);
 		}
 		if ( !empty($code) ) {

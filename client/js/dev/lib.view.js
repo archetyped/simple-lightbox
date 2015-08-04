@@ -4065,7 +4065,7 @@ var Template = {
 	
 	_hooks: function() {
 		// TODO: Refactor to event that can save retrieved tags
-		//(`dom_init` event called during attribute initialization so tags are not saved)
+		// (`dom_init` event called during attribute initialization so tags are not saved)
 		this.on('dom_init', function(ev) {
 			// Init tag handlers
 			var tags = this.get_tags(null, null, true);

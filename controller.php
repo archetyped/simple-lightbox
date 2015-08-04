@@ -105,7 +105,7 @@ class SLB_Lightbox extends SLB_Base {
 	 */	
 	public function __construct() {
 		parent::__construct();
-		//Init instances
+		// Init instances
 		$this->fields = new SLB_Fields();
 		$this->themes = new SLB_Themes($this);
 		if ( !is_admin() ) {
@@ -189,17 +189,17 @@ class SLB_Lightbox extends SLB_Base {
 			$this->util->add_filter('pre_exclude_content', $this->m('exclude_shortcodes'));
 			$this->util->add_filter('post_process_links', $this->m('restore_excluded_content'));
 			
-			//Grouping
+			// Grouping
 			if ( $this->options->get_bool('group_post') ) {
 				$this->util->add_filter('get_group_id', $this->m('post_group_id'), 1);	
 			}
 			
-			//Shortcode grouping
+			// Shortcode grouping
 			if ( $this->options->get_bool('group_gallery') ) {
 				add_filter('the_content', $this->m('group_shortcodes'), 1);
 			}
 			
-			//Widgets
+			// Widgets
 			if ( $this->options->get_bool('enabled_widget') ) {
 				add_action('dynamic_sidebar_before', $this->m('widget_process_nested'));
 				add_action('dynamic_sidebar', $this->m('widget_process_start'), PHP_INT_MAX);
@@ -221,7 +221,7 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	public function post_group_id($group_segments) {
 		if ( in_the_loop() ) {
-			//Prepend post ID to group ID
+			// Prepend post ID to group ID
 			$post = get_post();
 			if ( $post ) {
 				array_unshift($group_segments, $post->ID);
@@ -234,7 +234,7 @@ class SLB_Lightbox extends SLB_Base {
 	 * Init options
 	 */
 	protected function _options() {
-		//Setup options
+		// Setup options
 		$opts = array (
 			'groups' 	=> array (
 				'activation'	=> array ( 'title' => __('Activation', 'simple-lightbox'), 'priority' => 10),
@@ -314,7 +314,7 @@ class SLB_Lightbox extends SLB_Base {
 	 * @uses this->admin->add_theme_page
 	 */
 	function admin_menus() {
-		//Build options page
+		// Build options page
 		$lbls_opts = array(
 			'menu'			=> __('Lightbox', 'simple-lightbox'),
 			'header'		=> __('Lightbox Settings', 'simple-lightbox'),
@@ -324,13 +324,13 @@ class SLB_Lightbox extends SLB_Base {
 			->require_form()
 			->add_content('options', 'Options', $this->options);
 			
-		//Add Support information
+		// Add Support information
 		$support = $this->util->get_plugin_info('SupportURI');
 		if ( !empty($support) ) {
 			$pg_opts->add_content('support', __('Feedback & Support', 'simple-lightbox'), $this->m('theme_page_callback_support'), 'secondary');
 		}
 		
-		//Add Actions
+		// Add Actions
 		$lbls_reset = array (
 			'title'			=> __('Reset', 'simple-lightbox'),
 			'confirm'		=> __('Are you sure you want to reset settings?', 'simple-lightbox'),
@@ -374,7 +374,7 @@ class SLB_Lightbox extends SLB_Base {
 			$ret = ( !is_admin() && $this->options->get_bool('enabled') && !is_feed() ) ? true : false;
 			if ( $ret ) {
 				$opt = '';
-				//Determine option to check
+				// Determine option to check
 				if ( is_home() ) {
 					$opt = 'home';
 				}
@@ -384,7 +384,7 @@ class SLB_Lightbox extends SLB_Base {
 				elseif ( is_archive() || is_search() ) {
 					$opt = 'archive';
 				}
-				//Check sub-option
+				// Check sub-option
 				if ( !empty($opt) && ( $opt = 'enabled_' . $opt ) && $this->options->has($opt) ) {
 					$ret = $this->options->get_bool($opt);
 				}
@@ -429,26 +429,26 @@ class SLB_Lightbox extends SLB_Base {
 	 * @return A list of galleries with links activated
 	 */
 	function activate_galleries($galleries) {
-		//Validate
+		// Validate
 		if ( empty($galleries) ) {
 			return $galleries;
 		}
-		//Check galleries for HTML output
+		// Check galleries for HTML output
 		$gallery = reset($galleries);
 		if ( is_array($gallery) ) {
 			return $galleries;
 		}
 		
-		//Activate galleries
+		// Activate galleries
 		$group = ( $this->options->get_bool('group_gallery') ) ? true : null;
 		foreach ( $galleries as $key => $val ) {
 			if ( !is_null($group) ) {
 				$group = 'gallery_' . $key;
 			}
-			//Activate links in gallery
+			// Activate links in gallery
 			$gallery = $this->process_links($val, $group);
 			
-			//Save modified gallery
+			// Save modified gallery
 			$galleries[$key] = $gallery;
 		}
 		
@@ -489,9 +489,9 @@ class SLB_Lightbox extends SLB_Base {
 	 * @return string Content with processed links 
 	 */
 	protected function process_links($content, $group = null) {
-		//Extract links
+		// Extract links
 		$links = $this->get_links($content, true);
-		//Do not process content without links
+		// Do not process content without links
 		if ( empty($links) ) {
 			return $content;
 		}
@@ -508,7 +508,7 @@ class SLB_Lightbox extends SLB_Base {
 			$uri_proto = (object) array('raw' => '', 'source' => '', 'parts' => '');
 		}
 		
-		//Setup group properties
+		// Setup group properties
 		$g_props = (object) array(
 			'enabled'			=> $this->options->get_bool('group_links'),
 			'attr'				=> 'group',
@@ -520,7 +520,7 @@ class SLB_Lightbox extends SLB_Base {
 			$g_props->base = ( is_scalar($group) ) ? trim(strval($group)) : '';
 		}
 		
-		//Initialize content handlers
+		// Initialize content handlers
 		if ( !( $this->handlers instanceof SLB_Content_Handlers ) ) {
 			$this->handlers = new SLB_Content_Handlers($this);
 		}
@@ -528,7 +528,7 @@ class SLB_Lightbox extends SLB_Base {
 		// Iterate through and activate supported links
 		
 		foreach ( $links as $link ) {
-			//Init vars
+			// Init vars
 			$pid = 0;
 			$link_new = $link;
 			$q = null;
@@ -536,14 +536,14 @@ class SLB_Lightbox extends SLB_Base {
 			$type = false;
 			$props_extra = array();
 			
-			//Parse link attributes
+			// Parse link attributes
 			$attrs = $this->util->parse_attribute_string($link_new, array('href' => ''));
-			//Get URI
+			// Get URI
 			$uri->raw = $attrs['href'];
 			
-			//Stop processing invalid links
+			// Stop processing invalid links
 			if ( !$this->validate_uri($uri->raw)
-				|| $this->has_attribute($attrs, 'active', false) //Previously-processed
+				|| $this->has_attribute($attrs, 'active', false) // Previously-processed
 				) {
 				continue;
 			}
@@ -556,7 +556,7 @@ class SLB_Lightbox extends SLB_Base {
 			// Handle internal links (e.g. attachments)
 			$internal = ( $relative || $uri->parts['host'] === $uri_origin['host'] ) ? true : false;
 			
-			//Get source URI (e.g. attachments)
+			// Get source URI (e.g. attachments)
 			if ( $internal && is_local_attachment($uri->source) ) {
 				$pid = url_to_postid($uri->source);
 				$src = wp_get_attachment_url($pid);
@@ -569,17 +569,17 @@ class SLB_Lightbox extends SLB_Base {
 			
 			/* Determine content type */
 			
-			//Check if URI has already been processed
+			// Check if URI has already been processed
 			if ( $this->media_item_cached($uri->source) ) {
 				$i = $this->get_cached_media_item($uri->source);
 				$type = $i->type;
 			} else {
-				//Get handler match
+				// Get handler match
 				$hdl_result = $this->handlers->match($uri->source);
 				if ( !!$hdl_result->handler ) {
 					$type = $hdl_result->handler->get_id();
 					$props_extra = $hdl_result->props;
-					//Updated source URI
+					// Updated source URI
 					if ( isset($props_extra['uri']) ) {
 						$uri->source = $props_extra['uri'];
 						unset($props_extra['uri']);
@@ -587,17 +587,17 @@ class SLB_Lightbox extends SLB_Base {
 				}
 			}
 			
-			//Stop processing if link type not valid
+			// Stop processing if link type not valid
 			if ( !$type ) {
-				//Cache
+				// Cache
 				$this->validated_uris[$uri->raw] = false;
 				continue;
 			}
 			
-			//Set group (if enabled)
+			// Set group (if enabled)
 			if ( $g_props->enabled ) {
 				$group = array();
-				//Get preset group attribute
+				// Get preset group attribute
 				$g = ( $this->has_attribute($attrs, $g_props->attr) ) ? $this->get_attribute($attrs, $g_props->attr) : '';
 				if ( is_string($g) && ($g = trim($g)) && !empty($g) ) {
 					$group[] = $g;
@@ -607,39 +607,39 @@ class SLB_Lightbox extends SLB_Base {
 				
 				$group = $this->util->apply_filters('get_group_id', $group);
 				
-				//Default group
+				// Default group
 				if ( empty($group) || !is_array($group) ) {
 					$group = $this->get_prefix();
 				} else {
 					$group = implode('_', $group);
 				}
 				
-				//Set group attribute
+				// Set group attribute
 				$this->set_attribute($attrs, $g_props->attr, $group);
 				unset($g);
 			}
 			
-			//Activate link
+			// Activate link
 			$this->set_attribute($attrs, 'active');
 			
-			//Process internal links
+			// Process internal links
 			if ( $internal ) {
-				//Mark as internal
+				// Mark as internal
 				$this->set_attribute($attrs, 'internal', $pid);
 			}
 			
-			//Cache item attributes
+			// Cache item attributes
 			$key = $this->cache_media_item($uri, $type, $internal, $props_extra);
 			$this->set_attribute($attrs, 'asset', $key);
 			
-			//Filter attributes
+			// Filter attributes
 			$attrs = $this->util->apply_filters('process_link_attributes', $attrs);
 			
-			//Update link in content
+			// Update link in content
 			$link_new = '<a ' . $this->util->build_attribute_string($attrs) . '>';
 			$content = str_replace($link, $link_new, $content);
 		}
-		//Handle widget content
+		// Handle widget content
 		if ( !!$this->widget_processing && 'the_content' == current_filter() ) {
 			$content = $this->exclude_wrap($content);
 		}
@@ -673,24 +673,24 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	protected function validate_uri($uri) {
 		static $patterns = null;
-		//Previously-validated URI
+		// Previously-validated URI
 		if ( isset($this->validated_uris[$uri]) )
 			return $this->validated_uris[$uri];
 
 		$valid = true;
-		//Boilerplate validation
-		if ( empty($uri) //Empty
-			|| 0 === strpos($uri, '#') //Anchor
+		// Boilerplate validation
+		if ( empty($uri) // Empty
+			|| 0 === strpos($uri, '#') // Anchor
 			)
 			$valid = false;
 
-		//Regex matching
+		// Regex matching
 		if ( $valid ) {
-			//Get patterns
+			// Get patterns
 			if ( is_null($patterns) ) {
 				$patterns = $this->util->apply_filters('validate_uri_regex', array());
 			}	
-			//Iterate through patterns until match found
+			// Iterate through patterns until match found
 			foreach ( $patterns as $pattern ) {
 				if ( 1 === preg_match($pattern, $uri) ) {
 					$valid = false;
@@ -699,7 +699,7 @@ class SLB_Lightbox extends SLB_Base {
 			}
 		}
 		
-		//Cache
+		// Cache
 		$this->validated_uris[$uri] = $valid;
 		return $valid;
 	}
@@ -730,15 +730,15 @@ class SLB_Lightbox extends SLB_Base {
 	 * @return void
 	 */
 	function client_init($client_script) {
-		//Get options
+		// Get options
 		$options = $this->options->build_client_output();
 		
-		//Load UI Strings
+		// Load UI Strings
 		if ( ($labels = $this->build_labels()) && !empty($labels) ) {
 			$options['ui_labels'] = $labels;
 		}
 		
-		//Build client output
+		// Build client output
 		$client_script[] = $this->util->call_client_method('View.init', $options);
 		return $client_script;
 	}
@@ -753,10 +753,10 @@ class SLB_Lightbox extends SLB_Base {
 		if ( !$this->has_cached_media_items() )
 			return false;
 		
-		//Set up hooks
+		// Set up hooks
 		add_action('wp_print_footer_scripts', $this->m('client_footer_script'));
 		
-		//Build client output
+		// Build client output
 		$this->util->do_action('footer');
 	}
 	
@@ -1066,7 +1066,7 @@ class SLB_Lightbox extends SLB_Base {
 	 * @return string Exclusion tag
 	 */
 	private function get_exclude_tag( $type = "open" ) {
-		//Validate
+		// Validate
 		$tags = $this->get_exclude_tags();
 		if ( !isset($tags->{$type}) ) {
 			$type = "open";
@@ -1108,11 +1108,11 @@ class SLB_Lightbox extends SLB_Base {
 	 * @return string Content wrapped in exclusion tags
 	 */
 	private function exclude_wrap($content) {
-		//Validate
+		// Validate
 		if ( !is_string($content) ) {
 			$content = "";
 		}
-		//Wrap
+		// Wrap
 		$tags = $this->get_exclude_tags();
 		return $tags->open . $content . $tags->close;
 	}
@@ -1272,7 +1272,7 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	function group_shortcodes_handler($attr, $content, $tag) {
 		$code = $this->util->make_shortcode($tag, $attr, $content);
-		//Wrap shortcode
+		// Wrap shortcode
 		return sprintf( $this->group_get_wrapper(), $code);
 	}
 	
@@ -1445,16 +1445,16 @@ class SLB_Lightbox extends SLB_Base {
 	 * @return string Formatted attribute name
 	 */
 	function make_attribute_name($name = '') {
-		//Validate
+		// Validate
 		if ( !is_string($name) ) {
 			$name = '';
 		} else {
 			$name = trim($name);
 		}
-		//Setup
+		// Setup
 		$sep = '-';
 		$top = 'data';
-		//Generate valid name
+		// Generate valid name
 		if ( strpos($name, $top . $sep . $this->get_prefix()) !== 0 ) {
 			$name = $top . $sep . $this->add_prefix($name, $sep);
 		}
@@ -1470,7 +1470,7 @@ class SLB_Lightbox extends SLB_Base {
 	 * @return array Updated attribute array
 	 */
 	function set_attribute(&$attrs, $name, $value = true) {
-		//Validate
+		// Validate
 		$attrs = $this->get_attributes($attrs, false);
 		if ( !is_string($name) || empty($name) ) {
 			return $attrs;
@@ -1478,7 +1478,7 @@ class SLB_Lightbox extends SLB_Base {
 		if ( !is_scalar($value) ) {
 			$value = true;
 		}
-		//Add attribute
+		// Add attribute
 		$attrs = array_merge($attrs, array( $this->make_attribute_name($name) => strval($value) ));
 		
 		return $attrs;
@@ -1495,7 +1495,7 @@ class SLB_Lightbox extends SLB_Base {
 			$attr_string = $this->util->parse_attribute_string($attr_string);
 		}
 		$ret = ( is_array($attr_string) ) ? $attr_string : array();
-		//Filter out external attributes
+		// Filter out external attributes
 		if ( !empty($ret) && is_bool($internal) && $internal ) {
 			$ret_f = array();
 			foreach ( $ret as $key => $val ) {
@@ -1520,7 +1520,7 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	function get_attribute($attrs, $attr, $internal = true) {
 		$ret = false;
-		//Validate
+		// Validate
 		$attrs = $this->get_attributes($attrs, $internal);
 		if ( $internal ) {
 			$attr = $this->make_attribute_name($attr);
@@ -1546,7 +1546,7 @@ class SLB_Lightbox extends SLB_Base {
 		$ret = false;
 		if ( $a !== false ) {
 			$ret = true;
-			//Check value
+			// Check value
 			if ( !is_null($value) ) {
 				if ( is_string($value) ) {
 					$ret = ( $a == strval($value) ) ? true : false;
@@ -1566,11 +1566,11 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	function build_labels() {
 		$ret = array();
-		//Get all UI options
+		// Get all UI options
 		$prefix = 'txt_';
 		$opt_strings = array_filter(array_keys($this->options->get_items()), create_function('$opt', 'return ( strpos($opt, "' . $prefix . '") === 0 );'));
 		if ( count($opt_strings) ) {
-			//Build array of UI options
+			// Build array of UI options
 			foreach ( $opt_strings as $key ) {
 				$name = substr($key, strlen($prefix));
 				$ret[$name] = $this->options->get_value($key);

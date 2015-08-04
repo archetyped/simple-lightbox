@@ -32,14 +32,14 @@ class SLB_Theme extends SLB_Component {
 		$thm = $this;
 		while ( $thm->has_parent() ) {
 			$par = $thm->get_parent();
-			//Add ancestor
+			// Add ancestor
 			if ( $par->is_valid() && !in_array($par, $ret, true) ) {
 				$ret[] = $par;
 			}
-			//Get next ancestor
+			// Get next ancestor
 			$thm = $par;
 		}
-		//Sorting
+		// Sorting
 		if ( $sort_topdown ) {
 			$ret = array_reverse($ret);
 		}
