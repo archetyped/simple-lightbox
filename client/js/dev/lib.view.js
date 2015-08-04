@@ -2922,11 +2922,11 @@ var Content_Item = {
 		this._super();
 		// Add asset properties
 		var d = this.dom_get();
-		var key = d.attr('href') || null;
+		var key = d.attr(this.util.get_attribute('asset')) || null;
 		var assets = this.get_controller().assets || null;
 		// Merge asset data with default attributes
 		if ( this.util.is_string(key) ) {
-			var attrs = [{}, this._attr_default, {'permalink': key}];
+			var attrs = [{}, this._attr_default, {'permalink': d.attr('href')}];
 			if ( this.util.is_obj(assets) ) {
 				var t = this;
 				/**
@@ -2939,10 +2939,6 @@ var Content_Item = {
 					var ret = {};
 					if ( key in assets && t.util.is_obj(assets[key]) ) {
 						ret = assets[key];
-						// Handle variants
-						if ( '_parent' in ret ) {
-							ret = get_assets(ret._parent);
-						}
 					}
 					return ret;
 				};
