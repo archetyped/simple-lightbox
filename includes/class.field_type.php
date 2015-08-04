@@ -78,10 +78,10 @@ class SLB_Field_Type extends SLB_Field_Base {
 	 */
 	function set_container(&$container) {
 		if ( !empty($container) && is_object($container) ) {
-			//Set as param as container for current field
+			// Set as param as container for current field
 			$this->container =& $container;
 		} else {
-			//Clear container member if argument is invalid
+			// Clear container member if argument is invalid
 			$this->clear_container();
 		}
 	}
@@ -163,13 +163,13 @@ class SLB_Field_Type extends SLB_Field_Base {
 		$name = trim(strval($name));
 		if ( empty($name) )
 			return false;
-		//Create new field for element
+		// Create new field for element
 		$el = new SLB_Field($name, $type);
-		//Set container to current field instance
+		// Set container to current field instance
 		$el->set_container($this);
-		//Add properties to element
+		// Add properties to element
 		$el->set_properties($properties);
-		//Save element to current instance
+		// Save element to current instance
 		$this->elements[$name] =& $el;
 	}
 
@@ -193,24 +193,24 @@ class SLB_Field_Type extends SLB_Field_Base {
 	 * @return string Specified layout text
 	 */
 	function get_layout($name = 'form', $parse_nested = true) {
-		//Retrieve specified layout (use $name value if no layout by that name exists)
+		// Retrieve specified layout (use $name value if no layout by that name exists)
 		if ( empty($name) )
 			$name = $this->get_container_value('build_vars', 'layout', 'form');
 		$layout = $this->get_member_value('layout', $name, $name);
 
-		//Find all nested layouts in current layout
+		// Find all nested layouts in current layout
 		if ( !empty($layout) && !!$parse_nested ) {
 			$ph = $this->get_placeholder_defaults();
 
 			while ($ph->match = $this->parse_layout($layout, $ph->pattern_layout)) {
-				//Iterate through the different types of layout placeholders
+				// Iterate through the different types of layout placeholders
 				foreach ($ph->match as $tag => $instances) {
-					//Iterate through instances of a specific type of layout placeholder
+					// Iterate through instances of a specific type of layout placeholder
 					foreach ($instances as $instance) {
-						//Get nested layout
+						// Get nested layout
 						$nested_layout = $this->get_member_value($instance);
 
-						//Replace layout placeholder with retrieved item data
+						// Replace layout placeholder with retrieved item data
 						if ( !empty($nested_layout) )
 							$layout = str_replace($ph->start . $instance['match'] . $ph->end, $nested_layout, $layout);
 					}
@@ -271,59 +271,59 @@ class SLB_Field_Type extends SLB_Field_Base {
 		$ph_wrap_end = '</' . $ph_root_tag . '>';
 		$parse_result = false;
 
-		//Find all nested layouts in layout
+		// Find all nested layouts in layout
 		$match_value = preg_match_all($search, $layout, $parse_match, PREG_PATTERN_ORDER);
 
 		if ($match_value !== false && $match_value > 0) {
 			$parse_result = array();
-			//Get all matched elements
+			// Get all matched elements
 			$parse_match = $parse_match[1];
 
-			//Build XML string from placeholders
+			// Build XML string from placeholders
 			foreach ($parse_match as $ph) {
 				$ph_xml .= $ph_start_xml . $ph . $ph_end_xml . ' ';
 			}
 			$ph_xml = $ph_wrap_start . $ph_xml . $ph_wrap_end;
-			//Parse XML data
+			// Parse XML data
 			$ph_prs = xml_parser_create();
 			xml_parser_set_option($ph_prs, XML_OPTION_SKIP_WHITE, 1);
 			xml_parser_set_option($ph_prs, XML_OPTION_CASE_FOLDING, 0);
 			$ret = xml_parse_into_struct($ph_prs, $ph_xml, $parse_result['values'], $parse_result['index']);
 			xml_parser_free($ph_prs);
 
-			//Build structured array with all parsed data
+			// Build structured array with all parsed data
 
 			unset($parse_result['index'][$ph_root_tag]);
 
-			//Build structured array
+			// Build structured array
 			$result = array();
 			foreach ($parse_result['index'] as $tag => $instances) {
 				$result[$tag] = array();
-				//Instances
+				// Instances
 				foreach ($instances as $instance) {
-					//Skip instance if it doesn't exist in parse results
+					// Skip instance if it doesn't exist in parse results
 					if (!isset($parse_result['values'][$instance]))
 						continue;
 
-					//Stop processing instance if a previously-saved instance with the same options already exists
+					// Stop processing instance if a previously-saved instance with the same options already exists
 					foreach ($result[$tag] as $tag_match) {
 						if ($tag_match['match'] == $parse_match[$instance - 1])
 							continue 2;
 					}
 
-					//Init instance data array
+					// Init instance data array
 					$inst_data = array();
 
-					//Add Tag to array
+					// Add Tag to array
 					$inst_data['tag'] = $parse_result['values'][$instance]['tag'];
 
-					//Add instance data to array
+					// Add instance data to array
 					$inst_data['attributes'] = (isset($parse_result['values'][$instance]['attributes'])) ? $inst_data['attributes'] = $parse_result['values'][$instance]['attributes'] : '';
 
-					//Add match to array
+					// Add match to array
 					$inst_data['match'] = $parse_match[$instance - 1];
 
-					//Add to result array
+					// Add to result array
 					$result[$tag][] = $inst_data;
 				}
 			}
@@ -365,32 +365,32 @@ class SLB_Field_Type extends SLB_Field_Base {
 	 */
 	function build_layout($layout = 'form', $data = null) {
 		$out_default = '';
-		//Get base layout
+		// Get base layout
 		$out = $this->get_layout($layout);
-		//Only parse valid layouts
+		// Only parse valid layouts
 		if ( $this->is_valid_layout($out) ) {
-			//Parse Layout
+			// Parse Layout
 			$ph = $this->get_placeholder_defaults();
 
-			//Search layout for placeholders
+			// Search layout for placeholders
 			while ( $ph->match = $this->parse_layout($out, $ph->pattern_general) ) {
-				//Iterate through placeholders (tag, id, etc.)
+				// Iterate through placeholders (tag, id, etc.)
 				foreach ( $ph->match as $tag => $instances ) {
-					//Iterate through instances of current placeholder
+					// Iterate through instances of current placeholder
 					foreach ( $instances as $instance ) {
-						//Process value based on placeholder name
+						// Process value based on placeholder name
 						$target_property = $this->util->apply_filters(array('process_placeholder_' . $tag, false), '', $this, $instance, $layout, $data);
-						//Process value using default processors (if necessary)
+						// Process value using default processors (if necessary)
 						if ( '' == $target_property ) {
 							$target_property = $this->util->apply_filters(array('process_placeholder', false), $target_property, $this, $instance, $layout, $data);
 						}
 
-						//Clear value if value not a string
+						// Clear value if value not a string
 						if ( !is_scalar($target_property) ) {
 							$target_property = '';
 						}
 						
-						//Replace layout placeholder with retrieved item data
+						// Replace layout placeholder with retrieved item data
 						$out = str_replace($ph->start . $instance['match'] . $ph->end, $target_property, $out);
 					}
 				}

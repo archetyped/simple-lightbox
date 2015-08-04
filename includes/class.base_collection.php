@@ -64,7 +64,7 @@ class SLB_Base_Collection extends SLB_Base {
 	 * Calls `init` action if collection has a hook prefix
 	 */
 	private function init() {
-		//Initialize
+		// Initialize
 		if ( is_null($this->items) ) {
 			$this->items = array();
 			if ( !empty($this->hook_prefix) ) {
@@ -84,10 +84,10 @@ class SLB_Base_Collection extends SLB_Base {
 		if ( !is_array($items) ) {
 			$items = array($items);
 		}
-		//Validate item type
+		// Validate item type
 		if ( !is_null($this->item_type) ) {
 			foreach ( $items as $idx => $item ) {
-				//Remove invalid items
+				// Remove invalid items
 				if ( !( $item instanceof $this->item_type ) ) {
 					unset($items[$idx]);
 				}
@@ -100,7 +100,7 @@ class SLB_Base_Collection extends SLB_Base {
 	}
 	
 	protected function item_valid($item) {
-		//Validate item type 
+		// Validate item type 
 		return ( empty($this->item_type) || ( $item instanceof $this->item_type ) ) ? true : false;
 	}
 	
@@ -123,7 +123,7 @@ class SLB_Base_Collection extends SLB_Base {
 	protected function get_key($item, $check_existing = false) {
 		$ret = null;
 		if ( $this->unique || !!$check_existing ) {
-			//Check for item in collection
+			// Check for item in collection
 			if ( $this->has($item) ) {
 				$ret = array_search($item, $this->items);
 			} elseif ( !!$this->key_prop && ( is_object($item) || is_array($item) ) ) {
@@ -150,9 +150,9 @@ class SLB_Base_Collection extends SLB_Base {
 	 */
 	public function add($item, $meta = null) {
 		$this->init();
-		//Validate
+		// Validate
 		if ( $this->item_valid($item) ) {
-			//Add item to collection
+			// Add item to collection
 			$key = $this->get_key($item);
 			if ( !$key ) {
 				$this->items[] = $item;
@@ -160,7 +160,7 @@ class SLB_Base_Collection extends SLB_Base {
 			} else {
 				$this->items[$key] = $item;
 			}
-			//Add metadata
+			// Add metadata
 			if ( !!$key && is_array($meta) ) {
 				$this->add_meta($key, $meta);
 			}
@@ -195,7 +195,7 @@ class SLB_Base_Collection extends SLB_Base {
 	 * @return bool TRUE if item(s) in collection
 	 */
 	public function has($items) {
-		//Attempt to locate item
+		// Attempt to locate item
 		return false;
 	}
 	
@@ -207,7 +207,7 @@ class SLB_Base_Collection extends SLB_Base {
 	 */
 	public function get($args = null) {
 		$this->init();
-		//Parse args
+		// Parse args
 		$args_default = array(
 			'orderby'		=> null,
 			'order'			=> 'DESC',
@@ -220,42 +220,42 @@ class SLB_Base_Collection extends SLB_Base {
 		
 		/* Sort */
 		if ( !is_null($r['orderby']) ) {
-			//Validate
+			// Validate
 			if ( !is_array($r['orderby']) ) {
 				$r['orderby'] = array('item' => $r['orderby']);
 			}
-			//Prep
+			// Prep
 			$metas = ( isset($r['orderby']['meta']) ) ? $this->items_meta : array();
-			//Sort
+			// Sort
 			foreach ( $r['orderby'] as $stype => $sval ) {
 				/* Meta sorting */
 				if ( 'meta' == $stype ) {
-					//Build sorting buckets
+					// Build sorting buckets
 					$buckets = array();
 					foreach ( $metas as $item => $meta ) {
 						if ( !isset($meta[$sval]) ) {
 							continue;
 						}
-						//Create bucket
+						// Create bucket
 						$idx = $meta[$sval];
 						if ( !isset($buckets[ $idx ]) ) {
 							$buckets[ $idx ] = array();
 						}
-						//Add item to bucket
+						// Add item to bucket
 						$buckets[ $idx ][] = $item;
 					}
-					//Sort buckets
+					// Sort buckets
 					ksort($buckets, SORT_NUMERIC);
-					//Merge buckets
+					// Merge buckets
 					$pool = array();
 					foreach ( $buckets as $bucket ) {
 						$pool = array_merge($pool, $bucket);
 					}
-					//Fill with items
+					// Fill with items
 					$items = array_merge( array_fill_keys($pool, null), $items);
 				}
 			}
-			//Clear workers
+			// Clear workers
 			unset($stype, $sval, $buckets, $pool, $item, $metas, $meta, $idx);
 		}
 		return $items;
@@ -272,18 +272,18 @@ class SLB_Base_Collection extends SLB_Base {
 	 * @return object Current instance
 	 */
 	protected function add_meta($item, $meta_key, $meta_value = null, $reset = false) {
-		//Validate
+		// Validate
 		if ( $this->key_valid($item) && ( is_array($meta_key) || is_string($meta_key) ) ) {
-			//Prepare metadata
+			// Prepare metadata
 			$meta = ( is_string($meta_key) ) ? array($meta_key => $meta_value) : $meta_key;
-			//Reset existing meta (if necessary)
+			// Reset existing meta (if necessary)
 			if ( is_array($meta_key) && func_num_args() > 2) {
 				$reset = func_get_arg(2);
 			}
 			if ( !!$reset ) {
 				unset($this->items_meta[$item]);
 			}
-			//Add metadata
+			// Add metadata
 			if ( !isset($this->items_meta[$item]) ) {
 				$this->items_meta[$item] = array();
 			}
@@ -300,10 +300,10 @@ class SLB_Base_Collection extends SLB_Base {
 	protected function remove_meta($item, $meta_key = null) {
 		if ( $this->key_valid($item) && isset($this->items_meta[$item]) ) {
 			if ( is_string($meta_key) ) {
-				//Remove specific meta value
+				// Remove specific meta value
 				unset($this->items_meta[$item][$meta_key]);
 			} else {
-				//Remove all metadata
+				// Remove all metadata
 				unset($this->items_meta[$item]);
 			}
 		}
@@ -335,14 +335,14 @@ class SLB_Base_Collection extends SLB_Base {
 	 * Prints output
 	 */
 	function build($build_vars = array()) {
-		//Parse vars
+		// Parse vars
 		$this->parse_build_vars($build_vars);
 		$this->util->do_action_ref_array('build_init', array($this));
-		//Pre-build output
+		// Pre-build output
 		$this->util->do_action_ref_array('build_pre', array($this));
-		//Build groups
+		// Build groups
 		$this->build_groups();
-		//Post-build output
+		// Post-build output
 		$this->util->do_action_ref_array('build_post', array($this));
 	}
 	

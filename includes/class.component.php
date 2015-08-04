@@ -80,10 +80,10 @@ class SLB_Component extends SLB_Base_Object {
 			$param_final = ( 'script' == $t ) ? true : 'all';
 			foreach ( $files as $f ) {
 				$f = (object) $f;
-				//Format handle
+				// Format handle
 				$handle = $this->get_handle($f->handle);
 				
-				//Format dependencies
+				// Format dependencies
 				$deps = array();
 				foreach ( $f->deps as $dep ) {
 					if ( $this->util->has_wrapper($dep) ) {
@@ -121,7 +121,7 @@ class SLB_Component extends SLB_Base_Object {
 	public function is_valid() {
 		$ret = parent::is_valid();
 		if ( $ret ) {
-			//Check required component properties
+			// Check required component properties
 			$props = array_merge($this->props_required_base, $this->props_required);
 			foreach ( $props as $prop ) {
 				if ( !isset($this->{$prop}) || empty($this->{$prop}) ) {

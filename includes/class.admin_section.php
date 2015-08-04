@@ -16,9 +16,9 @@ class SLB_Admin_Section extends SLB_Admin_View {
 	/* Init */
 	
 	public function __construct($id, $parent, $labels, $callback = null, $capability = null) {
-		//Default
+		// Default
 		parent::__construct($id, $labels, $callback, $capability);
-		//Class specific
+		// Class specific
 		$this->set_parent($parent);
 		return $this;
 	}

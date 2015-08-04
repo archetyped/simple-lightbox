@@ -116,7 +116,7 @@ class SLB_Admin_View extends SLB_Base_Object {
 	
 	protected function init_required() {
 		$this->required = array_merge($this->_required, $this->required);
-		//Check for parent requirement
+		// Check for parent requirement
 		if ( $this->parent_required )
 			$this->required['parent'] = 'string';
 	}
@@ -171,10 +171,10 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 * @return string Label text
 	 */
 	public function get_label($type, $default = null) {
-		//Retrieve existing label type
+		// Retrieve existing label type
 		if ( $this->has_label($type) )
 			return $this->labels[$type];
-		//Use default label if type is not set
+		// Use default label if type is not set
 		if ( empty($default) && !empty($this->labels) ) {
 			reset($this->labels);
 			$default = current($this->labels);
@@ -191,14 +191,14 @@ class SLB_Admin_View extends SLB_Base_Object {
 	public function set_labels($labels) {
 		if ( empty($labels) )
 			return this;
-		//Single string
+		// Single string
 		if ( is_string($labels) ) {
 			$labels = array ( $labels );
 		} 
 		
-		//Array
+		// Array
 		if ( is_array($labels) ) {
-			//Merge with existing labels
+			// Merge with existing labels
 			if ( empty($this->labels) || !is_array($this->labels) ) {
 				$this->labels = array();
 			}
@@ -241,11 +241,11 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 * @return obj Current View instance
 	 */
 	public function add_content($id, $args) {
-		//Save parameters
+		// Save parameters
 		$this->content_raw[$id] = (object) $args;
-		//Clear parsed content
+		// Clear parsed content
 		$this->content = array();
-		//Return instance reference
+		// Return instance reference
 		return $this;
 	}
 	
@@ -255,12 +255,12 @@ class SLB_Admin_View extends SLB_Base_Object {
 	protected function get_content($parsed = true) {
 		$content = $this->content_raw;
 		if ( $parsed ) {
-			//Return previously parsed content
+			// Return previously parsed content
 			if ( !empty($this->content) ) {
 				$content = $this->content;
 			}
 			elseif ( !empty($this->content_raw) ) {
-				//Parse content before returning
+				// Parse content before returning
 				$content = $this->content = $this->parse_content();
 			}
 		}

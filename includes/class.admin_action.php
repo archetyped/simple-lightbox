@@ -25,7 +25,7 @@ class SLB_Admin_Action extends SLB_Admin_View {
 	 */
 	function __construct($id, $labels, $data = null) {
 		parent::__construct($id, $labels);
-		//Default options instance
+		// Default options instance
 		if ( !empty($data) ) {
 			$this->add_content('data', $data);
 		}
@@ -40,27 +40,27 @@ class SLB_Admin_Action extends SLB_Admin_View {
 	 * @return string Status message (success, fail, etc.)
 	 */
 	public function handle() {
-		//Validate user
+		// Validate user
 		if ( ! current_user_can('activate_plugins') || ! check_admin_referer($this->get_id()) )
 			wp_die(__('Access Denied', 'simple-lightbox'));
 		
-		//Get data
+		// Get data
 		$content = $this->get_content();
 		
 		$success = true;
 		
-		//Iterate through data
+		// Iterate through data
 		$hook = $this->util->get_hook($this->get_id_raw());
 		foreach ( $content as $c ) {
-			//Trigger action
+			// Trigger action
 			$res = apply_filters($hook, $success, $c->data, $this);
-			//Set result
+			// Set result
 			if ( !!$success ) {
 				$success = $res;
 			}
 		}
 		
-		//Set Status Message
+		// Set Status Message
 		$lbl = ( $success ) ? 'success' : 'failure';
 		$this->set_message($this->get_label($lbl));
 	}

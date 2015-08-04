@@ -70,7 +70,7 @@ class SLB_Admin extends SLB_Base {
 	
 	public function __construct(&$parent) {
 		parent::__construct();
-		//Set parent
+		// Set parent
 		if ( is_object($parent) )
 			$this->parent = $parent;
 	}
@@ -79,16 +79,16 @@ class SLB_Admin extends SLB_Base {
 	
 	protected function _hooks() {
 		parent::_hooks();
-		//Init
+		// Init
 		add_action('admin_menu', $this->m('init_menus'), 11);
 		
-		//Plugin actions
+		// Plugin actions
 		add_action('admin_action_' . $this->add_prefix('admin'), $this->m('handle_action'));
 		
-		//Notices
+		// Notices
 		add_action('admin_notices', $this->m('handle_notices'));
 		
-		//Plugin listing
+		// Plugin listing
 		add_filter('plugin_action_links_' . $this->util->get_plugin_base_name(), $this->m('plugin_action_links'), 10, 4);
 		add_filter('plugin_row_meta', $this->m('plugin_row_meta'), 10, 4);
 		add_action('in_plugin_update_message-' . $this->util->get_plugin_base_name(), $this->m('plugin_update_message'), 10, 2);
@@ -129,7 +129,7 @@ class SLB_Admin extends SLB_Base {
 	 * Handle routing of internal action to appropriate handler
 	 */
 	public function handle_action() {
-		//Parse action
+		// Parse action
 		$t = 'type';
 		$g = 'group';
 		$o = 'obj';
@@ -138,11 +138,11 @@ class SLB_Admin extends SLB_Base {
 		$this->add_prefix_ref($o);
 		$r =& $_REQUEST;
 		
-		//Retrieve view that initiated the action
+		// Retrieve view that initiated the action
 		if ( isset($r[$t]) && 'view' == $r[$t] ) {
 			if ( isset($r[$g]) && ( $prop = $r[$g] . 's' ) && property_exists($this, $prop) && is_array($this->{$prop}) && isset($r[$o]) && isset($this->{$prop}[$r[$o]]) ) {
 				$view =& $this->{$prop}[$r[$o]];
-				//Pass request to view
+				// Pass request to view
 				$view->do_callback();
 			}
 		}
@@ -156,10 +156,10 @@ class SLB_Admin extends SLB_Base {
 	public function handle_notices() {
 		$msgs = $this->util->apply_filters('admin_messages', array());
 		foreach ( $msgs as $mid => $msg ) {
-			//Filter out empty messages
+			// Filter out empty messages
 			if ( empty($msg) )
 				continue;
-			//Build and display message
+			// Build and display message
 			$mid = $this->add_prefix('msg_' . $mid);
 			?>
 			<div id="<?php echo esc_attr($mid); ?>" class="updated fade">
@@ -179,41 +179,41 @@ class SLB_Admin extends SLB_Base {
 	 * @uses `admin_init` hook
 	 */
 	public function init_menus() {
-		//Add top level menus (when necessary)
+		// Add top level menus (when necessary)
 		$menu;
 		foreach ( $this->menus as $menu ) {
-			//Register menu
+			// Register menu
 			$hook = add_menu_page($menu->get_label('title'), $menu->get_label('menu'), $menu->get_capability(), $menu->get_id(), $menu->get_callback());
-			//Add hook to menu object
+			// Add hook to menu object
 			$menu->set_hookname($hook);
 			$this->menus[$menu->get_id_raw()] =& $menu;
 		}
 		
 		$page;
-		//Add subpages
+		// Add subpages
 		foreach ( $this->pages as $page ) {
-			//Build Arguments
+			// Build Arguments
 			$args = array ( $page->get_label('header'), $page->get_label('menu'), $page->get_capability(), $page->get_id(), $page->get_callback() );
 			$f = null;
-			//Handle pages for default WP menus
+			// Handle pages for default WP menus
 			if ( $page->is_parent_wp() ) {
 				$f = 'add_' . $page->get_parent() . '_page';
 			}
 			
-			//Handle pages for custom menus
+			// Handle pages for custom menus
 			if ( ! function_exists($f) ) {
 				array_unshift( $args, $page->get_parent() );
 				$f = 'add_submenu_page';
 			}
 			
-			//Add admin page
+			// Add admin page
 			$hook = call_user_func_array($f, $args);
-			//Save hook to page properties
+			// Save hook to page properties
 			$page->set_hookname($hook);
 			$this->pages[$page->get_id_raw()] =& $page;
 		}
 		
-		//Add sections
+		// Add sections
 		$section;
 		foreach ( $this->sections as $section ) {
 			add_settings_section($section->get_id(), $section->get_title(), $section->get_callback(), $section->get_parent());
@@ -231,14 +231,14 @@ class SLB_Admin extends SLB_Base {
 	 * @return Admin_View|bool View instance (FALSE if view was not properly initialized)
 	 */
 	protected function add_view($type, $id, $args) {
-		//Validate request
+		// Validate request
 		$class = $this->add_prefix('admin_' . $type);
 		$collection = $type . 's';
 		if ( !class_exists($class) ) {
 			$class = $this->add_prefix('admin_view');
 			$collection = null;
 		}
-		//Create new instance
+		// Create new instance
 		$r = new ReflectionClass($class);
 		$view = $r->newInstanceArgs($args);
 		if ( $view->is_valid() && !empty($collection) && property_exists($this, $collection) && is_array($this->{$collection}) )
@@ -310,9 +310,9 @@ class SLB_Admin extends SLB_Base {
 	 * @return Admin_Page Page instance
 	 */
 	public function add_wp_page($id, $parent, $labels, $callback = null, $capability = null) {
-		//Add page
+		// Add page
 		$pg = $this->add_page($id, $parent, $labels, $capability);
-		//Set parent as WP
+		// Set parent as WP
 		if ( $pg ) {
 			$pg->set_parent_wp();
 		}
@@ -476,7 +476,7 @@ class SLB_Admin extends SLB_Base {
 		$args = func_get_args();
 		$section = $this->add_view('section', $id, $args);
 		
-		//Add Section
+		// Add Section
 		if ( $section->is_valid() )
 			$this->sections[$id] = $section;
 		
@@ -495,7 +495,7 @@ class SLB_Admin extends SLB_Base {
 	*/
 	public function plugin_action_links($actions, $plugin_file, $plugin_data, $context) {
 		global $admin_page_hooks;
-		//Add link to settings (only if active)
+		// Add link to settings (only if active)
 		if ( is_plugin_active($this->util->get_plugin_base_name()) ) {
 			/* Get Actions */
 			
@@ -531,13 +531,13 @@ class SLB_Admin extends SLB_Base {
 			}
 			unset($a);
 			
-			//Add links
+			// Add links
 			$links = array();
 			foreach ( $acts as $act ) {
 				$links[$act->id] = $this->util->build_html_link($act->uri, $act->label, $act->attributes);
 			}
 			
-			//Add links
+			// Add links
 			$actions = array_merge($links, $actions);
 		}
 		return $actions;
@@ -639,7 +639,7 @@ class SLB_Admin extends SLB_Base {
 	 */
 	function get_messages() {
 		if ( empty($this->messages) ) {
-			//Initialize messages if necessary
+			// Initialize messages if necessary
 			$this->messages = array(
 				'reset'			=> __('The settings have been reset', 'simple-lightbox'),
 				'beta'			=> __('<strong class="%1$s">Notice:</strong> This update is a <strong class="%1$s">Beta version</strong>. It is highly recommended that you test the update on a test server before updating the plugin on a production server.', 'simple-lightbox'),
