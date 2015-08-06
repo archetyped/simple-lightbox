@@ -1133,8 +1133,13 @@ class SLB_Utilities {
 	function get_file_extension($file, $lowercase = true) {
 		$ret = '';
 		$sep = '.';
+		// Validate
 		if ( !is_string($file) )
 			return $ret;
+		// Strip query string (if necessary)
+		if ( ( $qpos = strpos($file, '?') ) && $qpos !== false ) {
+			$file = substr($file, 0, $qpos);
+		}
 		if ( ( $rpos = strrpos($file, $sep) ) > 0 ) 
 			$ret = substr($file, $rpos + 1);
 		if ( !!$lowercase )
