@@ -208,15 +208,22 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 	/**
 	 * Matches image URIs
 	 * @param string $uri URI to match
-	 * @return bool TRUE if URI is image
+	 * @return bool|array TRUE if URI is image (array is used if extra data needs to be sent)
 	 */
 	public function match_image($uri, $handlers) {
 		// Basic matching
 		$match = ( $this->util->has_file_extension($uri, array('jpg', 'jpeg', 'jpe', 'jfif', 'jif', 'gif', 'png')) ) ? true : false;
 		
 		// Filter result
-		$match = $this->util->apply_filters('image_match', $match, $uri);
-
+		$extra = new stdClass();
+		$match = $this->util->apply_filters('image_match', $match, $uri, $extra);
+		
+		// Handle extra data passed from filters
+		// Currently only `uri` supported
+		if ( $match && isset($extra->uri) && is_string($extra->uri) ) {
+			$match = array('uri' => $extra->uri);
+		}
+		
 		return $match;
 	}
 	
