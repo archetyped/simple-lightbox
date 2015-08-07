@@ -211,13 +211,11 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 	 * @return bool TRUE if URI is image
 	 */
 	public function match_image($uri, $handlers) {
-		// Standard
+		// Basic matching
 		$match = ( $this->util->has_file_extension($uri, array('jpg', 'jpeg', 'jpe', 'jfif', 'jif', 'gif', 'png')) ) ? true : false;
 		
-		// If match not found, allow third-party matching
-		if ( !$match ) {
-			$match = $this->util->apply_filters('image_match', $match, $uri);
-		}
+		// Filter result
+		$match = $this->util->apply_filters('image_match', $match, $uri);
 
 		return $match;
 	}
