@@ -208,28 +208,23 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 	/**
 	 * Matches image URIs
 	 * @param string $uri URI to match
-	 * @return bool TRUE if URI is image
+	 * @return bool|array TRUE if URI is image (array is used if extra data needs to be sent)
 	 */
 	public function match_image($uri, $handlers) {
-		// Sanitize URI
-		$qpos = strpos($uri, '?');
-		$uri_source = ( $qpos !== false ) ? substr($uri, 0, $qpos) : $uri;
+		// Basic matching
+		$match = ( $this->util->has_file_extension($uri, array('jpg', 'jpeg', 'jpe', 'jfif', 'jif', 'gif', 'png')) ) ? true : false;
 		
-		// Standard
-		$match = ( $this->util->has_file_extension($uri_source, array('jpg', 'jpeg', 'jpe', 'jfif', 'jif', 'gif', 'png')) ) ? true : false;
+		// Filter result
+		$extra = new stdClass();
+		$match = $this->util->apply_filters('image_match', $match, $uri, $extra);
 		
-		// If match not found, allow third-party matching
-		if ( !$match ) {
-			$match = $this->util->apply_filters('image_match', $match, $uri);
+		// Handle extra data passed from filters
+		// Currently only `uri` supported
+		if ( $match && isset($extra->uri) && is_string($extra->uri) ) {
+			$match = array('uri' => $extra->uri);
 		}
 		
-		if ( !!$match ) {
-			$ret = ( $uri != $uri_source ) ? array('uri' => $uri_source) : true;
-		} else {
-			$ret = false;
-		}
-		
-		return $ret;
+		return $match;
 	}
 	
 	/* Output */
