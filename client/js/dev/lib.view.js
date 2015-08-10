@@ -3020,6 +3020,8 @@ var Content_Item = {
 		if ( !this.util.is_string(ret) ) {
 			ret = ( 'source' === mode ) ? this.get_attribute('permalink') : '';
 		}
+		// Format
+		ret = ret.replace('&amp;', '&');
 		return ret;
 	},
 	
