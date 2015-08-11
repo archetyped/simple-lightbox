@@ -960,8 +960,12 @@ class SLB_Lightbox extends SLB_Base {
 			$i = array_merge($i, array('type' => $type, 'source' => $uri->source, 'internal' => $internal));
 			// Cache item properties
 			$this->media_items_raw['props'][$key] = (object) $i;
-			// Cache URI (point to properties object)
+			// Cache Source URI (point to properties object)
 			$this->media_items_raw['uri'][$uri->source] = $key;
+			// Cache Raw URI (if necessary)
+			if ( $uri->raw !== $uri->source ) {
+				$this->media_items_raw['uri'][$uri->raw] = $key;
+			}
 		}
 		return $key;
 	}
