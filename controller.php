@@ -531,10 +531,11 @@ class SLB_Lightbox extends SLB_Base {
 			// Init vars
 			$pid = 0;
 			$link_new = $link;
-			$q = null;
 			$uri = clone $uri_proto;
 			$type = false;
 			$props_extra = array();
+			$key = null;
+			$internal = false;
 			
 			// Parse link attributes
 			$attrs = $this->util->parse_attribute_string($link_new, array('href' => ''));
@@ -548,32 +549,33 @@ class SLB_Lightbox extends SLB_Base {
 				continue;
 			}
 			
-			// Handle relative URIs
+			// Normalize URI (make absolute)
 			$uri->source = WP_HTTP::make_absolute_url($uri->raw, $uri_origin['scheme'] . '://' . $uri_origin['host']);
-			$relative = ( $uri->source !== $uri->raw ) ? true : false;
-			$uri->parts = parse_url($uri->source);
 			
-			// Handle internal links (e.g. attachments)
-			$internal = ( $relative || $uri->parts['host'] === $uri_origin['host'] ) ? true : false;
+			// URI cached?
+			$key = $this->get_media_item_id($uri->source);
 			
-			// Get source URI (e.g. attachments)
-			if ( $internal && is_local_attachment($uri->source) ) {
-				$pid = url_to_postid($uri->source);
-				$src = wp_get_attachment_url($pid);
-				if ( !!$src ) {
-					$uri->source = $src;
-					$props_extra['id'] = $pid;
+			// Internal URI? (e.g. attachments)
+			if ( !$key ) {
+				$uri->parts = parse_url($uri->source);
+				$internal = ( $uri->parts['host'] === $uri_origin['host'] ) ? true : false;
+			
+				// Attachment?
+				if ( $internal && is_local_attachment($uri->source) ) {
+					$pid = url_to_postid($uri->source);
+					$src = wp_get_attachment_url($pid);
+					if ( !!$src ) {
+						$uri->source = $src;
+						$props_extra['id'] = $pid;
+						// Check cache for attachment source URI
+						$key = $this->get_media_item_id($uri->source);
+					}
+					unset($src);
 				}
-				unset($src);
 			}
 			
-			/* Determine content type */
-			
-			// Check if URI has already been processed
-			if ( $this->media_item_cached($uri->source) ) {
-				$i = $this->get_cached_media_item($uri->source);
-				$type = $i->type;
-			} else {
+			// Determine content type
+			if ( !$key ) {
 				// Get handler match
 				$hdl_result = $this->handlers->match($uri->source);
 				if ( !!$hdl_result->handler ) {
@@ -585,13 +587,29 @@ class SLB_Lightbox extends SLB_Base {
 						unset($props_extra['uri']);
 					}
 				}
+				
+				// Cache valid item
+				if ( !!$type ) {
+					$key = $this->cache_media_item($uri, $type, $internal, $props_extra);
+				}
 			}
 			
-			// Stop processing if link type not valid
-			if ( !$type ) {
-				// Cache
-				$this->validated_uris[$uri->raw] = false;
+			// Stop processing invalid links
+			if ( !$key ) {
+				// Cache invalid URI
+				$this->validated_uris[$uri->source] = false;
+				if ( $uri->raw !== $uri->source ) {
+					$this->validated_uris[$uri->raw] = false;	
+				}
 				continue;
+			}
+			
+			// Activate link
+			$this->set_attribute($attrs, 'active');
+			$this->set_attribute($attrs, 'asset', $key);
+			// Mark internal links
+			if ( $internal ) {
+				$this->set_attribute($attrs, 'internal', $pid);
 			}
 			
 			// Set group (if enabled)
@@ -619,19 +637,6 @@ class SLB_Lightbox extends SLB_Base {
 				unset($g);
 			}
 			
-			// Activate link
-			$this->set_attribute($attrs, 'active');
-			
-			// Process internal links
-			if ( $internal ) {
-				// Mark as internal
-				$this->set_attribute($attrs, 'internal', $pid);
-			}
-			
-			// Cache item attributes
-			$key = $this->cache_media_item($uri, $type, $internal, $props_extra);
-			$this->set_attribute($attrs, 'asset', $key);
-			
 			// Filter attributes
 			$attrs = $this->util->apply_filters('process_link_attributes', $attrs);
 			
@@ -639,6 +644,7 @@ class SLB_Lightbox extends SLB_Base {
 			$link_new = '<a ' . $this->util->build_attribute_string($attrs) . '>';
 			$content = str_replace($link, $link_new, $content);
 		}
+
 		// Handle widget content
 		if ( !!$this->widget_processing && 'the_content' == current_filter() ) {
 			$content = $this->exclude_wrap($content);
@@ -960,7 +966,7 @@ class SLB_Lightbox extends SLB_Base {
 			$i = array_merge($i, array('type' => $type, 'source' => $uri->source, 'internal' => $internal));
 			// Cache item properties
 			$this->media_items_raw['props'][$key] = (object) $i;
-			// Cache URI (point to properties object)
+			// Cache Source URI (point to properties object)
 			$this->media_items_raw['uri'][$uri->source] = $key;
 		}
 		return $key;
