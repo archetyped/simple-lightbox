@@ -3,7 +3,7 @@
   "version": "0.0.0-dev",
   "title": "Simple Lightbox",
   "description": "The highly-customizable lightbox for WordPress",
-  "author": "Sol Marchessault <sol@archetyped.com>",
+  "author": "Archetyped <support@archetyped.com>",
   "license": "GPLv2",
   "private": true,
   "devDependencies": {
