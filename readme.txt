@@ -3,8 +3,8 @@ Contributors: Archetyped
 Donate link: http://gum.co/slb-donate
 License: GPLv2
 Tags: lightbox, gallery, photography, images, theme, template, style
-Requires at least: 4.2.2
-Tested up to: 4.2.2
+Requires at least: 4.2.4
+Tested up to: 4.3
 Stable tag: trunk
 
 The highly customizable lightbox for WordPress
@@ -57,13 +57,20 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 
 == Changelog ==
 
+= 2.5.0 =
+
+* Fix: Query string removed from URI (A Stern Query)
+* Optimize: Key-based asset data storage/retrieval
+* Optimize: Improved cache usage when processing links
+* Optimize: Refactor image URI detection
+
 = 2.4.1 =
 
+* Fix: Ungrouped items in empty group (Robert & The Lost Group)
+* Fix: IE8 Support (S.Franzis' Legacy)
 * Optimize: Widget support
 * Optimize: Relative and internal URI handling
 * Optimize: Link activation performance
-* Fix: Ungrouped items in empty group (Robert & The Lost Group)
-* Fix: IE8 Support (S.Franzis' Legacy)
 
 = 2.4.0 =
 
