@@ -507,6 +507,7 @@ class SLB_Lightbox extends SLB_Base {
 		if ( empty($uri_proto) ) {
 			$uri_proto = (object) array('raw' => '', 'source' => '', 'parts' => '');
 		}
+		$uri_parts_required = array('host' => '');
 		
 		// Setup group properties
 		$g_props = (object) array(
@@ -557,7 +558,7 @@ class SLB_Lightbox extends SLB_Base {
 			
 			// Internal URI? (e.g. attachments)
 			if ( !$key ) {
-				$uri->parts = parse_url($uri->source);
+				$uri->parts = array_merge( $uri_parts_required, (array) parse_url($uri->source) );
 				$internal = ( $uri->parts['host'] === $uri_origin['host'] ) ? true : false;
 			
 				// Attachment?
