@@ -19,9 +19,9 @@ class SLB_Admin_Menu extends SLB_Admin_View {
 	/* Init */
 	
 	public function __construct($id, $labels, $callback = null, $capability = null, $icon = null, $position = null) {
-		//Default
+		// Default
 		parent::__construct($id, $labels, $callback, $capability, $icon);
-		//Class specific
+		// Class specific
 		$this->set_position($position);
 		return $this;
 	}

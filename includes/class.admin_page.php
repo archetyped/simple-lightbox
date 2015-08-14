@@ -22,9 +22,9 @@ class SLB_Admin_Page extends SLB_Admin_View {
 	/* Init */
 	
 	public function __construct($id, $parent, $labels, $callback = null, $capability = null, $icon = null) {
-		//Default
+		// Default
 		parent::__construct($id, $labels, $callback, $capability, $icon);
-		//Class specific
+		// Class specific
 		$this->set_parent($parent);
 		return $this;
 	}
@@ -63,16 +63,16 @@ class SLB_Admin_Page extends SLB_Admin_View {
 	 * Sets content value
 	 */
 	protected function parse_content() {
-		//Get raw content
+		// Get raw content
 		$raw = $this->get_content(false);
-		//Group by context
+		// Group by context
 		$content = array();
 		foreach ( $raw as $c ) {
-			//Add new context
+			// Add new context
 			if ( !isset($content[$c->context]) ) {
 				$content[$c->context] = array();
 			}
-			//Add item to context
+			// Add item to context
 			$content[$c->context][] = $c;
 		}
 		return $content;
@@ -83,32 +83,32 @@ class SLB_Admin_Page extends SLB_Admin_View {
 	 * @param string $context (optional) Context to render
 	 */
 	protected function render_content($context = 'primary') {
-		//Get content
+		// Get content
 		$content = $this->get_content();
-		//Check for context
+		// Check for context
 		if ( !isset($content[$context]) ) {
 			return false;
 		}
 		$content = $content[$context];
 		$out = '';
-		//Render content
+		// Render content
 		?>
 		<div class="content-wrap">
 		<?php
-			//Add meta boxes
+			// Add meta boxes
 			$screen = get_current_screen();
 			foreach ( $content as $c ) {
 				$c->screen = $screen;
-				//Callback
+				// Callback
 				if ( is_callable($c->callback) ) {
 					$callback = $c->callback;
 					add_meta_box($c->id, $c->title, $c->callback, $c->screen, $c->context, $c->priority, $c->callback_args);
 				} else {
-					//Let handlers build output
+					// Let handlers build output
 					$this->util->do_action('render_content', $c->callback, $this, $c);
 				}
 			}
-			//Output meta boxes
+			// Output meta boxes
 			do_meta_boxes($screen, $context, null);
 		?>
 		</div>
@@ -150,9 +150,9 @@ class SLB_Admin_Page extends SLB_Admin_View {
 			<?php $this->show_icon(); ?>
 			<h2><?php esc_html_e( $this->get_label('header') ); ?></h2>
 			<?php
-				//Form submission support
+				// Form submission support
 				if ( $this->is_required_form() ) {
-					//Build form output
+					// Build form output
 					$form_id = $this->add_prefix('admin_form_' . $this->get_id_raw());
 					?>
 					<form id="<?php esc_attr_e($form_id); ?>" name="<?php esc_attr_e($form_id); ?>" action="" method="post">
@@ -173,7 +173,7 @@ class SLB_Admin_Page extends SLB_Admin_View {
 			</div>
 			<br class="clear" />
 			<?php
-				//Form submission support
+				// Form submission support
 				if ( $this->is_required_form() ) {
 					submit_button();
 					?>

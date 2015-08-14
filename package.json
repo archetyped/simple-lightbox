@@ -1,9 +1,9 @@
 {
   "name": "simple-lightbox",
-  "version": "2.4.1",
+  "version": "2.5.0",
   "title": "Simple Lightbox",
   "description": "The highly-customizable lightbox for WordPress",
-  "author": "Sol Marchessault <sol@archetyped.com>",
+  "author": "Archetyped <support@archetyped.com>",
   "license": "GPLv2",
   "private": true,
   "devDependencies": {

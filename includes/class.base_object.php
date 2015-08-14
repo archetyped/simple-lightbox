@@ -98,7 +98,7 @@ class SLB_Base_Object extends SLB_Base {
 	protected function set_props($props) {
 		if ( is_array($props) && !empty($props) ) {
 			foreach ( $props as $key => $val ) {
-				//Check for setter method
+				// Check for setter method
 				$m = 'set_' . $key;
 				if ( method_exists($this, $m) ) {
 					$this->{$m}($val);
@@ -142,9 +142,9 @@ class SLB_Base_Object extends SLB_Base {
 		$ret = array();
 		$curr = $this;
 		while ( $curr->has_parent() ) {
-			//Add ancestor
+			// Add ancestor
 			$ret[] = $par = $curr->get_parent();
-			//Get next ancestor
+			// Get next ancestor
 			$curr = $par;
 		}
 		return $ret;
@@ -161,15 +161,15 @@ class SLB_Base_Object extends SLB_Base {
 	 */
 	protected function add_file($type, $handle, $src, $deps = array()) {
 		if ( is_string($type) && is_string($handle) && is_string($src) ) {
-			//Validate dependencies
+			// Validate dependencies
 			if ( !is_array($deps) ) {
 				$deps = array();
 			}
-			//Init file group
+			// Init file group
 			if ( !isset($this->files[$type]) || !is_array($this->files[$type]) ) {
 				$this->files[$type] = array();
 			}
-			//Add file to group
+			// Add file to group
 			$this->files[$type][$handle] = array('handle' => $handle, 'uri' => $src, 'deps' => $deps); 
 		}
 		return $this;
@@ -221,23 +221,23 @@ class SLB_Base_Object extends SLB_Base {
 	 * @return array|null File properties (Default: NULL)
 	 */
 	protected function get_file($type, $handle, $format = null) {
-		//Get files
+		// Get files
 		$files = $this->get_files($type);
-		//Get specified file
+		// Get specified file
 		$ret = ( is_string($type) && isset($files[$handle]) ) ? $files[$handle] : null;
-		//Format return value
+		// Format return value
 		if ( !empty($ret) && !!$format ) {
 			switch ( $format ) {
 				case 'uri':
 					$ret = $ret['uri'];
-					//Normalize URI
+					// Normalize URI
 					if ( !$this->util->is_uri($ret) ) {
 						$ret = $this->util->normalize_path(site_url(), $ret);
 					}
 					break;
 				case 'path':
 					$ret = $ret['uri'];
-					//Normalize path
+					// Normalize path
 					if ( !$this->util->is_uri($ret) ) {
 						$ret = $this->util->get_relative_path($ret);
 						$ret = $this->util->normalize_path(ABSPATH, $ret);
@@ -279,8 +279,8 @@ class SLB_Base_Object extends SLB_Base {
 			$opts = (object) $opts;
 		}
 		if ( is_object($opts) && !empty($opts) ) {
-			//Parse options
-			//URI Format
+			// Parse options
+			// URI Format
 			if ( isset($opts->uri_format) ) {
 				foreach ( $files as $hdl => $props ) {
 					switch ( $opts->uri_format ) {

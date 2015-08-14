@@ -13,10 +13,10 @@ class SLB_Template_Tags extends SLB_Collection_Controller {
 	
 	public $hook_prefix = 'template_tags';
 	
-	//Use tag ID as key
+	// Use tag ID as key
 	protected $key_prop = 'get_id';
 	
-	//Call $key_prop is a method to be called
+	// Call $key_prop is a method to be called
 	protected $key_call = true;
 	
 	/* Properties */
@@ -48,7 +48,7 @@ class SLB_Template_Tags extends SLB_Collection_Controller {
 	 */
 	public function add($id, $props = array()) {
 		$o = ( is_string($id) ) ? new $this->item_type($id, $props) : $id;
-		//Add to collection
+		// Add to collection
 		return parent::add($o);
 	}
 	
@@ -85,7 +85,7 @@ class SLB_Template_Tags extends SLB_Collection_Controller {
 	 * Build client output
 	 */
 	public function client_output() {
-		//Load matched handlers
+		// Load matched handlers
 		foreach ( $this->get() as $tag ) {
 			$tag->enqueue_scripts();
 		}
@@ -105,12 +105,12 @@ class SLB_Template_Tags extends SLB_Collection_Controller {
 			if ( empty($styles) ) {
 				continue;
 			}
-			//Setup client parameters
+			// Setup client parameters
 			$params = array(
 				sprintf("'%s'", $tag->get_id()),
 			);
 			$params[] = json_encode( array('styles' => array_values($styles)) );
-			//Extend handler in client
+			// Extend handler in client
 			$code[] = $this->util->call_client_method('View.extend_template_tag_handler', $params, false);
 		}
 		if ( !empty($code) ) {

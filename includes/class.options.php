@@ -38,9 +38,9 @@ class SLB_Options extends SLB_Field_Collection {
 	/* Init */
 	
 	function __construct($id = '', $props = array()) {
-		//Validate arguments
+		// Validate arguments
 		$args = func_get_args();
-		//Set default ID
+		// Set default ID
 		if ( !$this->validate_id($id) ) {
 			$id = 'options';
 		}
@@ -52,13 +52,13 @@ class SLB_Options extends SLB_Field_Collection {
 	
 	protected function _hooks() {
 		parent::_hooks();
-		//Register fields
+		// Register fields
 		$this->util->add_action('register_fields', $this->m('register_fields'), 10, 1, false);
-		//Set option parents
+		// Set option parents
 		$this->util->add_action('fields_registered', $this->m('set_parents'), 10, 1, false);
-		//Building
+		// Building
 		$this->util->add_action('build_init', $this->m('build_init'));
-		//Admin
+		// Admin
 		$this->util->add_action('admin_page_render_content', $this->m('admin_page_render_content'), 10, 3, false);
 		$this->util->add_filter('admin_action_reset', $this->m('admin_action_reset'), 10, 3, false);
 	}
@@ -76,21 +76,21 @@ class SLB_Options extends SLB_Field_Collection {
 		if ( !$this->version_checked ) {
 			$this->version_checked = true;
 			$version_changed = false;
-			//Get version from DB
+			// Get version from DB
 			$vo = $this->get_version();
-			//Get current version
+			// Get current version
 			$vn = $this->util->get_plugin_version();
-			//Compare versions
+			// Compare versions
 			if ( $vo != $vn ) {
-				//Update saved version
+				// Update saved version
 				$this->set_version($vn);
-				//Migrate old version to new version
+				// Migrate old version to new version
 				if ( strcasecmp($vo, $vn) < 0 ) {
-					//Force full migration
+					// Force full migration
 					$version_changed = true;
 				}
 			}
-			//Migrate
+			// Migrate
 			$this->migrate($version_changed);
 		}
 		
@@ -129,30 +129,30 @@ class SLB_Options extends SLB_Field_Collection {
 		if ( !$full && $this->items_migrated )
 			return false;
 		
-		//Legacy options
+		// Legacy options
 		$d = null;
 		$this->load_data();
 		
 		$items = $this->get_items();
 		
-		//Migrate separate options to unified option
+		// Migrate separate options to unified option
 		if ( $full ) {
 			foreach ( $items as $opt => $props ) {
 				$oid = $this->add_prefix($opt);
 				$o = get_option($oid, $d);
 				if ( $o !== $d ) {
-					//Migrate value to data array
+					// Migrate value to data array
 					$this->set_data($opt, $o, false);
-					//Delete legacy option
+					// Delete legacy option
 					delete_option($oid);
 				}
 			}
 		}
 		
-		//Migrate legacy items
+		// Migrate legacy items
 		if ( is_array($this->properties_init) && isset($this->properties_init['legacy']) && is_array($this->properties_init['legacy']) ) {
 			$l =& $this->properties_init['legacy'];
-			//Normalize legacy map
+			// Normalize legacy map
 			foreach ( $l as $opt => $dest ) {
 				if ( !is_array($dest) ) {
 					if ( is_string($dest) )
@@ -167,37 +167,37 @@ class SLB_Options extends SLB_Field_Collection {
 				foreach ( $l as $opt => $dest ) {
 					$oid = $this->add_prefix($opt);
 					$o = get_option($oid, $d);
-					//Only migrate valid values
+					// Only migrate valid values
 					if ( $o !== $d ) {
-						//Process destinations
+						// Process destinations
 						foreach ( $dest as $id ) {
 							$this->set_data($id, $o, false, true);
 						}
 					}
-					//Remove legacy option
+					// Remove legacy option
 					delete_option($oid);
 				}
 			}
 			
 			/* Simple Migration (Internal options only) */
 			
-			//Get existing items that are also legacy items
+			// Get existing items that are also legacy items
 			$opts = array_intersect_key($this->get_data(), $l);
 			foreach ( $opts as $opt => $val ) {
 				$d = $this->get_data($opt);
-				//Migrate data from old option to new option
+				// Migrate data from old option to new option
 				$dest = $l[$opt];
-				//Validate new options to send data to
+				// Validate new options to send data to
 				foreach ( $dest as $id ) {
 					$this->set_data($id, $d, false, true);
 				}
-				//Remove legacy option
+				// Remove legacy option
 				$this->remove($opt, false);
 			}
 		}
-		//Save changes
+		// Save changes
 		$this->save();
-		//Set flag
+		// Set flag
 		$this->items_migrated = true;
 	}
 	
@@ -232,7 +232,7 @@ class SLB_Options extends SLB_Field_Collection {
 	 * @return void
 	 */
 	function register_fields($fields) {
-		//Layouts
+		// Layouts
 		$o = $this->get_field_elements();
 		$l =& $o->layout;
 		
@@ -245,7 +245,7 @@ class SLB_Options extends SLB_Field_Collection {
 			$l->opt_post
 		));
 		
-		//Text input
+		// Text input
 		$otxt = new SLB_Field_Type('option_text', 'text');
 		$otxt->set_property('class', '{inherit} code');
 		$otxt->set_property('size', null);
@@ -254,13 +254,13 @@ class SLB_Options extends SLB_Field_Collection {
 		$otxt->set_layout('form', $form);
 		$fields->add($otxt);
 		
-		//Checkbox
+		// Checkbox
 		$ocb = new SLB_Field_Type('option_checkbox', 'checkbox');
 		$ocb->set_layout('label', $l->label);
 		$ocb->set_layout('form', $form);
 		$fields->add($ocb);
 		
-		//Select
+		// Select
 		$othm = new SLB_Field_Type('option_select', 'select');
 		$othm->set_layout('label', $l->label);
 		$othm->set_layout('form_start', $l->field_pre . '{inherit}');
@@ -307,23 +307,23 @@ class SLB_Options extends SLB_Field_Collection {
 			$values = $_REQUEST[$qvar];
 		}
 		if ( is_array($values) ) {
-			//Format data based on option type (bool, string, etc.)
+			// Format data based on option type (bool, string, etc.)
 			foreach ( $values as $id => $val ) {
-				//Get default
+				// Get default
 				$d = $this->get_default($id);
 				if ( is_bool($d) && !empty($val) )
 					$values[$id] = true;
 			}
 			
-			//Merge in additional options that are not in post data
-			//Missing options (e.g. disabled checkboxes, empty fields, etc.)
+			// Merge in additional options that are not in post data
+			// Missing options (e.g. disabled checkboxes, empty fields, etc.)
 			
-			//Get groups that were output in request
+			// Get groups that were output in request
 			$qvar_groups = $qvar . '_groups';
 			if ( isset($_REQUEST[$qvar_groups]) ) {
 				$groups = explode( ',', implode(',', $_REQUEST[$qvar_groups]) );
 
-				//Get group items				
+				// Get group items				
 				$items = array();
 				$items_temp = null;
 				foreach ( $groups as $gid ) {
@@ -333,7 +333,7 @@ class SLB_Options extends SLB_Field_Collection {
 				unset($items_temp);
 				$items = call_user_func_array('array_merge', $items);
 				foreach ( $items as $id => $opt ) {
-					//Add options that were not included in form submission
+					// Add options that were not included in form submission
 					if ( !array_key_exists($id, $values) ) {
 						if ( is_bool($opt->get_default()) )
 							$values[$id] = false;
@@ -344,7 +344,7 @@ class SLB_Options extends SLB_Field_Collection {
 			}
 		}
 		
-		//Return value
+		// Return value
 		return $values;
 	}
 	
@@ -356,10 +356,10 @@ class SLB_Options extends SLB_Field_Collection {
 	 * @return array Options data
 	 */
 	function fetch_data($sanitize = true) {
-		//Get data
+		// Get data
 		$data = get_option($this->get_key(), null);
 		if ( $sanitize && is_array($data) ) {
-			//Sanitize loaded data based on default values
+			// Sanitize loaded data based on default values
 			foreach ( $data as $id => $val ) {
 				if ( $this->has($id) ) {
 					$opt = $this->get($id);
@@ -377,10 +377,10 @@ class SLB_Options extends SLB_Field_Collection {
 	 */
 	function load_data() {
 		if ( !$this->data_loaded ) {
-			//Retrieve data
+			// Retrieve data
 			$this->data = $this->fetch_data();
 			$this->data_loaded = true;
-			//Check update
+			// Check update
 			$this->check_update();
 		}
 	}
@@ -391,11 +391,11 @@ class SLB_Options extends SLB_Field_Collection {
 	 */
 	function reset($hard = true) {
 		$this->load_data();
-		//Reset data
+		// Reset data
 		if ( $hard ) {
 			$this->data = null;
 		}
-		//Save
+		// Save
 		$this->save();
 	}
 	
@@ -440,7 +440,7 @@ class SLB_Options extends SLB_Field_Collection {
 	 * @return SLB_Option Option instance
 	 */
 	function &add($id, $properties = array(), $update = false) {
-		//Create item
+		// Create item
 		$args = func_get_args();
 		$ret = call_user_func_array(array('parent', 'add'), $args); 
 		return $ret;
@@ -523,7 +523,7 @@ class SLB_Options extends SLB_Field_Collection {
 			$opts = $opts[0];
 		}
 		if ( $opts === $this ) {
-			//Set build variables and callbacks
+			// Set build variables and callbacks
 			$this->set_build_var('admin_page', $page);
 			$this->set_build_var('admin_state', $state);
 			if ( !empty($groups) ) {
@@ -535,7 +535,7 @@ class SLB_Options extends SLB_Field_Collection {
 				)
 			);
 			
-			//Add hooks
+			// Add hooks
 			foreach ( $hooks as $type => $hook ) {
 				$m = 'add_' . $type;
 				foreach ( $hook as $tag => $args ) {
@@ -544,17 +544,17 @@ class SLB_Options extends SLB_Field_Collection {
 				}
 			}
 			
-			//Build output
+			// Build output
 			$this->build(array('build_groups' => $this->m('admin_build_groups')));
 			
-			//Remove hooks
+			// Remove hooks
 			foreach ( $hooks as $type => $hook ) {
 				$m = 'remove_' . $type;
 				foreach ( $hook as $tag => $args ) {
 					call_user_func($this->util->m($m), $tag, $args[0]);
 				}
 			}
-			//Clear custom build vars
+			// Clear custom build vars
 			$this->delete_build_var('admin_page');
 			$this->delete_build_var('admin_state');
 		}
@@ -568,25 +568,25 @@ class SLB_Options extends SLB_Field_Collection {
 		$state = $this->get_build_var('admin_state');
 		$groups = $this->get_build_var('groups');
 		
-		//Get all groups
+		// Get all groups
 		$groups_all = $this->get_groups();
 		$groups_built = array();
 		if ( empty($groups) ) {
 			$groups = array_keys($groups_all);
 		}
-		//Iterate through groups
+		// Iterate through groups
 		foreach ( $groups as $gid ) {
-			//Validate
+			// Validate
 			if ( !isset($groups_all[$gid]) || !count($this->get_items($gid)) ) {
 				continue;
 			}
-			//Add meta box for each group
+			// Add meta box for each group
 			$g = $groups_all[$gid];
 			add_meta_box($g->id, $g->title, $this->m('admin_build_group'), $state->screen, $state->context, $state->priority, array('group' => $g->id, 'page' => $page));
 			$groups_built[] = $gid;
 		}
 		
-		//Define groups built
+		// Define groups built
 		if ( !empty($groups_built) ) {
 			echo $this->util->build_html_element(array(
 				'tag'			=> 'input',
@@ -615,7 +615,7 @@ class SLB_Options extends SLB_Field_Collection {
 	 * @uses `options_parse_build_vars` filter hook
 	 */
 	public function admin_parse_build_vars($vars, $opts) {
-		//Handle form submission
+		// Handle form submission
 		if ( isset($_REQUEST[$opts->get_id('formatted')]) ) {
 			$vars['validate_pre'] = $vars['save_pre'] = true;
 		}
@@ -629,11 +629,11 @@ class SLB_Options extends SLB_Field_Collection {
 	 * @param obj $reset Admin Reset instance
 	 */
 	public function admin_action_reset($res, $opts, $reset) {
-		//Only process matching options instance
+		// Only process matching options instance
 		if ( $opts === $this ) {
-			//Reset options
+			// Reset options
 			$this->reset();
-			//Set result
+			// Set result
 			$res = true;
 		}
 		return $res;
