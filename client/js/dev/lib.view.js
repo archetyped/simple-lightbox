@@ -2922,11 +2922,11 @@ var Content_Item = {
 		this._super();
 		// Add asset properties
 		var d = this.dom_get();
-		var key = d.attr('href') || null;
+		var key = d.attr(this.util.get_attribute('asset')) || null;
 		var assets = this.get_controller().assets || null;
 		// Merge asset data with default attributes
 		if ( this.util.is_string(key) ) {
-			var attrs = [{}, this._attr_default, {'permalink': key}];
+			var attrs = [{}, this._attr_default, {'permalink': d.attr('href')}];
 			if ( this.util.is_obj(assets) ) {
 				var t = this;
 				/**
@@ -2939,10 +2939,6 @@ var Content_Item = {
 					var ret = {};
 					if ( key in assets && t.util.is_obj(assets[key]) ) {
 						ret = assets[key];
-						// Handle variants
-						if ( '_parent' in ret ) {
-							ret = get_assets(ret._parent);
-						}
 					}
 					return ret;
 				};
@@ -3024,6 +3020,8 @@ var Content_Item = {
 		if ( !this.util.is_string(ret) ) {
 			ret = ( 'source' === mode ) ? this.get_attribute('permalink') : '';
 		}
+		// Format
+		ret = ret.replace('&amp;', '&');
 		return ret;
 	},
 	
@@ -4069,7 +4067,7 @@ var Template = {
 	
 	_hooks: function() {
 		// TODO: Refactor to event that can save retrieved tags
-		//(`dom_init` event called during attribute initialization so tags are not saved)
+		// (`dom_init` event called during attribute initialization so tags are not saved)
 		this.on('dom_init', function(ev) {
 			// Init tag handlers
 			var tags = this.get_tags(null, null, true);

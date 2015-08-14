@@ -25,10 +25,10 @@ class SLB_Themes extends SLB_Collection_Controller {
 	
 	protected function _hooks() {
 		parent::_hooks();
-		//Register themes
+		// Register themes
 		$this->util->add_action('init', $this->m('init_defaults'), 1);
 		
-		//Client output
+		// Client output
 		$this->util->add_action('footer', $this->m('client_output'), 1, 0, false);
 		$this->util->add_filter('footer_script', $this->m('client_output_script'), $this->util->priority('client_footer_output'), 1, false);
 	}
@@ -108,7 +108,7 @@ class SLB_Themes extends SLB_Collection_Controller {
 	 * @return object Current instance
 	 */
 	public function add($id, $props = array()) {
-		//Prepare parent
+		// Prepare parent
 		if ( isset($props['parent']) && !($props['parent'] instanceof $this->item_type) ) {
 			$pid = $props['parent'];
 			$items = $this->get(array('include_private' => true));
@@ -117,7 +117,7 @@ class SLB_Themes extends SLB_Collection_Controller {
 			}
 		}
 		$o = ( is_string($id) ) ? new $this->item_type($id, $props) : $id;
-		//Add to collection
+		// Add to collection
 		return parent::add($o);
 	}
 	
@@ -127,7 +127,7 @@ class SLB_Themes extends SLB_Collection_Controller {
 	 * @return array Themes
 	 */
 	public function get($args = null) {
-		//Normalize arguments
+		// Normalize arguments
 		$args_default = array(
 			'include_public'	=> true,
 			'include_private'	=> false,
@@ -143,9 +143,9 @@ class SLB_Themes extends SLB_Collection_Controller {
 		
 		/* Process custom arguments */
 
-		//Filter
+		// Filter
 		$items_exclude = array();
-		//Identify excluded themes
+		// Identify excluded themes
 		$filter_props = array('include_public' => true, 'include_private' => false);
 		foreach ( $filter_props as $filter_prop => $filter_value ) {
 			if ( !$r[ $filter_prop ] ) {
@@ -156,7 +156,7 @@ class SLB_Themes extends SLB_Collection_Controller {
 				}
 			}
 		}
-		//Filter themes from collection
+		// Filter themes from collection
 		$items = array_diff_key($items, array_fill_keys($items_exclude, null));
 		return $items;
 	}
@@ -180,9 +180,9 @@ class SLB_Themes extends SLB_Collection_Controller {
 	 * @return SLB_Theme Selected theme
 	 */
 	protected function get_selected() {
-		//Get themes
+		// Get themes
 		$thms = $this->get();
-		//Retrieve currently-selected theme
+		// Retrieve currently-selected theme
 		$id = $this->options->get_value('theme_default');
 		if ( !isset($thms[$id]) ) {
 			$id = $this->get_default_id();
@@ -196,15 +196,15 @@ class SLB_Themes extends SLB_Collection_Controller {
 	 * Build client output
 	 */
 	public function client_output() {
-		//Process active theme
+		// Process active theme
 		$thm = $this->get_selected();
 		
-		//Get theme ancestors
+		// Get theme ancestors
 		$thms = $thm->get_ancestors(true);
 		$thms[] = $thm;
 		
 		foreach ( $thms as $thm ) {
-			//Load files
+			// Load files
 			$thm->enqueue_scripts();
 		}
 	}
@@ -216,41 +216,41 @@ class SLB_Themes extends SLB_Collection_Controller {
 	 * @return array Modified script commands
 	 */
 	public function client_output_script($commands) {
-		//Theme
+		// Theme
 		$thm = $this->get_selected();
 
-		//Process theme ancestors
+		// Process theme ancestors
 		$thms = $thm->get_ancestors(true);
 		$thms[] = $thm;
 		
 		$out = array('/* THM */');
 		$code = array();
 		
-		//Build output for each theme
+		// Build output for each theme
 		foreach ( $thms as $thm ) {
-			//Setup client parameters
+			// Setup client parameters
 			$params = array(
 				sprintf("'%s'", $thm->get_id()),
 			);
-			//Theme properties
+			// Theme properties
 			$thm_props = array(
 				'name'			=> $thm->get_name(),
 				'parent'		=> ( $thm->has_parent() ) ? $thm->get_parent()->get_id() : '',
 				'styles'		=> array_values($thm->get_styles(array('uri_format'=>'full'))),
 			);
 			/* Optional properties */
-			//Layout
+			// Layout
 			$layout = $thm->get_layout('contents');
 			if ( !empty($layout) ) {
-				//Format
+				// Format
 				$layout = str_replace(array("\n", "\r", "\t"), '', $layout);
-				//Save
+				// Save
 				$thm_props['layout_raw'] = $layout;
 			}
-			//Add properties to parameters
+			// Add properties to parameters
 			$params[] = json_encode($thm_props);
 			
-			//Add theme to client
+			// Add theme to client
 			$code[] = $this->util->call_client_method('View.extend_theme', $params, false);
 		}
 
@@ -269,24 +269,24 @@ class SLB_Themes extends SLB_Collection_Controller {
 	 * @return array Theme options
 	 */
 	public function opt_get_field_values() {
-		//Get themes
+		// Get themes
 		$items = $this->get();
 		$d = $this->get_default_id();
-		//Pop out default theme
+		// Pop out default theme
 		if ( isset($items[$d]) ) {
 			$itm_d = $items[$d];
 			unset($items[$d]);
 		}
 		
-		//Sort themes by name
+		// Sort themes by name
 		uasort($items, create_function('$a,$b', 'return strcmp($a->get_name(), $b->get_name());'));
 		
-		//Insert default theme at top of array
+		// Insert default theme at top of array
 		if ( isset($itm_d) ) {
 			$items = array( $d => $itm_d ) + $items;
 		}
 		
-		//Build options
+		// Build options
 		foreach ( $items as $item ) {
 			$items[$item->get_id()] = $item->get_name();
 		}

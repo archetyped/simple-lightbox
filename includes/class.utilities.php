@@ -131,12 +131,12 @@ class SLB_Utilities {
 	 * @return string Text with prefix prepended
 	 */
 	function add_prefix($text, $sep = '_', $once = true) {
-		//Normalize data type (array)
+		// Normalize data type (array)
 		if ( empty($text) )
 			$text = array('');
 		if ( !is_array($text) )
 			$text = array($text);
-		//Add prefix (if necessary)
+		// Add prefix (if necessary)
 		if ( !$once || ( $once && !$this->has_prefix($text, $sep) ) )
 			array_unshift($text, $this->get_prefix());
 		return implode($sep, $text);
@@ -258,10 +258,10 @@ class SLB_Utilities {
 	function has_wrapper($text, $start = null, $end = null) {
 		if ( !is_string($text) || empty($text) )
 			return false;
-		//Validate wrapper
+		// Validate wrapper
 		$w = $this->get_wrapper($start, $end);
 		
-		//Check for wrapper
+		// Check for wrapper
 		return ( substr($text, 0, strlen($w->start)) == $w->start && substr($text, -1, strlen($w->end)) == $w->end ) ? true : false;
 	}
 	
@@ -322,7 +322,7 @@ class SLB_Utilities {
 	 */
 	function parse_client_files($files, $type = 'scripts') {
 		if ( is_array($files) && !empty($files) ) {
-			//Defaults
+			// Defaults
 			$defaults = array(
 				'file'		=> null,
 				'deps' 		=> array(),
@@ -338,43 +338,43 @@ class SLB_Utilities {
 				default:
 					$defaults['in_footer'] = false;
 			}
-			//Iterate through files
+			// Iterate through files
 			/**
 			 * $h (string) handle
 			 * $p (array) properties
 			 */
 			foreach ( $files as $h => $p ) {
 				unset($file, $cb, $ctxs, $ctx);
-				//Set ID
+				// Set ID
 				$p['id'] = $this->add_prefix($h);
-				//Type Validation
+				// Type Validation
 				/**
 				 * $m (string) property name
 				 * $d (mixed) default value
 				 */
 				foreach ( $defaults as $m => $d ) {
-					//Check if value requires validation
+					// Check if value requires validation
 					if ( !is_array($d) || !isset($p[$m]) || is_array($p[$m]) )
 						continue;
-					//Wrap value in array or destroy it
+					// Wrap value in array or destroy it
 					if ( is_scalar($p[$m]) )
 						$p[$m] = array($p[$m]);
 					else
 						unset($p[$m]);
 				}
 				
-				//Normalize file properties
+				// Normalize file properties
 				$p = array_merge($defaults, $p);
 				
 				/* File name */
 				
-				//Validate file
+				// Validate file
 				$file =& $p['file'];
 				
-				//Determine if filename or callback
+				// Determine if filename or callback
 				if ( !$this->is_file($file) )
 					$file = ( is_callable($file) ) ? $file : null;
-				//Remove invalid file and move on to next
+				// Remove invalid file and move on to next
 				if ( empty($file) ) {
 					unset($files[$h]);
 					continue;
@@ -382,7 +382,7 @@ class SLB_Utilities {
 				
 				/* Dependencies */
 				
-				//Format internal dependencies
+				// Format internal dependencies
 				foreach ( $p['deps'] as $idx => $dep ) {
 					if ( $this->has_wrapper($dep) ) {
 						$dep = $this->remove_wrapper($dep);
@@ -392,46 +392,46 @@ class SLB_Utilities {
 				
 				/* Context */
 				
-				//Validate callback
+				// Validate callback
 				$cb =& $p['callback'];
 				if ( !is_null($cb) && !is_callable($cb) ) {
-					//Remove files with invalid callbacks (will never be loaded)
+					// Remove files with invalid callbacks (will never be loaded)
 					unset($files[$h]);
 					continue;
 				}
 				
-				//Validate contexts
+				// Validate contexts
 				$ctxs =& $p['context'];
 				$ctxs = array_unique($ctxs);
 				$has_contexts = ( count($ctxs) > 0 ) ? true : false;
 				foreach ( $ctxs as $idx => $ctx ) {
-					//Convert to array
+					// Convert to array
 					$ctx = array_values( array_slice( (array) $ctx, 0, 2 ) );
 					switch ( count($ctx) ) {
 						case 1 :
-							//Simple context
+							// Simple context
 							$ctx = $ctx[0];
 							break;
 						case 2 :
-							//Context + Callback
+							// Context + Callback
 							if ( is_callable($ctx[1]) ) {
 								break;
 							}
-							//Continue to default case if callback is invalid
+							// Continue to default case if callback is invalid
 						default :
-							//Context is invalid
+							// Context is invalid
 							$ctx = false;
 							break;
 					}
 					
-					//Remove invalid contexts
+					// Remove invalid contexts
 					if ( empty($ctx) ) {
 						unset($ctxs[$idx]);
 					} else {
 						$ctxs[$idx] = $ctx;
 					}
 				}
-				//Remove file if all specified contexts invalid (no context is OK)
+				// Remove file if all specified contexts invalid (no context is OK)
 				if ( $has_contexts && empty($ctxs) ) {
 					unset($files[$h]);
 					continue;
@@ -440,11 +440,11 @@ class SLB_Utilities {
 				
 				/* Finalize Properties */
 				
-				//Convert properties to object
+				// Convert properties to object
 				$files[$h] = (object) $p;
 			}
 		}
-		//Cast to object before returning
+		// Cast to object before returning
 		$files = (object) $files;
 		return $files;
 	}
@@ -472,7 +472,7 @@ class SLB_Utilities {
 	 * @return string JS expression to extend client object
 	 */
 	function extend_client_object($obj, $data = null, $out = false) {
-		//Validate parameters
+		// Validate parameters
 		$args = func_get_args();
 		switch ( count($args) ) {
 			case 2:
@@ -487,14 +487,14 @@ class SLB_Utilities {
 				$obj = null;
 				break;
 		}
-		//Default client object
+		// Default client object
 		if ( !is_string($obj) || empty($obj) )
 			$obj = null;
-		//Default data
+		// Default data
 		if ( is_array($data) ) {
 			$data = (object)$data;
 		}
-		//Build expression
+		// Build expression
 		if ( empty($data) || ( empty($obj) && is_scalar($data) ) ) {
 			$ret = '';
 		} else {
@@ -531,7 +531,7 @@ class SLB_Utilities {
 		}
 		$condition = sprintf($fmt, $base, $obj);
 		
-		//Wrap command in validation
+		// Wrap command in validation
 		if ( !empty($cmd) && is_string($cmd) ) {
 			$condition = sprintf('if ( %1$s ) { %2$s }', $condition, $cmd);
 		}
@@ -555,7 +555,7 @@ class SLB_Utilities {
 		$encode = !!$encode;
 		$validate = !!$validate;
 		
-		//Build parameters
+		// Build parameters
 		if ( !is_null($params) ) {
 			if ( $encode ) {
 				$params = json_encode($params);	
@@ -636,7 +636,7 @@ class SLB_Utilities {
 	 * @return string Formatted hook
 	 */
 	function get_hook($tag, $hook_prefix = true) {
-		//Hook prefix
+		// Hook prefix
 		$hook = '';
 		if ( is_bool($hook_prefix) && $hook_prefix ) {
 			$hook = $this->get_parent_property('hook_prefix', '');
@@ -645,7 +645,7 @@ class SLB_Utilities {
 		}
 		if ( !empty($hook) )
 			$hook .= '_';
-		//Prefix
+		// Prefix
 		return $this->add_prefix($hook . $tag);
 	}
 	
@@ -657,7 +657,7 @@ class SLB_Utilities {
 	 * @param string|array $tag Action hook. If array, get hook prefix
 	 */
 	function do_action($tag, $arg = '') {
-		//Handle hook prefix
+		// Handle hook prefix
 		$hook_prefix = true;
 		if ( is_array($tag) ) {
 			$hook_prefix = $tag[1];
@@ -685,7 +685,7 @@ class SLB_Utilities {
 	 * @param string|array $tag Action hook. If array, get hook prefix
 	 */
 	function apply_filters($tag, $value) {
-		//Handle hook prefix
+		// Handle hook prefix
 		$hook_prefix = true;
 		if ( is_array($tag) ) {
 			$hook_prefix = $tag[1];
@@ -912,27 +912,27 @@ class SLB_Utilities {
 	 * @return array Context
 	 */
 	function get_context() {
-		//Context
+		// Context
 		static $ctx = null;
 		if ( !is_array($ctx) ) {
-			//Standard
+			// Standard
 			$ctx = array($this->build_context());
-			//Action
+			// Action
 			$action = $this->get_action();
 			if ( !empty($action) ) {
 				$ctx[] = $this->build_context('action', $action);
 			}
-			//Post type
+			// Post type
 			$post_type = $this->get_post_type();
 			if ( !empty($action) ) {
 				$ctx[] = $this->build_context('post-type', $post_type);
 			}
-			//Admin page
+			// Admin page
 			if ( is_admin() ) {
 				global $pagenow;
 				$pg = $this->strip_file_extension($pagenow);
 				$ctx[] = $this->build_context('page', $pg);
-				//Query String
+				// Query String
 				parse_str($_SERVER['QUERY_STRING'], $qv);
 				if ( isset($qv['page']) ) {
 					$ctx[] = $this->build_context('page', $qv['page']);
@@ -940,13 +940,13 @@ class SLB_Utilities {
 						$ctx[] = $this->build_context('page', $this->get_prefix());
 					}
 				}
-				//Action
+				// Action
 				if ( !empty($action) ) {
 					$ctx[] = $this->build_context('page', $pg, 'action', $action);
 					$ctx[] = $this->build_context('post-type', $post_type, 'action', $action);
 				}
 			}
-			//User
+			// User
 			$u = wp_get_current_user();
 			$ctx[] = $this->build_context('user', ( $u->ID ) ? 'registered' : 'guest', false);
 		}
@@ -966,16 +966,16 @@ class SLB_Utilities {
 	 */
 	function build_context($context = null, $prefix = true) {
 		$args = func_get_args();
-		//Get prefix option
+		// Get prefix option
 		if ( !empty($args) ) {
 			$prefix = ( is_bool($args[count($args) - 1]) ) ? array_pop($args) : true;
 		}
 		
-		//Validate 
+		// Validate 
 		$context = array_filter($args, 'is_string');
 		$sep = '_';
 
-		//Context Prefix
+		// Context Prefix
 		if ( $prefix )
 			array_unshift($context, ( is_admin() ) ? 'admin' : 'public' );
 		return implode($sep, $context);
@@ -1025,47 +1025,47 @@ class SLB_Utilities {
 		$sl_f = '/';
 		$sl_b = '\\';
 		$parts = func_get_args();
-		//Slash defaults (trailing, leading);
+		// Slash defaults (trailing, leading);
 		$slashes = array(false, true);
 		if ( func_num_args() > 1 ) {
-			//Get last argument
+			// Get last argument
 			$arg_last = $parts[count($parts) - 1];
 			if ( is_bool($arg_last) ) {
 				$arg_last = array($arg_last);
 			}
 			
 			if ( is_array($arg_last) && count($arg_last) > 0 && is_bool($arg_last[0]) ) {
-				//Remove slash paramter from args array
+				// Remove slash paramter from args array
 				array_pop($parts);
-				//Normalize slashes options
+				// Normalize slashes options
 				if ( isset($arg_last[0]) )
 					$slashes[0] = $arg_last[0];
 				if ( isset($arg_last[1]) )
 					$slashes[1] = $arg_last[1];
 			}
 		}
-		//Extract to slash options local variables
+		// Extract to slash options local variables
 		list($trailing_slash, $leading_slash) = $slashes;
 		
-		//Clean path segments
+		// Clean path segments
 		foreach ( $parts as $key => $part ) {
-			//Trim slashes/spaces
+			// Trim slashes/spaces
 			$parts[$key] = trim($part, " " . $sl_f . $sl_b);
 			
-			//Verify path segment still contains value
+			// Verify path segment still contains value
 			if ( empty($parts[$key]) ) {
 				unset($parts[$key]);
 				continue;
 			}
 		}
 		
-		//Join path parts together
+		// Join path parts together
 		$parts = implode($sl_b, $parts);
 		$parts = str_replace($sl_b, $sl_f, $parts);
-		//Add trailing slash (if necessary)
+		// Add trailing slash (if necessary)
 		if ( $trailing_slash )
 			$parts .= $sl_f;
-		//Add leading slash (if necessary)
+		// Add leading slash (if necessary)
 		$regex = '#^.+:[\\/]#';
 		if ( $leading_slash && !preg_match($regex, $parts) ) {
 			$parts = $sl_f . $parts;
@@ -1092,7 +1092,7 @@ class SLB_Utilities {
 	 * @return string File path
 	 */
 	function get_file_path($file, $relative = null) {
-		//Build path
+		// Build path
 		if ( is_string($file) && '' != trim($file) ) {
 			$file = $this->normalize_path($this->get_path_base($relative), $file);
 		}
@@ -1133,8 +1133,13 @@ class SLB_Utilities {
 	function get_file_extension($file, $lowercase = true) {
 		$ret = '';
 		$sep = '.';
+		// Validate
 		if ( !is_string($file) )
 			return $ret;
+		// Strip query string (if necessary)
+		if ( ( $qpos = strpos($file, '?') ) && $qpos !== false ) {
+			$file = substr($file, 0, $qpos);
+		}
 		if ( ( $rpos = strrpos($file, $sep) ) > 0 ) 
 			$ret = substr($file, $rpos + 1);
 		if ( !!$lowercase )
@@ -1154,7 +1159,7 @@ class SLB_Utilities {
 		if ( !is_array($extension) )
 			$extension = array(strval($extension));
 		if ( !$case_sensitive ) {
-			//Normalize extensions
+			// Normalize extensions
 			$extension = array_map('strtolower', $extension);
 		} 
 		return ( in_array($this->get_file_extension($file, !$case_sensitive), $extension) ) ? true : false;
@@ -1186,17 +1191,17 @@ class SLB_Utilities {
 		if ( empty($ret) ) {
 			$ret = $this->normalize_path(plugins_url(), $this->get_plugin_base());
 		}
-		//Trailing slash
+		// Trailing slash
 		if ( !!$trailing_slash ) {
 			$ret .= '/';
 		}
-		//Relative
+		// Relative
 		if ( !empty($relative) ) {
-			//Default
+			// Default
 			if ( is_bool($relative) ) {
 				$relative = site_url();
 			}
-			//Custom
+			// Custom
 			if ( is_string($relative) ) {
 				$ret = $this->get_relative_path($ret, $relative);
 			}
@@ -1215,7 +1220,7 @@ class SLB_Utilities {
 	function get_path_base($relative = null) {
 		$ret = $this->_path_base;
 		if ( empty($ret) ) {
-			//Get base directory of parent object
+			// Get base directory of parent object
 			if ( $this->get_parent() ) {
 				$r = new ReflectionClass(get_class($this->get_parent()));
 				$base = $r->getFileName();
@@ -1223,7 +1228,7 @@ class SLB_Utilities {
 			} else {
 				$base = __FILE__;
 			}
-			//Extract base path
+			// Extract base path
 			$base = $this->normalize_path($base);
 			if ( 0 === strpos($base, $this->normalize_path(WP_PLUGIN_DIR)) ) {
 				$end = strpos($base, '/', strlen(WP_PLUGIN_DIR) + 1);
@@ -1231,13 +1236,13 @@ class SLB_Utilities {
 			}
 			$ret = $this->_path_base = $base;
 		}
-		//Make relative path
+		// Make relative path
 		if ( !empty($relative) ) {
-			//Default
+			// Default
 			if ( is_bool($relative) ) {
 				$relative = ABSPATH;
 			}
-			//Custom
+			// Custom
 			if ( is_string($relative) ) {
 				$ret = $this->get_relative_path($ret, $relative);
 			}
@@ -1252,14 +1257,14 @@ class SLB_Utilities {
 	 * @return string Relative path
 	 */
 	function get_relative_path($path, $relative = true) {
-		//Default base path
+		// Default base path
 		if ( !is_string($relative) ) {
 			$relative = ABSPATH;
 		}
 		if ( !empty($relative) && !empty($path) ) {
 			$relative = $this->normalize_path($relative);
 			$path = $this->normalize_path($path);
-			//Strip base path
+			// Strip base path
 			if ( strpos($path, $relative) === 0 ) {
 				$path = substr($path, strlen($relative));
 			}
@@ -1294,16 +1299,16 @@ class SLB_Utilities {
 			$dir = @opendir($this->get_path_base());
 			if ( $dir ) {
 				while ( ($ftemp = readdir($dir)) !== false ) {
-					//Only process PHP files
+					// Only process PHP files
 					$ftemp = $this->get_file_path($ftemp);
 					if ( !$this->has_file_extension($ftemp, 'php') || !is_readable($ftemp) )
 						continue;
-					//Check for data
+					// Check for data
 					$data = get_file_data($ftemp, $this->_plugin['headers']);
 					if ( !empty($data['Name']) ) {
-						//Set base file
+						// Set base file
 						$file = $ftemp;
-						//Save plugin data
+						// Save plugin data
 						$this->set_plugin_info($data);
 						break;
 					}
@@ -1311,7 +1316,7 @@ class SLB_Utilities {
 			}
 			@closedir($dir);
 		}
-		//Return
+		// Return
 		return $file;
 	}
 	
@@ -1344,12 +1349,12 @@ class SLB_Utilities {
 	 */
 	function get_plugin_info($field = null) {
 		$ret = $this->_plugin['data'];
-		//Get plugin data
+		// Get plugin data
 		if ( empty($ret) ) {
 			$this->get_plugin_base_file(); 
 			$ret = $this->_plugin['data'];
 		}
-		//Return specified field
+		// Return specified field
 		if ( !empty($field) ) {
 			$ret = ( is_array($ret) && isset($ret[$field]) ) ? $ret[$field] : '';
 		}
@@ -1363,14 +1368,14 @@ class SLB_Utilities {
 	 * @return string Plugin version
 	 */
 	function get_plugin_version($strip_desc = true) {
-		//Retrieve version
+		// Retrieve version
 		$ret = $this->get_plugin_info('Version');
-		//Format
+		// Format
 		if ( !empty($ret) && $strip_desc ) {
 			$ret = explode(' ', $ret, 2);
 			$ret = $ret[0];
 		}
-		//Return
+		// Return
 		return $ret;
 	}
 	
@@ -1397,14 +1402,14 @@ class SLB_Utilities {
 	function get_action($default = null) {
 		$action = '';
 		
-		//Check if action is set in URL
+		// Check if action is set in URL
 		if ( isset($_GET['action']) )
 			$action = $_GET['action'];
-		//Otherwise, Determine action based on plugin plugin admin page suffix
+		// Otherwise, Determine action based on plugin plugin admin page suffix
 		elseif ( isset($_GET['page']) && ($pos = strrpos($_GET['page'], '-')) && $pos !== false && ( $pos != count($_GET['page']) - 1 ) )
 			$action = trim(substr($_GET['page'], $pos + 1), '-_');
 
-		//Determine action for core admin pages
+		// Determine action for core admin pages
 		if ( ! isset($_GET['page']) || empty($action) ) {
 			$actions = array(
 				'add'			=> array('page-new', 'post-new'),
@@ -1451,13 +1456,13 @@ class SLB_Utilities {
 	 */
 	function &get_property(&$obj, $property) {
 		$property = trim($property);
-		//Object
+		// Object
 		if ( is_object($obj) )
 			return $obj->{$property};
-		//Array
+		// Array
 		if ( is_array($obj) )
 			return $obj[$property];
-		//Class
+		// Class
 		if ( is_string($obj) && class_exists($obj) ) {
 			$cvars = get_class_vars($obj);
 			if ( isset($cvars[$property]) )
@@ -1477,23 +1482,23 @@ class SLB_Utilities {
 	 */
 	function array_remap($arr, $map = array(), $overwrite = false) {
 		if ( !empty($map) && is_array($map) ) {
-			//Iterate through mappings
+			// Iterate through mappings
 			foreach ( $map as $from => $to ) {
 				if ( !array_key_exists($from, $arr) )
 					continue;
 				$move = $overwrite;
-				//Only remap if parent property doesn't already exist in array
+				// Only remap if parent property doesn't already exist in array
 				if ( !array_key_exists($to, $arr) )
 					$move = true;
 				if ( $move ) {
-					//Move member value to new key
+					// Move member value to new key
 					$arr[$to] = $arr[$from];
-					//Remove source member
+					// Remove source member
 					unset($arr[$from]);
 				}
 			}
 		}
-		//Return remapped properties
+		// Return remapped properties
 		return $arr;
 	}
 	
@@ -1535,28 +1540,28 @@ class SLB_Utilities {
 	 * @return array Merged array
 	 */
 	function array_merge_recursive_distinct($arr1) {
-		//Get all arrays passed to function
+		// Get all arrays passed to function
 		$args = func_get_args();
 		if ( empty($args) )
 			return false;
-		//Return empty array if first parameter is not an array
+		// Return empty array if first parameter is not an array
 		if ( !is_array($args[0]) )
 			return array();
-		//Set first array as base array
+		// Set first array as base array
 		$merged = $args[0];
-		//Iterate through arrays to merge
+		// Iterate through arrays to merge
 		$arg_length = count($args);
 		for ( $x = 1; $x < $arg_length; $x++ ) {
-			//Skip if argument is not an array (only merge arrays)
+			// Skip if argument is not an array (only merge arrays)
 			if ( !is_array($args[$x]) )
 				continue;
-			//Iterate through argument items
+			// Iterate through argument items
 			foreach ( $args[$x] as $key => $val ) {
-				//Generate key for numeric indexes
+				// Generate key for numeric indexes
 				if ( is_int($key) ) {
-					//Add new item to merged array
+					// Add new item to merged array
 					$merged[] = null;
-					//Get key of new item
+					// Get key of new item
 					$key = array_pop(array_keys($merged));
 				}
 				if ( !isset($merged[$key]) || !is_array($merged[$key]) || !is_array($val) ) {
@@ -1579,13 +1584,13 @@ class SLB_Utilities {
 	 */
 	function array_replace_recursive($search, $arr_replace, $arr_subject) {
 		foreach ($arr_subject as $key => $val) {
-			//Skip element if key does not exist in the replacement array
+			// Skip element if key does not exist in the replacement array
 			if (!isset($arr_replace[$key]))
 				continue;
-			//If element values for both arrays are strings, replace text
+			// If element values for both arrays are strings, replace text
 			if (is_string($val) && strpos($val, $search) !== false && is_string($arr_replace[$key]))
 				$arr_subject[$key] = str_replace($search, $arr_replace[$key], $val);
-			//If value in both arrays are arrays, recursively replace text
+			// If value in both arrays are arrays, recursively replace text
 			if (is_array($val) && is_array($arr_replace[$key]))
 				$arr_subject[$key] = $this->array_replace_recursive($search, $arr_replace[$key], $val);
 		}
@@ -1612,14 +1617,14 @@ class SLB_Utilities {
 	 * @return string Formatted string based on array values
 	 */
 	function get_array_path($attribute = '', $format = null) {
-		//Formatted value
+		// Formatted value
 		$fmtd = '';
 		if (!empty($attribute)) {
-			//Make sure attribute is array
+			// Make sure attribute is array
 			if (!is_array($attribute)) {
 				$attribute = array($attribute);
 			}
-			//Format attribute
+			// Format attribute
 			$format = strtolower($format);
 			switch ($format) {
 				case 'id':
@@ -1627,14 +1632,14 @@ class SLB_Utilities {
 					break;
 				case 'metadata':
 				case 'attribute':
-					//Join segments
+					// Join segments
 					$delim = '_';
 					$fmtd = implode($delim, $attribute);
-					//Replace white space and repeating delimiters
+					// Replace white space and repeating delimiters
 					$fmtd = str_replace(' ', $delim, $fmtd);
 					while (strpos($fmtd, $delim.$delim) !== false)
 						$fmtd = str_replace($delim.$delim, $delim, $fmtd);
-					//Prefix formatted value with delimeter for metadata keys
+					// Prefix formatted value with delimeter for metadata keys
 					if ('metadata' == $format)
 						$fmtd = $delim . $fmtd;
 					break;
@@ -1657,17 +1662,17 @@ class SLB_Utilities {
 		$path = array();
 		$args = func_get_args();
 		
-		//Iterate through parameters and build path
+		// Iterate through parameters and build path
 		foreach ( $args as $arg ) {
 			if ( empty($arg) )
 				continue;
 				
 			if (is_array($arg)) {
-				//Recurse through array items to pull out any more arrays
+				// Recurse through array items to pull out any more arrays
 				foreach ($arg as $key => $val) {
 					$path = array_merge($path, $this->build_path($val));
 				}
-				//$path = array_merge($path, array_values($arg));
+				// $path = array_merge($path, array_values($arg));
 			} elseif ( is_scalar($arg) ) {
 				$path[] = $arg;
 			}
@@ -1697,7 +1702,7 @@ class SLB_Utilities {
 		$args = wp_parse_args($args, $args_default);
 		$args['format'] = wp_parse_args($args['format'], $format_default);
 		
-		//Validate
+		// Validate
 		if ( !is_string($args['tag']) || empty($args['tag']) ) {
 			return $ret;
 		}
@@ -1730,11 +1735,11 @@ class SLB_Utilities {
 	function parse_attribute_string($txt, $defaults = array()) {
 		$txt = trim($txt, ' >');
 		$matches = $attr = array();
-		//Strip tag
+		// Strip tag
 		if ( $txt[0] == '<' && ($s = strpos($txt, ' ')) && $s !== false ) {
 			$txt = trim(substr($txt, $s + 1));
 		}
-		//Parse attributes
+		// Parse attributes
 		$rgx = "/\b(\w+.*?)=([\"'])(.*?)\\2(?:\s|$)/i";
 		preg_match_all($rgx, $txt, $matches);
 		if ( count($matches) > 3 ) {
@@ -1743,7 +1748,7 @@ class SLB_Utilities {
 					$attr[trim($val)] = trim($matches[3][$sub_idx]);
 			}
 		}
-		//Destroy parsing vars
+		// Destroy parsing vars
 		unset($txt, $matches);
 
 		return array_merge($defaults, $attr);
@@ -1824,7 +1829,7 @@ class SLB_Utilities {
 	 * @param bool $wait_doc_ready (optional) Wait until document is fully loaded before executing commands? (Default: No)
 	 */
 	function build_script_element($content = '', $id = '', $wrap_jquery = true, $wait_doc_ready = false) {
-		//Stop processing invalid content
+		// Stop processing invalid content
 		if ( is_array($content) && !empty($content) ) {
 			$content = implode(PHP_EOL, $content);
 		}
@@ -1838,14 +1843,14 @@ class SLB_Utilities {
 			$start[] = 'if ( !!window.jQuery ) {(function($){';
 			$end[] = '})(jQuery);}';
 			
-			//Add event handler (if necessary)
+			// Add event handler (if necessary)
 			if ( $wait_doc_ready ) {
 				$start[] = '$(document).ready(function(){';
 				$end[] = '})';
 			}
 		}
 		
-		//Reverse order of end values
+		// Reverse order of end values
 		$end = array_reverse($end);
 		$content = implode('', array_merge($start, array($content), $end));
 		if ( is_string($id) && !empty($id) ) {
