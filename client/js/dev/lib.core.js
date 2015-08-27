@@ -834,6 +834,64 @@ var Utilities =  {
 			return s ? "-" + p.substr(0,4) + "-" + p.substr(4,4) : p ;
 		}
 		return _p8() + _p8(true) + _p8(true) + _p8();
+	},
+	
+	/**
+	 * Parse URI
+	 * @param string uri URI to parse
+	 * @return obj URI components (DOM anchor element)
+	 */
+	parse_uri: function(uri) {
+		return $('<a href="' + uri + '"/>').get(0);
+	},
+	/**
+	 * Parse URI query string
+	 * @param string uri URI with query string to parse
+	 * @return obj Query variables and values (empty if no query string)
+	 */
+	parse_query: function(uri) {
+		var delim = {
+			'vars': '&',
+			'val': '='
+		};
+		var query = {
+			'raw': [],
+			'parsed': {},
+			'string': ''
+		};
+		uri = this.parse_uri(uri);
+		if ( 0 === uri.search.indexOf('?') ) {
+			// Extract query string
+			query.raw = uri.search.substr(1).split(delim.vars);
+			var i, temp, key, val;
+			// Build query object
+			for ( i = 0; i < query.raw.length; i++ ) {
+				// Split var and value
+				temp = query.raw[i].split(delim.val);
+				key = temp.shift();
+				val = ( temp.length > 0 ) ? temp.join(delim.val) : null;
+				query.parsed[key] = val;
+			}
+		}
+		return query.parsed;
+	},
+	/**
+	 * Build query string from object
+	 * @param obj query Query data
+	 * @return string Query data formatted as HTTP query string
+	 */
+	build_query: function(query) {
+		var q = [];
+		var delim = {
+			'vars': '&',
+			'val': '='
+		};
+		var val;
+		for ( var key in query ) {
+			val = ( null !== query[key] ) ? delim.val + query[key] : '';
+			q.push(key + val);
+		}
+		return q.join(delim.vars);
 	}
 };
 
