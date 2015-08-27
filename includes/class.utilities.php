@@ -933,11 +933,13 @@ class SLB_Utilities {
 				$pg = $this->strip_file_extension($pagenow);
 				$ctx[] = $this->build_context('page', $pg);
 				// Query String
-				parse_str($_SERVER['QUERY_STRING'], $qv);
-				if ( isset($qv['page']) ) {
-					$ctx[] = $this->build_context('page', $qv['page']);
-					if ( stripos($qv['page'], $this->get_prefix()) === 0 ) {
-						$ctx[] = $this->build_context('page', $this->get_prefix());
+				if ( isset($_SERVER['QUERY_STRING']) ) {
+					parse_str($_SERVER['QUERY_STRING'], $qv);
+					if ( isset($qv['page']) ) {
+						$ctx[] = $this->build_context('page', $qv['page']);
+						if ( stripos($qv['page'], $this->get_prefix()) === 0 ) {
+							$ctx[] = $this->build_context('page', $this->get_prefix());
+						}
 					}
 				}
 				// Action
@@ -1410,7 +1412,7 @@ class SLB_Utilities {
 			$action = trim(substr($_GET['page'], $pos + 1), '-_');
 
 		// Determine action for core admin pages
-		if ( ! isset($_GET['page']) || empty($action) ) {
+		if ( ( !isset($_GET['page']) || empty($action) ) && isset($_SERVER['SCRIPT_NAME']) ) {
 			$actions = array(
 				'add'			=> array('page-new', 'post-new'),
 				'edit-item'		=> array('page', 'post'),
