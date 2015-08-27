@@ -57,6 +57,11 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 
 == Changelog ==
 
+= 2.5.1 =
+
+* Update: Client-side Utilities library
+* Optimize: Request processing
+
 = 2.5.0 =
 
 * Fix: Query string removed from URI (A Stern Query)
