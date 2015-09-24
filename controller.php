@@ -359,7 +359,7 @@ class SLB_Lightbox extends SLB_Base {
 	 * @return string Modified link text
 	 */
 	public function admin_plugin_row_meta_support($text) {
-		return "Feedback &amp; Support";
+		return __("Feedback &amp; Support", 'simple-lightbox');
 	}
 
 	/*-** Functionality **-*/
