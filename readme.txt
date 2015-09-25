@@ -57,6 +57,11 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 
 == Changelog ==
 
+= 2.5.2 =
+
+* Fix: Activation when Home page set to static page (Lyra's Static Cling)
+* Optimize: Prep for WordPress language packs
+
 = 2.5.1 =
 
 * Update: Client-side Utilities library
