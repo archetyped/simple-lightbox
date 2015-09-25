@@ -1,218 +1,260 @@
-# Copyright (C) 2013 
-# This file is distributed under the same license as the  package.
+# Copyright (C) 2015 Simple Lightbox
+# This file is distributed under the same license as the Simple Lightbox package.
 msgid ""
 msgstr ""
-"Project-Id-Version:  \n"
-"Report-Msgid-Bugs-To: https://github.com/archetyped/simple-lightbox/wiki/Reporting-Issues\n"
-"POT-Creation-Date: 2013-04-16 00:22:28+00:00\n"
+"Project-Id-Version: Simple Lightbox 2.5.1\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/simple-lightbox\n"
+"POT-Creation-Date: 2015-09-24 03:20:40+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2013-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2015-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 
-#: includes/class.admin.php:686
-msgid "The settings have been reset"
-msgstr ""
-
-#: includes/class.admin.php:687
-msgid "<strong class=\"%1$s\">Notice:</strong> This update is a <strong class=\"%1$s\">Beta version</strong>. It is highly recommended that you test the update on a test server before updating the plugin on a production server."
-msgstr ""
-
-#: includes/class.admin.php:688 includes/class.admin.php:1394
-#: includes/class.admin.php:1443 includes/class.admin.php:1531
-msgid "Access Denied"
-msgstr ""
-
-#: includes/class.admin.php:1318
-msgid "Save Changes"
-msgstr ""
-
-#: includes/class.fields.php:2223
-msgid "Default Element"
-msgstr ""
-
-#: includes/class.fields.php:2235
-msgid "Default Element (Closed Tag)"
-msgstr ""
-
-#: includes/class.fields.php:2243
-msgid "Default Input Element"
-msgstr ""
-
-#: includes/class.fields.php:2251
-msgid "Text Box"
-msgstr ""
-
-#: includes/class.fields.php:2282
-msgid "Hidden Field"
-msgstr ""
-
-#: includes/class.fields.php:2288
-msgid "Select tag"
-msgstr ""
-
-#: includes/class.fields.php:2300
-msgid "Inline wrapper"
-msgstr ""
-
-#: includes/class.options.php:115
-msgid "Enabled"
-msgstr ""
-
-#: includes/class.options.php:115
-msgid "Disabled"
-msgstr ""
-
-#: includes/class.options.php:400
-msgid "Default"
-msgstr ""
-
-#: includes/class.themes.php:41
-msgid "Theme"
-msgstr ""
-
-#: includes/class.themes.php:61
-msgid "Default (Light)"
-msgstr ""
-
-#: includes/class.themes.php:67
-msgid "Default (Dark)"
-msgstr ""
-
-#: model.php:151
+#: controller.php:240
 msgid "Activation"
 msgstr ""
 
-#: model.php:152
+#: controller.php:241
 msgid "Grouping"
 msgstr ""
 
-#: model.php:153
+#: controller.php:242
 msgid "UI"
 msgstr ""
 
-#: model.php:154
+#: controller.php:243
 msgid "Labels"
 msgstr ""
 
-#: model.php:157
+#: controller.php:246
 msgid "Enable Lightbox Functionality"
 msgstr ""
 
-#: model.php:158
+#: controller.php:247
 msgid "Enable on Home page"
 msgstr ""
 
-#: model.php:159
-msgid "Enable on Posts"
+#: controller.php:248
+msgid "Enable on Single Posts"
 msgstr ""
 
-#: model.php:160
+#: controller.php:249
 msgid "Enable on Pages"
 msgstr ""
 
-#: model.php:161
+#: controller.php:250
 msgid "Enable on Archive Pages (tags, categories, etc.)"
 msgstr ""
 
-#: model.php:162
+#: controller.php:251
 msgid "Enable for Widgets"
 msgstr ""
 
-#: model.php:163
+#: controller.php:252
 msgid "Group items (for displaying as a slideshow)"
 msgstr ""
 
-#: model.php:164
+#: controller.php:253
 msgid "Group items by Post (e.g. on pages with multiple posts)"
 msgstr ""
 
-#: model.php:165
+#: controller.php:254
 msgid "Group gallery items separately"
 msgstr ""
 
-#: model.php:166
+#: controller.php:255
 msgid "Group widget items separately"
 msgstr ""
 
-#: model.php:167
+#: controller.php:256
 msgid "Resize lightbox to fit in window"
 msgstr ""
 
-#: model.php:168
+#: controller.php:257
 msgid "Enable animations"
 msgstr ""
 
-#: model.php:169
+#: controller.php:258
 msgid "Start Slideshow Automatically"
 msgstr ""
 
-#: model.php:170
+#: controller.php:259
 msgid "Slide Duration (Seconds)"
 msgstr ""
 
-#: model.php:171
+#: controller.php:260
 msgid "Loop through items"
 msgstr ""
 
-#: model.php:172
+#: controller.php:261
 msgid "Overlay Opacity (0 - 1)"
 msgstr ""
 
-#: model.php:173
+#: controller.php:262
+msgid "Enable default title"
+msgstr ""
+
+#: controller.php:263
 msgid "Loading indicator"
 msgstr ""
 
-#: model.php:174
+#: controller.php:264
 msgid "Close button"
 msgstr ""
 
-#: model.php:175
+#: controller.php:265
 msgid "Next Item button"
 msgstr ""
 
-#: model.php:176
+#: controller.php:266
 msgid "Previous Item button"
 msgstr ""
 
-#: model.php:177
+#: controller.php:267
 msgid "Start Slideshow button"
 msgstr ""
 
-#: model.php:178
+#: controller.php:268
 msgid "Stop Slideshow button"
 msgstr ""
 
-#: model.php:179
+#: controller.php:269
 msgid "Slideshow status format"
 msgstr ""
 
-#: model.php:228
+#: controller.php:319
 msgid "Lightbox"
 msgstr ""
 
-#: model.php:229
+#: controller.php:320
 msgid "Lightbox Settings"
 msgstr ""
 
-#: model.php:230
+#: controller.php:321
 msgid "Settings"
 msgstr ""
 
-#: model.php:234
+#: controller.php:330
+msgid "Feedback & Support"
+msgstr ""
+
+#: controller.php:335
 msgid "Reset"
 msgstr ""
 
-#: model.php:235
+#: controller.php:336
 msgid "Are you sure you want to reset settings?"
 msgstr ""
 
-#: model.php:236
+#: controller.php:337
 msgid "Settings have been reset"
 msgstr ""
 
-#: model.php:237
+#: controller.php:338
 msgid "Settings were not reset"
+msgstr ""
+
+#: controller.php:348
+msgid ""
+"<p>Simple Lightbox thrives on your feedback!</p><p>Click the button below to "
+"<strong>get help</strong>, <strong>request a feature</strong>, or "
+"<strong>provide some feedback</strong>!</p>"
+msgstr ""
+
+#: controller.php:352
+msgid "Get Support &amp; Provide Feedback"
+msgstr ""
+
+#: includes/class.admin.php:644
+msgid "The settings have been reset"
+msgstr ""
+
+#: includes/class.admin.php:645
+msgid ""
+"<strong class=\"%1$s\">Notice:</strong> This update is a <strong class=\"%1$s"
+"\">Beta version</strong>. It is highly recommended that you test the update "
+"on a test server before updating the plugin on a production server."
+msgstr ""
+
+#: includes/class.admin.php:646 includes/class.admin_action.php:45
+#: includes/class.admin_page.php:146
+msgid "Access Denied"
+msgstr ""
+
+#: includes/class.fields.php:43
+msgid "Default Element"
+msgstr ""
+
+#: includes/class.fields.php:55
+msgid "Default Element (Closed Tag)"
+msgstr ""
+
+#: includes/class.fields.php:63
+msgid "Default Input Element"
+msgstr ""
+
+#: includes/class.fields.php:71
+msgid "Text Box"
+msgstr ""
+
+#: includes/class.fields.php:102
+msgid "Hidden Field"
+msgstr ""
+
+#: includes/class.fields.php:108
+msgid "Select tag"
+msgstr ""
+
+#: includes/class.fields.php:120
+msgid "Inline wrapper"
+msgstr ""
+
+#: includes/class.option.php:113
+msgid "Enabled"
+msgstr ""
+
+#: includes/class.option.php:113
+msgid "Disabled"
+msgstr ""
+
+#: includes/class.options.php:222
+msgid "Default"
+msgstr ""
+
+#: includes/class.themes.php:40
+msgid "Theme"
+msgstr ""
+
+#: includes/class.themes.php:65
+msgid "Baseline"
+msgstr ""
+
+#: includes/class.themes.php:76
+msgid "Default (Light)"
+msgstr ""
+
+#: includes/class.themes.php:87
+msgid "Default (Dark)"
+msgstr ""
+
+#. Plugin Name of the plugin/theme
+msgid "Simple Lightbox"
+msgstr ""
+
+#. Plugin URI of the plugin/theme
+msgid "http://archetyped.com/tools/simple-lightbox/"
+msgstr ""
+
+#. Description of the plugin/theme
+msgid "The highly customizable lightbox for WordPress"
+msgstr ""
+
+#. Author of the plugin/theme
+msgid "Archetyped"
+msgstr ""
+
+#. Author URI of the plugin/theme
+msgid "http://archetyped.com"
 msgstr ""
