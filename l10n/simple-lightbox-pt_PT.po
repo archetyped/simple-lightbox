@@ -5,15 +5,15 @@ msgstr ""
 "Project-Id-Version: Simple-Lightbox\n"
 "Report-Msgid-Bugs-To: https://github.com/archetyped/simple-lightbox/wiki/"
 "Reporting-Issues\n"
-"POT-Creation-Date: 2015-01-28 10:34-0000\n"
-"PO-Revision-Date: 2015-01-28 10:38-0000\n"
+"POT-Creation-Date: 2015-10-05 09:13+0100\n"
+"PO-Revision-Date: 2015-10-05 09:17+0100\n"
 "Last-Translator: Pedro Mendonça <ped.gaspar@gmail.com>\n"
 "Language-Team: Pedro Mendonça <ped.gaspar@gmail.com>\n"
 "Language: pt_PT\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.7.4\n"
+"X-Generator: Poedit 1.8.5\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Poedit-SourceCharset: UTF-8\n"
 "X-Poedit-KeywordsList: __;_e;__ngettext:1,2;_n:1,2;__ngettext_noop:1,2;"
@@ -22,151 +22,151 @@ msgstr ""
 "X-Poedit-Basepath: ..\n"
 "X-Poedit-SearchPath-0: .\n"
 
-#: controller.php:229
+#: controller.php:240
 msgid "Activation"
 msgstr "Activação"
 
-#: controller.php:230
+#: controller.php:241
 msgid "Grouping"
 msgstr "Agrupamento"
 
-#: controller.php:231
+#: controller.php:242
 msgid "UI"
 msgstr "Interface do utilizador"
 
-#: controller.php:232
+#: controller.php:243
 msgid "Labels"
 msgstr "Etiquetas"
 
-#: controller.php:235
+#: controller.php:246
 msgid "Enable Lightbox Functionality"
 msgstr "Activar funcionalidade Lightbox"
 
-#: controller.php:236
+#: controller.php:247
 msgid "Enable on Home page"
 msgstr "Activar na página inicial"
 
-#: controller.php:237
+#: controller.php:248
 msgid "Enable on Single Posts"
 msgstr "Activar em artigos únicos"
 
-#: controller.php:238
+#: controller.php:249
 msgid "Enable on Pages"
 msgstr "Activar em páginas"
 
-#: controller.php:239
+#: controller.php:250
 msgid "Enable on Archive Pages (tags, categories, etc.)"
 msgstr "Activar em páginas de arquivo (etiquetas, categorias, etc.)"
 
-#: controller.php:240
+#: controller.php:251
 msgid "Enable for Widgets"
 msgstr "Activar para widgets"
 
-#: controller.php:241
+#: controller.php:252
 msgid "Group items (for displaying as a slideshow)"
 msgstr "Agrupar itens (para mostrar em apresentação)"
 
-#: controller.php:242
+#: controller.php:253
 msgid "Group items by Post (e.g. on pages with multiple posts)"
 msgstr "Agrupar itens por artigo (p. ex. em páginas com múltiplos artigos)"
 
-#: controller.php:243
+#: controller.php:254
 msgid "Group gallery items separately"
 msgstr "Agrupar itens de galeria separadamente"
 
-#: controller.php:244
+#: controller.php:255
 msgid "Group widget items separately"
 msgstr "Agrupar itens de widget separadamente"
 
-#: controller.php:245
+#: controller.php:256
 msgid "Resize lightbox to fit in window"
 msgstr "Redimensionar lightbox para se ajustar à janela"
 
-#: controller.php:246
+#: controller.php:257
 msgid "Enable animations"
 msgstr "Activar animações"
 
-#: controller.php:247
+#: controller.php:258
 msgid "Start Slideshow Automatically"
 msgstr "Iniciar apresentação automaticamente"
 
-#: controller.php:248
+#: controller.php:259
 msgid "Slide Duration (Seconds)"
 msgstr "Duração do slide (segundos)"
 
-#: controller.php:249
+#: controller.php:260
 msgid "Loop through items"
 msgstr "Percorrer itens em loop"
 
-#: controller.php:250
+#: controller.php:261
 msgid "Overlay Opacity (0 - 1)"
 msgstr "Opacidade do fundo (0 - 1)"
 
-#: controller.php:251
+#: controller.php:262
 msgid "Enable default title"
 msgstr "Activar título padrão"
 
-#: controller.php:252
+#: controller.php:263
 msgid "Loading indicator"
 msgstr "Indicador de carregamento"
 
-#: controller.php:253
+#: controller.php:264
 msgid "Close button"
 msgstr "Botão para fechar"
 
-#: controller.php:254
+#: controller.php:265
 msgid "Next Item button"
 msgstr "Botão para item seguinte"
 
-#: controller.php:255
+#: controller.php:266
 msgid "Previous Item button"
 msgstr "Botão para item anterior"
 
-#: controller.php:256
+#: controller.php:267
 msgid "Start Slideshow button"
 msgstr "Botão para iniciar apresentação"
 
-#: controller.php:257
+#: controller.php:268
 msgid "Stop Slideshow button"
 msgstr "Botão para parar apresentação"
 
-#: controller.php:258
+#: controller.php:269
 msgid "Slideshow status format"
 msgstr "Formato de estado da apresentação"
 
-#: controller.php:308
+#: controller.php:319
 msgid "Lightbox"
 msgstr "Lightbox"
 
-#: controller.php:309
+#: controller.php:320
 msgid "Lightbox Settings"
 msgstr "Definições de Lightbox"
 
-#: controller.php:310
+#: controller.php:321
 msgid "Settings"
 msgstr "Definições"
 
-#: controller.php:319
+#: controller.php:330
 msgid "Feedback & Support"
-msgstr "Feedback e Suporte"
+msgstr "Feedback e suporte"
 
-#: controller.php:324
+#: controller.php:335
 msgid "Reset"
 msgstr "Repor"
 
-#: controller.php:325
+#: controller.php:336
 msgid "Are you sure you want to reset settings?"
 msgstr "Tem a certeza que quer repor as definições?"
 
-#: controller.php:326
+#: controller.php:337
 msgid "Settings have been reset"
 msgstr "As definições foram repostas"
 
-#: controller.php:327
+#: controller.php:338
 msgid "Settings were not reset"
 msgstr "As definições não foram repostas"
 
-#: controller.php:337
+#: controller.php:348
 msgid ""
 "<p>Simple Lightbox thrives on your feedback!</p><p>Click the button below to "
 "<strong>get help</strong>, <strong>request a feature</strong>, or "
@@ -176,9 +176,13 @@ msgstr ""
 "abaixo para <strong>obter ajuda</strong>, <strong>solicitar um recurso</"
 "strong>, ou <strong>dar algum feedback</strong>!</p>"
 
-#: controller.php:341
+#: controller.php:352
 msgid "Get Support &amp; Provide Feedback"
 msgstr "Obter suporte e dar feedback"
+
+#: controller.php:362
+msgid "Feedback &amp; Support"
+msgstr "Feedback e suporte"
 
 #: includes/class.admin.php:644
 msgid "The settings have been reset"
@@ -257,8 +261,22 @@ msgstr "Padrão (Light)"
 msgid "Default (Dark)"
 msgstr "Padrão (Dark)"
 
-#~ msgid "Save Changes"
-#~ msgstr "Guardar alterações"
+#. Plugin Name of the plugin/theme
+msgid "Simple Lightbox"
+msgstr "Simple Lightbox"
 
-#~ msgid "Enable on Posts"
-#~ msgstr "Activar em artigos"
+#. Plugin URI of the plugin/theme
+msgid "http://archetyped.com/tools/simple-lightbox/"
+msgstr "http://archetyped.com/tools/simple-lightbox/"
+
+#. Description of the plugin/theme
+msgid "The highly customizable lightbox for WordPress"
+msgstr "Uma lightbox muito personalizável para o WordPress"
+
+#. Author of the plugin/theme
+msgid "Archetyped"
+msgstr "Archetyped"
+
+#. Author URI of the plugin/theme
+msgid "http://archetyped.com"
+msgstr "http://archetyped.com"
