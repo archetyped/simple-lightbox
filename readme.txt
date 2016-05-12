@@ -57,6 +57,10 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 
 == Changelog ==
 
+= 2.5.3 =
+
+* Optimize: Entity handling in URIs for different server environments 
+
 = 2.5.2 =
 
 * Fix: Activation when Home page set to static page (Lyra's Static Cling)
