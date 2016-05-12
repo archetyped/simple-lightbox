@@ -359,7 +359,7 @@ class SLB_Lightbox extends SLB_Base {
 	 * @return string Modified link text
 	 */
 	public function admin_plugin_row_meta_support($text) {
-		return "Feedback &amp; Support";
+		return __("Feedback &amp; Support", 'simple-lightbox');
 	}
 
 	/*-** Functionality **-*/
@@ -375,7 +375,7 @@ class SLB_Lightbox extends SLB_Base {
 			if ( $ret ) {
 				$opt = '';
 				// Determine option to check
-				if ( is_home() ) {
+				if ( is_home() || is_front_page() ) {
 					$opt = 'home';
 				}
 				elseif ( is_singular() ) {
