@@ -210,6 +210,11 @@ class SLB_Lightbox extends SLB_Base {
 				add_action('dynamic_sidebar_before', $this->m('widget_block_start'));
 				add_action('dynamic_sidebar_after', $this->m('widget_block_finish'));
 			}
+			
+			// Menus
+			if ( $this->options->get_bool('enabled_menu') ) {
+				add_filter('wp_nav_menu', $this->m('activate_links'), $priority);
+			}
 		}
 	}
 
