@@ -213,7 +213,7 @@ class SLB_Lightbox extends SLB_Base {
 			
 			// Menus
 			if ( $this->options->get_bool('enabled_menu') ) {
-				add_filter('wp_nav_menu', $this->m('activate_links'), $priority);
+				add_filter('wp_nav_menu', $this->m('menu_process'), $priority, 2);
 			}
 		}
 	}
@@ -1448,6 +1448,21 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	public function widget_block_handle($is_content_valid) {
 		return false;
+	}
+	
+	/*-** Menus **-*/
+	
+	/**
+	 * Process navigation menu links
+	 *
+	 * @see wp_nav_menu()/filter: wp_nav_menu
+	 *
+	 * @param string $nav_menu The HTML content for the navigation menu.
+	 * @param object $args     An object containing wp_nav_menu() arguments.
+	 */
+	public function menu_process($nav_menu, $args) {
+		$nav_menu = $this->activate_links($nav_menu);
+		return $nav_menu;
 	}
 	
 	/*-** Helpers **-*/
