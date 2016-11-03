@@ -249,6 +249,7 @@ class SLB_Lightbox extends SLB_Base {
 				'enabled_page'				=> array('title' => __('Enable on Pages', 'simple-lightbox'), 'default' => true, 'group' => array('activation', 40)),
 				'enabled_archive'			=> array('title' => __('Enable on Archive Pages (tags, categories, etc.)', 'simple-lightbox'), 'default' => true, 'group' => array('activation', 50)),
 				'enabled_widget'			=> array('title' => __('Enable for Widgets', 'simple-lightbox'), 'default' => false, 'group' => array('activation', 60)),
+				'enabled_menu'				=> array('title' => __('Enable for Menus', 'simple-lightbox'), 'default' => false, 'group' => array('activation', 60)),
 				'group_links'				=> array('title' => __('Group items (for displaying as a slideshow)', 'simple-lightbox'), 'default' => true, 'group' => array('grouping', 10)),
 				'group_post'				=> array('title' => __('Group items by Post (e.g. on pages with multiple posts)', 'simple-lightbox'), 'default' => true, 'group' => array('grouping', 20)),
 				'group_gallery'				=> array('title' => __('Group gallery items separately', 'simple-lightbox'), 'default' => false, 'group' => array('grouping', 30)),
