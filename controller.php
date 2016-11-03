@@ -259,6 +259,7 @@ class SLB_Lightbox extends SLB_Base {
 				'group_post'				=> array('title' => __('Group items by Post (e.g. on pages with multiple posts)', 'simple-lightbox'), 'default' => true, 'group' => array('grouping', 20)),
 				'group_gallery'				=> array('title' => __('Group gallery items separately', 'simple-lightbox'), 'default' => false, 'group' => array('grouping', 30)),
 				'group_widget'				=> array('title' => __('Group widget items separately', 'simple-lightbox'), 'default' => false, 'group' => array('grouping', 40)),
+				'group_menu'				=> array('title' => __('Group menu items separately', 'simple-lightbox'), 'default' => false, 'group' => array('grouping', 50)),
 				'ui_autofit'				=> array('title' => __('Resize lightbox to fit in window', 'simple-lightbox'), 'default' => true, 'group' => array('ui', 10), 'in_client' => true),
 				'ui_animate'				=> array('title' => __('Enable animations', 'simple-lightbox'), 'default' => true, 'group' => array('ui', 20), 'in_client' => true),
 				'slideshow_autostart'		=> array('title' => __('Start Slideshow Automatically', 'simple-lightbox'), 'default' => true, 'group' => array('ui', 30), 'in_client' => true),
