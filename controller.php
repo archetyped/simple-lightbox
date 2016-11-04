@@ -631,6 +631,13 @@ class SLB_Lightbox extends SLB_Base {
 					$group[] = $g_props->base;
 				}
 				
+				/**
+				 * Filter group ID components
+				 * 
+				 * @see process_links()
+				 * 
+				 * @param array $group Components used to build group ID
+				 */
 				$group = $this->util->apply_filters('get_group_id', $group);
 				
 				// Default group
@@ -1457,12 +1464,47 @@ class SLB_Lightbox extends SLB_Base {
 	 *
 	 * @see wp_nav_menu()/filter: wp_nav_menu
 	 *
-	 * @param string $nav_menu The HTML content for the navigation menu.
-	 * @param object $args     An object containing wp_nav_menu() arguments.
+	 * @param string $nav_menu HTML content for navigation menu.
+	 * @param object $args     Navigation menu's arguments.
 	 */
 	public function menu_process($nav_menu, $args) {
-		$nav_menu = $this->activate_links($nav_menu);
+		// Grouping
+		if ( $this->options->get_bool('group_menu') ) {
+			// Generate group ID for menu
+			$group = 'menu';
+			$sep = '_';
+			if ( !empty( $args->menu_id ) ) {
+				$group .= $sep . $args->menu_id;
+			} elseif ( !empty( $args->menu ) ) {
+				$group .= $sep . ( ( is_object($args->menu) ) ? $args->menu->slug : $args->menu );
+			}
+			$group = $this->group_id_unique( $group );
+		} else {
+			$group = null;
+		}
+		
+		// Process menu
+		$nav_menu = $this->activate_links($nav_menu, $group);
+		
 		return $nav_menu;
+	}
+	
+	/**
+	 * Generate unique group ID
+	 * 
+	 * @param string $group Group ID to check
+	 * @return string Unique group ID
+	 */
+	public function group_id_unique($group) {
+		static $groups = array();
+		while ( in_array($group, $groups) ) {
+			$patt = '#-(\d+)$#';
+			if ( preg_match( $patt, $group, $matches ) )
+				$group = preg_replace($patt, '-' . ++$matches[1], $group );
+			else
+				$group = $group . '-1';
+		}
+		return $group;
 	}
 	
 	/*-** Helpers **-*/
