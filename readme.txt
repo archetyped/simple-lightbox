@@ -57,6 +57,13 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 
 == Changelog ==
 
+= 2.6.0 =
+
+* Add: Activate links in native WordPress navigation menus (enable in admin settings)
+* Add: Group menu links separately (enable in admin settings)
+* Optimize: Fallback lightbox title text retrieval (link text)
+* Fix: Undefined variable in `Utilities::get_plugin_base_file()` (The Lost Temple of Xavivars)
+
 = 2.5.3 =
 
 * Optimize: Entity handling in URIs for different server environments 
