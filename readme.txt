@@ -3,8 +3,8 @@ Contributors: Archetyped
 Donate link: http://gum.co/slb-donate
 License: GPLv2
 Tags: lightbox, gallery, photography, images, theme, template, style
-Requires at least: 4.5
-Tested up to: 4.5
+Requires at least: 4.6
+Tested up to: 4.6
 Stable tag: trunk
 
 The highly customizable lightbox for WordPress
@@ -56,6 +56,13 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 3. Dark Theme
 
 == Changelog ==
+
+= 2.6.0 =
+
+* Add: Activate links in native WordPress navigation menus (enable in admin settings)
+* Add: Group menu links separately (enable in admin settings)
+* Optimize: Fallback lightbox title text retrieval (link text)
+* Fix: Undefined variable in `Utilities::get_plugin_base_file()` (The Lost Temple of Xavivars)
 
 = 2.5.3 =
 

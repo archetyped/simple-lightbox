@@ -1,13 +1,11 @@
 //Imports
 
-@import "bourbon";
-
 //Variables
 
 //Mixins
 
 %box-sizing-border-box {
-	@include box-sizing(border-box);
+	box-sizing: border-box;
 }
 
 #slb_viewer_wrap {

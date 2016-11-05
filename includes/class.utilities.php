@@ -1309,7 +1309,7 @@ class SLB_Utilities {
 					$data = get_file_data($ftemp, $this->_plugin['headers']);
 					if ( !empty($data['Name']) ) {
 						// Set base file
-						$file = $ftemp;
+						$ret = $ftemp;
 						// Save plugin data
 						$this->set_plugin_info($data);
 						break;
@@ -1319,7 +1319,7 @@ class SLB_Utilities {
 			@closedir($dir);
 		}
 		// Return
-		return $file;
+		return $ret;
 	}
 	
 	/**

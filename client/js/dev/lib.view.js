@@ -3070,7 +3070,7 @@ var Content_Item = {
 			
 			// Element text
 			if ( !title ) {
-				title = dom.text();
+				title = dom.get(0).innerText.trim();
 			}
 		}
 		
