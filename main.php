@@ -11,7 +11,7 @@ Author URI: http://archetyped.com
 Support URI: https://github.com/archetyped/simple-lightbox/wiki/Feedback-&-Support
 */
 /*
-Copyright 2015 Archetyped (support@archetyped.com)
+Copyright 2016 Archetyped (support@archetyped.com)
 */
 $slb = null;
 /**
