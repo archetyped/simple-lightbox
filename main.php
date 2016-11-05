@@ -3,7 +3,7 @@
 Plugin Name: Simple Lightbox
 Plugin URI: http://archetyped.com/tools/simple-lightbox/
 Description: The highly customizable lightbox for WordPress
-Version: 2.5.3
+Version: 2.6.0
 Text Domain: simple-lightbox
 Domain Path: /l10n
 Author: Archetyped

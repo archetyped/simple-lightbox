@@ -210,6 +210,11 @@ class SLB_Lightbox extends SLB_Base {
 				add_action('dynamic_sidebar_before', $this->m('widget_block_start'));
 				add_action('dynamic_sidebar_after', $this->m('widget_block_finish'));
 			}
+			
+			// Menus
+			if ( $this->options->get_bool('enabled_menu') ) {
+				add_filter('wp_nav_menu', $this->m('menu_process'), $priority, 2);
+			}
 		}
 	}
 
@@ -249,10 +254,12 @@ class SLB_Lightbox extends SLB_Base {
 				'enabled_page'				=> array('title' => __('Enable on Pages', 'simple-lightbox'), 'default' => true, 'group' => array('activation', 40)),
 				'enabled_archive'			=> array('title' => __('Enable on Archive Pages (tags, categories, etc.)', 'simple-lightbox'), 'default' => true, 'group' => array('activation', 50)),
 				'enabled_widget'			=> array('title' => __('Enable for Widgets', 'simple-lightbox'), 'default' => false, 'group' => array('activation', 60)),
+				'enabled_menu'				=> array('title' => __('Enable for Menus', 'simple-lightbox'), 'default' => false, 'group' => array('activation', 60)),
 				'group_links'				=> array('title' => __('Group items (for displaying as a slideshow)', 'simple-lightbox'), 'default' => true, 'group' => array('grouping', 10)),
 				'group_post'				=> array('title' => __('Group items by Post (e.g. on pages with multiple posts)', 'simple-lightbox'), 'default' => true, 'group' => array('grouping', 20)),
 				'group_gallery'				=> array('title' => __('Group gallery items separately', 'simple-lightbox'), 'default' => false, 'group' => array('grouping', 30)),
 				'group_widget'				=> array('title' => __('Group widget items separately', 'simple-lightbox'), 'default' => false, 'group' => array('grouping', 40)),
+				'group_menu'				=> array('title' => __('Group menu items separately', 'simple-lightbox'), 'default' => false, 'group' => array('grouping', 50)),
 				'ui_autofit'				=> array('title' => __('Resize lightbox to fit in window', 'simple-lightbox'), 'default' => true, 'group' => array('ui', 10), 'in_client' => true),
 				'ui_animate'				=> array('title' => __('Enable animations', 'simple-lightbox'), 'default' => true, 'group' => array('ui', 20), 'in_client' => true),
 				'slideshow_autostart'		=> array('title' => __('Start Slideshow Automatically', 'simple-lightbox'), 'default' => true, 'group' => array('ui', 30), 'in_client' => true),
@@ -624,6 +631,13 @@ class SLB_Lightbox extends SLB_Base {
 					$group[] = $g_props->base;
 				}
 				
+				/**
+				 * Filter group ID components
+				 * 
+				 * @see process_links()
+				 * 
+				 * @param array $group Components used to build group ID
+				 */
 				$group = $this->util->apply_filters('get_group_id', $group);
 				
 				// Default group
@@ -1441,6 +1455,56 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	public function widget_block_handle($is_content_valid) {
 		return false;
+	}
+	
+	/*-** Menus **-*/
+	
+	/**
+	 * Process navigation menu links
+	 *
+	 * @see wp_nav_menu()/filter: wp_nav_menu
+	 *
+	 * @param string $nav_menu HTML content for navigation menu.
+	 * @param object $args     Navigation menu's arguments.
+	 */
+	public function menu_process($nav_menu, $args) {
+		// Grouping
+		if ( $this->options->get_bool('group_menu') ) {
+			// Generate group ID for menu
+			$group = 'menu';
+			$sep = '_';
+			if ( !empty( $args->menu_id ) ) {
+				$group .= $sep . $args->menu_id;
+			} elseif ( !empty( $args->menu ) ) {
+				$group .= $sep . ( ( is_object($args->menu) ) ? $args->menu->slug : $args->menu );
+			}
+			$group = $this->group_id_unique( $group );
+		} else {
+			$group = null;
+		}
+		
+		// Process menu
+		$nav_menu = $this->activate_links($nav_menu, $group);
+		
+		return $nav_menu;
+	}
+	
+	/**
+	 * Generate unique group ID
+	 * 
+	 * @param string $group Group ID to check
+	 * @return string Unique group ID
+	 */
+	public function group_id_unique($group) {
+		static $groups = array();
+		while ( in_array($group, $groups) ) {
+			$patt = '#-(\d+)$#';
+			if ( preg_match( $patt, $group, $matches ) )
+				$group = preg_replace($patt, '-' . ++$matches[1], $group );
+			else
+				$group = $group . '-1';
+		}
+		return $group;
 	}
 	
 	/*-** Helpers **-*/

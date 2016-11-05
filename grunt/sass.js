@@ -15,7 +15,6 @@ grunt.config('sass', {
 	},
 	themes : {
 		options : {
-			includePaths : require('node-bourbon').includePaths
 		},
 		files : [{
 			expand : true,
