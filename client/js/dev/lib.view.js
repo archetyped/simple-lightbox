@@ -3065,8 +3065,13 @@ var Content_Item = {
 		
 		// Fallbacks
 		if ( !title && dom.length ) {
+			// Title attribute
+			title = dom.find('img').first().attr('title');
+
 			// Alt attribute
-			title = dom.find('img').first().attr('alt');
+			if ( !title ) {
+				title = dom.find('img').first().attr('alt');
+			}
 			
 			// Element text
 			if ( !title ) {
