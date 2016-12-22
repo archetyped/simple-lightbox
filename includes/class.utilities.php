@@ -1296,8 +1296,8 @@ class SLB_Utilities {
 	 * @return string Base file path
 	 */
 	function get_plugin_base_file() {
-		$ret = $this->_plugin['file'];
-		if ( empty($ret) ) {
+		$file = $this->_plugin['file'];
+		if ( empty($file) ) {
 			$dir = @opendir($this->get_path_base());
 			if ( $dir ) {
 				while ( ($ftemp = readdir($dir)) !== false ) {
