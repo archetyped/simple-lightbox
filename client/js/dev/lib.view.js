@@ -3065,12 +3065,17 @@ var Content_Item = {
 		
 		// Fallbacks
 		if ( !title && dom.length ) {
-			// Alt attribute
-			title = dom.find('img').first().attr('alt');
+			// Caption / Description
+			title = dom.parents('.gallery-item').find('.gallery-caption').text().trim();
 			
 			// Element text
 			if ( !title ) {
 				title = dom.get(0).innerText.trim();
+			}
+                        
+			// Alt attribute
+			if ( !title ) {
+				title = dom.find('img').first().attr('alt');
 			}
 		}
 		
