@@ -13,6 +13,7 @@ The highly customizable lightbox for WordPress
 Simple Lightbox is a very simple and customizable lightbox that is easy to add to your WordPress website.
 
 #### Features
+
 Options for customizing the lightbox behavior are located in the **Appearance > Lightbox** admin menu (or just click the **Settings** link below the plugin's name when viewing the list of installed plugins)
 
 * Automatically activate links (no manual coding required)
@@ -30,7 +31,8 @@ Options for customizing the lightbox behavior are located in the **Appearance > 
 * Group image links by Post (separate slideshow for each post on page)
 
 #### Usage
-1. Insert links to images/image attachments into your posts/pages
+
+1.  Insert links to images/image attachments into your posts/pages
 
 **That's it! The image will be displayed in a lightbox automatically.**
 
@@ -38,8 +40,8 @@ Options for customizing the lightbox behavior are located in the **Appearance > 
 
 == Installation ==
 
-1. Install and activate SLB
-1. Verify that your site's theme uses the `wp_head()`, `wp_footer()`, & `the_content()` template tags (standard in any professional theme)
+1.  Install and activate SLB
+1.  Verify that your site's theme uses the `wp_head()`, `wp_footer()`, & `the_content()` template tags (standard in any professional theme)
 
 == Upgrade Notice ==
 
@@ -51,9 +53,9 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 
 == Screenshots ==
 
-1. Lightbox Customization Options
-2. Light Theme
-3. Dark Theme
+1.  Lightbox Customization Options
+2.  Light Theme
+3.  Dark Theme
 
 == Changelog ==
 
@@ -66,7 +68,7 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 
 = 2.5.3 =
 
-* Optimize: Entity handling in URIs for different server environments 
+* Optimize: Entity handling in URIs for different server environments
 
 = 2.5.2 =
 
@@ -104,6 +106,7 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 * Add: `slb_is_enabled` filter
 
 = 2.3.1 =
+
 * Fix: WordPress version requirement
 * Optimize: Field collection group parsing
 
@@ -143,10 +146,12 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 * Optimize: Grunt: Selective file compilation
 
 = 2.2.2 =
+
 * Optimize: Widget processing
 * Optimize: Remove call-time-pass-by-references
 
 = 2.2.1 =
+
 * Fix: Enable/Disable lightbox on certain requests (Danny the Enabler)
 * Fix: Widget links grouped with post links (Rafa's Widgetarian Adventure)
 * Optimize: Client-side loading
@@ -154,6 +159,7 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 * Optimize: Widget processing
 
 = 2.2.0 =
+
 * Update: WordPress 3.8 support
 * Add: Add-on support
 * Add: Load external data for item
@@ -169,13 +175,16 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 * Optimize: Use absolute paths for file includes (props k3davis)
 
 = 2.1.3 =
+
 * Fix: PHP configuration issue on some web hosts (Tim's got (config) issues)
 * Optimize: Hide overlapping elements when lightbox is displayed (e.g. Flash, etc.)
 
 = 2.1.2 =
+
 * Fix: Incorrect paths when WP in subdirectory (Kim's Van Repair)
 
 = 2.1.1 =
+
 * Fix: Automatic resizing
 * Fix: Compatibility with non-standard wp-content location (On the Path of the Wijdemans)
 * Optimize: jQuery dependency handling
@@ -184,6 +193,7 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 * Optimize: Code cleanup
 
 = 2.1 =
+
 * Update: Finalized Theme API
 * Update: Finalized Content Handler API
 * Update: Finalized Template Tag API
@@ -198,6 +208,7 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 * Fix: Gallery post format compatibility (Just Juan problem with galleries)
 
 = 2.0 =
+
 * Completely rewritten lightbox code
 * Add: Automatically resize lightbox to fit window
 * Add: APIs for third-party add-ons
@@ -209,6 +220,7 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 * Optimize: Full internationalization support
 
 = 1.6 =
+
 * Add: Widget support
 * Add: WordPress 3.3 support
 * Add: Localization support
@@ -231,12 +243,13 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 * Fix: YouTube embed using iFrame overlaps lightbox (Elena in Hiding)
 * Fix: Issue when scanning links without valid URLs (McCloskey Iteration)
 * Fix: Image activation is case-sensitive (Sensitive Tanya)
-* Fix: Visible lightbox overlay edges when image larger than browser window (Chibi Overlay) 
+* Fix: Visible lightbox overlay edges when image larger than browser window (Chibi Overlay)
 * Fix: Options availability for some users
 * Fix: Inconsistent loading of image metadata
 * Fix: Links not fully processed when group is set manually
 
 = 1.5.6 =
+
 * Add: Display image description in lightbox (with HTML support)
 * Add: Support for W3 Total Cache plugin
 * Add: Initial support for NextGEN galleries
@@ -253,9 +266,11 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 * Fix: Options reset after update (KRazy Donna)
 
 = 1.5.5.1 =
+
 * Fix: Disabled links not being disabled (Disabling Sascha)
 
 = 1.5.5 =
+
 * Add: Distinct link activation (will not affect other lightboxes)
 * Add: Backwards compatibility with legacy lightbox links (optional)
 * Add: Support for WordPress 3.2
@@ -273,6 +288,7 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 * Fix: XHTML Validation (Hajo Validation)
 
 = 1.5.4 =
+
 * Add: Optional Link validation
 * Add: Keyboard Navigation
 * Add: Option to enable/disable image caption
@@ -287,50 +303,61 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 * Optimize: Better grouping support
 
 = 1.5.3 =
+
 * Fix: Caption may not display under certain circumstances (Caption Erin)
 * Fix: Images not grouped when "separate by post" option is activated (Logical Ross)
 * Update: Lightbox will not be activated for links that already have `rel` attribute set
 
 = 1.5.2 =
+
 * Fix: Slideshow loops out of control (Mirage of Wallentin)
 * Fix: Lightbox fails when group by posts disabled (Lange Find)
 * Add: Option to use the image's URI as caption when link title not set (Under UI options)
 
 = 1.5.1 =
+
 * Add: WP Gallery support
 * Fix: Navigation hidden when only one image
 * Fix: Use user-defined UI text
 
 = 1.5 =
+
 * Add: Theme support
-* Optimize: Javascript cleanup and file size reductions
+* Optimize: JavaScript cleanup and file size reductions
 * Optimize: CSS cleanup
 
 = 1.4 =
+
 * Update: Integrated with jQuery
-* Optimize: Javascript filesize 9x smaller
+* Optimize: JavaScript file size 9x smaller
 * Add: Close lightbox by clicking to left/right outside of image (an oft-requested feature)
 
 = 1.3.2 =
+
 * Add: Option to enable/disable lightbox resizing animation (thanks Maria!)
 
 = 1.3.1 =
+
 * Update: Utilities code (internal)
 
 = 1.3 =
-* Add: Customizable UI label text (close, next, and prev button images can be replaced in `images` directory)
+
+* Add: Customizable UI label text (close, next, and previous button images can be replaced in `images` directory)
 * Add: Group image links by Post (separate slideshow for each post)
 * Add: Reset settings link on plugin listings page
 * Optimize: Organized settings page
 
 = 1.2.1 =
+
 * Fixed: Image title given higher precedence than Image alt (more compatible w/WP workflow)
 
 = 1.2 =
+
 * Added: Option to group automatically activated links
 * Optimized: Lightbox caption retrieval
 
 = 1.1 =
+
 * Added: Enable/disable lightbox functionality by page type (Home, Pages/Posts, Archive, etc.)
 * Added: Automatically activate lightbox functionality for image links
 * Added: Link to settings menu on plugin listing page
@@ -339,4 +366,5 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 * Optimized: General code optimizations
 
 = 1.0 =
+
 * Initial release
