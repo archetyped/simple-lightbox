@@ -3,8 +3,8 @@ Contributors: Archetyped
 Donate link: http://gum.co/slb-donate
 License: GPLv2
 Tags: lightbox, gallery, photography, images, theme, template, style
-Requires at least: 4.6
-Tested up to: 4.8
+Requires at least: 4.9
+Tested up to: 4.9
 Stable tag: trunk
 
 The highly customizable lightbox for WordPress
