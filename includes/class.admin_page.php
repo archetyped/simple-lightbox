@@ -31,10 +31,6 @@ class SLB_Admin_Page extends SLB_Admin_View {
 	
 	/* Operations */
 	
-	protected function show_icon() {
-		echo screen_icon();
-	}
-	
 	/**
 	 * Add content to page
 	 * @uses parent::add_content()
@@ -147,7 +143,6 @@ class SLB_Admin_Page extends SLB_Admin_View {
 		wp_enqueue_script('postbox');
 		?>
 		<div class="wrap slb">
-			<?php $this->show_icon(); ?>
 			<h2><?php esc_html_e( $this->get_label('header') ); ?></h2>
 			<?php
 				// Form submission support
