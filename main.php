@@ -1,5 +1,13 @@
 <?php
-/* 
+/**
+ * Plugin entrypoint
+ *
+ * @package Simple Lightbox
+ * @author Archetyped <support@archetyped.com>
+ * @copyright 2018 Archetyped
+ */
+
+/*
 Plugin Name: Simple Lightbox
 Plugin URI: http://archetyped.com/tools/simple-lightbox/
 Description: The highly customizable lightbox for WordPress
@@ -10,9 +18,7 @@ Author: Archetyped
 Author URI: http://archetyped.com
 Support URI: https://github.com/archetyped/simple-lightbox/wiki/Feedback-&-Support
 */
-/*
-Copyright 2016 Archetyped (support@archetyped.com)
-*/
+
 $slb = null;
 /**
  * Initialize SLB
