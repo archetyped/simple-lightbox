@@ -5,6 +5,7 @@ License: GPLv2
 Tags: lightbox, gallery, photography, images, theme, template, style
 Requires at least: 4.9
 Tested up to: 4.9
+Requires PHP: 5.4
 Stable tag: trunk
 
 The highly customizable lightbox for WordPress
@@ -45,7 +46,8 @@ Options for customizing the lightbox behavior are located in the **Appearance > 
 
 == Upgrade Notice ==
 
-No upgrade notices
+= 0.0.0-dev =
+Fixes & improvements. PHP 5.4+ Required.
 
 == Frequently Asked Questions ==
 
