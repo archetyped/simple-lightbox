@@ -60,3 +60,5 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 3.  Dark Theme
 
 == Changelog ==
+
+[See full changelog](https://github.com/archetyped/simple-lightbox/releases)
