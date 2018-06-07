@@ -279,7 +279,9 @@ class SLB_Themes extends SLB_Collection_Controller {
 		}
 		
 		// Sort themes by name
-		uasort($items, create_function('$a,$b', 'return strcmp($a->get_name(), $b->get_name());'));
+		uasort( $items, function( $a, $b ) {
+			return strcmp( $a->get_name(), $b->get_name() );
+		});
 		
 		// Insert default theme at top of array
 		if ( isset($itm_d) ) {
