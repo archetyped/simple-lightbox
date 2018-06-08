@@ -64,6 +64,7 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 = 2.7.0 =
 
 * Fix: Remove reference to deprecated `screen_icon()` function (The Icon of Finnegan Island)
+* Fix: Reset settings link initializes plugin delete confirmation
 * Add: Validate requirements before initialization.
 * Optimize: PHP 7.2+ Compatibility
 * Optimize: Internal code optimizations
