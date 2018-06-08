@@ -2321,10 +2321,15 @@ var Viewer = {
 	
 	keys_control: function(ev) {
 		var handlers = {
-			27: this.close,
-			37: this.item_prev,
-			39: this.item_next
+			27: this.close, /* esc */
+			37: this.item_prev, /* left-arrow */
+			39: this.item_next, /* right-arrow */
 		};
+		// Swap next/prev keys on RTL pages
+		if ('rtl' === document.documentElement.getAttribute('dir')) {
+			handlers[37] = this.item_next; /* left-arrow */
+			handlers[39] = this.item_prev; /* right-arrow */
+		}
 		if ( ev.which in handlers ) {
 			handlers[ev.which].call(this);
 			return false;
