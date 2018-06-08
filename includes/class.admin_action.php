@@ -93,8 +93,8 @@ class SLB_Admin_Action extends SLB_Admin_View {
 	
 	public function get_link_attr() {
 		return array (
-			'class' 	=> 'delete',
-			'onclick'	=> "return confirm('" . $this->get_label('confirm') . "')"
+			'class'		=> $this->util->get_hook($this->get_id_raw()),
+			'onclick'	=> "return confirm('" . esc_js( $this->get_label('confirm') ) . "')"
 		);
 	}
 	

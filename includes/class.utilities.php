@@ -1407,8 +1407,8 @@ class SLB_Utilities {
 		// Check if action is set in URL
 		if ( isset($_GET['action']) )
 			$action = $_GET['action'];
-		// Otherwise, Determine action based on plugin plugin admin page suffix
-		elseif ( isset($_GET['page']) && ($pos = strrpos($_GET['page'], '-')) && $pos !== false && ( $pos != count($_GET['page']) - 1 ) )
+		// Otherwise, Determine action based on plugin admin page suffix
+		elseif ( isset($_GET['page']) && ($pos = strrpos($_GET['page'], '-')) && $pos !== false && ( $pos != strlen($_GET['page']) - 1 ) )
 			$action = trim(substr($_GET['page'], $pos + 1), '-_');
 
 		// Determine action for core admin pages

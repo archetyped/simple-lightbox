@@ -633,7 +633,14 @@ class SLB_Field_Collection extends SLB_Field_Base {
 			if ( !empty($groups) && !empty($sort) && is_string($sort) ) {
 				if ( property_exists(current($groups), $sort) ) {
 					// Sort groups by property
-					$sfunc = create_function('$a,$b', '$ap = $a->' . $sort . '; $bp = $b->' . $sort . '; if ( $ap == $bp ) return 0; return ( $ap > $bp ) ? 1 : -1;');
+					$sfunc = function ( $a, $b ) use ($sort) {
+						$ap = $a->$sort;
+						$bp = $b->$sort;
+						if ( $ap == $bp ) {
+							return 0;
+						}
+						return ( $ap > $bp ) ? 1 : -1;
+					};
 					uasort($groups, $sfunc);
 				}
 			}

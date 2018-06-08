@@ -79,7 +79,6 @@ class SLB_Themes extends SLB_Collection_Controller {
 					array ( 'base', $src_base . "/default/$js_path/client.js" ),
 				),
 				'styles'		=> array (
-					array ( 'font', "$scheme://fonts.googleapis.com/css?family=Yanone+Kaffeesatz" ),
 					array ( 'base', "$src_base/default/css/style.css" ),
 				),
 			),
@@ -279,7 +278,9 @@ class SLB_Themes extends SLB_Collection_Controller {
 		}
 		
 		// Sort themes by name
-		uasort($items, create_function('$a,$b', 'return strcmp($a->get_name(), $b->get_name());'));
+		uasort( $items, function( $a, $b ) {
+			return strcmp( $a->get_name(), $b->get_name() );
+		});
 		
 		// Insert default theme at top of array
 		if ( isset($itm_d) ) {

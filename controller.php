@@ -340,7 +340,7 @@ class SLB_Lightbox extends SLB_Base {
 		// Add Actions
 		$lbls_reset = array (
 			'title'			=> __('Reset', 'simple-lightbox'),
-			'confirm'		=> __('Are you sure you want to reset settings?', 'simple-lightbox'),
+			'confirm'		=> __('Are you sure you want to reset Simple Lightbox\'s settings?', 'simple-lightbox'),
 			'success'		=> __('Settings have been reset', 'simple-lightbox'),
 			'failure'		=> __('Settings were not reset', 'simple-lightbox')
 		);
@@ -1635,16 +1635,18 @@ class SLB_Lightbox extends SLB_Base {
 	 * Build JS object of UI strings when initializing lightbox
 	 * @return array UI strings
 	 */
-	function build_labels() {
+	private function build_labels() {
 		$ret = array();
-		// Get all UI options
-		$prefix = 'txt_';
-		$opt_strings = array_filter(array_keys($this->options->get_items()), create_function('$opt', 'return ( strpos($opt, "' . $prefix . '") === 0 );'));
-		if ( count($opt_strings) ) {
-			// Build array of UI options
+		/* Get all UI options */
+		$prefix      = 'txt_';
+		$opt_strings = array_filter( array_keys( $this->options->get_items() ), function ( $opt ) use ( $prefix ) {
+			return ( strpos( $opt, $prefix ) === 0 );
+		} );
+		if ( count( $opt_strings ) ) {
+			/* Build array of UI options */
 			foreach ( $opt_strings as $key ) {
-				$name = substr($key, strlen($prefix));
-				$ret[$name] = $this->options->get_value($key);
+				$name         = substr( $key, strlen( $prefix ) );
+				$ret[ $name ] = $this->options->get_value( $key );
 			}
 		}
 		return $ret;
