@@ -13,13 +13,16 @@
 		.slb_container {
 			background-color: #151515;
 		}
-		
-		.slb_prev a {
-			background-image: url('../images/nav_prev.png');
-		}
-		
-		.slb_next a {
-			background-image: url('../images/nav_next.png');
+		.slb_content {
+			.slb_prev .slb_template_tag,
+			[dir="rtl"] & .slb_next .slb_template_tag {
+				background-image: url('../images/nav_prev.png');
+			}
+			
+			.slb_next .slb_template_tag,
+			[dir="rtl"] & .slb_prev .slb_template_tag {
+				background-image: url('../images/nav_next.png');
+			}
 		}
 		
 		.slb_data_title {
