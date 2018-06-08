@@ -21,19 +21,15 @@ class SLB_Admin_Page extends SLB_Admin_View {
 	
 	/* Init */
 	
-	public function __construct($id, $parent, $labels, $callback = null, $capability = null, $icon = null) {
+	public function __construct($id, $parent, $labels, $callback = null, $capability = null) {
 		// Default
-		parent::__construct($id, $labels, $callback, $capability, $icon);
+		parent::__construct($id, $labels, $callback, $capability);
 		// Class specific
 		$this->set_parent($parent);
 		return $this;
 	}
 	
 	/* Operations */
-	
-	protected function show_icon() {
-		echo screen_icon();
-	}
 	
 	/**
 	 * Add content to page
@@ -147,7 +143,6 @@ class SLB_Admin_Page extends SLB_Admin_View {
 		wp_enqueue_script('postbox');
 		?>
 		<div class="wrap slb">
-			<?php $this->show_icon(); ?>
 			<h2><?php esc_html_e( $this->get_label('header') ); ?></h2>
 			<?php
 				// Form submission support
