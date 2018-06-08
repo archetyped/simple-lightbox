@@ -340,7 +340,7 @@ class SLB_Lightbox extends SLB_Base {
 		// Add Actions
 		$lbls_reset = array (
 			'title'			=> __('Reset', 'simple-lightbox'),
-			'confirm'		=> __('Are you sure you want to reset settings?', 'simple-lightbox'),
+			'confirm'		=> __('Are you sure you want to reset Simple Lightbox\'s settings?', 'simple-lightbox'),
 			'success'		=> __('Settings have been reset', 'simple-lightbox'),
 			'failure'		=> __('Settings were not reset', 'simple-lightbox')
 		);

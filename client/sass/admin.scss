@@ -44,3 +44,11 @@
 		}
 	}
 }
+
+.slb_admin_action_reset {
+	color: #a00;
+	&:hover {
+		color: #dc3232;
+		border: none;
+	}
+}
