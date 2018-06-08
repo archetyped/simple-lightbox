@@ -40,6 +40,9 @@
 			position: static;
 			float: none;
 			clear: none;
+			[dir="rtl"] & {
+				text-align: right;
+			}
 		}
 		
 		//General
