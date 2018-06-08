@@ -3,7 +3,12 @@
 $nav_width: 25px;
 $nav_height: 33px;
 $ui_controls_width: 25px;
-$ui_controls_height: 25px; 
+$ui_controls_height: 25px;
+%hide-text {
+	text-indent: 100%;
+	white-space: nowrap;
+	overflow: hidden;
+}
 
 #slb_viewer_wrap {
 	.slb_theme_slb_default {
@@ -25,7 +30,7 @@ $ui_controls_height: 25px;
 		}
 		
 		.slb_loading {
-			text-indent: -2000em;
+			@extend %hide-text;
 		}
 		
 		.slb_template_tag_ui {
@@ -39,14 +44,21 @@ $ui_controls_height: 25px;
 			right: 8px;
 			width: 75%;
 			text-align: right;
+			[dir="rtl"] & {
+				right: inherit;
+				left: 0px;
+			}
 			
 			.slb_template_tag_ui {
+				@extend %hide-text;
 				width: $ui_controls_width;
 				height: $ui_controls_height;
 				float: right;
 				margin-left: 2px;
-				text-indent: -2000em;
 				opacity: 0.5;
+				[dir="rtl"] & {
+					float: left;
+				}
 			}
 			
 			.slb_template_tag_ui:hover {
@@ -69,15 +81,14 @@ $ui_controls_height: 25px;
 		//Navigation 
 		$ui_nav_pos: 45%;
 		%ui_nav {
+			@extend %hide-text;
 			position: absolute;
 			top: 20%;
 			height: 71%;
 			width: 45%;
 			min-width: $nav_width;
 			min-height: $nav_height;
-			margin-left: 4px;
 			background-repeat: no-repeat;
-			text-indent: -2000em;
 			opacity: 0.5;
 		}
 		
@@ -86,13 +97,18 @@ $ui_controls_height: 25px;
 			min-height: $nav_height + $ui_controls_height;
 			min-width: $nav_width * 2;
 			
-			.slb_prev .slb_template_tag {
+			.slb_prev .slb_template_tag,
+			[dir="rtl"] & .slb_next .slb_template_tag {
+				left: 4px;
+				right: inherit;
 				background-image: url('../images/nav_prev.png');
 				background-position: left $ui_nav_pos;
 			}
 			
-			.slb_next .slb_template_tag {
+			.slb_next .slb_template_tag,
+			[dir="rtl"] & .slb_prev .slb_template_tag {
 				right: 4px;
+				left: inherit;
 				background-image: url('../images/nav_next.png');
 				background-position: right $ui_nav_pos;
 			}
@@ -100,7 +116,7 @@ $ui_controls_height: 25px;
 			.slb_prev, .slb_next {
 				.slb_template_tag {
 					@extend %ui_nav;
-					&:hover { 
+					&:hover {
 						opacity: 1
 					}
 				}
@@ -128,6 +144,11 @@ $ui_controls_height: 25px;
 			font-family: 'Yanone Kaffeesatz', arial, sans-serif;
 			font-size: $title-size;
 			margin-right: .2em;
+			display: inline-block;
+			[dir="rtl"] & {
+				margin-left: .2em;
+				margin-right: 0px;
+			}
 		}
 		
 		.slb_group_status {
