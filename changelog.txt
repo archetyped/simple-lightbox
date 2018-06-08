@@ -1,3 +1,13 @@
+= 2.7.0 =
+
+* Fix: Remove reference to deprecated `screen_icon()` function (The Icon of Finnegan Island)
+* Add: Validate requirements before initialization.
+* Optimize: PHP 7.2+ Compatibility
+* Optimize: Internal code optimizations
+* Themes
+    * Add: RTL Support
+    * Update: Load font locally
+
 = 2.6.0 =
 
 * Add: Activate links in native WordPress navigation menus (enable in admin settings)

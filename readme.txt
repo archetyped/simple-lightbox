@@ -46,7 +46,7 @@ Options for customizing the lightbox behavior are located in the **Appearance > 
 
 == Upgrade Notice ==
 
-= 0.0.0-dev =
+= 2.7.0 =
 Fixes & improvements. PHP 5.4+ Required.
 
 == Frequently Asked Questions ==
@@ -60,5 +60,15 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 3.  Dark Theme
 
 == Changelog ==
+
+= 2.7.0 =
+
+* Fix: Remove reference to deprecated `screen_icon()` function (The Icon of Finnegan Island)
+* Add: Validate requirements before initialization.
+* Optimize: PHP 7.2+ Compatibility
+* Optimize: Internal code optimizations
+* Themes
+    * Add: RTL Support
+    * Update: Load font locally
 
 [See full changelog](https://github.com/archetyped/simple-lightbox/releases)
