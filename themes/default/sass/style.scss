@@ -1,9 +1,16 @@
-//Variables
+// Variables
 
 $nav_width: 25px;
 $nav_height: 33px;
 $ui_controls_width: 25px;
 $ui_controls_height: 25px;
+
+// Fonts
+
+@import "fonts";
+
+// Placeholders
+
 %hide-text {
 	text-indent: 100%;
 	white-space: nowrap;

@@ -79,7 +79,6 @@ class SLB_Themes extends SLB_Collection_Controller {
 					array ( 'base', $src_base . "/default/$js_path/client.js" ),
 				),
 				'styles'		=> array (
-					array ( 'font', "$scheme://fonts.googleapis.com/css?family=Yanone+Kaffeesatz" ),
 					array ( 'base', "$src_base/default/css/style.css" ),
 				),
 			),
