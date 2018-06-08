@@ -5,13 +5,13 @@
  * Used to ensure environment meets plugin requirements.
  *
  * @package Simple Lightbox
- * @since
+ * @since 2.7.0
  */
 
 /**
  * Plugin Requirements Validation class
  *
- * @since
+ * @since 2.7.0
  */
 class SLB_Requirements_Check {
 	/**
