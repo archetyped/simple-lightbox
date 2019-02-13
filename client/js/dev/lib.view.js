@@ -3042,7 +3042,6 @@ var Content_Item = {
 		}
 		
 		var title = '';
-		var sel_cap = '.wp-caption-text';
 		// Generate title from DOM values
 		var dom = this.dom_get();
 		
@@ -3051,9 +3050,14 @@ var Content_Item = {
 			// Link title
 			title = dom.attr(prop);
 			
-			// Caption
+			// Caption (class-based)
 			if ( !title ) {
-				title = dom.siblings(sel_cap).html();
+				title = dom.siblings('.wp-caption-text').html();
+			}
+			
+			// Caption (figcaption)
+			if ( !title ) {
+				title = dom.siblings('figcaption').html();
 			}
 		}
 		
