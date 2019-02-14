@@ -3,8 +3,8 @@ Contributors: Archetyped
 Donate link: http://gum.co/slb-donate
 License: GPLv2
 Tags: lightbox, gallery, photography, images, theme, template, style
-Requires at least: 4.9
-Tested up to: 4.9
+Requires at least: 5.0
+Tested up to: 5.1
 Requires PHP: 5.4
 Stable tag: trunk
 
