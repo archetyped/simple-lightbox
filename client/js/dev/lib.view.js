@@ -3042,18 +3042,22 @@ var Content_Item = {
 		}
 		
 		var title = '';
-		var sel_cap = '.wp-caption-text';
 		// Generate title from DOM values
 		var dom = this.dom_get();
 		
-		// Standalone link
-		if ( dom.length && !this.in_gallery() ) {
-			// Link title
+		// DOM-based caption
+		if ( dom.length ) {
+			// Link title (generally must be manually-entered)
 			title = dom.attr(prop);
 			
-			// Caption
+			// Figcaption element
 			if ( !title ) {
-				title = dom.siblings(sel_cap).html();
+				title = dom.closest('figure').find('figcaption').first().html();
+			}
+
+			// Class Name
+			if ( !title ) {
+				title = dom.closest('figure').find('.wp-caption-text').first().html();
 			}
 		}
 		
