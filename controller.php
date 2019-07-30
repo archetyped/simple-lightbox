@@ -675,8 +675,8 @@ class SLB_Lightbox extends SLB_Base {
 	 * @return array Links in content
 	 */
 	function get_links($content, $unique = false) {
-		$rgx = "/\<a[^\>]+href=.*?\>/i";
-		$links = array();
+		$rgx = "/\<a\b(?:(?!\shref=|\>).)*\shref=[^\>\<]++\>/i";
+		$links = [];
 		preg_match_all($rgx, $content, $links);
 		$links = $links[0];
 		if ( $unique )
