@@ -3029,7 +3029,7 @@ var Content_Item = {
 		ret = ret.replace(/&(#38|amp);/, '&');
 		return ret;
 	},
-	
+
 	/**
 	 * Retrieve item title
 	 */
@@ -3044,6 +3044,33 @@ var Content_Item = {
 		var title = '';
 		// Generate title from DOM values
 		var dom = this.dom_get();
+		var t = this;
+		/**
+		 * Validate title value.
+		 * 
+		 * Removes default title based on user option.
+		 * 
+		 * @param string title Title to check.
+		 * @return string Current title or empty string (if default title set and not permitted).
+		 */
+		var validate = function(title) {
+			// Return empty string if empty title set.
+			if ( typeof title !== 'string' || '' === title.trim() ) {
+				return '';
+			}
+			// Cleanup title.
+			title = title.trim();
+			// Stop processing if default title is allowed.
+			if ( t.get_viewer().get_attribute('title_default') ) {
+				return title;
+			}
+			
+			// Check if default title is used.
+			if ( title === t.get_title_default() ) {
+				title = '';
+			}
+			return title;
+		};
 		
 		// DOM-based caption
 		if ( dom.length ) {
@@ -3065,30 +3092,45 @@ var Content_Item = {
 		if ( !title ) {
 			var props = ['caption', 'title'];
 			for ( var x = 0; x < props.length; x++ ) {
-				title = this.get_attribute(props[x], '');
+				title = validate( this.get_attribute(props[x], '') );
 				if ( !this.util.is_empty(title) ) {
 					break;
 				}
 			}
 		}
-		
+
 		// Fallbacks
 		if ( !title && dom.length ) {
-			// Alt attribute
-			title = dom.find('img').first().attr('alt');
+			// Image Alt attribute
+			title = validate( dom.find('img').first().attr('alt') );
 			
 			// Element text
 			if ( !title ) {
-				title = dom.get(0).innerText.trim();
+				title = validate( dom.get(0).innerText.trim() );
 			}
 		}
 		
-		// Validate
-		if ( !this.util.is_string(title, false) ) {
-			title = '';
-		}
-		// Strip default title
-		if ( !this.util.is_empty(title) && !this.get_viewer().get_attribute('title_default') ) {
+		// Final validation.
+		title = validate(title);
+		
+		// Cache retrieved value
+		this.set_attribute(prop_cached, title);
+		// Return value
+		return title;
+	},
+
+	/**
+	 * Retrieve default title.
+	 * 
+	 * WordPress-generated default title for attachments is base file name (without extension).
+	 * 
+	 * @return string Default title.
+	 */
+	get_title_default: function() {
+		var val = '';
+		var prop = 'title_default';
+		// Build default title if necessary.
+		if ( !this.has_attribute(prop) ) {
 			var f = this.get_uri('source');
 			var i = f.lastIndexOf('/');
 			if ( -1 !== i ) {
@@ -3097,17 +3139,13 @@ var Content_Item = {
 				if ( -1 !== i ) {
 					f = f.substr(0, i);
 				}
-				if ( title === f ) {
-					title = '';
-				}
 			}
+			// Save default title
+			val = this.set_attribute(prop, f);
+		} else {
+			val = this.get_attribute(prop);
 		}
-		
-		
-		// Cache retrieved value
-		this.set_attribute(prop_cached, title);
-		// Return value
-		return title;
+		return val;
 	},
 	
 	/**
