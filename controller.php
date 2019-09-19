@@ -984,10 +984,8 @@ class SLB_Lightbox extends SLB_Base {
 			unset($atts, $atts_meta, $m, $a, $uri, $pids, $pids_flat);
 		}
 
-		// Filter media item properties.
-		foreach ( $this->media_items as $key => $props ) {
-			$this->media_items[$key] =  $this->util->apply_filters('media_item_properties', (object) $props);
-		}
+		// Filter media items.
+		$this->media_items =  $this->util->apply_filters('media_items', $this->media_items);
 
 		// Build client output.
 		$obj = 'View.assets';
