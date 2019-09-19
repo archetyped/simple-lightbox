@@ -65,18 +65,20 @@ class SLB_Lightbox extends SLB_Base {
 		'type' => null,
 		'internal' => false,
 		'source' => '',
+		/* @future: Metadata
 		'media' => [],
 		'meta'	=> []
+		END @future: Metadata */
 	];
 
 	/**
 	 * Processed media items for output to client.
-	 * 
+	 *
 	 * @var object[string] {
 	 *     Media item properties.
-	 * 
+	 *
 	 *     @index string Unique ID (system-generated).
-	 *         
+	 *
 	 *     @see $media_item_template.
 	 * }
 	 */
@@ -916,6 +918,7 @@ class SLB_Lightbox extends SLB_Base {
 			
 			// Process attachments.
 			if ( $atts ) {
+				/* @future: Metadata
 				// Retrieve attachment metadata.
 				$pids_flat = "('" . implode("','", $pids_flat) . "')";
 				$atts_meta = $wpdb->get_results($wpdb->prepare("SELECT `post_id`,`meta_value` FROM $wpdb->postmeta WHERE `post_id` IN $pids_flat AND `meta_key` = %s LIMIT %d", '_wp_attachment_metadata', count($atts)));
@@ -931,14 +934,21 @@ class SLB_Lightbox extends SLB_Base {
 				} else {
 					$atts_meta = [];
 				}
+				END @future: Metadata */
 
+				/* @future: Metadata
 				// Process attachment data.
 				$media_props = array('file', 'width', 'height');
 				$media_original_name = 'full';
+				END @future: Metadata */
+
 				$props_post_map = [ 'title' => 'post_title', 'caption' => 'post_excerpt', 'description' => 'post_content' ];
 
 				foreach ( $atts as $att ) {
+					$data = [];
+					/* @future: Metadata
 					$data = [ 'meta' => [], 'media' => [ $media_original_name => [] ] ];
+					END @future: Metadata */
 					// Remap post data to metadata.
 					foreach ( $props_post_map as $props_post_key => $props_post_source ) {
 						$data[$props_post_key] = $att->{$props_post_source};
@@ -946,6 +956,7 @@ class SLB_Lightbox extends SLB_Base {
 					// Cleanup.
 					unset($props_post_key, $props_post_source);
 					
+					/* @future: Metadata
 					// Process metadata.
 					if ( isset( $atts_meta[$att->ID] ) && ( $a = unserialize( $atts_meta[$att->ID] ) ) && is_array( $a ) ) {
 						// Media properties.
@@ -958,6 +969,7 @@ class SLB_Lightbox extends SLB_Base {
 						// Cleanup.
 						unset( $a, $d );
 					}
+					END @future: Metadata */
 					// Save data to corresponding media item(s).
 					if ( isset($pids[$att->ID]) ) {
 						foreach ( $pids[$att->ID] as $key ) {
