@@ -35,28 +35,74 @@ class SLB_Lightbox extends SLB_Base {
 	var $template_tags = null;
 
 	/**
-	 * Collection of processed media items for output to client
-	 * > Key (string) Attachment URI
-	 * > Value (assoc-array) Attachment properties (url, etc.)
-	 *   > source: Source URL
-	 * @var array
+	 * Media item template.
+	 * 
+	 * @var array {
+	 *     Media item properties.
+	 * 
+	 *     @type int $id WP post ID. Default null.
+	 *     @type string $type Item type. Default null.
+	 *     @type string $source Source URI.
+	 *     @type bool $internal Internal resource. Default false.
+	 *     @type string $title Item title.
+	 *     @type string $caption Item caption.
+	 *     @type string $description Item description.
+	 *     @type array $media {
+	 *         Media properties (indexed by size name).
+	 *         Original size = 'full'.
+	 * 
+	 *         @type string $file File URI.
+	 *         @type int $width File width in pixels.
+	 *         @type int $height File height in pixels.
+	 *     }
+	 *     @type array $meta {
+	 *         Item metadata.
+	 *     }
+	 * }
 	 */
-	var $media_items = array();
-	
+	private $media_item_template = [
+		'id' => null,
+		'type' => null,
+		'internal' => false,
+		'source' => '',
+		'media' => [],
+		'meta'	=> []
+	];
+
 	/**
-	 * Collection of unprocessed media items
-	 * Multi-dimensional array
-	 * > props (array) Media properties indexed by ID
-	 *     > Key: (string) Unique ID (system-generated)
-	 *     > Value: (object) Media properties
-	 *         > type: (string) Item type (Default: null)
-	 * 	       > id: (int) WP item ID (Default: null)
-	 * > uri (array) Index of cached URIs
-	 *     > Key: (string) Item URI
-	 *     > Value: (string) Item ID (pointer to item in `id` array)
-	 * @var array
+	 * Processed media items for output to client.
+	 * 
+	 * @var object[string] {
+	 *     Media item properties.
+	 * 
+	 *     @index string Unique ID (system-generated).
+	 *         
+	 *     @see $media_item_template.
+	 * }
 	 */
-	private $media_items_raw = array( 'props' => array(), 'uri' => array() );
+	private $media_items = [];
+
+	/**
+	 * Collection of unprocessed media items.
+	 * 
+	 * @var array {
+	 *     @type object[string] $props {
+	 *         Media item properties.
+	 * 
+	 *         @index string Unique ID (system-generated).
+	 *         
+	 *         @see $media_item_template
+	 *     }
+	 *     @type string[string] $uri {
+	 *         Cached URIs.
+	 * 
+	 *         @index string URI.
+	 * 
+	 *         @type string Item ID (points to item in `props` array)
+	 *     }
+	 * }
+	 */
+	private $media_items_raw = [ 'props' => [], 'uri' => [] ];
 	
 	/**
 	 * Manage excluded content
@@ -794,153 +840,144 @@ class SLB_Lightbox extends SLB_Base {
 	/**
 	 * Add media information to client output
 	 * 
-	 * @param array $commands Client script commands
-	 * @return array Modified script commands
+	 * @param array $client_script Client script commands.
+	 * @return array Modified script commands.
 	 * TODO Refactor
 	 */
-	function client_script_media($client_script) {
+	public function client_script_media($client_script) {
 		global $wpdb;
 		
-		// Init variables
-		$this->media_items = array();
-		$props = array('id', 'type', 'description', 'title', 'source', 'caption');
-		$props = (object) array_combine($props, $props);
-		$props_map = array('description' => 'post_content', 'title' => 'post_title', 'caption' => 'post_excerpt');
+		// Init.
+		$this->media_items = $this->get_cached_media_items();
 
-		// Separate media into buckets by type
-		$m_internals = array();
-		$type = $id = null;
-		
-		$m_items = $this->media_items = $this->get_cached_media_items();
-		foreach ( $m_items as $key => $p ) {
-			// Set aside internal links for additional processing
-			if ( $p->internal && !isset($m_internals[$key]) ) {
-				$m_internals[$key] =& $m_items[$key];
+		// Extract internal links for additional processing.
+		$m_internals = [];
+		foreach ( $this->media_items as $key => $p ) {
+			if ( $p->internal ) {
+				$m_internals[$key] =& $this->media_items[$key];
 			}
 		}
+		// Cleanup.
 		unset($key, $p);
 		
-		// Process internal links
+		// Process internal links.
 		if ( !empty($m_internals) ) {
-			$uris_base = array();
+			$uris_base = [];
 			$uri_prefix = wp_upload_dir();
 			$uri_prefix = $this->util->normalize_path($uri_prefix['baseurl'], true);
 			foreach ( $m_internals as $key => $p ) {
-				// Prepare internal links
-				// Create relative URIs for attachment data retrieval
+				// Prepare internal links.
+				// Create relative URIs for attachment data retrieval.
 				if ( !$p->id && strpos($p->source, $uri_prefix) === 0 ) {
 					$uris_base[str_replace($uri_prefix, '', $p->source)] = $key;
 				}
 			}
+			// Cleanup.
 			unset($key, $p);
 			
-			// Retrieve attachment IDs
+			// Retrieve attachment IDs.
 			$uris_flat = "('" . implode("','", array_keys($uris_base)) . "')";
 			$q = $wpdb->prepare("SELECT post_id, meta_value FROM $wpdb->postmeta WHERE `meta_key` = %s AND LOWER(`meta_value`) IN $uris_flat LIMIT %d", '_wp_attached_file', count($uris_base));
 			$pids = $wpdb->get_results($q);
-			// Match IDs to URIs
+			// Match IDs to URIs.
 			if ( $pids ) {
 				foreach ( $pids as $pd ) {
 					$file =& $pd->meta_value;
 					if ( isset($uris_base[$file]) ) {
-						$m_internals[ $uris_base[$file] ]->{$props->id} = absint($pd->post_id);
+						$m_internals[ $uris_base[$file] ]->id = absint($pd->post_id);
 					}
 				}
 			}
-			// Destroy worker vars
+			// Cleanup.
 			unset($uris_base, $uris_flat, $q, $pids, $pd, $file);
 		}
 		
-		// Process items with attachment IDs
-		$pids = array();
-		foreach ( $m_items as $key => $p ) {
-			// Add post ID to query
+		// Process items with attachment IDs.
+		$pids = [];
+		foreach ( $this->media_items as $key => $p ) {
+			// Add post ID to query.
 			if ( !!$p->id ) {
-				// Create array for ID (support multiple URIs per ID)
+				// Create array for ID (support multiple URIs per ID).
 				if ( !isset($pids[$p->id]) ) {
-					$pids[$p->id] = array();
+					$pids[$p->id] = [];
 				}
-				// Add URI to ID
+				// Add URI to ID.
 				$pids[$p->id][] = $key;
 			}
 		}
+		// Cleanup.
 		unset($key, $p);
 		
-		// Retrieve attachment properties
+		// Retrieve attachment properties.
 		if ( !empty($pids) ) {
 			$pids_flat = array_keys($pids);
-			// Retrieve attachment post data
+			// Retrieve attachment post data.
 			$atts = get_posts(array('post_type' => 'attachment', 'include' => $pids_flat));
 			
-			// Process attachments
+			// Process attachments.
 			if ( $atts ) {
-				// Retrieve attachment metadata
+				// Retrieve attachment metadata.
 				$pids_flat = "('" . implode("','", $pids_flat) . "')";
 				$atts_meta = $wpdb->get_results($wpdb->prepare("SELECT `post_id`,`meta_value` FROM $wpdb->postmeta WHERE `post_id` IN $pids_flat AND `meta_key` = %s LIMIT %d", '_wp_attachment_metadata', count($atts)));
-				// Restructure metadata array by post ID
+				// Reindex metadata array by attachment ID.
 				if ( $atts_meta ) {
-					$meta = array();
+					$meta = [];
 					foreach ( $atts_meta as $att_meta ) {
 						$meta[$att_meta->post_id] = $att_meta->meta_value;
 					}
 					$atts_meta = $meta;
+					// Cleanup.
 					unset($meta);
 				} else {
-					$atts_meta = array();
+					$atts_meta = [];
 				}
-				$props_size = array('file', 'width', 'height');
-				$props_exclude = array('hwstring_small');
-				foreach ( $atts as $att ) {
-					// Set post data
-					$m = array();
-					
-					// Remap post data to properties
-					foreach ( $props_map as $prop_key => $prop_source ) {
-						$m[$props->{$prop_key}] = $att->{$prop_source};
-					}
-					unset($prop_key, $prop_source);
-					
-					// Add metadata
-					if ( isset($atts_meta[$att->ID]) && ($a = unserialize($atts_meta[$att->ID])) && is_array($a) ) {
-						// Move original size into `sizes` array
-						foreach ( $props_size as $d ) {
-							if ( !isset($a[$d]) ) {
-								continue;
-							}
-							$a['sizes']['original'][$d] = $a[$d];
-							unset($a[$d]);
-						}
 
-						// Strip extraneous metadata
-						foreach ( $props_exclude as $d ) {
+				// Process attachment data.
+				$media_props = array('file', 'width', 'height');
+				$media_original_name = 'full';
+				$props_post_map = [ 'title' => 'post_title', 'caption' => 'post_excerpt', 'description' => 'post_content' ];
+
+				foreach ( $atts as $att ) {
+					$data = [ 'meta' => [], 'media' => [ $media_original_name => [] ] ];
+					// Remap post data to metadata.
+					foreach ( $props_post_map as $props_post_key => $props_post_source ) {
+						$data[$props_post_key] = $att->{$props_post_source};
+					}
+					// Cleanup.
+					unset($props_post_key, $props_post_source);
+					
+					// Process metadata.
+					if ( isset( $atts_meta[$att->ID] ) && ( $a = unserialize( $atts_meta[$att->ID] ) ) && is_array( $a ) ) {
+						// Media properties.
+						// Source file.
+						foreach ( $media_props as $d ) {
 							if ( isset($a[$d]) ) {
-								unset($a[$d]);
+								$data['media'][$media_original_name][$d] = $a[$d];
 							}
 						}
-						
-						// Merge post data & meta data
-						$m = array_merge($a, $m);
-						// Destroy worker vars
-						unset($a, $d);
+						// Cleanup.
+						unset( $a, $d );
 					}
-					
-					// Save attachment data (post & meta) to original object(s)
+					// Save data to corresponding media item(s).
 					if ( isset($pids[$att->ID]) ) {
 						foreach ( $pids[$att->ID] as $key ) {
-							$this->media_items[$key] = array_merge( (array) $m_items[$key], $m);
+							$this->media_items[$key] = (object) array_merge( (array) $this->media_items[$key], $data );
 						}
 					}
 				}
+				// Cleanup.
+				unset($att, $data);
 			}
+			// Cleanup.
 			unset($atts, $atts_meta, $m, $a, $uri, $pids, $pids_flat);
 		}
 
-		// Filter media item properties
+		// Filter media item properties.
 		foreach ( $this->media_items as $key => $props ) {
 			$this->media_items[$key] =  $this->util->apply_filters('media_item_properties', (object) $props);
 		}
 
-		// Build client output
+		// Build client output.
 		$obj = 'View.assets';
 		$client_script[] = $this->util->extend_client_object($obj, $this->media_items);
 		return $client_script;
@@ -961,27 +998,31 @@ class SLB_Lightbox extends SLB_Base {
 	 * @return string Unique ID for cached media item
 	 */
 	private function cache_media_item($uri, $type, $internal, $props = null) {
-		// Validate
+		// Validate.
 		if ( !is_object($uri) || !is_string($type) ) {
 			return false;
 		}
-		// Check if URI already cached
+		// Check if URI already cached.
 		$key = $this->get_media_item_id($uri->source);
-		// Cache new item
+		// Cache new item.
 		if ( null == $key ) {
-			// Generate Unique ID
+			// Generate Unique ID.
 			do {
 				$key = (string) mt_rand();
 			} while ( isset($this->media_items_raw['props'][$key]) );
-			// Build properties object
-			$i = array('id' => null);
+			// Build properties object.
+			$i = $this->media_item_template;
 			if ( is_array($props) && !empty($props) ) {
 				$i = array_merge($i, $props);
 			}
-			$i = array_merge($i, array('type' => $type, 'source' => $uri->source, 'internal' => $internal));
-			// Cache item properties
+			$i = array_merge( $i, [
+				'type' => $type,
+				'source' => $uri->source,
+				'internal' => $internal,
+			] );
+			// Cache item properties.
 			$this->media_items_raw['props'][$key] = (object) $i;
-			// Cache Source URI (point to properties object)
+			// Cache Source URI (point to properties object).
 			$this->media_items_raw['uri'][$uri->source] = $key;
 		}
 		return $key;
