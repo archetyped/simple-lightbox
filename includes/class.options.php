@@ -306,7 +306,7 @@ class SLB_Options extends SLB_Field_Collection {
 	function validate($values = null) {
 		$qvar = $this->get_id('formatted');
 		// Check for submitted data (e.g. form submission) when no values passed to method.
-		if ( empty($values) && isset($_REQUEST[$qvar]) ) {
+		if ( empty($values) && isset($_REQUEST[$qvar]) && check_admin_referer( $qvar, $qvar . '_nonce' ) ) {
 			$values = $_REQUEST[$qvar];
 		}
 		if ( is_array($values) ) {
