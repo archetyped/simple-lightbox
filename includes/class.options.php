@@ -294,15 +294,18 @@ class SLB_Options extends SLB_Field_Collection {
 	/* Processing */
 	
 	/**
-	 * Validate option values
-	 * Used for validating options (e.g. admin form submission) prior to saving options to DB
-	 * Reformats values based on options' default values (i.e. bool, int, string, etc.)
-	 * Adds option items not included in original submission 
-	 * @param array $values (optional) Option values
-	 * @return array Full options data
+	 * Validate option values.
+	 * 
+	 * Used for validating options (e.g. admin form submission) prior to saving options to DB.
+	 * Reformats values based on options' default values (i.e. bool, int, string, etc.).
+	 * Adds option items not included in original submission.
+	 * 
+	 * @param array $values (optional) Option values to validate.
+	 * @return array Full options data.
 	 */
 	function validate($values = null) {
 		$qvar = $this->get_id('formatted');
+		// Check for submitted data (e.g. form submission) when no values passed to method.
 		if ( empty($values) && isset($_REQUEST[$qvar]) ) {
 			$values = $_REQUEST[$qvar];
 		}
