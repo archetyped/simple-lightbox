@@ -1000,7 +1000,7 @@ class SLB_Field_Base extends SLB_Base {
 	 */
 	function format_form($value) {
 		if ( is_string($value) )
-			$value = htmlspecialchars($value);
+			$value = esc_attr($value);
 		return $value;
 	}
 	
