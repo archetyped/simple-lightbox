@@ -201,11 +201,15 @@ class SLB_Fields extends SLB_Field_Collection {
 				if ( 'properties' == $placeholder['tag'] && ($prop_group = $item->get_group($placeholder['attributes']['group'])) && !empty($prop_group) ) {
 					/* Process group */
 					$group_out = array();
-					// Iterate through properties in group and build string
-					foreach ( array_keys($prop_group) as $prop_key ) {
-						$prop_val = $item->get_property($prop_key);
-						if ( !is_null($prop_val) )
-							$group_out[] = $prop_key . '="' . $prop_val . '"';
+					// Iterate through properties in group and build string.
+					foreach ( array_keys( $prop_group ) as $prop_key ) {
+						$prop_val = $item->get_property( $prop_key );
+						if ( !is_null( $prop_val ) ) {
+							// Process placeholders.
+							$prop_val = $item->process_placeholders( $prop_val, $layout, $data );
+							// Add property to attribute string output.
+							$group_out[] = $prop_key . '="' . esc_attr( $prop_val ) . '"';
+						}
 					}
 					$output = implode(' ', $group_out);
 				}
