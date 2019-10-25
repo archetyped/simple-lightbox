@@ -388,7 +388,7 @@ class SLB_Field_Type extends SLB_Field_Base {
 	 * @param array   $data Optional. Additional data for current item.
 	 * @return string Original text with placeholders converted to full values.
 	 */
-	function process_placeholders( $str, $layout = 'form', $data = null ) {
+	public function process_placeholders( $str, $layout = 'form', $data = null ) {
 		// Parse Layout.
 		$ph = $this->get_placeholder_defaults();
 
