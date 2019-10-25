@@ -150,8 +150,6 @@ class SLB_Field_Type extends SLB_Field_Base {
 		return !empty($this->caller);
 	}
 
-	
-
 	/**
 	 * Sets an element for the field type
 	 * @param string $name Name of element
@@ -369,37 +367,54 @@ class SLB_Field_Type extends SLB_Field_Base {
 		$out = $this->get_layout($layout);
 		// Only parse valid layouts
 		if ( $this->is_valid_layout($out) ) {
-			// Parse Layout
-			$ph = $this->get_placeholder_defaults();
-
-			// Search layout for placeholders
-			while ( $ph->match = $this->parse_layout($out, $ph->pattern_general) ) {
-				// Iterate through placeholders (tag, id, etc.)
-				foreach ( $ph->match as $tag => $instances ) {
-					// Iterate through instances of current placeholder
-					foreach ( $instances as $instance ) {
-						// Process value based on placeholder name
-						$target_property = $this->util->apply_filters(array('process_placeholder_' . $tag, false), '', $this, $instance, $layout, $data);
-						// Process value using default processors (if necessary)
-						if ( '' == $target_property ) {
-							$target_property = $this->util->apply_filters(array('process_placeholder', false), $target_property, $this, $instance, $layout, $data);
-						}
-
-						// Clear value if value not a string
-						if ( !is_scalar($target_property) ) {
-							$target_property = '';
-						}
-						
-						// Replace layout placeholder with retrieved item data
-						$out = str_replace($ph->start . $instance['match'] . $ph->end, $target_property, $out);
-					}
-				}
-			}
+			$out = $this->process_placeholders( $out, $layout, $data );
 		} else {
 			$out = $out_default;
 		}
 		/* Return generated value */
 		$out = $this->format_final($out);
+		return $out;
+	}
+
+	/**
+	 * Processes placeholders in a string.
+	 * 
+	 * Finds and expands placeholders in a string to their full values.
+	 * 
+	 * @since dev
+	 *
+	 * @param string  $out String containing placeholders.
+	 * @param string  $layout Optional. Name of layout being built.
+	 * @param array   $data Optional. Additional data for current item.
+	 * @return string Original text with placeholders converted to full values.
+	 */
+	function process_placeholders( $out, $layout = 'form', $data = null ) {
+		// Parse Layout
+		$ph = $this->get_placeholder_defaults();
+
+		// Search layout for placeholders
+		while ( $ph->match = $this->parse_layout($out, $ph->pattern_general) ) {
+			// Iterate through placeholders (tag, id, etc.)
+			foreach ( $ph->match as $tag => $instances ) {
+				// Iterate through instances of current placeholder
+				foreach ( $instances as $instance ) {
+					// Process value based on placeholder name
+					$target_property = $this->util->apply_filters(array('process_placeholder_' . $tag, false), '', $this, $instance, $layout, $data);
+					// Process value using default processors (if necessary)
+					if ( '' == $target_property ) {
+						$target_property = $this->util->apply_filters(array('process_placeholder', false), $target_property, $this, $instance, $layout, $data);
+					}
+
+					// Clear value if value not a string
+					if ( !is_scalar($target_property) ) {
+						$target_property = '';
+					}
+					
+					// Replace layout placeholder with retrieved item data
+					$out = str_replace($ph->start . $instance['match'] . $ph->end, $target_property, $out);
+				}
+			}
+		}
 		return $out;
 	}
 }
