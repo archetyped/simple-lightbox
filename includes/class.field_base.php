@@ -459,16 +459,20 @@ class SLB_Field_Base extends SLB_Base {
 			// Initilize default formats.
 			$this->add_id_format(
 				'attr_id',
-				[ 'open' => '_', 'segment_open' => '_' ],
-				[ 'get_container', 'get_id', 'add_prefix' ],
-				true,
+				[
+					'wrap' => [ 'open' => '_', 'segment_open' => '_' ],
+					'prefix' => [ 'get_container', 'get_id', 'add_prefix' ],
+					'recursive' => true,
+				],
 				true
 			);
 			$this->add_id_format(
 				'attr_name',
-				[ 'open' => '[', 'close' => ']', 'segment_open' => '[', 'segment_close' => ']' ],
-				[ 'get_container', 'get_id', 'add_prefix' ],
-				true,
+				[
+					'wrap' => [ 'open' => '[', 'close' => ']', 'segment_open' => '[', 'segment_close' => ']' ],
+					'prefix' => [ 'get_container', 'get_id', 'add_prefix' ],
+					'recursive' =>  true,
+				],
 				true
 			);
 			
@@ -487,19 +491,17 @@ class SLB_Field_Base extends SLB_Base {
 	 * @param bool $overwrite Optional. Overwrite existing format. Default false.
 	 * @return void
 	 */
-	protected function add_id_format( string $name, array $wrap, array $prefix, bool $recursive = false, bool $overwrite = false ) {
+	protected function add_id_format( string $name, array $options, bool $overwrite = false ) {
 		// Init ID formats before adding new ones.
 		$this->init_id_formats();
 		// Do not add format if name matches existing format (when overwriting not allowed).
 		if ( ! $overwrite && in_array( $name, array_keys( $this->id_formats ) ) ) {
 			return;
 		}
+		// Normlize options.
+		$options = wp_parse_args( $options, [ 'wrap' => [], 'prefix' => [], 'recursive' => false ] );
 		// Add format.
-		$this->id_formats[ $name ] = [
-			'wrap'      => $wrap,
-			'prefix'    => $prefix,
-			'recursive' => $recursive,
-		];
+		$this->id_formats[ $name ] = $options;
 	}
 
 	/**

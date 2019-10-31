@@ -78,9 +78,11 @@ class SLB_Field_Collection extends SLB_Field_Base {
 		// Add custom ID format(s).
 		$this->add_id_format(
 			'formatted',
-			[ 'open' => '_' ],
-			[ 'get_prefix' ],
-			false
+			[
+				'wrap'      => [ 'open' => '_' ],
+				'prefix'    => [ 'get_prefix' ],
+				'recursive' => false,
+			]
 		);
 	}
 	
