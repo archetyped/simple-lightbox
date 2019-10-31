@@ -233,7 +233,7 @@ class SLB_Fields extends SLB_Field_Collection {
 	function process_placeholder_id($output, $item, $placeholder, $layout, $data) {
 		// Get attributes
 		$args = wp_parse_args($placeholder['attributes'], array('format' => 'attr_id')); 
-		return $item->get_id($args);
+		return esc_attr( $item->get_id($args) );
 	}
 	
 	/**
@@ -245,7 +245,7 @@ class SLB_Fields extends SLB_Field_Collection {
 	function process_placeholder_name($output, $item, $placeholder, $layout, $data) {
 		// Get attributes
 		$args = wp_parse_args($placeholder['attributes'], array('format' => 'attr_name')); 
-		return $item->get_id($args);
+		return esc_attr( $item->get_id($args) );
 	}
 	
 	/**
