@@ -1036,7 +1036,9 @@ class SLB_Field_Base extends SLB_Base {
 	 * Format value for output as an attribute.
 	 * 
 	 * Only strings are formatted.
-	 * 
+	 *
+	 * @since dev
+	 *
 	 * @param mixed $value Value to format.
 	 * @return mixed Formatted value.
 	 */
