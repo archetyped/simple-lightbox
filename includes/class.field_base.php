@@ -1031,15 +1031,19 @@ class SLB_Field_Base extends SLB_Base {
 		// Return formatted value
 		return $value;
 	}
-	
+
 	/**
-	 * Format value for output in form field
-	 * @param mixed $value Value to format
-	 * @return mixed Formatted value
+	 * Format value for output as an attribute.
+	 * 
+	 * Only strings are formatted.
+	 * 
+	 * @param mixed $value Value to format.
+	 * @return mixed Formatted value.
 	 */
-	function format_form($value) {
-		if ( is_string($value) )
+	function format_attr( $value ) {
+		if ( is_string($value) ) {
 			$value = esc_attr($value);
+		}
 		return $value;
 	}
 	
