@@ -268,24 +268,19 @@ class SLB_Fields extends SLB_Field_Collection {
 	 * @return string Placeholder output
 	 */
 	function process_placeholder_data($output, $item, $placeholder, $layout) {
-		$attr_default = array (
-			'context'	=> '',
-		);
-		$opts = wp_parse_args($placeholder['attributes'], $attr_default);
-		// Save context to separate variable
-		$context = $opts['context'];
-		unset($opts['context']);
+		$opts = $placeholder['attributes'];
+		// Strip context from data retrieval options (Formatting handled upstream).
+		if ( is_array( $opts ) ) {
+			unset( $opts['context'] );
+		}
 		// Get data
 		$out = $item->get_data($opts);
-		if ( !is_null($out) ) {
+		if ( ! is_null($out) ) {
 			// Get specific member in value (e.g. value from a specific item element)
 			if ( isset($opts['element']) && is_array($out) && ( $el = $opts['element'] ) && isset($out[$el]) )
 				$out = $out[$el];
 		}
 		
-		// Format data based on context
-		$out = $item->preserve_special_chars($out, $context);
-		$out = $item->format($out, $context);
 		// Return data
 		return $out;
 	}

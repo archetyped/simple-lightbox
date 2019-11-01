@@ -401,17 +401,11 @@ class SLB_Field_Type extends SLB_Field_Base {
 					// Process value based on placeholder name
 					$target_property = $this->util->apply_filters( array( 'process_placeholder_' . $tag, false ), '', $this, $instance, $layout, $data );
 					// Process value using default processors (if necessary)
-					if ( '' == $target_property ) {
+					if ( '' === $target_property ) {
 						$target_property = $this->util->apply_filters( array( 'process_placeholder', false ), $target_property, $this, $instance, $layout, $data );
 					}
-
-					// Clear value if value not a string
-					if ( !is_scalar( $target_property ) ) {
-						$target_property = '';
-					}
-
 					// Format output.
-					if ( ! empty( $target_property ) ) {
+					if ( ! is_null( $target_property ) ) {
 						$context = ( isset( $instance['attributes']['context'] ) ) ? $instance['attributes']['context'] : '';
 						// Handle special characters.
 						$target_property = $this->preserve_special_chars( $target_property, $context );
@@ -419,6 +413,10 @@ class SLB_Field_Type extends SLB_Field_Base {
 						$target_property = $this->format( $target_property, $context );
 					}
 					
+					// Clear value if value not a string
+					if ( !is_scalar( $target_property ) ) {
+						$target_property = '';
+					}
 					// Replace layout placeholder with retrieved item data
 					$str = str_replace( $ph->start . $instance['match'] . $ph->end, $target_property, $str );
 				}
