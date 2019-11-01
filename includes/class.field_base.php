@@ -1043,8 +1043,8 @@ class SLB_Field_Base extends SLB_Base {
 	 * @return mixed Formatted value.
 	 */
 	function format_attr( $value ) {
-		if ( is_string($value) ) {
-			$value = esc_attr($value);
+		if ( is_string( $value ) ) {
+			$value = esc_attr( $value );
 		}
 		return $value;
 	}
