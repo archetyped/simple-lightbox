@@ -355,15 +355,23 @@ class SLB_Fields extends SLB_Field_Collection {
 		// Return output
 		return implode($out);
 	}
-	
+
 	/**
-	 * Returns specified value from extended data array for item
-	 * @see SLB_Field_Type::process_placeholder_default for parameter descriptions
-	 * @return string Placeholder output
+	 * Returns specified value from extended data array for item.
+	 *
+	 * @param string $output Value to be used in place of placeholder.
+	 * @param SLB_Field $item Field containing placeholder.
+	 * @param array $placeholder Current placeholder.
+	 * @see SLB_Field::parse_layout for structure of `$placeholder` array.
+	 * @param string $layout Name of layout being built.
+	 * @param array $data Extended data for item.
+	 *
+	 * @return string Processed value.
 	 */
-	function process_placeholder_data_ext($output, $item, $placeholder, $layout, $data) {
-		if ( isset($placeholder['attributes']['id']) && ($key = $placeholder['attributes']['id']) && isset($data[$key]) ) {
-			$output = strval($data[$key]);
+	function process_placeholder_data_ext( string $output, SLB_Field $item, array $placeholder, string $layout, array $data ) {
+		$key = ( isset( $placeholder['attributes']['id'] ) ) ? $placeholder['attributes']['id'] : false;
+		if ( !! $key && isset( $data[ $key ] ) && is_scalar( $data[ $key ] ) ) {
+			$output = strval( $data[ $key ] );
 		}
 		
 		return $output;
