@@ -1050,6 +1050,24 @@ class SLB_Field_Base extends SLB_Base {
 	}
 	
 	/**
+	 * Formats value for output as plain text.
+	 * 
+	 * Escapes HTML, etc.
+	 * Only strings are formatted.
+	 * 
+	 * @since dev
+	 *
+	 * @param mixed $value Value to format.
+	 * @return mixed Formatted value.
+	 */
+	function format_text( $value ) {
+		if ( is_string( $value ) ) {
+			$value = esc_html( $value );
+		}
+		return $value;
+	}
+	
+	/**
 	 * Final formatting before output
 	 * Restores special characters, etc.
 	 * @uses $special_chars
