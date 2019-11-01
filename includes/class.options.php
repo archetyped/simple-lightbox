@@ -249,7 +249,7 @@ class SLB_Options extends SLB_Field_Collection {
 		$otxt = new SLB_Field_Type('option_text', 'text');
 		$otxt->set_property('class', '{inherit} code');
 		$otxt->set_property('size', null);
-		$otxt->set_property('value', '{data context="form"}');
+		$otxt->set_property('value', '{data}');
 		$otxt->set_layout('label', $l->label);
 		$otxt->set_layout('form', $form);
 		$fields->add($otxt);
