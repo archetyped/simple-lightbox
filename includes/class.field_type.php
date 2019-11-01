@@ -409,6 +409,11 @@ class SLB_Field_Type extends SLB_Field_Base {
 					if ( !is_scalar( $target_property ) ) {
 						$target_property = '';
 					}
+
+					// Format output based on context.
+					if ( ! empty( $target_property ) && isset( $instance['attributes']['context'] ) ) {
+						$target_property = $this->format( $target_property, $instance['attributes']['context'] );
+					}
 					
 					// Replace layout placeholder with retrieved item data
 					$str = str_replace( $ph->start . $instance['match'] . $ph->end, $target_property, $str );
