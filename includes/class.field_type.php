@@ -410,9 +410,13 @@ class SLB_Field_Type extends SLB_Field_Base {
 						$target_property = '';
 					}
 
-					// Format output based on context.
-					if ( ! empty( $target_property ) && isset( $instance['attributes']['context'] ) ) {
-						$target_property = $this->format( $target_property, $instance['attributes']['context'] );
+					// Format output.
+					if ( ! empty( $target_property ) ) {
+						$context = ( isset( $instance['attributes']['context'] ) ) ? $instance['attributes']['context'] : '';
+						// Handle special characters.
+						$target_property = $this->preserve_special_chars( $target_property, $context );
+						// Context-specific formatting.
+						$target_property = $this->format( $target_property, $context );
 					}
 					
 					// Replace layout placeholder with retrieved item data
