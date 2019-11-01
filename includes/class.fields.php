@@ -111,8 +111,8 @@ class SLB_Fields extends SLB_Field_Collection {
 		$select->set_property('options', array());
 		$select->set_layout('form', '{label ref_base="layout"} {form_start ref_base="layout"}{option_loop ref_base="layout"}{form_end ref_base="layout"}');
 		$select->set_layout('option_loop', '{loop data="properties.options" layout="option" layout_data="option_data"}');
-		$select->set_layout('option', '<{tag_option} value="{data_ext id="option_value"}">{data_ext id="option_text"}</{tag_option}>');
-		$select->set_layout('option_data', '<{tag_option} value="{data_ext id="option_value"}" selected="selected">{data_ext id="option_text"}</{tag_option}>');		
+		$select->set_layout('option', '<{tag_option} value="{data_ext id="option_value" context="attr"}">{data_ext id="option_text"}</{tag_option}>');
+		$select->set_layout('option_data', '<{tag_option} value="{data_ext id="option_value" context="attr"}" selected="selected">{data_ext id="option_text"}</{tag_option}>');		
 		$this->add($select);
 		
 		// Span
