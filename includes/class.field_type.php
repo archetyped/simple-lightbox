@@ -260,75 +260,93 @@ class SLB_Field_Type extends SLB_Field_Base {
 	 *					'attributes' 	=> (array) attributes
 	 */
 	function parse_layout($layout, $search) {
-		$ph_xml = '';
 		$parse_match = '';
+		$result = [];
+		
+		// Find all nested layouts in layout.
+		$match_value = preg_match_all( $search, $layout, $parse_match, PREG_PATTERN_ORDER );
+		
+		// Stop if no matches found.
+		if ( ! $match_value ) {
+			return $result;
+		}
+		
+		/* Process matches */
+		
+		$ph_xml = '';
 		$ph_root_tag = 'ph_root_element';
 		$ph_start_xml = '<';
 		$ph_end_xml = ' />';
 		$ph_wrap_start = '<' . $ph_root_tag . '>';
 		$ph_wrap_end = '</' . $ph_root_tag . '>';
-		$parse_result = false;
+		$parse_result = [];
 
-		// Find all nested layouts in layout
-		$match_value = preg_match_all($search, $layout, $parse_match, PREG_PATTERN_ORDER);
+		// Get all matched elements.
+		$parse_match = $parse_match[1];
 
-		if ($match_value !== false && $match_value > 0) {
-			$parse_result = array();
-			// Get all matched elements
-			$parse_match = $parse_match[1];
+		// Build XML string from placeholders.
+		foreach ( $parse_match as $ph ) {
+			$ph_xml .= $ph_start_xml . $ph . $ph_end_xml . ' ';
+		}
+		$ph_xml = $ph_wrap_start . $ph_xml . $ph_wrap_end;
+		// Parse XML data.
+		$ph_prs = xml_parser_create();
+		xml_parser_set_option($ph_prs, XML_OPTION_SKIP_WHITE, 1);
+		xml_parser_set_option($ph_prs, XML_OPTION_CASE_FOLDING, 0);
+		$ph_parsed = xml_parse_into_struct($ph_prs, $ph_xml, $parse_result['values'], $parse_result['index']);
+		xml_parser_free($ph_prs);
 
-			// Build XML string from placeholders
-			foreach ($parse_match as $ph) {
-				$ph_xml .= $ph_start_xml . $ph . $ph_end_xml . ' ';
-			}
-			$ph_xml = $ph_wrap_start . $ph_xml . $ph_wrap_end;
-			// Parse XML data
-			$ph_prs = xml_parser_create();
-			xml_parser_set_option($ph_prs, XML_OPTION_SKIP_WHITE, 1);
-			xml_parser_set_option($ph_prs, XML_OPTION_CASE_FOLDING, 0);
-			$ret = xml_parse_into_struct($ph_prs, $ph_xml, $parse_result['values'], $parse_result['index']);
-			xml_parser_free($ph_prs);
-
-			// Build structured array with all parsed data
-
-			unset($parse_result['index'][$ph_root_tag]);
-
-			// Build structured array
-			$result = array();
-			foreach ($parse_result['index'] as $tag => $instances) {
-				$result[$tag] = array();
-				// Instances
-				foreach ($instances as $instance) {
-					// Skip instance if it doesn't exist in parse results
-					if (!isset($parse_result['values'][$instance]))
-						continue;
-
-					// Stop processing instance if a previously-saved instance with the same options already exists
-					foreach ($result[$tag] as $tag_match) {
-						if ($tag_match['match'] == $parse_match[$instance - 1])
-							continue 2;
-					}
-
-					// Init instance data array
-					$inst_data = array();
-
-					// Add Tag to array
-					$inst_data['tag'] = $parse_result['values'][$instance]['tag'];
-
-					// Add instance data to array
-					$inst_data['attributes'] = (isset($parse_result['values'][$instance]['attributes'])) ? $inst_data['attributes'] = $parse_result['values'][$instance]['attributes'] : '';
-
-					// Add match to array
-					$inst_data['match'] = $parse_match[$instance - 1];
-
-					// Add to result array
-					$result[$tag][] = $inst_data;
-				}
-			}
-			$parse_result = $result;
+		// Stop if placeholder parsing failed.
+		if ( ! $ph_parsed ) {
+			return $result;
 		}
 
-		return $parse_result;
+		unset( $parse_result['index'][$ph_root_tag] );
+
+		// Build structured array with all parsed data.
+		$ph_default = [
+			'tag'        => '',
+			'match'      => '',
+			'attributes' => [],
+		];
+
+		// Build structured array.
+		foreach ( $parse_result['index'] as $tag => $instances ) {
+			// Create container for instances of current placeholder.
+			$result[ $tag ] = [];
+			// Process placeholder instances.
+			foreach ( $instances as $instance ) {
+				// Skip instance if it doesn't exist in parse results.
+				if ( !isset( $parse_result['values'][ $instance ] ) ) {
+					continue;
+				}
+				// Stop processing instance if a previously-saved instance with the same options already exists.
+				foreach ( $result[ $tag ] as $tag_match ) {
+					if ( $tag_match['match'] == $parse_match[ $instance - 1 ] ) {
+						continue 2;
+					}
+				}
+				$instance_parsed = $parse_result['values'][ $instance ];
+				// Init instance data array.
+				$instance_data = $ph_default;
+
+				// Set tag.
+				$instance_data['tag'] = $instance_parsed['tag'];
+
+				// Set attributes.
+				if ( isset( $instance_parsed['attributes'] ) && is_array( $instance_parsed['attributes'] ) ) {
+					$instance_data['attributes'] = $instance_parsed['attributes'];
+				}
+
+				// Add match to array.
+				$instance_data['match'] = $parse_match[ $instance - 1 ];
+
+				// Add to result array.
+				$result[ $tag ][] = $instance_data;
+			}
+		}
+
+		return $result;
 	}
 
 	/**
