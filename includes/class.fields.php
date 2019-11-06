@@ -226,26 +226,53 @@ class SLB_Fields extends SLB_Field_Collection {
 	}
 
 	/**
-	 * Build Field ID attribute
-	 * @see SLB_Field_Type::process_placeholder_default for parameter descriptions
-	 * @return string Placeholder output
+	 * Renders field ID formatted for a form field's `id` attribute.
+	 * 
+	 * ID is formatted to be unique identifier for form field.
+	 * Example: `options_field_id`.
+	 * Registered as handler for `{field_id}` placeholder.
+	 * 
+	 * @param string $output Placeholder's rendered value.
+	 * @param SLB_Field $item Field containing placeholder.
+	 * @param array &$placeholder Placeholder being processed.
+	 * @param string $layout Name of layout being built.
+	 * @param array $data Additional data for current field.
+	 * @return string Field's ID (formatted for a form field's `id` attribute).
 	 */
-	function process_placeholder_id($output, $item, $placeholder, $layout, $data) {
+	function process_placeholder_id( $output, $item, &$placeholder, $layout, $data ) {
 		// Get attributes
-		$args = wp_parse_args($placeholder['attributes'], array('format' => 'attr_id')); 
-		return esc_attr( $item->get_id($args) );
+		$args = wp_parse_args($placeholder['attributes'], array('format' => 'attr_id'));
+		$output = $item->get_id($args);
+		// Set default placeholder context.
+		if ( ! isset( $placeholder['attributes']['context'] ) ) {
+			$placeholder['attributes']['context'] = 'attr';
+		}
+		return $output;
 	}
-	
+
 	/**
-	 * Build Field name attribute
-	 * Name is formatted as an associative array for processing by PHP after submission
-	 * @see SLB_Field_Type::process_placeholder_default for parameter descriptions
-	 * @return string Placeholder output
+	 * Renders field ID formatted for a form field's `name` attribute.
+	 * 
+	 * ID is formatted to be part of an associative array for processing form submission.
+	 * Example: `options[field_id]`.
+	 * Registered as handler for `{field_name}` placeholder.
+	 * 
+	 * @param string $output Placeholder's rendered value.
+	 * @param SLB_Field $item Field containing placeholder.
+	 * @param array &$placeholder Placeholder being processed.
+	 * @param string $layout Name of layout being built.
+	 * @param array $data Additional data for current field.
+	 * @return string Field's ID (formatted for a form field's `name` attribute).
 	 */
-	function process_placeholder_name($output, $item, $placeholder, $layout, $data) {
+	function process_placeholder_name($output, $item, &$placeholder, $layout, $data) {
 		// Get attributes
 		$args = wp_parse_args($placeholder['attributes'], array('format' => 'attr_name')); 
-		return esc_attr( $item->get_id($args) );
+		$output = $item->get_id($args);
+		// Set default placeholder context.
+		if ( ! isset( $placeholder['attributes']['context'] ) ) {
+			$placeholder['attributes']['context'] = 'attr';
+		}
+		return $output;
 	}
 	
 	/**
