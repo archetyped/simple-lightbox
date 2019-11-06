@@ -208,7 +208,7 @@ class SLB_Fields extends SLB_Field_Collection {
 							// Process placeholders.
 							$prop_val = $item->process_placeholders( $prop_val, $layout, $data );
 							// Add property to attribute string output.
-							$group_out[] = $prop_key . '="' . esc_attr( $prop_val ) . '"';
+							$group_out[] = esc_attr( $prop_key ) . '="' . esc_attr( $prop_val ) . '"';
 						}
 					}
 					$output = implode(' ', $group_out);
