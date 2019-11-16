@@ -111,7 +111,7 @@ class SLB_Field_Base extends SLB_Base {
 	 * Whether data has been fetched or not
 	 * @var bool
 	 */
-	var $data_loaded = false;
+	protected $data_loaded = false;
 	
 	/**
 	 * @var array Script resources to include for object
