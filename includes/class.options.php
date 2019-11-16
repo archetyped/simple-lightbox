@@ -306,8 +306,8 @@ class SLB_Options extends SLB_Field_Collection {
 	function validate($values = null) {
 		$qvar = $this->get_id('formatted');
 		// Check for submitted data (e.g. form submission) when no values passed to method.
-		if ( empty($values) && isset($_REQUEST[$qvar]) && check_admin_referer( $qvar, $qvar . '_nonce' ) ) {
-			$values = $_REQUEST[$qvar];
+		if ( empty($values) && isset($_POST[$qvar]) && check_admin_referer( $qvar, $qvar . '_nonce' ) ) {
+			$values = $_POST[$qvar];
 		}
 		if ( is_array($values) ) {
 			// Format data based on option type (bool, string, etc.)
@@ -323,8 +323,8 @@ class SLB_Options extends SLB_Field_Collection {
 			
 			// Get groups that were output in request
 			$qvar_groups = $qvar . '_groups';
-			if ( isset($_REQUEST[$qvar_groups]) ) {
-				$groups = explode( ',', implode(',', $_REQUEST[$qvar_groups]) );
+			if ( isset($_POST[$qvar_groups]) ) {
+				$groups = explode( ',', implode(',', $_POST[$qvar_groups]) );
 
 				// Get group items				
 				$items = array();
@@ -619,7 +619,7 @@ class SLB_Options extends SLB_Field_Collection {
 	 */
 	public function admin_parse_build_vars($vars, $opts) {
 		// Handle form submission
-		if ( isset($_REQUEST[$opts->get_id('formatted')]) ) {
+		if ( isset($_POST[$opts->get_id('formatted')]) ) {
 			$vars['validate_pre'] = $vars['save_pre'] = true;
 		}
 		return $vars;
