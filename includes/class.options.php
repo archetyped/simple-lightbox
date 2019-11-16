@@ -382,7 +382,7 @@ class SLB_Options extends SLB_Field_Collection {
 		if ( !$this->data_loaded ) {
 			// Retrieve data
 			$this->data = $this->fetch_data();
-			$this->data_loaded = true;
+			parent::load_data();
 			// Check update
 			$this->check_update();
 		}
