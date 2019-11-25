@@ -294,61 +294,94 @@ class SLB_Options extends SLB_Field_Collection {
 	/* Processing */
 	
 	/**
-	 * Validate option values.
+	 * Validates option data.
 	 * 
-	 * Used for validating options (e.g. admin form submission) prior to saving options to DB.
-	 * Reformats values based on options' default values (i.e. bool, int, string, etc.).
-	 * Adds option items not included in original submission.
+	 * Validates option values (e.g. prior to saving to DB, after form submission, etc.).
+	 * Values are formatted and sanitized according to corresponding option's data type
+	 * (e.g. boolean, string, number, etc.).
 	 * 
-	 * @param array $values (optional) Option values to validate.
-	 * @return array Full options data.
+	 * @since 1.5.5
+	 * 
+	 * @param array<string,scalar> $values Optional. Option data to validate.
+	 *                             Indexed by option ID.
+	 *                             Default form-submission data used.
+	 * @return array<string,scalar> Validated data. Indexed by option ID.
 	 */
-	function validate($values = null) {
-		$qvar = $this->get_id('formatted');
-		// Check for submitted data (e.g. form submission) when no values passed to method.
-		if ( empty($values) && isset($_POST[$qvar]) && check_admin_referer( $qvar, $qvar . '_nonce' ) ) {
-			$values = $_POST[$qvar];
+	function validate( $values = null ) {
+		/** @var array<string,scalar> $values_valid Validated option data. Indexed by option ID. */
+		$values_valid = [];
+		// Enforce values data type.
+		if ( ! is_array( $values ) ) {
+			/** @var array<string,scalar> $values */
+			$values = [];
 		}
-		if ( is_array($values) ) {
-			// Format data based on option type (bool, string, etc.)
-			foreach ( $values as $id => $val ) {
-				// Get default
-				$d = $this->get_default($id);
-				if ( is_bool($d) && !empty($val) )
-					$values[$id] = true;
-			}
-			
-			// Merge in additional options that are not in post data
-			// Missing options (e.g. disabled checkboxes, empty fields, etc.)
-			
-			// Get groups that were output in request
+		// Get options form field group ID.
+		$qvar = $this->get_id('formatted');
+		// Use form submission data when no values provided.
+		if ( empty( $values ) && isset( $_POST[ $qvar ] ) && check_admin_referer( $qvar, $qvar . '_nonce' ) ) {
+			/** @var array<string,scalar> $values */
+			$values = $_POST[ $qvar ];
+			// Append non-submitted, but rendered fields (e.g. unchecked checkboxes)
 			$qvar_groups = $qvar . '_groups';
-			if ( isset($_POST[$qvar_groups]) ) {
-				$groups = explode( ',', implode(',', $_POST[$qvar_groups]) );
+			if ( isset( $_POST[ $qvar_groups ] ) ) {
+				// Merge all group names into single array (accomodate multiple fields with groups).
+				$groups = explode( ',', implode( ',', $_POST[ $qvar_groups ] ) );
 
-				// Get group items				
-				$items = array();
-				$items_temp = null;
+				// Get items in each group.
+				$items      = array();
 				foreach ( $groups as $gid ) {
-					$items_temp = $this->get_group_items($gid);
-					$items = array_merge($items, $items_temp);
+					$items = array_merge( $items, $this->get_group_items( $gid ) );
 				}
-				unset($items_temp);
-				$items = call_user_func_array('array_merge', $items);
+				// Flatten item array (break out of priority grouping).
+				$items = array_merge( ...$items );
+				// Add boolean options (marked as false).
 				foreach ( $items as $id => $opt ) {
-					// Add options that were not included in form submission
-					if ( !array_key_exists($id, $values) ) {
-						if ( is_bool($opt->get_default()) )
-							$values[$id] = false;
-						else
-							$values[$id] = $opt->get_default();
+					if ( ! array_key_exists( $id, $values ) && is_bool( $opt->get_default() ) ) {
+						$values_valid[ $id ] = false;
 					}
 				}
 			}
 		}
-		
-		// Return value
-		return $values;
+		// Process values.
+		/** 
+		 * @var string $id Option ID.
+		 * @var mixed $val Option value (raw/unsanitized).
+		 */
+		foreach ( $values as $id => $val ) {
+			// Do not process invalid option IDs or invalid (non-scalar) data.
+			if ( ! $this->has( $id ) || ! is_scalar( $val )  ) {
+				continue;
+			}
+			// Conform to option's data type and sanitize.
+			/** @var scalar $d Option's default data. */
+			$d = $this->get_default( $id );
+			// Boolean.
+			if ( is_bool( $d ) ) {
+				$val = !! $val;
+			}
+			// Numeric - do not process non-numeric values for int/float fields.
+			elseif ( ( is_int( $d ) || is_float( $d ) ) && ! is_numeric( $val ) ) {
+				continue;
+			}
+			// Integer.
+			elseif ( is_int( $d ) ) {
+				$val = (int) $val;
+			}
+			// Float.
+			elseif ( is_float( $d ) ) {
+				$val = (float) $val;
+			}
+			// Defaut: Handle as string.
+			else {
+				$val = sanitize_text_field( $val );
+			}
+			// Add to validated data.
+			$values_valid[ $id ] = $val;
+		}
+		unset( $id, $val );
+
+		// Return validated values.
+		return $values_valid;
 	}
 	
 	/* Data */
