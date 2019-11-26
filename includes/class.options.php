@@ -323,25 +323,18 @@ class SLB_Options extends SLB_Field_Collection {
 			/** @var array<string,scalar> $values */
 			$values = $_POST[ $qvar ];
 			// Append non-submitted, but rendered fields (e.g. unchecked checkboxes)
-			$qvar_groups = $qvar . '_groups';
-			if ( isset( $_POST[ $qvar_groups ] ) ) {
-				// Merge all group names into single array (accomodate multiple fields with groups).
-				$groups = explode( ',', implode( ',', $_POST[ $qvar_groups ] ) );
-
-				// Get items in each group.
-				$items      = array();
-				foreach ( $groups as $gid ) {
-					$items = array_merge( $items, $this->get_group_items( $gid ) );
-				}
-				// Flatten item array (break out of priority grouping).
-				$items = array_merge( ...$items );
-				// Add boolean options (marked as false).
-				foreach ( $items as $id => $opt ) {
-					if ( ! array_key_exists( $id, $values ) && is_bool( $opt->get_default() ) ) {
-						$values_valid[ $id ] = false;
+			$qvar_items = "{$qvar}_items";
+			/** @var string[] $items_bool Boolean options rendered in submitted form. */
+			$items_bool = ( isset( $_POST[ $qvar_items ] ) ) ? $_POST[ $qvar_items ] : null;
+			if ( ! empty( $items_bool ) && is_array( $items_bool) ) {
+				foreach ( $items_bool as $item_id ) {
+					// Add missing boolean options (false == unchecked).
+					if ( ! array_key_exists( $item_id, $values ) && $this->has( $item_id ) && is_bool( $this->get_default( $item_id ) ) ) {
+						$values_valid[ $item_id ] = false;
 					}
 				}
 			}
+			unset( $qvar_items, $items_bool, $item_id );
 		}
 		// Process values.
 		/** 
