@@ -600,7 +600,6 @@ class SLB_Options extends SLB_Field_Collection {
 		
 		// Get all groups
 		$groups_all = $this->get_groups();
-		$groups_built = array();
 		if ( empty($groups) ) {
 			$groups = array_keys($groups_all);
 		}
@@ -613,23 +612,7 @@ class SLB_Options extends SLB_Field_Collection {
 			// Add meta box for each group
 			$g = $groups_all[$gid];
 			add_meta_box($g->id, $g->title, $this->m('admin_build_group'), $state->screen, $state->context, $state->priority, array('group' => $g->id, 'page' => $page));
-			$groups_built[] = $gid;
 		}
-
-		// Define groups built
-		if ( !empty($groups_built) ) {
-			echo $this->util->build_html_element(array(
-				'tag'			=> 'input',
-				'attributes'	=> array (
-					'type'	=> 'hidden',
-					'value'	=> implode(',', $groups_built),
-					'name'	=> $this->get_id('formatted') . '_groups[]'
-				),
-			));
-		}
-
-		// Add list of rendered boolean options.
-
 	}
 	
 	/**
