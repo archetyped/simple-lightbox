@@ -257,7 +257,8 @@ class SLB_Options extends SLB_Field_Collection {
 		// Checkbox
 		$ocb = new SLB_Field_Type('option_checkbox', 'checkbox');
 		$ocb->set_layout('label', $l->label);
-		$ocb->set_layout('form', $form);
+		$ocb->set_layout('field_reference', sprintf( '<input type="hidden" name="%s" value="{field_name format="raw"}" />', "{$this->get_id('formatted')}_items[]" ) );
+		$ocb->set_layout('form', '{field_reference ref_base="layout"}' . $form);
 		$fields->add($ocb);
 		
 		// Select
@@ -621,7 +622,7 @@ class SLB_Options extends SLB_Field_Collection {
 			add_meta_box($g->id, $g->title, $this->m('admin_build_group'), $state->screen, $state->context, $state->priority, array('group' => $g->id, 'page' => $page));
 			$groups_built[] = $gid;
 		}
-		
+
 		// Define groups built
 		if ( !empty($groups_built) ) {
 			echo $this->util->build_html_element(array(
@@ -633,6 +634,9 @@ class SLB_Options extends SLB_Field_Collection {
 				),
 			));
 		}
+
+		// Add list of rendered boolean options.
+
 	}
 	
 	/**
