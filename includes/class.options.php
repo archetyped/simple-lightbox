@@ -356,7 +356,7 @@ class SLB_Options extends SLB_Field_Collection {
 					}
 				}
 			}
-			unset( $qvar_items, $items_bool, $item_id );
+			unset( $qvar, $qvar_items, $items_bool, $item_id );
 		}
 		// Process values.
 		/** 
