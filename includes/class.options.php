@@ -316,14 +316,36 @@ class SLB_Options extends SLB_Field_Collection {
 			/** @var array<string,scalar> $values */
 			$values = [];
 		}
+		/**
+		 * Generates query variable using common base.
+		 * 
+		 * @since dev
+		 * 
+		 * @param string $text Optional. Text to append to base.
+		 * 
+		 * @return string Query variable name. Format: "{base}_{text}". Default "{base}".
+		 */
+		$qv = function ( $text = '' ) {
+			static $base;
+			// Get base.
+			if ( empty( $base ) ) {
+				$base = $this->get_id( 'formatted' );
+			}
+			$out = $base;
+			// Append text to base.
+			if ( is_string( $text ) && ! empty( $text ) ) {
+				$out .= "_{$text}"; 
+			}
+			return $out;
+		};
 		// Get options form field group ID.
-		$qvar = $this->get_id('formatted');
+		$qvar = $qv();
 		// Use form submission data when no values provided.
-		if ( empty( $values ) && isset( $_POST[ $qvar ] ) && check_admin_referer( $qvar, $qvar . '_nonce' ) ) {
+		if ( empty( $values ) && isset( $_POST[ $qvar ] ) && check_admin_referer( $qvar, $qv( 'nonce' ) ) ) {
 			/** @var array<string,scalar> $values */
 			$values = $_POST[ $qvar ];
 			// Append non-submitted, but rendered fields (e.g. unchecked checkboxes)
-			$qvar_items = "{$qvar}_items";
+			$qvar_items = $qv( 'items' );
 			/** @var string[] $items_bool Boolean options rendered in submitted form. */
 			$items_bool = ( isset( $_POST[ $qvar_items ] ) ) ? $_POST[ $qvar_items ] : null;
 			if ( ! empty( $items_bool ) && is_array( $items_bool) ) {
