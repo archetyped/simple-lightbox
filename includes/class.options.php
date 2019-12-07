@@ -389,7 +389,7 @@ class SLB_Options extends SLB_Field_Collection {
 			}
 			// Defaut: Handle as string.
 			else {
-				$val = sanitize_text_field( $val );
+				$val = sanitize_text_field( wp_unslash( $val ) );
 			}
 			// Add to validated data.
 			$values_valid[ $id ] = $val;
