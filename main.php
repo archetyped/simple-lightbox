@@ -4,7 +4,7 @@
  *
  * @package Simple Lightbox
  * @author Archetyped <support@archetyped.com>
- * @copyright 2018 Archetyped
+ * @copyright 2019 Archetyped
  *
  * Plugin Name: Simple Lightbox
  * Plugin URI: http://archetyped.com/tools/simple-lightbox/
