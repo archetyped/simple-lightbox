@@ -1,15 +1,15 @@
 #slb_viewer_wrap {
 	.slb_theme_slb_black {
-		
+
 		a,
 		a:hover {
 			color: #fff;
 		}
-		
+
 		.slb_loading {
 			background-image: url('../images/loading.gif');
 		}
-		
+
 		.slb_container {
 			background-color: #151515;
 		}
@@ -18,21 +18,21 @@
 			[dir="rtl"] & .slb_next .slb_template_tag {
 				background-image: url('../images/nav_prev.png');
 			}
-			
+
 			.slb_next .slb_template_tag,
 			[dir="rtl"] & .slb_prev .slb_template_tag {
 				background-image: url('../images/nav_next.png');
 			}
 		}
-		
+
 		.slb_data_title {
 			color: #e3e3e3;
 		}
-		
+
 		.slb_data_desc {
 			color: #cecece;
 		}
-		
+
 		.slb_group_status {
 			color: #999;
 		}
