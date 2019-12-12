@@ -7,9 +7,9 @@
  * @uses SLB_Field_Collection
  */
 class SLB_Options extends SLB_Field_Collection {
-	
+
 	/* Properties */
-	
+
 	public $hook_prefix = 'options';
 
 	var $item_type = 'SLB_Option';
@@ -19,24 +19,24 @@ class SLB_Options extends SLB_Field_Collection {
 	 * @var string
 	 */
 	private $version_key = 'version';
-	
+
 	/**
 	 * Whether version has been checked
 	 * @var bool
 	 */
 	var $version_checked = false;
-	
+
 	var $items_migrated = false;
-		
+
 	var $build_vars = array (
 		'validate_pre'	=> false,
 		'validate_post'	=> false,
 		'save_pre'		=> false,
 		'save_post'		=> false
 	);
-	
+
 	/* Init */
-	
+
 	function __construct($id = '', $props = array()) {
 		// Validate arguments
 		$args = func_get_args();
@@ -49,7 +49,7 @@ class SLB_Options extends SLB_Field_Collection {
 		parent::__construct($props);
 		$this->add_prefix_ref($this->version_key);
 	}
-	
+
 	protected function _hooks() {
 		parent::_hooks();
 		// Register fields
@@ -62,9 +62,9 @@ class SLB_Options extends SLB_Field_Collection {
 		$this->util->add_action('admin_page_render_content', $this->m('admin_page_render_content'), 10, 3, false);
 		$this->util->add_filter('admin_action_reset', $this->m('admin_action_reset'), 10, 3, false);
 	}
-	
+
 	/* Legacy/Migration */
-	
+
 	/**
 	 * Checks whether new version has been installed and migrates necessary settings
 	 * @uses $version_key as option name
@@ -93,10 +93,10 @@ class SLB_Options extends SLB_Field_Collection {
 			// Migrate
 			$this->migrate($version_changed);
 		}
-		
+
 		return $this->version_checked;
 	}
-	
+
 	/**
 	 * Save plugin version to DB
 	 * If no version supplied, will fetch plugin data to determine version
@@ -110,7 +110,7 @@ class SLB_Options extends SLB_Field_Collection {
 		}
 		return update_option($this->version_key, $ver);
 	}
-	
+
 	/**
 	 * Retrieve saved version data
 	 * @return string Saved version
@@ -118,7 +118,7 @@ class SLB_Options extends SLB_Field_Collection {
 	function get_version() {
 		return get_option($this->version_key, '');
 	}
-	
+
 	/**
 	 * Migrate options from old versions to current version
 	 * @uses self::items_migrated to determine if simple migration has been performed in current request or not
@@ -128,13 +128,13 @@ class SLB_Options extends SLB_Field_Collection {
 	function migrate($full = false) {
 		if ( !$full && $this->items_migrated )
 			return false;
-		
+
 		// Legacy options
 		$d = null;
 		$this->load_data();
-		
+
 		$items = $this->get_items();
-		
+
 		// Migrate separate options to unified option
 		if ( $full ) {
 			foreach ( $items as $opt => $props ) {
@@ -148,7 +148,7 @@ class SLB_Options extends SLB_Field_Collection {
 				}
 			}
 		}
-		
+
 		// Migrate legacy items
 		if ( is_array($this->properties_init) && isset($this->properties_init['legacy']) && is_array($this->properties_init['legacy']) ) {
 			$l =& $this->properties_init['legacy'];
@@ -161,7 +161,7 @@ class SLB_Options extends SLB_Field_Collection {
 						unset($l[$opt]);
 				}
 			}
-			
+
 			/* Separate options */
 			if ( $full ) {
 				foreach ( $l as $opt => $dest ) {
@@ -178,9 +178,9 @@ class SLB_Options extends SLB_Field_Collection {
 					delete_option($oid);
 				}
 			}
-			
+
 			/* Simple Migration (Internal options only) */
-			
+
 			// Get existing items that are also legacy items
 			$opts = array_intersect_key($this->get_data(), $l);
 			foreach ( $opts as $opt => $val ) {
@@ -200,9 +200,9 @@ class SLB_Options extends SLB_Field_Collection {
 		// Set flag
 		$this->items_migrated = true;
 	}
-	
+
 	/* Option setup */
-	
+
 	/**
 	 * Get elements for creating fields
 	 * @return obj
@@ -225,7 +225,7 @@ class SLB_Options extends SLB_Field_Collection {
 		}
 		return $o;
 	}
-	
+
 	/**
 	 * Register option-specific fields
 	 * @param SLB_Fields $fields Reference to global fields object
@@ -235,7 +235,7 @@ class SLB_Options extends SLB_Field_Collection {
 		// Layouts
 		$o = $this->get_field_elements();
 		$l =& $o->layout;
-		
+
 		$form = implode('', array (
 			$l->opt_pre,
 			$l->label_ref,
@@ -244,7 +244,7 @@ class SLB_Options extends SLB_Field_Collection {
 			$l->field_post,
 			$l->opt_post
 		));
-		
+
 		// Text input
 		$otxt = new SLB_Field_Type('option_text', 'text');
 		$otxt->set_property('class', '{inherit} code');
@@ -253,14 +253,14 @@ class SLB_Options extends SLB_Field_Collection {
 		$otxt->set_layout('label', $l->label);
 		$otxt->set_layout('form', $form);
 		$fields->add($otxt);
-		
+
 		// Checkbox
 		$ocb = new SLB_Field_Type('option_checkbox', 'checkbox');
 		$ocb->set_layout('label', $l->label);
 		$ocb->set_layout('field_reference', sprintf( '<input type="hidden" name="%s" value="{field_name format="raw"}" />', "{$this->get_id('formatted')}_items[]" ) );
 		$ocb->set_layout('form', '{field_reference ref_base="layout"}' . $form);
 		$fields->add($ocb);
-		
+
 		// Select
 		$othm = new SLB_Field_Type('option_select', 'select');
 		$othm->set_layout('label', $l->label);
@@ -269,7 +269,7 @@ class SLB_Options extends SLB_Field_Collection {
 		$othm->set_layout('form', $l->opt_pre . '{inherit}' . $l->opt_post);
 		$fields->add($othm);
 	}
-	
+
 	/**
 	 * Set parent field types for options
 	 * Parent only set for Admin pages
@@ -291,18 +291,18 @@ class SLB_Options extends SLB_Field_Collection {
 				$p = 'o:' . $p->id;
 		}
 	}
-	
+
 	/* Processing */
-	
+
 	/**
 	 * Validates option data.
-	 * 
+	 *
 	 * Validates option values (e.g. prior to saving to DB, after form submission, etc.).
 	 * Values are formatted and sanitized according to corresponding option's data type
 	 * (e.g. boolean, string, number, etc.).
-	 * 
+	 *
 	 * @since 1.5.5
-	 * 
+	 *
 	 * @param array<string,scalar> $values Optional. Option data to validate.
 	 *                             Indexed by option ID.
 	 *                             Default form-submission data used.
@@ -318,11 +318,11 @@ class SLB_Options extends SLB_Field_Collection {
 		}
 		/**
 		 * Generates query variable using common base.
-		 * 
+		 *
 		 * @since dev
-		 * 
+		 *
 		 * @param string $text Optional. Text to append to base.
-		 * 
+		 *
 		 * @return string Query variable name. Format: "{base}_{text}". Default "{base}".
 		 */
 		$qv = function ( $text = '' ) {
@@ -334,7 +334,7 @@ class SLB_Options extends SLB_Field_Collection {
 			$out = $base;
 			// Append text to base.
 			if ( is_string( $text ) && ! empty( $text ) ) {
-				$out .= "_{$text}"; 
+				$out .= "_{$text}";
 			}
 			return $out;
 		};
@@ -359,7 +359,7 @@ class SLB_Options extends SLB_Field_Collection {
 			unset( $qvar, $qvar_items, $items_bool, $item_id );
 		}
 		// Process values.
-		/** 
+		/**
 		 * @var string $id Option ID.
 		 * @var mixed $val Option value (raw/unsanitized).
 		 */
@@ -399,9 +399,9 @@ class SLB_Options extends SLB_Field_Collection {
 		// Return validated values.
 		return $values_valid;
 	}
-	
+
 	/* Data */
-	
+
 	/**
 	 * Retrieve options from database
 	 * @uses get_option to retrieve option data
@@ -422,7 +422,7 @@ class SLB_Options extends SLB_Field_Collection {
 		}
 		return $data;
 	}
-	
+
 	/**
 	 * Retrieves option data for collection
 	 * @see SLB_Field_Collection::load_data()
@@ -436,7 +436,7 @@ class SLB_Options extends SLB_Field_Collection {
 			$this->check_update();
 		}
 	}
-	
+
 	/**
 	 * Resets option values to their default values
 	 * @param bool $hard Reset all options if TRUE (default), Reset only unset options if FALSE
@@ -450,7 +450,7 @@ class SLB_Options extends SLB_Field_Collection {
 		// Save
 		$this->save();
 	}
-	
+
 	/**
 	 * Save options data to database
 	 */
@@ -458,7 +458,7 @@ class SLB_Options extends SLB_Field_Collection {
 		$this->normalize_data();
 		update_option($this->get_key(), $this->data);
 	}
-	
+
 	/**
 	 * Normalize data
 	 * Assures that data in collection match items
@@ -474,7 +474,7 @@ class SLB_Options extends SLB_Field_Collection {
 	}
 
 	/* Collection */
-	
+
 	/**
 	 * Build key for saving/retrieving data to options table
 	 * @return string Key
@@ -482,7 +482,7 @@ class SLB_Options extends SLB_Field_Collection {
 	function get_key() {
 		return $this->add_prefix($this->get_id());
 	}
-	
+
 	/**
 	 * Add option to collection
 	 * @uses SLB_Field_Collection::add() to add item
@@ -494,10 +494,10 @@ class SLB_Options extends SLB_Field_Collection {
 	function &add($id, $properties = array(), $update = false) {
 		// Create item
 		$args = func_get_args();
-		$ret = call_user_func_array(array('parent', 'add'), $args); 
+		$ret = call_user_func_array(array('parent', 'add'), $args);
 		return $ret;
 	}
-	
+
 	/**
 	 * Retrieve option value
 	 * @uses get_data() to retrieve option data
@@ -508,7 +508,7 @@ class SLB_Options extends SLB_Field_Collection {
 	function get_value($option, $context = '') {
 		return $this->get_data($option, $context);
 	}
-	
+
 	/**
 	 * Retrieve option value as boolean (true/false)
 	 * @uses get_data() to retrieve option data
@@ -518,11 +518,11 @@ class SLB_Options extends SLB_Field_Collection {
 	function get_bool($option) {
 		return $this->get_value($option, 'bool');
 	}
-	
+
 	function get_string($option) {
 		return $this->get_value($option, 'string');
 	}
-	
+
 	/**
 	 * Retrieve option's default value
 	 * @uses get_data() to retrieve option data
@@ -533,9 +533,9 @@ class SLB_Options extends SLB_Field_Collection {
 	function get_default($option, $context = '') {
 		return $this->get_data($option, $context, false);
 	}
-	
+
 	/* Output */
-	
+
 	function build_init() {
 		if ( $this->build_vars['validate_pre'] ) {
 			$values = $this->validate();
@@ -544,7 +544,7 @@ class SLB_Options extends SLB_Field_Collection {
 			}
 		}
 	}
-	
+
 	/**
 	 * Build array of option values for client output
 	 * @return array Associative array of options
@@ -559,9 +559,9 @@ class SLB_Options extends SLB_Field_Collection {
 		}
 		return $out;
 	}
-	
+
 	/* Admin */
-	
+
 	/**
 	 * Handles output building for options on admin pages
 	 * @param obj|array $opts Options instance or Array of options instance and groups to build
@@ -586,7 +586,7 @@ class SLB_Options extends SLB_Field_Collection {
 					'parse_build_vars'		=> array( $this->m('admin_parse_build_vars'), 10, 2 )
 				)
 			);
-			
+
 			// Add hooks
 			foreach ( $hooks as $type => $hook ) {
 				$m = 'add_' . $type;
@@ -595,10 +595,10 @@ class SLB_Options extends SLB_Field_Collection {
 					call_user_func_array($this->util->m($m), $args);
 				}
 			}
-			
+
 			// Build output
 			$this->build(array('build_groups' => $this->m('admin_build_groups')));
-			
+
 			// Remove hooks
 			foreach ( $hooks as $type => $hook ) {
 				$m = 'remove_' . $type;
@@ -619,7 +619,7 @@ class SLB_Options extends SLB_Field_Collection {
 		$page = $this->get_build_var('admin_page');
 		$state = $this->get_build_var('admin_state');
 		$groups = $this->get_build_var('groups');
-		
+
 		// Get all groups
 		$groups_all = $this->get_groups();
 		if ( empty($groups) ) {
@@ -636,7 +636,7 @@ class SLB_Options extends SLB_Field_Collection {
 			add_meta_box($g->id, $g->title, $this->m('admin_build_group'), $state->screen, $state->context, $state->priority, array('group' => $g->id, 'page' => $page));
 		}
 	}
-	
+
 	/**
 	 * Group output handler for admin pages
 	 * @param obj $obj Object passed by `do_meta_boxes()` call (Default: NULL)
@@ -647,7 +647,7 @@ class SLB_Options extends SLB_Field_Collection {
 		$group = $a['group'];
 		$this->build_group($group);
 	}
-	
+
 	/**
 	 * Parse build vars
 	 * @uses `options_parse_build_vars` filter hook

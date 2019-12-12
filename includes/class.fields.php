@@ -7,21 +7,21 @@
  *
  */
 class SLB_Fields extends SLB_Field_Collection {
-	
+
 	var $item_type = 'SLB_Field_Type';
-	
+
 	/**
 	 * Placeholder handlers
 	 * @var array
 	 */
 	var $placholders = null;
-	
+
 	/* Constructor */
-	
+
 	function __construct() {
 		parent::__construct('fields');
 	}
-	
+
 	protected function _hooks() {
 		parent::_hooks();
 		// Init fields
@@ -29,9 +29,9 @@ class SLB_Fields extends SLB_Field_Collection {
 		// Init placeholders
 		add_action('init', $this->m('register_placeholders'));
 	}
-	
+
 	/* Field Types */
-	
+
 	/**
 	 * Initialize fields
 	 */
@@ -73,7 +73,7 @@ class SLB_Fields extends SLB_Field_Collection {
 		$text->set_property('label');
 		$text->set_layout('form', '{label ref_base="layout"} {inherit}');
 		$this->add($text);
-		
+
 		// Checkbox
 		$cb = new SLB_Field_Type('checkbox', 'input');
 		$cb->set_property('type', 'checkbox');
@@ -88,7 +88,7 @@ class SLB_Fields extends SLB_Field_Collection {
 		$ta->set_property('cols', 40, 'attr');
 		$ta->set_property('rows', 3, 'attr');
 		$this->add($ta);
-		
+
 		// Rich Text
 		$rt = new SLB_Field_Type('richtext', 'textarea');
 		$rt->set_property('class', 'theEditor {inherit}');
@@ -112,25 +112,25 @@ class SLB_Fields extends SLB_Field_Collection {
 		$select->set_layout('form', '{label ref_base="layout"} {form_start ref_base="layout"}{option_loop ref_base="layout"}{form_end ref_base="layout"}');
 		$select->set_layout('option_loop', '{loop data="properties.options" layout="option" layout_data="option_data"}');
 		$select->set_layout('option', '<{tag_option} value="{data_ext id="option_value" context="attr"}">{data_ext id="option_text" context="text"}</{tag_option}>');
-		$select->set_layout('option_data', '<{tag_option} value="{data_ext id="option_value" context="attr"}" selected="selected">{data_ext id="option_text" context="text"}</{tag_option}>');		
+		$select->set_layout('option_data', '<{tag_option} value="{data_ext id="option_value" context="attr"}" selected="selected">{data_ext id="option_text" context="text"}</{tag_option}>');
 		$this->add($select);
-		
+
 		// Span
 		$span = new SLB_Field_Type('span', 'base_closed');
 		$span->set_description(__('Inline wrapper', 'simple-lightbox'));
 		$span->set_property('tag', 'span');
 		$span->set_property('value', 'Hello there!');
 		$this->add($span);
-		
+
 		// Enable plugins to modify (add, remove, etc.) field types
 		$this->util->do_action_ref_array('register_fields', array($this), false);
-		
+
 		// Signal completion of field registration
 		$this->util->do_action_ref_array('fields_registered', array($this), false);
 	}
-	
+
 	/* Placeholder handlers */
-	
+
 	function register_placeholders() {
 		// Default placeholder handlers
 		$this->register_placeholder('all', $this->m('process_placeholder_default'), 11);
@@ -141,14 +141,14 @@ class SLB_Fields extends SLB_Field_Collection {
 		$this->register_placeholder('loop', $this->m('process_placeholder_loop'));
 		$this->register_placeholder('label', $this->m('process_placeholder_label'));
 		$this->register_placeholder('checked', $this->m('process_placeholder_checked'));
-		
+
 		// Allow other code to register placeholders
 		$this->util->do_action_ref_array('register_field_placeholders', array($this), false);
-		
+
 		// Signal completion of field placeholder registration
 		$this->util->do_action_ref_array('field_placeholders_registered', array($this), false);
 	}
-	
+
 	/**
 	 * Register a function to handle a placeholder
 	 * Multiple handlers may be registered for a single placeholder
@@ -168,7 +168,7 @@ class SLB_Fields extends SLB_Field_Collection {
 		$hook = $this->add_prefix('process_placeholder' . $placeholder);
 		add_filter($hook, $callback, $priority, 5);
 	}
-	
+
 	/**
 	 * Default placeholder processing
 	 * To be executed when current placeholder has not been handled by another handler
@@ -227,11 +227,11 @@ class SLB_Fields extends SLB_Field_Collection {
 
 	/**
 	 * Renders field ID formatted for a form field's `id` attribute.
-	 * 
+	 *
 	 * ID is formatted to be unique identifier for form field.
 	 * Example: `options_field_id`.
 	 * Registered as handler for `{field_id}` placeholder.
-	 * 
+	 *
 	 * @param string $output Placeholder's rendered value.
 	 * @param SLB_Field $item Field containing placeholder.
 	 * @param array &$placeholder Placeholder being processed.
@@ -252,11 +252,11 @@ class SLB_Fields extends SLB_Field_Collection {
 
 	/**
 	 * Renders field ID formatted for a form field's `name` attribute.
-	 * 
+	 *
 	 * ID is formatted to be part of an associative array for processing form submission.
 	 * Example: `options[field_id]`.
 	 * Registered as handler for `{field_name}` placeholder.
-	 * 
+	 *
 	 * @param string $output Placeholder's rendered value.
 	 * @param SLB_Field $item Field containing placeholder.
 	 * @param array &$placeholder Placeholder being processed.
@@ -266,7 +266,7 @@ class SLB_Fields extends SLB_Field_Collection {
 	 */
 	function process_placeholder_name($output, $item, &$placeholder, $layout, $data) {
 		// Get attributes
-		$args = wp_parse_args($placeholder['attributes'], array('format' => 'attr_name')); 
+		$args = wp_parse_args($placeholder['attributes'], array('format' => 'attr_name'));
 		$output = $item->get_id($args);
 		// Set default placeholder context.
 		if ( ! isset( $placeholder['attributes']['context'] ) ) {
@@ -274,7 +274,7 @@ class SLB_Fields extends SLB_Field_Collection {
 		}
 		return $output;
 	}
-	
+
 	/**
 	 * Build item label
 	 * @see SLB_Fields::process_placeholder_default for parameter descriptions
@@ -288,7 +288,7 @@ class SLB_Fields extends SLB_Field_Collection {
 			$out = $item->get_title();
 		return $out;
 	}
-	
+
 	/**
 	 * Retrieve data for item
 	 * @see SLB_Field_Type::process_placeholder_default for parameter descriptions
@@ -307,11 +307,11 @@ class SLB_Fields extends SLB_Field_Collection {
 			if ( isset($opts['element']) && is_array($out) && ( $el = $opts['element'] ) && isset($out[$el]) )
 				$out = $out[$el];
 		}
-		
+
 		// Return data
 		return $out;
 	}
-	
+
 	/**
 	 * Set checked attribute on item
 	 * Evaluates item's data to see if item should be checked or not
@@ -351,11 +351,11 @@ class SLB_Fields extends SLB_Field_Collection {
 		// Get data for loop
 		$path = explode('.', $attr['data']);
 		$loop_data = $item->get_member_value($path);
-		
+
 		// Check if data is callback
 		if ( is_callable($loop_data) )
 			$loop_data = call_user_func($loop_data);
-		
+
 		// Get item data
 		$data = $item->get_data();
 
@@ -395,12 +395,12 @@ class SLB_Fields extends SLB_Field_Collection {
 		if ( !! $key && isset( $data[ $key ] ) && is_scalar( $data[ $key ] ) ) {
 			$output = strval( $data[ $key ] );
 		}
-		
+
 		return $output;
 	}
-	
+
 	/* Build */
-	
+
 	/**
 	 * Output items in a group
 	 * @param string $group ID of Group to output

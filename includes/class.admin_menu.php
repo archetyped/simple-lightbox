@@ -9,15 +9,15 @@
  */
 class SLB_Admin_Menu extends SLB_Admin_View {
 	/* Properties */
-	
+
 	/**
 	 * Menu position
 	 * @var int
 	 */
 	protected $position = null;
-	
+
 	/* Init */
-	
+
 	public function __construct($id, $labels, $callback = null, $capability = null, $icon = null, $position = null) {
 		// Default
 		parent::__construct($id, $labels, $callback, $capability, $icon);
@@ -25,9 +25,9 @@ class SLB_Admin_Menu extends SLB_Admin_View {
 		$this->set_position($position);
 		return $this;
 	}
-	
+
 	/* Getters/Setters */
-	
+
 	/**
 	 * Set menu position
 	 * @return obj Current instance

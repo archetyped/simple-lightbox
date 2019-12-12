@@ -8,27 +8,27 @@
  */
 class SLB_Base_Object extends SLB_Base {
 	/* Configuration */
-	
+
 	/**
 	 * @var string
 	 * @see Base::$mode
 	 */
 	protected $mode = 'object';
-	
+
 	/*-** Properties **-*/
-	
+
 	/**
 	 * Unique ID
 	 * @var string
 	 */
 	protected $id = '';
-	
+
 	/**
 	 * Parent object
 	 * @var Base_Object
 	 */
 	protected $parent = null;
-	
+
 	/**
 	 * Attached files
 	 * @var array
@@ -39,15 +39,15 @@ class SLB_Base_Object extends SLB_Base {
 		'scripts'	=> array(),
 		'styles'	=> array()
 	);
-	
+
 	/**
 	 * Properties that can be inherited from parent
 	 * @var array
 	 */
 	protected $parent_props = array();
-	
+
 	/*-** Methods **-*/
-	
+
 	/**
 	 * Constructor
 	 * @param string $id Unique ID for content type
@@ -59,7 +59,7 @@ class SLB_Base_Object extends SLB_Base {
 			->set_id($id)
 			->set_props($props);
 	}
-	
+
 	/**
 	 * Checks if object is valid
 	 * To be overriden by child classes
@@ -67,9 +67,9 @@ class SLB_Base_Object extends SLB_Base {
 	public function is_valid() {
 		return true;
 	}
-	
+
 	/*-** Getters/Setters **-*/
-		
+
 	/**
 	 * Get ID
 	 * @return string ID
@@ -77,7 +77,7 @@ class SLB_Base_Object extends SLB_Base {
 	public function get_id() {
 		return $this->id;
 	}
-	
+
 	/**
 	 * Set ID
 	 * @param string $id ID
@@ -90,7 +90,7 @@ class SLB_Base_Object extends SLB_Base {
 		}
 		return $this;
 	}
-	
+
 	/**
 	 * Set type properties
 	 * @param array $props Type properties to set
@@ -107,7 +107,7 @@ class SLB_Base_Object extends SLB_Base {
 		}
 		return $this;
 	}
-	
+
 	/**
 	 * Get parent
 	 * @return object|null Parent
@@ -115,7 +115,7 @@ class SLB_Base_Object extends SLB_Base {
 	public function get_parent() {
 		return $this->parent;
 	}
-	
+
 	/**
 	 * Set parent
 	 * @param object $parent Parent object
@@ -133,7 +133,7 @@ class SLB_Base_Object extends SLB_Base {
 	public function has_parent() {
 		return ( is_null($this->parent) ) ? false : true;
 	}
-	
+
 	/**
 	 * Retrieve all ancestors
 	 * @return array Ancestors
@@ -149,9 +149,9 @@ class SLB_Base_Object extends SLB_Base {
 		}
 		return $ret;
 	}
-	
+
 	/* Files */
-	
+
 	/**
 	 * Add file
 	 * @param string $type Group to add file to
@@ -170,11 +170,11 @@ class SLB_Base_Object extends SLB_Base {
 				$this->files[$type] = array();
 			}
 			// Add file to group
-			$this->files[$type][$handle] = array('handle' => $handle, 'uri' => $src, 'deps' => $deps); 
+			$this->files[$type][$handle] = array('handle' => $handle, 'uri' => $src, 'deps' => $deps);
 		}
 		return $this;
 	}
-	
+
 	/**
 	 * Add multiple files
 	 * @param string $type Group to add files to
@@ -195,7 +195,7 @@ class SLB_Base_Object extends SLB_Base {
 		}
 		return $this;
 	}
-	
+
 	/**
 	 * Retrieve files
 	 * All files or a specific group of files can be retrieved
@@ -212,7 +212,7 @@ class SLB_Base_Object extends SLB_Base {
 		}
 		return $ret;
 	}
-	
+
 	/**
 	 * Retrieve file
 	 * @param string $type Group to retrieve file from
@@ -258,7 +258,7 @@ class SLB_Base_Object extends SLB_Base {
 		}
 		return $ret;
 	}
-	
+
 	/**
 	 * Add stylesheet
 	 * @param string $handle Name of the stylesheet
@@ -268,7 +268,7 @@ class SLB_Base_Object extends SLB_Base {
 	public function add_style($handle, $src, $deps = array()) {
 		return $this->add_file('styles', $handle, $src, $deps);
 	}
-	
+
 	/**
 	 * Retrieve stylesheet files
 	 * @return array Stylesheet files
@@ -295,7 +295,7 @@ class SLB_Base_Object extends SLB_Base {
 		}
 		return $files;
 	}
-	
+
 	/**
 	 * Retrieve stylesheet file
 	 * @param string $handle Name of stylesheet
@@ -305,7 +305,7 @@ class SLB_Base_Object extends SLB_Base {
 	public function get_style($handle, $format = null) {
 		return $this->get_file('styles', $handle, $format);
 	}
-	
+
 	/**
 	 * Add script
 	 * @param string $handle Name of the script
@@ -315,7 +315,7 @@ class SLB_Base_Object extends SLB_Base {
 	public function add_script($handle, $src, $deps = array()) {
 		return $this->add_file('scripts', $handle, $src, $deps);
 	}
-	
+
 	/**
 	 * Retrieve script files
 	 * @return array Script files
@@ -323,7 +323,7 @@ class SLB_Base_Object extends SLB_Base {
 	public function get_scripts() {
 		return $this->get_files('scripts');
 	}
-	
+
 	/**
 	 * Retrieve script file
 	 * @param string $handle Name of script
@@ -333,5 +333,5 @@ class SLB_Base_Object extends SLB_Base {
 	public function get_script($handle, $format = null) {
 		return $this->get_file('scripts', $handle, $format);
 	}
-	
+
 }

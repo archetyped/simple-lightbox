@@ -6,17 +6,17 @@
  * @author Archetyped
  */
 class SLB_Option extends SLB_Field {
-	
+
 	/* Properties */
-	
+
 	public $hook_prefix = 'option';
-	
+
 	/**
 	 * Determines whether option will be sent to client
 	 * @var bool
 	 */
 	var $in_client = false;
-	
+
 	/**
 	 * Child mapping
 	 * @see SLB_Field_Base::map
@@ -26,11 +26,11 @@ class SLB_Option extends SLB_Field {
 		'default'	=> 'data',
 		'attr'		=> 'properties'
 	);
-	
+
 	var $property_priority = array ('id', 'data', 'parent');
-	
+
 	/* Init */
-	
+
 	/**
 	 * @see SLB_Field::__construct()
 	 * @uses parent::__construct() to initialize instance
@@ -51,17 +51,17 @@ class SLB_Option extends SLB_Field {
 		// Send to parent constructor
 		parent::__construct($props);
 	}
-	
+
 	/* Getters/Setters */
-	
+
 	/**
 	 * Retrieve default value for option
 	 * @return mixed Default option value
 	 */
 	function get_default($context = '') {
-		return $this->get_data($context, false);	
+		return $this->get_data($context, false);
 	}
-			
+
 	/**
 	 * Sets parent based on default value
 	 */
@@ -78,7 +78,7 @@ class SLB_Option extends SLB_Field {
 		}
 		parent::set_parent($parent);
 	}
-	
+
 	/**
 	 * Set in_client property
 	 * @uses this::in_client
@@ -88,7 +88,7 @@ class SLB_Option extends SLB_Field {
 	function set_in_client($in_client = false) {
 		$this->in_client = !!$in_client;
 	}
-	
+
 	/**
 	 * Determines whether option should be included in client output
 	 * @uses this::in_client
@@ -97,9 +97,9 @@ class SLB_Option extends SLB_Field {
 	function get_in_client() {
 		return $this->in_client;
 	}
-	
+
 	/* Formatting */
-	
+
 	/**
 	 * Format data as string for browser output
 	 * @see SLB_Field_Base::format()
@@ -121,13 +121,13 @@ class SLB_Option extends SLB_Field {
 		}
 		return htmlentities($value);
 	}
-	
+
 	/**
 	 * Format data using same format as default value
 	 * @see SLB_Field_Base::format()
 	 * @param mixed $value Data to format
 	 * @param string $context (optional) Current context
-	 * @return mixed Formatted option value 
+	 * @return mixed Formatted option value
 	 */
 	function format_default($value, $context = '') {
 		// Get default value
@@ -140,7 +140,7 @@ class SLB_Option extends SLB_Field {
 			$value = $this->format_string($value);
 		return $value;
 	}
-	
+
 	/**
 	 * Format data as boolean (true/false)
 	 * @see SLB_Field_Base::format()
@@ -153,7 +153,7 @@ class SLB_Option extends SLB_Field {
 			$value = !!$value;
 		return $value;
 	}
-	
+
 	/**
 	 * Format data as string
 	 * @see SLB_Field_Base::format()
@@ -164,13 +164,13 @@ class SLB_Option extends SLB_Field {
 	function format_string($value, $context = '') {
 		if ( is_bool($value) ) {
 			$value = ( $value ) ? 'true' : 'false';
-		} 
+		}
 		elseif ( is_object($value) ) {
 			$value = get_class($value);
 		}
 		elseif ( is_array($value) ) {
 			$value = implode(' ', $value);
-		} 
+		}
 		else {
 			$value = strval($value);
 		}

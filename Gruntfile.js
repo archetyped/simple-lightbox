@@ -11,13 +11,13 @@ module.exports = function(grunt) {
 		paths : {
 			// Base dir assets dir
 			base : 'client',
-			
+
 			// PHP assets
 			php : {
 				files_std : ['*.php', '**/*.php', '!node_modules/**/*.php'], // Standard file match
 				files : '<%= paths.php.files_std %>' // Dynamic file match
 			},
-			
+
 			// JavaScript assets
 			js : {
 				base : 'js', // Base dir
@@ -26,7 +26,7 @@ module.exports = function(grunt) {
 				files_std : '**/<%= paths.js.src %>/**/*.js', // Standard file match
 				files : '<%= paths.js.files_std %>' // Dynamic file match
 			},
-			
+
 			// Sass assets
 			sass : {
 				src : 'sass', // Source files dir
@@ -39,10 +39,10 @@ module.exports = function(grunt) {
 			}
 		},
 	});
-	
+
 	// Load task configurations
 	grunt.loadTasks('grunt');
-	
+
 	// Default Tasks
 	grunt.registerTask('build', ['phplint', 'jshint:all', 'uglify', 'sass']);
 	grunt.registerTask('watch_all', ['watch:js', 'watch:sass']);

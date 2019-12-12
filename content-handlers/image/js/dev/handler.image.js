@@ -20,7 +20,7 @@ SLB.View.extend_content_handler('image', {
 			// Resolve deferred
 			dfr.resolve(out);
 		};
-		
+
 		// Attach event handler
 		$(img).on('load', function(e) { handler(e); });
 		// Load image
