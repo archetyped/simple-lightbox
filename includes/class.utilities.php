@@ -558,7 +558,7 @@ class SLB_Utilities {
 		// Build parameters
 		if ( !is_null($params) ) {
 			if ( $encode ) {
-				$params = json_encode($params);	
+				$params = wp_json_encode($params);	
 			} elseif ( is_array($params) ) {
 				$params = implode(',', $params); 
 			}
