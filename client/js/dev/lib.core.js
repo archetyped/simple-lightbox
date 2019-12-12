@@ -9,7 +9,7 @@ if ( window.jQuery ){(function($) {
 /**
  * Extendible class
  * Adapted from John Resig
- * @link http://ejohn.org/blog/simple-javascript-inheritance/ 
+ * @link http://ejohn.org/blog/simple-javascript-inheritance/
  */
 var c_init = false;
 var Class = function() {};
@@ -21,13 +21,13 @@ var Class = function() {};
  */
 Class.extend = function(members) {
 	var _super = this.prototype;
-	
+
 	// Copy instance to prototype
 	c_init = true;
 	var proto = new this();
 	c_init = false;
-	
-	var val, name; 
+
+	var val, name;
 	// Scrub prototype objects (Decouple from super class)
 	for ( name in proto ) {
 		if ( $.isPlainObject(proto[name]) ) {
@@ -35,7 +35,7 @@ Class.extend = function(members) {
 			proto[name] = val;
 		}
 	}
-	
+
 	/**
 	 * Create class method with access to super class method
 	 * @param string nm Method name
@@ -67,7 +67,7 @@ Class.extend = function(members) {
 			proto[name] = ( $.isPlainObject(members[name]) ) ? $.extend({}, members[name]) : members[name];
 		}
 	}
-	
+
 	/**
 	 * Class constructor
 	 * Supports pre-construction initilization (`Class._init()`)
@@ -85,17 +85,17 @@ Class.extend = function(members) {
 			}
 		}
 	}
-	
-	
+
+
 	// Populate new prototype
 	Class.prototype = proto;
-	
+
 	// Set constructor
 	Class.prototype.constructor = Class;
-	
+
 	// Set extender
 	Class.extend = this.extend;
-	
+
 	// Return function
 	return Class;
 };
@@ -105,7 +105,7 @@ Class.extend = function(members) {
  */
 var Base = {
 	/* Properties */
-	
+
 	/**
 	 * Base object flag
 	 * @var bool
@@ -121,9 +121,9 @@ var Base = {
 	 * @var string
 	 */
 	prefix: 'slb',
-	
+
 	/* Methods */
-	
+
 	/**
 	 * Constructor
 	 * Sets instance parent
@@ -131,7 +131,7 @@ var Base = {
 	_init: function() {
 		this._set_parent();
 	},
-	
+
 	/**
 	 * Set instance parent
 	 * Set utilities parent to current instance
@@ -143,7 +143,7 @@ var Base = {
 		}
 		this.util._parent = this;
 	},
-	
+
 	/**
 	 * Attach new member to instance
 	 * Member can be property (value) or method
@@ -172,11 +172,11 @@ var Base = {
 		}
 		return ret;
 	},
-	
+
 	/**
 	 * Check for child object
 	 * Child object can be multi-level (e.g. Child.Level2child.Level3child)
-	 * 
+	 *
 	 * @param string child Name of child object
 	 */
 	has_child: function(child) {
@@ -184,7 +184,7 @@ var Base = {
 		if ( !this.util.is_string(child) ) {
 			return false;
 		}
-		
+
 		var children = child.split('.');
 		child = null;
 		var o = this;
@@ -202,7 +202,7 @@ var Base = {
 		}
 		return true;
 	},
-	
+
 	/**
 	 * Check if instance is set as a base
 	 * @uses base
@@ -211,7 +211,7 @@ var Base = {
 	is_base: function() {
 		return !!this.base;
 	},
-	
+
 	/**
 	 * Get parent instance
 	 * @uses `Base._parent` property
@@ -232,14 +232,14 @@ var Base = {
  */
 var Utilities =  {
 	/* Properties  */
-	
+
 	_base: null,
 	_parent: null,
-	
+
 	/* Methods */
-	
+
 	/* Connections */
-	
+
 	/**
 	 * Get base ancestor
 	 * @return obj Base ancestor
@@ -262,7 +262,7 @@ var Utilities =  {
 		}
 		return this._base;
 	},
-	
+
 	/**
 	 * Get parent object or parent property value
 	 * @param string prop (optional) Property to retrieve
@@ -281,9 +281,9 @@ var Utilities =  {
 		}
 		return ret;
 	},
-	
+
 	/* Prefix */
-	
+
 	/**
 	 * Retrieve valid separator
 	 * If supplied argument is not a valid separator, use default separator
@@ -294,7 +294,7 @@ var Utilities =  {
 		var sep_default = '_';
 		return ( this.is_string(sep, false) ) ? sep : sep_default;
 	},
-	
+
 	/**
 	 * Retrieve prefix
 	 * @return string Prefix
@@ -303,14 +303,14 @@ var Utilities =  {
 		var p = this.get_parent('prefix');
 		return ( this.is_string(p, false) ) ? p : '';
 	},
-	
+
 	/**
 	 * Check if string is prefixed
 	 */
 	has_prefix: function(val, sep) {
 		return ( this.is_string(val) && 0 === val.indexOf(this.get_prefix() + this.get_sep(sep)) );
 	},
-	
+
 	/**
 	 * Add Prefix to a string
 	 * @param string val Value to add prefix to
@@ -327,10 +327,10 @@ var Utilities =  {
 		if ( !this.is_bool(once) ) {
 			once = true;
 		}
-		
+
 		return ( once && this.has_prefix(val, sep) ) ? val : [this.get_prefix(), val].join(sep);
 	},
-	
+
 	/**
 	 * Remove Prefix from a string
 	 * @param string val Value to add prefix to
@@ -358,9 +358,9 @@ var Utilities =  {
 		}
 		return val;
 	},
-	
+
 	/* Attributes */
-	
+
 	/*
 	 * Get attribute name
 	 * @param string attr_base Attribute's base name
@@ -378,9 +378,9 @@ var Utilities =  {
 		}
 		return attr;
 	},
-	
+
 	/* Request */
-	
+
 	/**
 	 * Retrieve valid context
 	 * @return array Context
@@ -394,11 +394,11 @@ var Utilities =  {
 		// Return context
 		return b.context;
 	},
-			
+
 	/**
 	 * Check if a context exists in current request
 	 * If multiple contexts are supplied, result will be TRUE if at least ONE context exists
-	 * 
+	 *
 	 * @param string|array ctx Context to check for
 	 * @return bool TRUE if context exists, FALSE otherwise
 	 */
@@ -409,9 +409,9 @@ var Utilities =  {
 		}
 		return ( this.is_array(ctx) && this.arr_intersect(this.get_context(), ctx).length > 0 );
 	},
-	
+
 	/* Helpers */
-	
+
 	/**
 	 * Check if value is set/defined
 	 * @param mixed val Value to check
@@ -420,7 +420,7 @@ var Utilities =  {
 	is_set: function(val) {
 		return ( typeof val !== 'undefined' );
 	},
-	
+
 	/**
 	 * Validate data type
 	 * @param mixed val Value to validate
@@ -443,14 +443,14 @@ var Utilities =  {
 					break;
 			}
 		}
-		
+
 		// Validate empty values
 		if ( ret && ( !this.is_set(nonempty) || !!nonempty ) ) {
 			ret = !this.is_empty(val);
 		}
 		return ret;
 	},
-	
+
 	/**
 	 * Check if value is a string
 	 * @uses is_type()
@@ -461,7 +461,7 @@ var Utilities =  {
 	is_string: function(value, nonempty) {
 		return this.is_type(value, 'string', nonempty);
 	},
-	
+
 	/**
 	 * Check if value is an array
 	 * @uses is_type()
@@ -472,7 +472,7 @@ var Utilities =  {
 	is_array: function(value, nonempty) {
 		return ( this.is_type(value, 'array', nonempty) );
 	},
-	
+
 	/**
 	 * Check if value is a boolean
 	 * @uses is_type()
@@ -482,7 +482,7 @@ var Utilities =  {
 	is_bool: function(value) {
 		return this.is_type(value, 'boolean', false);
 	},
-	
+
 	/**
 	 * Check if value is an object
 	 * @uses is_type()
@@ -493,7 +493,7 @@ var Utilities =  {
 	is_obj: function(value, nonempty) {
 		return this.is_type(value, 'object', nonempty);
 	},
-	
+
 	/**
 	 * Check if value is a function
 	 * @uses is_type()
@@ -503,7 +503,7 @@ var Utilities =  {
 	is_func: function(value) {
 		return this.is_type(value, 'function', false);
 	},
-	
+
 	/**
 	 * Checks if an object has a method
 	 * @param obj obj Object to check
@@ -525,7 +525,7 @@ var Utilities =  {
 		}
 		return ret;
 	},
-	
+
 	/**
 	 * Check if object is instance of a class
 	 * @param obj obj Instance object
@@ -538,7 +538,7 @@ var Utilities =  {
 		}
 		return ( this.is_obj(obj) && ( obj instanceof parent ) );
 	},
-	
+
 	/**
 	 * Check if object is class
 	 * Optionally check if class is sub-class of another class
@@ -555,7 +555,7 @@ var Utilities =  {
 		}
 		return ret;
 	},
-	
+
 	/**
 	 * Check if value is a number
 	 * @uses is_type()
@@ -570,7 +570,7 @@ var Utilities =  {
 		};
 		return ( this.is_type(value, 'number', nonempty) && !f.nan(value) && f.finite(value) );
 	},
-	
+
 	/**
 	 * Check if value is a integer
 	 * @uses is_type()
@@ -581,7 +581,7 @@ var Utilities =  {
 	is_int: function(value, nonempty) {
 		return ( this.is_num(value, nonempty) && Math.floor(value) === value );
 	},
-	
+
 	/**
 	 * Check if value is scalar (string, number, boolean)
 	 * @uses is_type()
@@ -592,7 +592,7 @@ var Utilities =  {
 	is_scalar: function(value, nonempty) {
 		return ( this.is_num(value, nonempty) || this.is_string(value, nonempty) || this.is_bool(value) );
 	},
-	
+
 	/**
 	 * Checks if value is empty
 	 * @param mixed value Value to check
@@ -613,7 +613,7 @@ var Utilities =  {
 				x++;
 			}
 		}
-		
+
 		// Advanced check
 		if ( !ret ) {
 			// Validate type
@@ -638,7 +638,7 @@ var Utilities =  {
 							// Evaluate plain object
 							if ( Object.getOwnPropertyNames ) {
 								// Modern browser check
-								ret = ( Object.getOwnPropertyNames(value).length === 0 ); 
+								ret = ( Object.getOwnPropertyNames(value).length === 0 );
 							} else if ( value.hasOwnProperty ) {
 								// Legacy browser check
 								ret = true;
@@ -658,18 +658,18 @@ var Utilities =  {
 		}
 		return ret;
 	},
-	
+
 	/**
 	 * Check if object is a jQuery.Promise instance
 	 * Will also match (but not guarantee) jQuery.Deferred instances
 	 * @uses is_method()
-	 * @param obj obj Object to check 
+	 * @param obj obj Object to check
 	 * @return bool TRUE if object is Promise/Deferred
 	 */
 	is_promise: function(obj) {
 		return ( this.is_method(obj, ['then', 'done', 'always', 'fail', 'pipe']) );
 	},
-	
+
 	/**
 	 * Return formatted string
 	 * @param string fmt Format template
@@ -702,7 +702,7 @@ var Utilities =  {
 				params[x] = '';
 			}
 		}
-		
+
 		// Replace all placeholders at once if single parameter set
 		if ( params.length === 1 ) {
 			fmt = fmt.replace(ph, params[0].toString());
@@ -721,12 +721,12 @@ var Utilities =  {
 		}
 		return fmt;
 	},
-	
+
 	/**
 	 * Checks if key(s) exist in an object
 	 * @param object obj Object to check
 	 * @param string|array key Key(s) to check for in object
-	 * @param bool all (optional) All keys must exist in object? (Default: TRUE) 
+	 * @param bool all (optional) All keys must exist in object? (Default: TRUE)
 	 * @return bool TRUE if key(s) exist in object
 	 */
 	in_obj: function(obj, key, all) {
@@ -752,7 +752,7 @@ var Utilities =  {
 		}
 		return ret;
 	},
-	
+
 	/**
 	 * Retrieve an object's keys
 	 * @param obj Object to parse
@@ -776,7 +776,7 @@ var Utilities =  {
 		}
 		return keys;
 	},
-	
+
 	/**
 	 * Find common elements of 2 or more arrays
 	 * @param array arr1 First array
@@ -820,7 +820,7 @@ var Utilities =  {
 		// Return intersection results
 		return ret;
 	},
-	
+
 	/**
 	 * Generates a GUID string.
 	 * @returns string The generated GUID.
@@ -835,7 +835,7 @@ var Utilities =  {
 		}
 		return _p8() + _p8(true) + _p8(true) + _p8();
 	},
-	
+
 	/**
 	 * Parse URI
 	 * @param string uri URI to parse
@@ -908,18 +908,18 @@ var SLB_Base = Class.extend(Base);
  */
 var Core = {
 	/* Properties */
-	
+
 	base: true,
 	context: [],
-	
+
 	/**
 	 * New object initializer
 	 * @var obj
 	 */
 	Class: SLB_Base,
-	
+
 	/* Methods */
-	
+
 	/**
 	 * Init
 	 * Set variables, DOM, etc.
