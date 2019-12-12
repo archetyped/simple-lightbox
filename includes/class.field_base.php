@@ -449,7 +449,7 @@ class SLB_Field_Base extends SLB_Base {
 	/**
 	 * Initializes default ID formats.
 	 *
-	 * @since dev
+	 * @since 2.8.0
 	 *
 	 * @return void
 	 */
@@ -482,7 +482,7 @@ class SLB_Field_Base extends SLB_Base {
 	/**
 	 * Adds custom ID format.
 	 *
-	 * @since dev
+	 * @since 2.8.0
 	 *
 	 * @param string $name Format name.
 	 * @param array $wrap
@@ -1037,7 +1037,7 @@ class SLB_Field_Base extends SLB_Base {
 	 *
 	 * Only strings are formatted.
 	 *
-	 * @since dev
+	 * @since 2.8.0
 	 *
 	 * @param mixed $value Value to format.
 	 * @return mixed Formatted value.
@@ -1055,7 +1055,7 @@ class SLB_Field_Base extends SLB_Base {
 	 * Escapes HTML, etc.
 	 * Only strings are formatted.
 	 *
-	 * @since dev
+	 * @since 2.8.0
 	 *
 	 * @param mixed $value Value to format.
 	 * @return mixed Formatted value.

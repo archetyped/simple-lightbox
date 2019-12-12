@@ -399,7 +399,7 @@ class SLB_Field_Type extends SLB_Field_Base {
 	 *
 	 * Finds and replaces placeholders in a string to their full values.
 	 *
-	 * @since dev
+	 * @since 2.8.0
 	 *
 	 * @param string  $str String with placeholders to replace.
 	 * @param string  $layout Optional. Name of layout being built.

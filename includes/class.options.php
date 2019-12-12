@@ -319,7 +319,7 @@ class SLB_Options extends SLB_Field_Collection {
 		/**
 		 * Generates query variable using common base.
 		 *
-		 * @since dev
+		 * @since 2.8.0
 		 *
 		 * @param string $text Optional. Text to append to base.
 		 *
