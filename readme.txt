@@ -5,7 +5,7 @@ License: GPLv2
 Tags: lightbox, gallery, photography, images, theme, template, style
 Requires at least: 5.2
 Tested up to: 5.2
-Requires PHP: 5.6.20
+Requires PHP: 7.2
 Stable tag: trunk
 
 The highly customizable lightbox for WordPress
