@@ -20,32 +20,18 @@ class SLB_Field_Base extends SLB_Base {
 	var $id = '';
 	
 	/**
-	 * ID formatting options
-	 * Merged with defaults during initialization
-	 * @see $id_formats_default
-	 * @var array
+	 * ID formatting options.
+	 * 
+	 * @var array $id_formats
 	 */
-	var $id_formats = null;
-	
+	private $id_formats = [];
+
 	/**
-	 * Default ID Formatting options
-	 * Structure:
-	 * > Key (string): Format name
-	 * > Val (array): Options
-	 * @var array
+	 * Flag for ID format initialization status.
+	 * 
+	 * @var bool $id_formats_init
 	 */
-	var $id_formats_default = array(
-		'attr_id' => array(
-			'wrap'			=> array('open' => '_', 'segment_open' => '_'),
-			'prefix'		=> array('get_container', 'get_id', 'add_prefix'),
-			'recursive'		=> true
-		),
-		'attr_name' => array(
-			'wrap'		=> array('open' => '[', 'close' => ']', 'segment_open' => '[', 'segment_close' => ']'),
-			'recursive'	=> true,
-			'prefix'	=> array('get_container', 'get_id', 'add_prefix')
-		)
-	);
+	private $id_formats_init = false;
 	
 	/**
 	 * Special characters/phrases
@@ -125,7 +111,7 @@ class SLB_Field_Base extends SLB_Base {
 	 * Whether data has been fetched or not
 	 * @var bool
 	 */
-	var $data_loaded = false;
+	protected $data_loaded = false;
 	
 	/**
 	 * @var array Script resources to include for object
@@ -355,7 +341,6 @@ class SLB_Field_Base extends SLB_Base {
 	function get_id($options = array()) {
 		$item_id = trim($this->id);
 		$formats = $this->get_id_formats();
-		
 		// Setup options
 		$wrap_default = array('open' => '', 'close' => '', 'segment_open' => '', 'segment_close' => '');
 		
@@ -452,17 +437,71 @@ class SLB_Field_Base extends SLB_Base {
 	}
 	
 	/**
-	 * Retrieve ID formatting options for class
-	 * Format options arrays are merged together and saved to $id_formats
-	 * @uses $id_formats
-	 * @uses $id_formats_default
-	 * @return array ID Formatting options
+	 * Retrieves ID formats.
+	 * 
+	 * @return array ID formats.
 	 */
-	function &get_id_formats() {
-		if ( is_null($this->id_formats) ) {
-			$this->id_formats = wp_parse_args($this->id_formats, $this->id_formats_default);
-		}
+	private function &get_id_formats() {
+		$this->init_id_formats();
 		return $this->id_formats;
+	}
+
+	/**
+	 * Initializes default ID formats.
+	 * 
+	 * @since dev
+	 * 
+	 * @return void
+	 */
+	private function init_id_formats() {
+		if ( ! $this->id_formats_init ) {
+			$this->id_formats_init = true;
+			// Initilize default formats.
+			$this->add_id_format(
+				'attr_id',
+				[
+					'wrap' => [ 'open' => '_', 'segment_open' => '_' ],
+					'prefix' => [ 'get_container', 'get_id', 'add_prefix' ],
+					'recursive' => true,
+				],
+				true
+			);
+			$this->add_id_format(
+				'attr_name',
+				[
+					'wrap' => [ 'open' => '[', 'close' => ']', 'segment_open' => '[', 'segment_close' => ']' ],
+					'prefix' => [ 'get_container', 'get_id', 'add_prefix' ],
+					'recursive' =>  true,
+				],
+				true
+			);
+			
+		}
+	}
+
+	/**
+	 * Adds custom ID format.
+	 *
+	 * @since dev
+	 * 
+	 * @param string $name Format name.
+	 * @param array $wrap
+	 * @param array $prefix
+	 * @param bool $recursive Optional.
+	 * @param bool $overwrite Optional. Overwrite existing format. Default false.
+	 * @return void
+	 */
+	protected function add_id_format( string $name, array $options, bool $overwrite = false ) {
+		// Init ID formats before adding new ones.
+		$this->init_id_formats();
+		// Do not add format if name matches existing format (when overwriting not allowed).
+		if ( ! $overwrite && in_array( $name, array_keys( $this->id_formats ) ) ) {
+			return;
+		}
+		// Normlize options.
+		$options = wp_parse_args( $options, [ 'wrap' => [], 'prefix' => [], 'recursive' => false ] );
+		// Add format.
+		$this->id_formats[ $name ] = $options;
 	}
 
 	/**
@@ -992,15 +1031,39 @@ class SLB_Field_Base extends SLB_Base {
 		// Return formatted value
 		return $value;
 	}
+
+	/**
+	 * Format value for output as an attribute.
+	 * 
+	 * Only strings are formatted.
+	 *
+	 * @since dev
+	 *
+	 * @param mixed $value Value to format.
+	 * @return mixed Formatted value.
+	 */
+	function format_attr( $value ) {
+		if ( is_string( $value ) ) {
+			$value = esc_attr( $value );
+		}
+		return $value;
+	}
 	
 	/**
-	 * Format value for output in form field
-	 * @param mixed $value Value to format
-	 * @return mixed Formatted value
+	 * Formats value for output as plain text.
+	 * 
+	 * Escapes HTML, etc.
+	 * Only strings are formatted.
+	 * 
+	 * @since dev
+	 *
+	 * @param mixed $value Value to format.
+	 * @return mixed Formatted value.
 	 */
-	function format_form($value) {
-		if ( is_string($value) )
-			$value = htmlspecialchars($value);
+	function format_text( $value ) {
+		if ( is_string( $value ) ) {
+			$value = esc_html( $value );
+		}
 		return $value;
 	}
 	

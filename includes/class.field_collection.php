@@ -25,14 +25,6 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	 */
 	var $items = array();
 	
-	var $id_formats = array (
-		'formatted' => array(
-			'wrap'		=> array ( 'open' => '_' ),
-			'recursive'	=> false,
-			'prefix'	=> array('get_prefix')
-		)
-	);
-	
 	var $build_vars_default = array ( 
 		'groups'		=> array(),
 		'context'		=> '',
@@ -79,7 +71,19 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	
 	public function _init() {
 		parent::_init();
+		
+		// Load properties.
 		$this->load($this->properties_init, false);
+
+		// Add custom ID format(s).
+		$this->add_id_format(
+			'formatted',
+			[
+				'wrap'      => [ 'open' => '_' ],
+				'prefix'    => [ 'get_prefix' ],
+				'recursive' => false,
+			]
+		);
 	}
 	
 	/*-** Getters/Setters **-*/

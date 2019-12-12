@@ -149,9 +149,14 @@ class SLB_Admin_Page extends SLB_Admin_View {
 				if ( $this->is_required_form() ) {
 					// Build form output
 					$form_id = $this->add_prefix('admin_form_' . $this->get_id_raw());
+					$nonce = (object) [
+						'action' => $this->get_id(),
+						'name' => $this->get_id() . '_nonce',
+					];
 					?>
 					<form id="<?php esc_attr_e($form_id); ?>" name="<?php esc_attr_e($form_id); ?>" action="" method="post">
 					<?php
+						wp_nonce_field( $nonce->action, $nonce->name );
 				}
 			?>
 			<div class="metabox-holder columns-2">

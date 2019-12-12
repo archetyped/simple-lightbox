@@ -111,8 +111,8 @@ class SLB_Fields extends SLB_Field_Collection {
 		$select->set_property('options', array());
 		$select->set_layout('form', '{label ref_base="layout"} {form_start ref_base="layout"}{option_loop ref_base="layout"}{form_end ref_base="layout"}');
 		$select->set_layout('option_loop', '{loop data="properties.options" layout="option" layout_data="option_data"}');
-		$select->set_layout('option', '<{tag_option} value="{data_ext id="option_value"}">{data_ext id="option_text"}</{tag_option}>');
-		$select->set_layout('option_data', '<{tag_option} value="{data_ext id="option_value"}" selected="selected">{data_ext id="option_text"}</{tag_option}>');		
+		$select->set_layout('option', '<{tag_option} value="{data_ext id="option_value" context="attr"}">{data_ext id="option_text" context="text"}</{tag_option}>');
+		$select->set_layout('option_data', '<{tag_option} value="{data_ext id="option_value" context="attr"}" selected="selected">{data_ext id="option_text" context="text"}</{tag_option}>');		
 		$this->add($select);
 		
 		// Span
@@ -201,11 +201,15 @@ class SLB_Fields extends SLB_Field_Collection {
 				if ( 'properties' == $placeholder['tag'] && ($prop_group = $item->get_group($placeholder['attributes']['group'])) && !empty($prop_group) ) {
 					/* Process group */
 					$group_out = array();
-					// Iterate through properties in group and build string
-					foreach ( array_keys($prop_group) as $prop_key ) {
-						$prop_val = $item->get_property($prop_key);
-						if ( !is_null($prop_val) )
-							$group_out[] = $prop_key . '="' . $prop_val . '"';
+					// Iterate through properties in group and build string.
+					foreach ( array_keys( $prop_group ) as $prop_key ) {
+						$prop_val = $item->get_property( $prop_key );
+						if ( !is_null( $prop_val ) ) {
+							// Process placeholders.
+							$prop_val = $item->process_placeholders( $prop_val, $layout, $data );
+							// Add property to attribute string output.
+							$group_out[] = esc_attr( $prop_key ) . '="' . esc_attr( $prop_val ) . '"';
+						}
 					}
 					$output = implode(' ', $group_out);
 				}
@@ -222,26 +226,53 @@ class SLB_Fields extends SLB_Field_Collection {
 	}
 
 	/**
-	 * Build Field ID attribute
-	 * @see SLB_Field_Type::process_placeholder_default for parameter descriptions
-	 * @return string Placeholder output
+	 * Renders field ID formatted for a form field's `id` attribute.
+	 * 
+	 * ID is formatted to be unique identifier for form field.
+	 * Example: `options_field_id`.
+	 * Registered as handler for `{field_id}` placeholder.
+	 * 
+	 * @param string $output Placeholder's rendered value.
+	 * @param SLB_Field $item Field containing placeholder.
+	 * @param array &$placeholder Placeholder being processed.
+	 * @param string $layout Name of layout being built.
+	 * @param array $data Additional data for current field.
+	 * @return string Field's ID (formatted for a form field's `id` attribute).
 	 */
-	function process_placeholder_id($output, $item, $placeholder, $layout, $data) {
+	function process_placeholder_id( $output, $item, &$placeholder, $layout, $data ) {
 		// Get attributes
-		$args = wp_parse_args($placeholder['attributes'], array('format' => 'attr_id')); 
-		return $item->get_id($args);
+		$args = wp_parse_args($placeholder['attributes'], array('format' => 'attr_id'));
+		$output = $item->get_id($args);
+		// Set default placeholder context.
+		if ( ! isset( $placeholder['attributes']['context'] ) ) {
+			$placeholder['attributes']['context'] = 'attr';
+		}
+		return $output;
 	}
-	
+
 	/**
-	 * Build Field name attribute
-	 * Name is formatted as an associative array for processing by PHP after submission
-	 * @see SLB_Field_Type::process_placeholder_default for parameter descriptions
-	 * @return string Placeholder output
+	 * Renders field ID formatted for a form field's `name` attribute.
+	 * 
+	 * ID is formatted to be part of an associative array for processing form submission.
+	 * Example: `options[field_id]`.
+	 * Registered as handler for `{field_name}` placeholder.
+	 * 
+	 * @param string $output Placeholder's rendered value.
+	 * @param SLB_Field $item Field containing placeholder.
+	 * @param array &$placeholder Placeholder being processed.
+	 * @param string $layout Name of layout being built.
+	 * @param array $data Additional data for current field.
+	 * @return string Field's ID (formatted for a form field's `name` attribute).
 	 */
-	function process_placeholder_name($output, $item, $placeholder, $layout, $data) {
+	function process_placeholder_name($output, $item, &$placeholder, $layout, $data) {
 		// Get attributes
 		$args = wp_parse_args($placeholder['attributes'], array('format' => 'attr_name')); 
-		return $item->get_id($args);
+		$output = $item->get_id($args);
+		// Set default placeholder context.
+		if ( ! isset( $placeholder['attributes']['context'] ) ) {
+			$placeholder['attributes']['context'] = 'attr';
+		}
+		return $output;
 	}
 	
 	/**
@@ -264,24 +295,19 @@ class SLB_Fields extends SLB_Field_Collection {
 	 * @return string Placeholder output
 	 */
 	function process_placeholder_data($output, $item, $placeholder, $layout) {
-		$attr_default = array (
-			'context'	=> '',
-		);
-		$opts = wp_parse_args($placeholder['attributes'], $attr_default);
-		// Save context to separate variable
-		$context = $opts['context'];
-		unset($opts['context']);
+		$opts = $placeholder['attributes'];
+		// Strip context from data retrieval options (Formatting handled upstream).
+		if ( is_array( $opts ) ) {
+			unset( $opts['context'] );
+		}
 		// Get data
 		$out = $item->get_data($opts);
-		if ( !is_null($out) ) {
+		if ( ! is_null($out) ) {
 			// Get specific member in value (e.g. value from a specific item element)
 			if ( isset($opts['element']) && is_array($out) && ( $el = $opts['element'] ) && isset($out[$el]) )
 				$out = $out[$el];
 		}
 		
-		// Format data based on context
-		$out = $item->preserve_special_chars($out, $context);
-		$out = $item->format($out, $context);
 		// Return data
 		return $out;
 	}
@@ -351,15 +377,23 @@ class SLB_Fields extends SLB_Field_Collection {
 		// Return output
 		return implode($out);
 	}
-	
+
 	/**
-	 * Returns specified value from extended data array for item
-	 * @see SLB_Field_Type::process_placeholder_default for parameter descriptions
-	 * @return string Placeholder output
+	 * Returns specified value from extended data array for item.
+	 *
+	 * @param string $output Value to be used in place of placeholder.
+	 * @param SLB_Field $item Field containing placeholder.
+	 * @param array $placeholder Current placeholder.
+	 * @see SLB_Field::parse_layout for structure of `$placeholder` array.
+	 * @param string $layout Name of layout being built.
+	 * @param array $data Extended data for item.
+	 *
+	 * @return string Processed value.
 	 */
-	function process_placeholder_data_ext($output, $item, $placeholder, $layout, $data) {
-		if ( isset($placeholder['attributes']['id']) && ($key = $placeholder['attributes']['id']) && isset($data[$key]) ) {
-			$output = strval($data[$key]);
+	function process_placeholder_data_ext( string $output, SLB_Field $item, array $placeholder, string $layout, array $data ) {
+		$key = ( isset( $placeholder['attributes']['id'] ) ) ? $placeholder['attributes']['id'] : false;
+		if ( !! $key && isset( $data[ $key ] ) && is_scalar( $data[ $key ] ) ) {
+			$output = strval( $data[ $key ] );
 		}
 		
 		return $output;
