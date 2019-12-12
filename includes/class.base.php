@@ -8,7 +8,7 @@
  */
 class SLB_Base {
 	/* Configuration */
-	
+
 	/**
 	 * Class type
 	 * Controls initialization, etc.
@@ -18,53 +18,53 @@ class SLB_Base {
 	 * @var string
 	 */
 	protected $mode = 'full';
-	
+
 	/**
 	 * Indicates that instance is model (main controller)
 	 * @var bool
 	 */
 	protected $model = false;
-	
+
 	/* Properties */
-			
+
 	/**
 	 * Variable name of base object in global scope
 	 * @var string
 	 */
 	protected $base = 'slb';
-	
+
 	/**
 	 * Prefix for plugin-related data (attributes, DB tables, etc.)
 	 * @var string
 	 */
 	public $prefix = 'slb';
-	
+
 	/**
 	 * Prefix to be added when creating internal hook (action/filter) tags
 	 * Used by Utilities
 	 * @var string
 	 */
 	public $hook_prefix = '';
-	
+
 	/**
 	 * Global data
 	 * Facilitates sharing between decoupled objects
 	 * @var array
 	 */
 	private static $globals = array();
-	
+
 	protected $shared = array('options', 'admin');
-	
+
 	/**
 	 * Capabilities
 	 * @var array
 	 */
 	protected $caps = null;
-	
+
 	protected $_init = false;
-	
+
 	private static $_init_passed = false;
-	
+
 	/* Client */
 
 	/**
@@ -80,36 +80,36 @@ class SLB_Base {
 	 * 		> Context in which the script should be included
 	 *   > in_footer (bool) optional [Default: FALSE]
 	 * 		> If TRUE, file will be included in footer of page, otherwise it will be included in the header
-	 * 
+	 *
 	 * Array is processed and converted to an object on init
 	 */
 	private $client_files = array (
 		'scripts'	=> array(),
 		'styles'	=> array()
 	);
-	
+
 	/*-** Instances **-*/
-	
+
 	/**
 	 * Utilities
 	 * @var SLB_Utilities
 	 */
 	var $util = null;
-	
+
 	/**
 	 * Options
 	 * @var SLB_Options
 	 */
 	protected $options = null;
-	
+
 	/**
 	 * Admin
 	 * @var SLB_Admin
 	 */
 	var $admin = null;
-	
+
 	/*-** Initialization **-*/
-	
+
 	/**
 	 * Constructor
 	 */
@@ -124,7 +124,7 @@ class SLB_Base {
 			}
 		}
 	}
-	
+
 	/**
 	 * Default initialization method
 	 * @uses _init_passed
@@ -145,7 +145,7 @@ class SLB_Base {
 		if ( $this->can('control') ) {
 			// Options
 			$this->_options();
-			
+
 			// Admin
 			if ( is_admin() )
 				$this->_admin();
@@ -153,11 +153,11 @@ class SLB_Base {
 
 		// Hooks
 		$this->_hooks();
-		
+
 		// Client files
 		$this->_client_files();
 	}
-	
+
 	/**
 	 * Initialize environment (Localization, etc.)
 	 */
@@ -172,17 +172,17 @@ class SLB_Base {
 		if ( is_dir($lpath_abs) ) {
 			load_plugin_textdomain('simple-lightbox', false, $lpath);
 		}
-		
+
 		// Context
 		add_action( ( is_admin() ) ? 'admin_print_footer_scripts' : 'wp_footer', $this->util->m('set_client_context'), $this->util->priority('client_footer_output') );
 	}
-	
+
 	/**
 	 * Initialize options
 	 * To be implemented in child classes
 	 */
 	protected function _options() {}
-	
+
 	/**
 	 * Initialize options
 	 * To be called by child class
@@ -206,7 +206,7 @@ class SLB_Base {
 		// Set instance property
 		$this->options = $opts;
 	}
-	
+
 	/**
 	 * Initialize admin
 	 * To be called by child class
@@ -229,7 +229,7 @@ class SLB_Base {
 		// Set instance property
 		$this->admin = $adm;
 	}
-	
+
 	/**
 	 * Register default hooks
 	 */
@@ -239,13 +239,13 @@ class SLB_Base {
 		$func_activate = '_activate';
 		if ( method_exists($this, $func_activate) )
 			register_activation_hook($base, $this->m($func_activate));
-		
+
 		// Deactivation
 		$func_deactivate = '_deactivate';
 		if ( method_exists($this, $func_deactivate) )
 			register_deactivation_hook($base, $this->m($func_deactivate));
 	}
-	
+
 	/**
 	 * Initialize client files
 	 */
@@ -253,7 +253,7 @@ class SLB_Base {
 		// Validation
 		if ( !is_array($files) || empty($files) ) {
 			return false;
-		} 
+		}
 		foreach ( $this->client_files as $key => $val ) {
 			if ( isset($files[$key]) && is_array($files[$key]) || !empty($files[$key]) ) {
 				$this->client_files[$key] = $this->util->parse_client_files($files[$key], $key);
@@ -263,16 +263,16 @@ class SLB_Base {
 				unset($this->client_files[$key]);
 			}
 		}
-		
-		
+
+
 		// Stop if no files are set for registration
 		if ( empty($this->client_files) ) {
 			return false;
 		}
-		
+
 		// Register
 		add_action('init', $this->m('register_client_files'));
-		
+
 		// Enqueue
 		$hk_prfx = ( ( is_admin() ) ? 'admin' : 'wp' );
 		$hk_enqueue = $hk_prfx . '_enqueue_scripts' ;
@@ -280,7 +280,7 @@ class SLB_Base {
 		add_action($hk_enqueue, $this->m('enqueue_client_files'), 10, 0);
 		add_action($hk_enqueue_ft, $this->m('enqueue_client_files_footer'), 1);
 	}
-	
+
 	/**
 	 * Register client files
 	 * @see enqueue_client_files() for actual loading of files based on context
@@ -311,7 +311,7 @@ class SLB_Base {
 			}
 		}
 	}
-	
+
 	/**
 	 * Enqueues files for client output (scripts/styles) based on context
 	 * @uses `admin_enqueue_scripts` Action hook depending on context
@@ -384,7 +384,7 @@ class SLB_Base {
 	public function enqueue_client_files_footer() {
 		$this->enqueue_client_files(true);
 	}
-	
+
 	/**
 	 * Build function name for handling client operations
 	 */
@@ -394,9 +394,9 @@ class SLB_Base {
 			$func = false;
 		return $func;
 	}
-	
+
 	/*-** Reflection **-*/
-	
+
 	/**
 	 * Retrieve base object
 	 * @return object|bool Base object (FALSE if object does not exist)
@@ -404,12 +404,12 @@ class SLB_Base {
 	function &get_base() {
 		$base = false;
 		if ( isset($GLOBALS[$this->base]) )
-			$base =& $GLOBALS[$this->base]; 
+			$base =& $GLOBALS[$this->base];
 		return $base;
 	}
-	
+
 	/*-** Method/Function calling **-*/
-	
+
 	/**
 	 * Returns callback to instance method
 	 * @param string $method Method name
@@ -418,9 +418,9 @@ class SLB_Base {
 	function m($method) {
 		return $this->util->m($this, $method);
 	}
-	
+
 	/*-** Prefix **-*/
-	
+
 	/**
 	 * Retrieve class prefix (with separator if set)
 	 * @param bool|string $sep Separator to append to class prefix (Default: no separator)
@@ -430,7 +430,7 @@ class SLB_Base {
 		$args = func_get_args();
 		return call_user_func_array($this->util->m($this->util, 'get_prefix'), $args);
 	}
-	
+
 	/**
 	 * Check if a string is prefixed
 	 * @param string $text Text to check for prefix
@@ -440,7 +440,7 @@ class SLB_Base {
 		$args = func_get_args();
 		return call_user_func_array($this->util->m($this->util, 'has_prefix'), $args);
 	}
-	
+
 	/**
 	 * Prepend plugin prefix to some text
 	 * @param string $text Text to add to prefix
@@ -452,7 +452,7 @@ class SLB_Base {
 		$args = func_get_args();
 		return call_user_func_array($this->util->m($this->util, 'add_prefix'), $args);
 	}
-	
+
 	/**
 	 * Prepend uppercased plugin prefix to some text
 	 * @param string $text Text to add to prefix
@@ -464,7 +464,7 @@ class SLB_Base {
 		$args = func_get_args();
 		return call_user_func_array($this->util->m($this->util, 'add_prefix_uc'), $args);
 	}
-	
+
 	/**
 	 * Add prefix to variable reference
 	 * Updates actual variable rather than return value
@@ -479,7 +479,7 @@ class SLB_Base {
 		$args[0] =& $var;
 		call_user_func_array($this->util->m($this->util, 'add_prefix_ref'), $args);
 	}
-	
+
 	/**
 	 * Remove prefix from specified string
 	 * @param string $text String to remove prefix from
@@ -489,9 +489,9 @@ class SLB_Base {
 		$args = func_get_args();
 		return call_user_func_array($this->util->m($this->util, 'remove_prefix'), $args);
 	}
-	
+
 	/*-** Capabilities **-*/
-	
+
 	protected function can($cap) {
 		if ( is_null($this->caps) ) {
 			// Build capabilities based on instance properties
@@ -503,9 +503,9 @@ class SLB_Base {
 		}
 		return ( isset($this->caps[$cap]) ) ? $this->caps[$cap] : false;
 	}
-	
+
 	/*-** Globals **-*/
-	
+
 	/**
 	 * Get/Set (internal) global variables
 	 * @uses $globals to get/set global variables
@@ -531,13 +531,13 @@ class SLB_Base {
 		}
 		return $ret;
 	}
-	
+
 	private function shares($name) {
 		return ( !empty($this->shared) && in_array($name, $this->shared) ) ? true : false;
 	}
-	
+
 	/*-** Options **-*/
-	
+
 	/**
 	 * Checks if options are valid
 	 * @param array $data Data to be used on options

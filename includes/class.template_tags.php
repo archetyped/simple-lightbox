@@ -8,36 +8,36 @@
  */
 class SLB_Template_Tags extends SLB_Collection_Controller {
 	/* Configuration */
-	
+
 	protected $item_type = 'SLB_Template_Tag';
-	
+
 	public $hook_prefix = 'template_tags';
-	
+
 	// Use tag ID as key
 	protected $key_prop = 'get_id';
-	
+
 	// Call $key_prop is a method to be called
 	protected $key_call = true;
-	
+
 	/* Properties */
-	
+
 	/**
 	 * Cache properties (key, group)
 	 * @var object
 	 */
 	protected $cache_props = null;
-	
+
 	/* Initialization */
-	
+
 	protected function _hooks() {
 		parent::_hooks();
 		$this->util->add_action('init', $this->m('init_defaults'));
 		$this->util->add_action('footer', $this->m('client_output'), 1, 0, false);
 		$this->util->add_filter('footer_script', $this->m('client_output_script'), $this->util->priority('client_footer_output'), 1, false);
 	}
-	
+
 	/* Collection Management */
-	
+
 	/**
 	 * Add template tag
 	 * Accepts properties to create new template tag OR previously-initialized tag instance
@@ -51,9 +51,9 @@ class SLB_Template_Tags extends SLB_Collection_Controller {
 		// Add to collection
 		return parent::add($o);
 	}
-	
+
 	/* Defaults */
-	
+
 	/**
 	 * Initialize default template tags
 	 * @param SLB_Template_Tags $tags Tags controller
@@ -78,9 +78,9 @@ class SLB_Template_Tags extends SLB_Collection_Controller {
 			$tags->add($id, $props);
 		}
 	}
-	
+
 	/* Output */
-	
+
 	/**
 	 * Build client output
 	 */
@@ -90,7 +90,7 @@ class SLB_Template_Tags extends SLB_Collection_Controller {
 			$tag->enqueue_scripts();
 		}
 	}
-	
+
 	/**
 	 * Client output script
 	 * @param array $commands Client script commands
@@ -99,7 +99,7 @@ class SLB_Template_Tags extends SLB_Collection_Controller {
 	public function client_output_script($commands) {
 		$out = array('/* TPLT */');
 		$code = array();
-		
+
 		foreach ( $this->get() as $tag ) {
 			$styles = $tag->get_styles(array('uri_format'=>'full'));
 			if ( empty($styles) ) {

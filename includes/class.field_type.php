@@ -42,7 +42,7 @@ class SLB_Field_Type extends SLB_Field_Base {
 		$defaults = $this->integrate_id($id);
 		if ( !is_array($parent) )
 			$defaults['parent'] = $parent;
-		
+
 		$props = $this->make_properties($args, $defaults);
 		parent::__construct($props);
 	}
@@ -262,17 +262,17 @@ class SLB_Field_Type extends SLB_Field_Base {
 	function parse_layout($layout, $search) {
 		$parse_match = '';
 		$result = [];
-		
+
 		// Find all nested layouts in layout.
 		$match_value = preg_match_all( $search, $layout, $parse_match, PREG_PATTERN_ORDER );
-		
+
 		// Stop if no matches found.
 		if ( ! $match_value ) {
 			return $result;
 		}
-		
+
 		/* Process matches */
-		
+
 		$ph_xml = '';
 		$ph_root_tag = 'ph_root_element';
 		$ph_start_xml = '<';
@@ -362,7 +362,7 @@ class SLB_Field_Type extends SLB_Field_Base {
 		$ph->pattern_layout = '/' . $ph->start . '([a-zA-Z0-9].*?\s+' . $ph->reserved['ref'] . '="layout.*?".*?)' . $ph->end . '/i';
 		return $ph;
 	}
-	
+
 	/**
 	 * Build item output
 	 * @param string $layout (optional) Layout to build
@@ -373,7 +373,7 @@ class SLB_Field_Type extends SLB_Field_Base {
 		echo $this->build_layout($layout, $data);
 		$this->util->do_action_ref_array('build_post', array($this));
 	}
-	
+
 	/**
 	 * Builds HTML for a field based on its properties
 	 * @param string $layout (optional) Name of layout to build
@@ -396,9 +396,9 @@ class SLB_Field_Type extends SLB_Field_Base {
 
 	/**
 	 * Processes placeholders in a string.
-	 * 
+	 *
 	 * Finds and replaces placeholders in a string to their full values.
-	 * 
+	 *
 	 * @since dev
 	 *
 	 * @param string  $str String with placeholders to replace.
@@ -430,7 +430,7 @@ class SLB_Field_Type extends SLB_Field_Base {
 						// Context-specific formatting.
 						$target_property = $this->format( $target_property, $context );
 					}
-					
+
 					// Clear value if value not a string
 					if ( !is_scalar( $target_property ) ) {
 						$target_property = '';

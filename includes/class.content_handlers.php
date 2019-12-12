@@ -8,36 +8,36 @@
  */
 class SLB_Content_Handlers extends SLB_Collection_Controller {
 	/* Configuration */
-	
+
 	protected $item_type = 'SLB_Content_Handler';
-	
+
 	public $hook_prefix = 'content_handlers';
-	
+
 	protected $key_prop = 'get_id';
-	
+
 	protected $key_call = true;
-	
+
 	/* Properties */
-	
+
 	protected $request_matches = array();
-	
+
 	/**
 	 * Cache properties (key, group)
 	 * @var object
 	 */
 	protected $cache_props = null;
-	
+
 	/* Initialization */
-	
+
 	protected function _hooks() {
 		parent::_hooks();
 		$this->util->add_action('init', $this->m('init_defaults'), 5);
 		$this->util->add_action('footer', $this->m('client_output'), 1, 0, false);
 		$this->util->add_filter('footer_script', $this->m('client_output_script'), $this->util->priority('client_footer_output'), 1, false);
 	}
-	
+
 	/* Collection Management */
-	
+
 	/**
 	 * Add content type handler
 	 * Accepts properties to create new handler OR previously-initialized handler instance
@@ -65,7 +65,7 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 		// Add to collection
 		return parent::add($handler, array('priority' => $priority));
 	}
-	
+
 	/**
 	 * Remove item
 	 * @uses clear_cache()
@@ -76,7 +76,7 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 		$this->clear_cache();
 		return parent::remove($item);
 	}
-	
+
 	/**
 	 * Clear collection
 	 * @uses clear_cache()
@@ -87,7 +87,7 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 		$this->clear_cache();
 		return parent::clear();
 	}
-	
+
 	/**
 	 * Retrieves handlers sorted by priority
 	 * @see parent::get()
@@ -104,7 +104,7 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 		}
 		return $items;
 	}
-	
+
 	/**
 	 * Get matching handler for URI
 	 * @param string $uri URI to find match for
@@ -133,9 +133,9 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 		}
 		return $ret;
 	}
-	
+
 	/* Cache */
-	
+
 	/**
 	 * Retrieve cached items
 	 * @uses get_cache_props()
@@ -147,7 +147,7 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 		$items = wp_cache_get($cprops->key, $cprops->group);
 		return ( is_array($items) ) ? $items : array();
 	}
-	
+
 	/**
 	 * Update cached items
 	 * Cache is cleared if no items specified
@@ -159,7 +159,7 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 		$props = $this->get_cache_props();
 		wp_cache_set($props->key, $data, $props->group);
 	}
-	
+
 	/**
 	 * Clear cache
 	 * @uses update_cache()
@@ -167,7 +167,7 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 	protected function clear_cache() {
 		$this->update_cache();
 	}
-	
+
 	/**
 	 * Retrieve cache properites (key, group)
 	 * @return object Cache properties
@@ -179,11 +179,11 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 				'group' => $this->get_prefix(),
 			);
 		}
-		return $this->cache_props; 
+		return $this->cache_props;
 	}
-	
+
 	/* Handlers */
-	
+
 	/**
 	 * Initialize default handlers
 	 * @param SLB_Content_Handlers $handlers Handlers controller
@@ -204,7 +204,7 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 			$handlers->add($id, $props);
 		}
 	}
-	
+
 	/**
 	 * Matches image URIs
 	 * @param string $uri URI to match
@@ -213,22 +213,22 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 	public function match_image($uri, $handlers) {
 		// Basic matching
 		$match = ( $this->util->has_file_extension($uri, array('jpg', 'jpeg', 'jpe', 'jfif', 'jif', 'gif', 'png')) ) ? true : false;
-		
+
 		// Filter result
 		$extra = new stdClass();
 		$match = $this->util->apply_filters('image_match', $match, $uri, $extra);
-		
+
 		// Handle extra data passed from filters
 		// Currently only `uri` supported
 		if ( $match && isset($extra->uri) && is_string($extra->uri) ) {
 			$match = array('uri' => $extra->uri);
 		}
-		
+
 		return $match;
 	}
-	
+
 	/* Output */
-	
+
 	/**
 	 * Build client output
 	 * Load handler files in client
@@ -239,7 +239,7 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 			$handler->enqueue_scripts();
 		}
 	}
-	
+
 	/**
 	 * Client output script
 	 * @param array $commands Client script commands
@@ -248,7 +248,7 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 	public function client_output_script($commands) {
 		$out = array('/* CHDL */');
 		$code = array();
-		
+
 		foreach ( $this->request_matches as $handler ) {
 			// Attributes
 			$attrs = $handler->get_attributes();

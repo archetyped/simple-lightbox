@@ -2,62 +2,62 @@
 
 /**
  * Admin View Base
- * Core functionality Admin UI components 
+ * Core functionality Admin UI components
  * @package Simple Lightbox
  * @subpackage Admin
  * @author Archetyped
  */
 class SLB_Admin_View extends SLB_Base_Object {
 	/* Properties */
-	
+
 	/**
 	 * Labels
 	 * @var array (Associative)
 	 */
 	protected $labels = array();
-	
+
 	/**
 	 * Function to handle building UI
 	 * @var callback
 	 */
 	protected $callback = null;
-	
+
 	/**
 	 * Capability for access control
-	 * @var string 
+	 * @var string
 	 */
 	protected $capability = 'manage_options';
-	
+
 	/**
 	 * Icon to use
 	 * @var string
 	 */
 	protected $icon = null;
-	
+
 	/**
 	 * View parent ID/Slug
 	 * @var string
 	 */
 	protected $parent = null;
-	
+
 	/**
 	 * Whether parent is a custom view or a default WP one
 	 * @var bool
 	 */
 	protected $parent_custom = true;
-		
+
 	/**
 	 * If view requires a parent
 	 * @var bool
 	 */
 	protected $parent_required = false;
-	
+
 	/**
 	 * WP-Generated hook name for view
 	 * @var string
 	 */
 	protected $hookname = null;
-	
+
 	/**
 	 * Raw content parameters
 	 * Stores pre-rendered content parameters
@@ -65,20 +65,20 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 * @var array
 	 */
 	protected $content_raw = array();
-	
+
 	/**
 	 * Parsed content parameters
 	 * @var array
 	 */
 	protected $content = array();
-	
+
 	/**
 	 * Messages to be displayed
 	 * Indexed Array
 	 * @var array
 	 */
 	protected $messages = array();
-	
+
 	/**
 	 * Required properties
 	 * Associative array
@@ -87,7 +87,7 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 * @var array
 	 */
 	private $required = array();
-	
+
 	/**
 	 * Default required properties
 	 * Merged into $required array with this->init_required()
@@ -95,9 +95,9 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 * @var array
 	 */
 	private $_required = array ( 'id' => 'string', 'labels' => 'array' );
-	
+
 	/* Init */
-	
+
 	/**
 	 * Constructor
 	 * @return obj Current instance
@@ -113,14 +113,14 @@ class SLB_Admin_View extends SLB_Base_Object {
 		$this->init_required();
 		return $this;
 	}
-	
+
 	protected function init_required() {
 		$this->required = array_merge($this->_required, $this->required);
 		// Check for parent requirement
 		if ( $this->parent_required )
 			$this->required['parent'] = 'string';
 	}
-	
+
 	/**
 	 * Set required feature
 	 * @param string $feature Required feature
@@ -131,7 +131,7 @@ class SLB_Admin_View extends SLB_Base_Object {
 		}
 		return $this;
 	}
-	
+
 	/**
 	 * Check if feature is required
 	 * @param string $feature Feature to check for
@@ -140,9 +140,9 @@ class SLB_Admin_View extends SLB_Base_Object {
 	protected function _is_required($feature) {
 		return ( isset($this->_required[$feature]) ) ? true : false;
 	}
-	
+
 	/* Property Methods */
-	
+
 	/**
 	 * Retrieve ID (Formatted by default)
 	 * @param bool $formatted (optional) Whether ID should be formatted for external use or not
@@ -154,7 +154,7 @@ class SLB_Admin_View extends SLB_Base_Object {
 			$this->add_prefix_ref($id);
 		return $id;
 	}
-	
+
 	/**
 	 * Retrieve raw ID
 	 * @return string Raw ID
@@ -162,7 +162,7 @@ class SLB_Admin_View extends SLB_Base_Object {
 	public function get_id_raw() {
 		return $this->get_id(false);
 	}
-	
+
 	/**
 	 * Retrieve label
 	 * Uses first label (or default if defined) if specified type does not exist
@@ -179,10 +179,10 @@ class SLB_Admin_View extends SLB_Base_Object {
 			reset($this->labels);
 			$default = current($this->labels);
 		}
-		
+
 		return ( empty($default) ) ? '' : $default;
 	}
-	
+
 	/**
 	 * Set text labels
 	 * @param array|string $labels
@@ -194,8 +194,8 @@ class SLB_Admin_View extends SLB_Base_Object {
 		// Single string
 		if ( is_string($labels) ) {
 			$labels = array ( $labels );
-		} 
-		
+		}
+
 		// Array
 		if ( is_array($labels) ) {
 			// Merge with existing labels
@@ -206,7 +206,7 @@ class SLB_Admin_View extends SLB_Base_Object {
 		}
 		return $this;
 	}
-	
+
 	/**
 	 * Set single text label
 	 * @uses this->set_labels()
@@ -221,7 +221,7 @@ class SLB_Admin_View extends SLB_Base_Object {
 		}
 		return $this;
 	}
-	
+
 	/**
 	 * Checks if specified label is set on view
 	 * @param string $type Label type
@@ -230,9 +230,9 @@ class SLB_Admin_View extends SLB_Base_Object {
 	public function has_label($type) {
 		return ( isset($this->labels[$type]) );
 	}
-	
+
 	/* Content */
-	
+
 	/**
 	 * Add content block to view
 	 * Child classes define method functionality
@@ -248,7 +248,7 @@ class SLB_Admin_View extends SLB_Base_Object {
 		// Return instance reference
 		return $this;
 	}
-	
+
 	/**
 	 * Retrieve content
 	 */
@@ -266,7 +266,7 @@ class SLB_Admin_View extends SLB_Base_Object {
 		}
 		return $content;
 	}
-	
+
 	/**
 	 * Parse content
 	 * Child classes define functionality
@@ -275,7 +275,7 @@ class SLB_Admin_View extends SLB_Base_Object {
 	protected function parse_content() {
 		return $this->get_content(false);
 	}
-	
+
 	/**
 	 * Check if content has been added to view
 	 * @return bool TRUE if content added
@@ -284,12 +284,12 @@ class SLB_Admin_View extends SLB_Base_Object {
 		$raw = $this->get_content(false);
 		return !empty($raw);
 	}
-	
+
 	/**
 	 * Render content
 	 */
 	protected function render_content($context = 'default') {}
-	
+
 	/**
 	 * Retrieve view messages
 	 * @return array Messages
@@ -299,7 +299,7 @@ class SLB_Admin_View extends SLB_Base_Object {
 			$this->messages = array();
 		return $this->messages;
 	}
-	
+
 	/**
 	 * Save message
 	 * @param string $text Message text
@@ -313,7 +313,7 @@ class SLB_Admin_View extends SLB_Base_Object {
 		$msgs[] = $text;
 		return $this;
 	}
-	
+
 	/**
 	 * Add messages to array
 	 * Called by internal `admin_messages` filter hook
@@ -326,7 +326,7 @@ class SLB_Admin_View extends SLB_Base_Object {
 			$msgs = array_merge($msgs, $m);
 		return $msgs;
 	}
-	
+
 	/**
 	 * Retrieve view callback
 	 * @return callback Callback (Default: standard handler method)
@@ -334,7 +334,7 @@ class SLB_Admin_View extends SLB_Base_Object {
 	public function get_callback() {
 		return ( $this->has_callback() ) ? $this->callback : $this->m('handle');
 	}
-	
+
 	/**
 	 * Set callback function for building item
 	 * @param callback $callback Callback function to use
@@ -344,7 +344,7 @@ class SLB_Admin_View extends SLB_Base_Object {
 		$this->callback = ( is_callable($callback) ) ? $callback : null;
 		return $this;
 	}
-	
+
 	/**
 	 * Check if callback set
 	 * @return bool TRUE if callback is set
@@ -352,14 +352,14 @@ class SLB_Admin_View extends SLB_Base_Object {
 	protected function has_callback() {
 		return ( !empty($this->callback) ) ? true : false;
 	}
-	
+
 	/**
 	 * Run callback
 	 */
 	public function do_callback() {
 		call_user_func($this->get_callback());
 	}
-	
+
 	/**
 	 * Retrieve capability
 	 * @return string Capability
@@ -367,7 +367,7 @@ class SLB_Admin_View extends SLB_Base_Object {
 	public function get_capability() {
 		return $this->capability;
 	}
-	
+
 	/**
 	 * Set capability for access control
 	 * @param string $capability Capability
@@ -378,7 +378,7 @@ class SLB_Admin_View extends SLB_Base_Object {
 			$this->capability = $capability;
 		return $this;
 	}
-	
+
 	/**
 	 * Set icon
 	 * @param string $icon Icon URI
@@ -389,11 +389,11 @@ class SLB_Admin_View extends SLB_Base_Object {
 			$this->icon = $icon;
 		return $this;
 	}
-	
+
 	protected function get_hookname() {
 		return ( empty($this->hookname) ) ? '' : $this->hookname;
 	}
-	
+
 	/**
 	 * Set hookname
 	 * @param string $hookname Hookname value
@@ -404,7 +404,7 @@ class SLB_Admin_View extends SLB_Base_Object {
 			$this->hookname = $hookname;
 		return $this;
 	}
-	
+
 	/**
 	 * Retrieve parent
 	 * Formats parent ID for custom parents
@@ -415,7 +415,7 @@ class SLB_Admin_View extends SLB_Base_Object {
 		$parent = parent::get_parent();
 		return ( $this->is_parent_custom() ) ? $this->add_prefix($parent) : $parent;
 	}
-	
+
 	/**
 	 * Set parent for view
 	 * @param string $parent Parent ID
@@ -430,7 +430,7 @@ class SLB_Admin_View extends SLB_Base_Object {
 		}
 		return $this;
 	}
-		
+
 	/**
 	 * Specify whether parent is a custom view or a WP view
 	 * @param bool $custom (optional) TRUE if custom, FALSE if WP
@@ -442,7 +442,7 @@ class SLB_Admin_View extends SLB_Base_Object {
 		}
 		return $this;
 	}
-	
+
 	/**
 	 * Set parent as WP view
 	 * @uses this->set_parent_custom()
@@ -452,18 +452,18 @@ class SLB_Admin_View extends SLB_Base_Object {
 		$this->set_parent_custom(false);
 		return $this;
 	}
-	
+
 	/**
 	 * Get view URI
 	 * URI Structures:
 	 *  > Top Level Menus: admin.php?page={menu_id}
 	 *  > Pages: [parent_page_file.php|admin.php]?page={page_id}
 	 * 	> Section: [parent_menu_uri]#{section_id}
-	 * 
+	 *
 	 * @uses $admin_page_hooks to determine if page is child of default WP page
 	 * @param string $file (optional) Base file name
 	 * @param string $format (optional) Format string for URI
-	 * @return string Object URI 
+	 * @return string Object URI
 	 */
 	public function get_uri($file = null, $format = null) {
 		static $page_hooks = null;
@@ -478,7 +478,7 @@ class SLB_Admin_View extends SLB_Base_Object {
 			if ( isset($page_hooks[$parent]) )
 				$file = $page_hooks[$parent];
 		}
-		
+
 		if ( empty($format) ) {
 			$delim = ( strpos($file, '?') === false ) ? '?' : '&amp;';
 			$format = '%1$s' . $delim . 'page=%2$s';
@@ -487,20 +487,20 @@ class SLB_Admin_View extends SLB_Base_Object {
 
 		return $uri;
 	}
-	
+
 	/* Handlers */
-	
+
 	/**
 	 * Default View handler
 	 * Used as callback when none set
 	 */
 	public function handle() {}
-	
+
 	/* Validation */
-	
+
 	/**
 	 * Check if instance is valid based on required properties/data types
-	 * @return bool TRUE if valid, FALSE if not valid 
+	 * @return bool TRUE if valid, FALSE if not valid
 	 */
 	public function is_valid() {
 		$valid = true;
@@ -513,17 +513,17 @@ class SLB_Admin_View extends SLB_Base_Object {
 		}
 		return $valid;
 	}
-	
+
 	protected function is_child() {
 		return $this->parent_required;
 	}
-	
+
 	protected function is_parent_custom() {
 		return ( $this->is_child() && $this->parent_custom ) ? true : false;
 	}
-	
+
 	public function is_parent_wp() {
 		return ( $this->is_child() && !$this->parent_custom ) ? true : false;
 	}
-	
+
 }

@@ -9,12 +9,12 @@
  */
 class SLB_Admin_Section extends SLB_Admin_View {
 	/* Properties */
-	
+
 	protected $parent_required = true;
 	protected $parent_custom = false;
-	
+
 	/* Init */
-	
+
 	public function __construct($id, $parent, $labels, $callback = null, $capability = null) {
 		// Default
 		parent::__construct($id, $labels, $callback, $capability);
@@ -22,9 +22,9 @@ class SLB_Admin_Section extends SLB_Admin_View {
 		$this->set_parent($parent);
 		return $this;
 	}
-	
+
 	/* Getters/Setters */
-	
+
 	/**
 	 * Retrieve URI
 	 * @uses Admin_View::get_uri()

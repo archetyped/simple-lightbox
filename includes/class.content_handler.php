@@ -8,21 +8,21 @@
  */
 class SLB_Content_Handler extends SLB_Component {
 	/* Properties */
-	
+
 	/**
 	 * Match handler
 	 * @var callback
 	 */
 	protected $match;
-	
+
 	/**
 	 * Custom attributes
 	 * @var callback
 	 */
 	protected $attributes;
-	
+
 	/* Matching */
-		
+
 	/**
 	 * Set matching handler
 	 * @param callback $callback Handler callback
@@ -32,7 +32,7 @@ class SLB_Content_Handler extends SLB_Component {
 		$this->match = ( is_callable($callback) ) ? $callback : null;
 		return $this;
 	}
-	
+
 	/**
 	 * Retrieve match handler
 	 * @return callback|null Match handler
@@ -40,14 +40,14 @@ class SLB_Content_Handler extends SLB_Component {
 	protected function get_match() {
 		return $this->match;
 	}
-	
+
 	/**
 	 * Check if valid match set
 	 */
 	protected function has_match()	{
 		return ( is_null($this->match) ) ? false : true;
 	}
-	
+
 	/**
 	 * Match handler against URI
 	 * @param string $uri URI to check for match
@@ -60,14 +60,14 @@ class SLB_Content_Handler extends SLB_Component {
 		}
 		return $ret;
 	}
-	
+
 	/* Attributes */
-	
+
 	public function set_attributes($callback) {
 		$this->attributes = ( is_callable($callback) ) ? $callback : null;
 		return $this;
 	}
-	
+
 	public function get_attributes() {
 		$ret = array();
 		// Callback
