@@ -1,22 +1,20 @@
 <?php
 /**
- * Plugin entrypoint
+ * Simple Lightbox
  *
  * @package Simple Lightbox
  * @author Archetyped <support@archetyped.com>
  * @copyright 2018 Archetyped
- */
-
-/*
-Plugin Name: Simple Lightbox
-Plugin URI: http://archetyped.com/tools/simple-lightbox/
-Description: The highly customizable lightbox for WordPress
-Version: 0.0.0-dev
-Text Domain: simple-lightbox
-Domain Path: /l10n
-Author: Archetyped
-Author URI: http://archetyped.com
-Support URI: https://github.com/archetyped/simple-lightbox/wiki/Feedback-&-Support
+ *
+ * Plugin Name: Simple Lightbox
+ * Plugin URI: http://archetyped.com/tools/simple-lightbox/
+ * Description: The highly customizable lightbox for WordPress
+ * Version: 0.0.0-dev
+ * Text Domain: simple-lightbox
+ * Domain Path: /l10n
+ * Author: Archetyped
+ * Author URI: http://archetyped.com
+ * Support URI: https://github.com/archetyped/simple-lightbox/wiki/Feedback-&-Support
 */
 
 require_once dirname( __FILE__ ) . '/includes/class-requirements-check.php';
