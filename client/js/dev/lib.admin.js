@@ -11,7 +11,7 @@ if ( !!window.SLB && !!SLB.attach ) { (function ($) {
 
 SLB.attach('Admin', {
 	/**
-	 * Initialization routines 
+	 * Initialization routines
 	 */
 	init: function() {
 		if ( postboxes ) {

@@ -9,18 +9,18 @@
  */
 class SLB_Admin_Page extends SLB_Admin_View {
 	/* Properties */
-	
+
 	protected $parent_required = true;
-	
+
 	public $hook_prefix = 'admin_page';
-	
+
 	/**
 	 * Required features/elements
 	 */
 	private $_required = array();
-	
+
 	/* Init */
-	
+
 	public function __construct($id, $parent, $labels, $callback = null, $capability = null) {
 		// Default
 		parent::__construct($id, $labels, $callback, $capability);
@@ -28,9 +28,9 @@ class SLB_Admin_Page extends SLB_Admin_View {
 		$this->set_parent($parent);
 		return $this;
 	}
-	
+
 	/* Operations */
-	
+
 	/**
 	 * Add content to page
 	 * @uses parent::add_content()
@@ -53,7 +53,7 @@ class SLB_Admin_Page extends SLB_Admin_View {
 			)
 		);
 	}
-	
+
 	/**
 	 * Parse content by parameters
 	 * Sets content value
@@ -73,7 +73,7 @@ class SLB_Admin_Page extends SLB_Admin_View {
 		}
 		return $content;
 	}
-	
+
 	/**
 	 * Render content blocks
 	 * @param string $context (optional) Context to render
@@ -110,7 +110,7 @@ class SLB_Admin_Page extends SLB_Admin_View {
 		</div>
 		<?php
 	}
-	
+
 	/**
 	 * Require form submission support
 	 * @return obj Page instance
@@ -119,7 +119,7 @@ class SLB_Admin_Page extends SLB_Admin_View {
 		$this->_require('form_submit');
 		return $this;
 	}
-	
+
 	/**
 	 * Check if form submission is required
 	 * @return bool TRUE if form submission required
@@ -127,9 +127,9 @@ class SLB_Admin_Page extends SLB_Admin_View {
 	private function is_required_form() {
 		return $this->_is_required('form_submit');
 	}
-	
+
 	/* Handlers */
-	
+
 	/**
 	 * Default Page handler
 	 * Builds content blocks
@@ -149,9 +149,14 @@ class SLB_Admin_Page extends SLB_Admin_View {
 				if ( $this->is_required_form() ) {
 					// Build form output
 					$form_id = $this->add_prefix('admin_form_' . $this->get_id_raw());
+					$nonce = (object) [
+						'action' => $this->get_id(),
+						'name' => $this->get_id() . '_nonce',
+					];
 					?>
 					<form id="<?php esc_attr_e($form_id); ?>" name="<?php esc_attr_e($form_id); ?>" action="" method="post">
 					<?php
+						wp_nonce_field( $nonce->action, $nonce->name );
 				}
 			?>
 			<div class="metabox-holder columns-2">

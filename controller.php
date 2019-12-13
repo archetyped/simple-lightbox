@@ -1,33 +1,33 @@
-<?php 
+<?php
 /**
  * Controller
  * @package Simple Lightbox
  * @author Archetyped
  */
 class SLB_Lightbox extends SLB_Base {
-	
+
 	/*-** Properties **-*/
-	
+
 	protected $model = true;
-		
+
 	/**
 	 * Fields
 	 * @var SLB_Fields
 	 */
 	public $fields = null;
-	
+
 	/**
 	 * Themes collection
 	 * @var SLB_Themes
 	 */
 	var $themes = null;
-	
+
 	/**
 	 * Content types
 	 * @var SLB_Content_Handlers
 	 */
 	var $handlers = null;
-	
+
 	/**
 	 * Template tags
 	 * @var SLB_Template_Tags
@@ -35,40 +35,88 @@ class SLB_Lightbox extends SLB_Base {
 	var $template_tags = null;
 
 	/**
-	 * Collection of processed media items for output to client
-	 * > Key (string) Attachment URI
-	 * > Value (assoc-array) Attachment properties (url, etc.)
-	 *   > source: Source URL
-	 * @var array
+	 * Media item template.
+	 *
+	 * @var array {
+	 *     Media item properties.
+	 *
+	 *     @type int $id WP post ID. Default null.
+	 *     @type string $type Item type. Default null.
+	 *     @type string $source Source URI.
+	 *     @type bool $internal Internal resource. Default false.
+	 *     @type string $title Item title.
+	 *     @type string $caption Item caption.
+	 *     @type string $description Item description.
+	 *     @type array $media {
+	 *         Media properties (indexed by size name).
+	 *         Original size = 'full'.
+	 *
+	 *         @type string $file File URI.
+	 *         @type int $width File width in pixels.
+	 *         @type int $height File height in pixels.
+	 *     }
+	 *     @type array $meta {
+	 *         Item metadata.
+	 *     }
+	 * }
 	 */
-	var $media_items = array();
-	
+	private $media_item_template = [
+		'id' => null,
+		'type' => null,
+		'internal' => false,
+		'source' => '',
+		/* @future: Metadata
+		'media' => [],
+		'meta'	=> []
+		END @future: Metadata */
+	];
+
 	/**
-	 * Collection of unprocessed media items
-	 * Multi-dimensional array
-	 * > props (array) Media properties indexed by ID
-	 *     > Key: (string) Unique ID (system-generated)
-	 *     > Value: (object) Media properties
-	 *         > type: (string) Item type (Default: null)
-	 * 	       > id: (int) WP item ID (Default: null)
-	 * > uri (array) Index of cached URIs
-	 *     > Key: (string) Item URI
-	 *     > Value: (string) Item ID (pointer to item in `id` array)
-	 * @var array
+	 * Processed media items for output to client.
+	 *
+	 * @var object[string] {
+	 *     Media item properties.
+	 *
+	 *     @index string Unique ID (system-generated).
+	 *
+	 *     @see $media_item_template.
+	 * }
 	 */
-	private $media_items_raw = array( 'props' => array(), 'uri' => array() );
-	
+	private $media_items = [];
+
+	/**
+	 * Collection of unprocessed media items.
+	 *
+	 * @var array {
+	 *     @type object[string] $props {
+	 *         Media item properties.
+	 *
+	 *         @index string Unique ID (system-generated).
+	 *
+	 *         @see $media_item_template
+	 *     }
+	 *     @type string[string] $uri {
+	 *         Cached URIs.
+	 *
+	 *         @index string URI.
+	 *
+	 *         @type string Item ID (points to item in `props` array)
+	 *     }
+	 * }
+	 */
+	private $media_items_raw = [ 'props' => [], 'uri' => [] ];
+
 	/**
 	 * Manage excluded content
 	 * @var object
 	 */
 	private $exclude = null;
-	
+
 	private $groups = array (
 		'auto'		=> 0,
 		'manual'	=> array(),
 	);
-	
+
 	/**
 	 * Validated URIs
 	 * Caches validation of parsed URIs
@@ -77,22 +125,22 @@ class SLB_Lightbox extends SLB_Base {
 	 * @var array
 	 */
 	private $validated_uris = array();
-	
+
 	/* Widget properties */
-	
+
 	/**
 	 * Used to track if widget is currently being processed or not
 	 * Set to Widget ID currently being processed
 	 * @var bool|string
 	 */
 	private $widget_processing = false;
-	
+
 	/**
 	 * Parameters for widget being processed
 	 * @param array
 	 */
 	private $widget_processing_params = null;
-	
+
 	/**
 	 * Manage nested widget processing
 	 * Used to avoid premature widget output
@@ -102,7 +150,7 @@ class SLB_Lightbox extends SLB_Base {
 
 	/**
 	 * Constructor
-	 */	
+	 */
 	public function __construct() {
 		parent::__construct();
 		// Init instances
@@ -112,14 +160,14 @@ class SLB_Lightbox extends SLB_Base {
 			$this->template_tags = new SLB_Template_Tags($this);
 		}
 	}
-	
+
 	/* Init */
-	
+
 	public function _init() {
 		parent::_init();
 		$this->util->do_action('init');
 	}
-	
+
 	/**
 	 * Declare client files (scripts, styles)
 	 * @uses parent::_client_files()
@@ -152,7 +200,7 @@ class SLB_Lightbox extends SLB_Base {
 		);
 		parent::_client_files($files);
 	}
-	
+
 	/**
 	 * Register hooks
 	 * @uses parent::_hooks()
@@ -163,18 +211,18 @@ class SLB_Lightbox extends SLB_Base {
 		/* Admin */
 		add_action('admin_menu', $this->m('admin_menus'));
 		$this->util->add_filter('admin_plugin_row_meta_support', $this->m('admin_plugin_row_meta_support'));
-		
+
 		/* Init */
 		add_action('wp', $this->m('_hooks_init'));
 	}
-	
+
 	/**
 	 * Init Hooks
 	 */
 	public function _hooks_init() {
 		if ( $this->is_enabled() ) {
 			$priority = $this->util->priority('low');
-			
+
 			// Init lightbox
 			add_action('wp_footer', $this->m('client_footer'));
 			$this->util->add_action('footer_script', $this->m('client_init'), 1);
@@ -188,17 +236,17 @@ class SLB_Lightbox extends SLB_Base {
 			$this->util->add_filter('pre_process_links', $this->m('exclude_content'));
 			$this->util->add_filter('pre_exclude_content', $this->m('exclude_shortcodes'));
 			$this->util->add_filter('post_process_links', $this->m('restore_excluded_content'));
-			
+
 			// Grouping
 			if ( $this->options->get_bool('group_post') ) {
-				$this->util->add_filter('get_group_id', $this->m('post_group_id'), 1);	
+				$this->util->add_filter('get_group_id', $this->m('post_group_id'), 1);
 			}
-			
+
 			// Shortcode grouping
 			if ( $this->options->get_bool('group_gallery') ) {
 				add_filter('the_content', $this->m('group_shortcodes'), 1);
 			}
-			
+
 			// Widgets
 			if ( $this->options->get_bool('enabled_widget') ) {
 				add_action('dynamic_sidebar_before', $this->m('widget_process_nested'));
@@ -210,7 +258,7 @@ class SLB_Lightbox extends SLB_Base {
 				add_action('dynamic_sidebar_before', $this->m('widget_block_start'));
 				add_action('dynamic_sidebar_after', $this->m('widget_block_finish'));
 			}
-			
+
 			// Menus
 			if ( $this->options->get_bool('enabled_menu') ) {
 				add_filter('wp_nav_menu', $this->m('menu_process'), $priority, 2);
@@ -234,7 +282,7 @@ class SLB_Lightbox extends SLB_Base {
 		}
 		return $group_segments;
 	}
-	
+
 	/**
 	 * Init options
 	 */
@@ -266,7 +314,7 @@ class SLB_Lightbox extends SLB_Base {
 				'slideshow_duration'		=> array('title' => __('Slide Duration (Seconds)', 'simple-lightbox'), 'default' => '6', 'attr' => array('size' => 3, 'maxlength' => 3), 'group' => array('ui', 40), 'in_client' => true),
 				'group_loop'				=> array('title' => __('Loop through items', 'simple-lightbox'),'default' => true, 'group' => array('ui', 50), 'in_client' => true),
 				'ui_overlay_opacity'		=> array('title' => __('Overlay Opacity (0 - 1)', 'simple-lightbox'), 'default' => '0.8', 'attr' => array('size' => 3, 'maxlength' => 3), 'group' => array('ui', 60), 'in_client' => true),
-				'ui_title_default'			=> array('title' => __('Enable default title', 'simple-lightbox'), 'default' => false, 'group' => array('ui', 70), 'in_client' => true),		
+				'ui_title_default'			=> array('title' => __('Enable default title', 'simple-lightbox'), 'default' => false, 'group' => array('ui', 70), 'in_client' => true),
 				'txt_loading'				=> array('title' => __('Loading indicator', 'simple-lightbox'), 'default' => 'Loading', 'group' => array('labels', 20)),
 				'txt_close'					=> array('title' => __('Close button', 'simple-lightbox'), 'default' => 'Close', 'group' => array('labels', 10)),
 				'txt_nav_next'				=> array('title' => __('Next Item button', 'simple-lightbox'), 'default' => 'Next', 'group' => array('labels', 30)),
@@ -300,7 +348,7 @@ class SLB_Lightbox extends SLB_Base {
 				'txt_closeLink'				=> 'txt_link_close',
 				'txt_nextLink'				=> 'txt_link_next',
 				'txt_prevLink'				=> 'txt_link_prev',
-				'txt_startSlideshow'		=> 'txt_slideshow_start',	
+				'txt_startSlideshow'		=> 'txt_slideshow_start',
 				'txt_stopSlideshow'			=> 'txt_slideshow_stop',
 				'txt_loadingMsg'			=> 'txt_loading',
 				'txt_link_next'				=> 'txt_nav_next',
@@ -308,12 +356,12 @@ class SLB_Lightbox extends SLB_Base {
 				'txt_link_close'			=> 'txt_close',
 			)
 		);
-		
+
 		parent::_set_options($opts);
 	}
 
 	/* Methods */
-	
+
 	/*-** Admin **-*/
 
 	/**
@@ -330,13 +378,13 @@ class SLB_Lightbox extends SLB_Base {
 		$pg_opts = $this->admin->add_theme_page('options', $lbls_opts)
 			->require_form()
 			->add_content('options', 'Options', $this->options);
-			
+
 		// Add Support information
 		$support = $this->util->get_plugin_info('SupportURI');
 		if ( !empty($support) ) {
 			$pg_opts->add_content('support', __('Feedback & Support', 'simple-lightbox'), $this->m('theme_page_callback_support'), 'secondary');
 		}
-		
+
 		// Add Actions
 		$lbls_reset = array (
 			'title'			=> __('Reset', 'simple-lightbox'),
@@ -346,7 +394,7 @@ class SLB_Lightbox extends SLB_Base {
 		);
 		$this->admin->add_action('reset', $lbls_reset, $this->options);
 	}
-	
+
 	/**
 	 * Support information
 	 */
@@ -359,7 +407,7 @@ class SLB_Lightbox extends SLB_Base {
 		$lnk_txt = __('Get Support &amp; Provide Feedback', 'simple-lightbox');
 		echo $this->util->build_html_link($lnk_uri, $lnk_txt, array('target' => '_blank', 'class' => 'button'));
 	}
-	
+
 	/**
 	 * Filter support link text in plugin metadata
 	 * @param string $text Original link text
@@ -370,7 +418,7 @@ class SLB_Lightbox extends SLB_Base {
 	}
 
 	/*-** Functionality **-*/
-	
+
 	/**
 	 * Checks whether lightbox is currently enabled/disabled
 	 * @return bool TRUE if lightbox is currently enabled, FALSE otherwise
@@ -404,10 +452,10 @@ class SLB_Lightbox extends SLB_Base {
 		// Return value (force boolean)
 		return !!$ret;
 	}
-	
+
 	/**
 	 * Make sure content is valid for processing/activation
-	 * 
+	 *
 	 * @param string $content Content to validate
 	 * @return bool TRUE if content is valid (FALSE otherwise)
 	 */
@@ -419,16 +467,16 @@ class SLB_Lightbox extends SLB_Base {
 		// Non-string value
 		if ( !is_string($content) )
 			return false;
-		
+
 		// Empty string
 		$content = trim($content);
 		if ( empty($content) )
 			return false;
-		
+
 		// Content is valid
 		return $this->util->apply_filters('is_content_valid', true, $content);
 	}
-	
+
 	/**
 	 * Activates galleries extracted from post
 	 * @see get_post_galleries()
@@ -445,7 +493,7 @@ class SLB_Lightbox extends SLB_Base {
 		if ( is_array($gallery) ) {
 			return $galleries;
 		}
-		
+
 		// Activate galleries
 		$group = ( $this->options->get_bool('group_gallery') ) ? true : null;
 		foreach ( $galleries as $key => $val ) {
@@ -454,17 +502,17 @@ class SLB_Lightbox extends SLB_Base {
 			}
 			// Activate links in gallery
 			$gallery = $this->process_links($val, $group);
-			
+
 			// Save modified gallery
 			$galleries[$key] = $gallery;
 		}
-		
+
 		return $galleries;
 	}
-	
+
 	/**
 	 * Scans post content for image links and activates them
-	 * 
+	 *
 	 * Lightbox will not be activated for feeds
 	 * @param string $content Content to activate
 	 * @param string (optonal) $group Group ID for content
@@ -477,23 +525,23 @@ class SLB_Lightbox extends SLB_Base {
 		}
 		// Filter content before processing links
 		$content = $this->util->apply_filters('pre_process_links', $content);
-		
+
 		// Process links
 		$content = $this->process_links($content, $group);
-		
+
 		// Filter content after processing links
 		$content = $this->util->apply_filters('post_process_links', $content);
-		
+
 		return $content;
 	}
-	
+
 	/**
 	 * Process links in content
 	 * @global obj $wpdb DB instance
 	 * @global obj $post Current post
 	 * @param string $content Text containing links
 	 * @param string (optional) $group Group to add links to (Default: none)
-	 * @return string Content with processed links 
+	 * @return string Content with processed links
 	 */
 	protected function process_links($content, $group = null) {
 		// Extract links
@@ -515,7 +563,7 @@ class SLB_Lightbox extends SLB_Base {
 			$uri_proto = (object) array('raw' => '', 'source' => '', 'parts' => '');
 		}
 		$uri_parts_required = array('host' => '');
-		
+
 		// Setup group properties
 		$g_props = (object) array(
 			'enabled'			=> $this->options->get_bool('group_links'),
@@ -527,14 +575,14 @@ class SLB_Lightbox extends SLB_Base {
 		if ( $g_props->enabled ) {
 			$g_props->base = ( is_scalar($group) ) ? trim(strval($group)) : '';
 		}
-		
+
 		// Initialize content handlers
 		if ( !( $this->handlers instanceof SLB_Content_Handlers ) ) {
 			$this->handlers = new SLB_Content_Handlers($this);
 		}
-		
+
 		// Iterate through and activate supported links
-		
+
 		foreach ( $links as $link ) {
 			// Init vars
 			$pid = 0;
@@ -544,30 +592,30 @@ class SLB_Lightbox extends SLB_Base {
 			$props_extra = array();
 			$key = null;
 			$internal = false;
-			
+
 			// Parse link attributes
 			$attrs = $this->util->parse_attribute_string($link_new, array('href' => ''));
 			// Get URI
 			$uri->raw = $attrs['href'];
-			
+
 			// Stop processing invalid links
 			if ( !$this->validate_uri($uri->raw)
 				|| $this->has_attribute($attrs, 'active', false) // Previously-processed
 				) {
 				continue;
 			}
-			
+
 			// Normalize URI (make absolute)
 			$uri->source = WP_HTTP::make_absolute_url($uri->raw, $uri_origin['scheme'] . '://' . $uri_origin['host']);
-			
+
 			// URI cached?
 			$key = $this->get_media_item_id($uri->source);
-			
+
 			// Internal URI? (e.g. attachments)
 			if ( !$key ) {
 				$uri->parts = array_merge( $uri_parts_required, (array) parse_url($uri->source) );
 				$internal = ( $uri->parts['host'] === $uri_origin['host'] ) ? true : false;
-			
+
 				// Attachment?
 				if ( $internal && is_local_attachment($uri->source) ) {
 					$pid = url_to_postid($uri->source);
@@ -581,7 +629,7 @@ class SLB_Lightbox extends SLB_Base {
 					unset($src);
 				}
 			}
-			
+
 			// Determine content type
 			if ( !$key ) {
 				// Get handler match
@@ -595,23 +643,23 @@ class SLB_Lightbox extends SLB_Base {
 						unset($props_extra['uri']);
 					}
 				}
-				
+
 				// Cache valid item
 				if ( !!$type ) {
 					$key = $this->cache_media_item($uri, $type, $internal, $props_extra);
 				}
 			}
-			
+
 			// Stop processing invalid links
 			if ( !$key ) {
 				// Cache invalid URI
 				$this->validated_uris[$uri->source] = false;
 				if ( $uri->raw !== $uri->source ) {
-					$this->validated_uris[$uri->raw] = false;	
+					$this->validated_uris[$uri->raw] = false;
 				}
 				continue;
 			}
-			
+
 			// Activate link
 			$this->set_attribute($attrs, 'active');
 			$this->set_attribute($attrs, 'asset', $key);
@@ -619,7 +667,7 @@ class SLB_Lightbox extends SLB_Base {
 			if ( $internal ) {
 				$this->set_attribute($attrs, 'internal', $pid);
 			}
-			
+
 			// Set group (if enabled)
 			if ( $g_props->enabled ) {
 				$group = array();
@@ -630,31 +678,31 @@ class SLB_Lightbox extends SLB_Base {
 				} elseif ( !empty($g_props->base) ) {
 					$group[] = $g_props->base;
 				}
-				
+
 				/**
 				 * Filter group ID components
-				 * 
+				 *
 				 * @see process_links()
-				 * 
+				 *
 				 * @param array $group Components used to build group ID
 				 */
 				$group = $this->util->apply_filters('get_group_id', $group);
-				
+
 				// Default group
 				if ( empty($group) || !is_array($group) ) {
 					$group = $this->get_prefix();
 				} else {
 					$group = implode('_', $group);
 				}
-				
+
 				// Set group attribute
 				$this->set_attribute($attrs, $g_props->attr, $group);
 				unset($g);
 			}
-			
+
 			// Filter attributes
 			$attrs = $this->util->apply_filters('process_link_attributes', $attrs);
-			
+
 			// Update link in content
 			$link_new = '<a ' . $this->util->build_attribute_string($attrs) . '>';
 			$content = str_replace($link, $link_new, $content);
@@ -664,7 +712,7 @@ class SLB_Lightbox extends SLB_Base {
 		if ( !!$this->widget_processing && 'the_content' == current_filter() ) {
 			$content = $this->exclude_wrap($content);
 		}
-		
+
 		return $content;
 	}
 
@@ -675,20 +723,20 @@ class SLB_Lightbox extends SLB_Base {
 	 * @return array Links in content
 	 */
 	function get_links($content, $unique = false) {
-		$rgx = "/\<a[^\>]+href=.*?\>/i";
-		$links = array();
+		$rgx = "/\<a\b(?:(?!\shref=|\>).)*\shref=[^\>\<]++\>/i";
+		$links = [];
 		preg_match_all($rgx, $content, $links);
 		$links = $links[0];
 		if ( $unique )
 			$links = array_unique($links);
 		return $links;
 	}
-	
+
 	/**
 	 * Validate URI
 	 * Matches specified URI against internal & external regex patterns
 	 * URI is **invalid** if it matches a regex
-	 * 
+	 *
 	 * @param string $uri URI to validate
 	 * @return bool TRUE if URI is valid
 	 */
@@ -710,7 +758,7 @@ class SLB_Lightbox extends SLB_Base {
 			// Get patterns
 			if ( is_null($patterns) ) {
 				$patterns = $this->util->apply_filters('validate_uri_regex', array());
-			}	
+			}
 			// Iterate through patterns until match found
 			foreach ( $patterns as $pattern ) {
 				if ( 1 === preg_match($pattern, $uri) ) {
@@ -719,23 +767,23 @@ class SLB_Lightbox extends SLB_Base {
 				}
 			}
 		}
-		
+
 		// Cache
 		$this->validated_uris[$uri] = $valid;
 		return $valid;
 	}
-	
+
 	/**
 	 * Add URI validation regex pattern
-	 * @param 
+	 * @param
 	 */
 	public function validate_uri_regex_default($patterns) {
 		$patterns[] = '@^https?://[^/]*(wikipedia|wikimedia)\.org/wiki/file:.*$@i';
 		return $patterns;
-	} 
-	
+	}
+
 	/* Client */
-	
+
 	/**
 	 * Checks if output should be loaded in current request
 	 * @uses `is_enabled()`
@@ -745,7 +793,7 @@ class SLB_Lightbox extends SLB_Base {
 	public function is_request_valid() {
 		return ( $this->is_enabled() && $this->has_cached_media_items() ) ? true : false;
 	}
-	
+
 	/**
 	 * Sets options/settings to initialize lightbox functionality on page load
 	 * @return void
@@ -753,17 +801,17 @@ class SLB_Lightbox extends SLB_Base {
 	function client_init($client_script) {
 		// Get options
 		$options = $this->options->build_client_output();
-		
+
 		// Load UI Strings
 		if ( ($labels = $this->build_labels()) && !empty($labels) ) {
 			$options['ui_labels'] = $labels;
 		}
-		
+
 		// Build client output
 		$client_script[] = $this->util->call_client_method('View.init', $options);
 		return $client_script;
 	}
-	
+
 	/**
 	 * Output code in footer
 	 * > Media attachment URLs
@@ -773,14 +821,14 @@ class SLB_Lightbox extends SLB_Base {
 	function client_footer() {
 		if ( !$this->has_cached_media_items() )
 			return false;
-		
+
 		// Set up hooks
 		add_action('wp_print_footer_scripts', $this->m('client_footer_script'));
-		
+
 		// Build client output
 		$this->util->do_action('footer');
 	}
-	
+
 	/**
 	 * Output client footer scripts
 	 */
@@ -790,164 +838,163 @@ class SLB_Lightbox extends SLB_Base {
 			echo $this->util->build_script_element($client_script, 'footer', true, true);
 		}
 	}
-	
+
 	/**
 	 * Add media information to client output
-	 * 
-	 * @param array $commands Client script commands
-	 * @return array Modified script commands
+	 *
+	 * @param array $client_script Client script commands.
+	 * @return array Modified script commands.
 	 * TODO Refactor
 	 */
-	function client_script_media($client_script) {
+	public function client_script_media($client_script) {
 		global $wpdb;
-		
-		// Init variables
-		$this->media_items = array();
-		$props = array('id', 'type', 'description', 'title', 'source', 'caption');
-		$props = (object) array_combine($props, $props);
-		$props_map = array('description' => 'post_content', 'title' => 'post_title', 'caption' => 'post_excerpt');
 
-		// Separate media into buckets by type
-		$m_internals = array();
-		$type = $id = null;
-		
-		$m_items = $this->media_items = $this->get_cached_media_items();
-		foreach ( $m_items as $key => $p ) {
-			// Set aside internal links for additional processing
-			if ( $p->internal && !isset($m_internals[$key]) ) {
-				$m_internals[$key] =& $m_items[$key];
+		// Init.
+		$this->media_items = $this->get_cached_media_items();
+
+		// Extract internal links for additional processing.
+		$m_internals = [];
+		foreach ( $this->media_items as $key => $p ) {
+			if ( $p->internal ) {
+				$m_internals[$key] =& $this->media_items[$key];
 			}
 		}
+		// Cleanup.
 		unset($key, $p);
-		
-		// Process internal links
+
+		// Process internal links.
 		if ( !empty($m_internals) ) {
-			$uris_base = array();
+			$uris_base = [];
 			$uri_prefix = wp_upload_dir();
 			$uri_prefix = $this->util->normalize_path($uri_prefix['baseurl'], true);
 			foreach ( $m_internals as $key => $p ) {
-				// Prepare internal links
-				// Create relative URIs for attachment data retrieval
+				// Prepare internal links.
+				// Create relative URIs for attachment data retrieval.
 				if ( !$p->id && strpos($p->source, $uri_prefix) === 0 ) {
 					$uris_base[str_replace($uri_prefix, '', $p->source)] = $key;
 				}
 			}
+			// Cleanup.
 			unset($key, $p);
-			
-			// Retrieve attachment IDs
+
+			// Retrieve attachment IDs.
 			$uris_flat = "('" . implode("','", array_keys($uris_base)) . "')";
 			$q = $wpdb->prepare("SELECT post_id, meta_value FROM $wpdb->postmeta WHERE `meta_key` = %s AND LOWER(`meta_value`) IN $uris_flat LIMIT %d", '_wp_attached_file', count($uris_base));
 			$pids = $wpdb->get_results($q);
-			// Match IDs to URIs
+			// Match IDs to URIs.
 			if ( $pids ) {
 				foreach ( $pids as $pd ) {
 					$file =& $pd->meta_value;
 					if ( isset($uris_base[$file]) ) {
-						$m_internals[ $uris_base[$file] ]->{$props->id} = absint($pd->post_id);
+						$m_internals[ $uris_base[$file] ]->id = absint($pd->post_id);
 					}
 				}
 			}
-			// Destroy worker vars
+			// Cleanup.
 			unset($uris_base, $uris_flat, $q, $pids, $pd, $file);
 		}
-		
-		// Process items with attachment IDs
-		$pids = array();
-		foreach ( $m_items as $key => $p ) {
-			// Add post ID to query
+
+		// Process items with attachment IDs.
+		$pids = [];
+		foreach ( $this->media_items as $key => $p ) {
+			// Add post ID to query.
 			if ( !!$p->id ) {
-				// Create array for ID (support multiple URIs per ID)
+				// Create array for ID (support multiple URIs per ID).
 				if ( !isset($pids[$p->id]) ) {
-					$pids[$p->id] = array();
+					$pids[$p->id] = [];
 				}
-				// Add URI to ID
+				// Add URI to ID.
 				$pids[$p->id][] = $key;
 			}
 		}
+		// Cleanup.
 		unset($key, $p);
-		
-		// Retrieve attachment properties
+
+		// Retrieve attachment properties.
 		if ( !empty($pids) ) {
 			$pids_flat = array_keys($pids);
-			// Retrieve attachment post data
+			// Retrieve attachment post data.
 			$atts = get_posts(array('post_type' => 'attachment', 'include' => $pids_flat));
-			
-			// Process attachments
+
+			// Process attachments.
 			if ( $atts ) {
-				// Retrieve attachment metadata
+				/* @future: Metadata
+				// Retrieve attachment metadata.
 				$pids_flat = "('" . implode("','", $pids_flat) . "')";
 				$atts_meta = $wpdb->get_results($wpdb->prepare("SELECT `post_id`,`meta_value` FROM $wpdb->postmeta WHERE `post_id` IN $pids_flat AND `meta_key` = %s LIMIT %d", '_wp_attachment_metadata', count($atts)));
-				// Restructure metadata array by post ID
+				// Reindex metadata array by attachment ID.
 				if ( $atts_meta ) {
-					$meta = array();
+					$meta = [];
 					foreach ( $atts_meta as $att_meta ) {
 						$meta[$att_meta->post_id] = $att_meta->meta_value;
 					}
 					$atts_meta = $meta;
+					// Cleanup.
 					unset($meta);
 				} else {
-					$atts_meta = array();
+					$atts_meta = [];
 				}
-				$props_size = array('file', 'width', 'height');
-				$props_exclude = array('hwstring_small');
-				foreach ( $atts as $att ) {
-					// Set post data
-					$m = array();
-					
-					// Remap post data to properties
-					foreach ( $props_map as $prop_key => $prop_source ) {
-						$m[$props->{$prop_key}] = $att->{$prop_source};
-					}
-					unset($prop_key, $prop_source);
-					
-					// Add metadata
-					if ( isset($atts_meta[$att->ID]) && ($a = unserialize($atts_meta[$att->ID])) && is_array($a) ) {
-						// Move original size into `sizes` array
-						foreach ( $props_size as $d ) {
-							if ( !isset($a[$d]) ) {
-								continue;
-							}
-							$a['sizes']['original'][$d] = $a[$d];
-							unset($a[$d]);
-						}
+				END @future: Metadata */
 
-						// Strip extraneous metadata
-						foreach ( $props_exclude as $d ) {
+				/* @future: Metadata
+				// Process attachment data.
+				$media_props = array('file', 'width', 'height');
+				$media_original_name = 'full';
+				END @future: Metadata */
+
+				$props_post_map = [ 'title' => 'post_title', 'caption' => 'post_excerpt', 'description' => 'post_content' ];
+
+				foreach ( $atts as $att ) {
+					$data = [];
+					/* @future: Metadata
+					$data = [ 'meta' => [], 'media' => [ $media_original_name => [] ] ];
+					END @future: Metadata */
+					// Remap post data to metadata.
+					foreach ( $props_post_map as $props_post_key => $props_post_source ) {
+						$data[$props_post_key] = $att->{$props_post_source};
+					}
+					// Cleanup.
+					unset($props_post_key, $props_post_source);
+
+					/* @future: Metadata
+					// Process metadata.
+					if ( isset( $atts_meta[$att->ID] ) && ( $a = unserialize( $atts_meta[$att->ID] ) ) && is_array( $a ) ) {
+						// Media properties.
+						// Source file.
+						foreach ( $media_props as $d ) {
 							if ( isset($a[$d]) ) {
-								unset($a[$d]);
+								$data['media'][$media_original_name][$d] = $a[$d];
 							}
 						}
-						
-						// Merge post data & meta data
-						$m = array_merge($a, $m);
-						// Destroy worker vars
-						unset($a, $d);
+						// Cleanup.
+						unset( $a, $d );
 					}
-					
-					// Save attachment data (post & meta) to original object(s)
+					END @future: Metadata */
+					// Save data to corresponding media item(s).
 					if ( isset($pids[$att->ID]) ) {
 						foreach ( $pids[$att->ID] as $key ) {
-							$this->media_items[$key] = array_merge( (array) $m_items[$key], $m);
+							$this->media_items[$key] = (object) array_merge( (array) $this->media_items[$key], $data );
 						}
 					}
 				}
+				// Cleanup.
+				unset($att, $data);
 			}
+			// Cleanup.
 			unset($atts, $atts_meta, $m, $a, $uri, $pids, $pids_flat);
 		}
 
-		// Filter media item properties
-		foreach ( $this->media_items as $key => $props ) {
-			$this->media_items[$key] =  $this->util->apply_filters('media_item_properties', (object) $props);
-		}
+		// Filter media items.
+		$this->media_items =  $this->util->apply_filters('media_items', $this->media_items);
 
-		// Build client output
+		// Build client output.
 		$obj = 'View.assets';
 		$client_script[] = $this->util->extend_client_object($obj, $this->media_items);
 		return $client_script;
 	}
 
 	/*-** Media **-*/
-	
+
 	/**
 	 * Cache media properties for later processing
 	 * @uses array self::$media_items_raw Stores media items for output
@@ -961,32 +1008,36 @@ class SLB_Lightbox extends SLB_Base {
 	 * @return string Unique ID for cached media item
 	 */
 	private function cache_media_item($uri, $type, $internal, $props = null) {
-		// Validate
+		// Validate.
 		if ( !is_object($uri) || !is_string($type) ) {
 			return false;
 		}
-		// Check if URI already cached
+		// Check if URI already cached.
 		$key = $this->get_media_item_id($uri->source);
-		// Cache new item
+		// Cache new item.
 		if ( null == $key ) {
-			// Generate Unique ID
+			// Generate Unique ID.
 			do {
 				$key = (string) mt_rand();
 			} while ( isset($this->media_items_raw['props'][$key]) );
-			// Build properties object
-			$i = array('id' => null);
+			// Build properties object.
+			$i = $this->media_item_template;
 			if ( is_array($props) && !empty($props) ) {
 				$i = array_merge($i, $props);
 			}
-			$i = array_merge($i, array('type' => $type, 'source' => $uri->source, 'internal' => $internal));
-			// Cache item properties
+			$i = array_merge( $i, [
+				'type' => $type,
+				'source' => $uri->source,
+				'internal' => $internal,
+			] );
+			// Cache item properties.
 			$this->media_items_raw['props'][$key] = (object) $i;
-			// Cache Source URI (point to properties object)
+			// Cache Source URI (point to properties object).
 			$this->media_items_raw['uri'][$uri->source] = $key;
 		}
 		return $key;
 	}
-	
+
 	/**
 	 * Retrieve ID for media item
 	 * @uses self::$media_items_raw
@@ -999,7 +1050,7 @@ class SLB_Lightbox extends SLB_Base {
 		}
 		return null;
 	}
-	
+
 	/**
 	 * Checks if media item has already been cached
 	 * @param string $uri URI of media item
@@ -1008,7 +1059,7 @@ class SLB_Lightbox extends SLB_Base {
 	private function media_item_cached($uri) {
 		return ( is_string($uri) && !empty($uri) && isset($this->media_items_raw['uri'][$uri]) ) ? true : false;
 	}
-	
+
 	/**
 	 * Retrieve cached media item
 	 * @param string $uri Media item URI
@@ -1021,7 +1072,7 @@ class SLB_Lightbox extends SLB_Base {
 		}
 		return null;
 	}
-	
+
 	/**
 	 * Retrieve cached media items (properties)
 	 * @uses self::$media_items_raw
@@ -1030,17 +1081,17 @@ class SLB_Lightbox extends SLB_Base {
 	private function &get_cached_media_items() {
 		return $this->media_items_raw['props'];
 	}
-	
+
 	/**
 	 * Check if media items have been cached
 	 * @return boolean
 	 */
 	private function has_cached_media_items() {
-		return ( empty($this->media_items_raw['props']) ) ? false : true; 
+		return ( empty($this->media_items_raw['props']) ) ? false : true;
 	}
-	
+
 	/*-** Exclusion **-*/
-	
+
 	/**
 	 * Retrieve exclude object
 	 * Initialize object properties if necessary
@@ -1058,11 +1109,11 @@ class SLB_Lightbox extends SLB_Base {
 		}
 		return $this->exclude;
 	}
-	
+
 	/**
 	 * Get exclusion tags (open/close)
 	 * Example: open => [slb_exclude], close => [/slb_exclude]
-	 * 
+	 *
 	 * @return object Exclusion tags
 	 */
 	private function get_exclude_tags() {
@@ -1078,11 +1129,11 @@ class SLB_Lightbox extends SLB_Base {
 		}
 		return $tags;
 	}
-	
+
 	/**
 	 * Get exclusion tag ("[slb_exclude]")
 	 * @uses `get_exclude_tags()` to retrieve tag
-	 * 
+	 *
 	 * @param string $type (optional) Tag to retrieve (open or close)
 	 * @return string Exclusion tag
 	 */
@@ -1094,7 +1145,7 @@ class SLB_Lightbox extends SLB_Base {
 		}
 		return $tags->{$type};
 	}
-	
+
 	/**
 	 * Build exclude placeholder
 	 * @return object Exclude placeholder properties
@@ -1121,7 +1172,7 @@ class SLB_Lightbox extends SLB_Base {
 		}
 		return $ph;
 	}
-	
+
 	/**
 	 * Wrap content in exclusion tags
 	 * @uses `get_exclude_tag()` to wrap content with exclusion tag
@@ -1137,7 +1188,7 @@ class SLB_Lightbox extends SLB_Base {
 		$tags = $this->get_exclude_tags();
 		return $tags->open . $content . $tags->close;
 	}
-	
+
 	/**
 	 * Remove excluded content
 	 * Caches content for restoring later
@@ -1156,7 +1207,7 @@ class SLB_Lightbox extends SLB_Base {
 		$cache =& $ex->cache[$group];
 
 		$content = $this->util->apply_filters('pre_exclude_content', $content);
-		
+
 		// Search content
 		$matches = null;
 		if ( false !== strpos($content, $ex->tags->open) && preg_match_all($ex->tags->search, $content, $matches) ) {
@@ -1174,14 +1225,14 @@ class SLB_Lightbox extends SLB_Base {
 			unset($midx, $match);
 			// Replace content with placeholder
 			$content = str_replace($matches[0], $ph, $content);
-			
+
 			// Cleanup
 			unset($matches, $ph);
 		}
-		
+
 		return $content;
 	}
-	
+
 	/**
 	 * Exclude shortcodes from link activation
 	 * @param string $content Content to exclude shortcodes from
@@ -1194,11 +1245,11 @@ class SLB_Lightbox extends SLB_Base {
 		$shortcodes = array_fill_keys($shortcodes, $this->m('exclude_shortcodes_handler'));
 		return $this->util->do_shortcode($content, $shortcodes);
 	}
-	
+
 	/**
 	 * Wrap shortcode in exclude tags
 	 * @uses Util->make_shortcode() to rebuild original shortcode
-	 * 
+	 *
 	 * @param array $attr Shortcode attributes
 	 * @param string $content Content enclosed in shortcode
 	 * @param string $tag Shortcode name
@@ -1209,7 +1260,7 @@ class SLB_Lightbox extends SLB_Base {
 		// Exclude shortcode
 		return $this->exclude_wrap($code);
 	}
-	
+
 	/**
 	 * Restore excluded content
 	 * @param string $content Content to restore excluded content to
@@ -1226,7 +1277,7 @@ class SLB_Lightbox extends SLB_Base {
 			return $content;
 		}
 		$cache =& $ex->cache[$group];
-		
+
 		// Search content for placeholders
 		$matches = null;
 		if ( false !== strpos($content, $ex->ph->open . $ex->ph->base) && preg_match_all($ex->ph->search, $content, $matches) ) {
@@ -1247,12 +1298,12 @@ class SLB_Lightbox extends SLB_Base {
 			// Cleanup
 			unset($idx, $ph, $matches, $key);
 		}
-		
+
 		return $content;
 	}
-	
+
 	/*-** Grouping **-*/
-	
+
 	/**
 	 * Builds wrapper for grouping
 	 * @return string Format for wrapping content in group
@@ -1264,7 +1315,7 @@ class SLB_Lightbox extends SLB_Base {
 		}
 		return $fmt;
 	}
-	
+
 	/**
 	 * Wraps shortcodes for automatic grouping
 	 * @uses `the_content` Filter hook
@@ -1283,7 +1334,7 @@ class SLB_Lightbox extends SLB_Base {
 		// Process gallery shortcodes
 		return $this->util->do_shortcode($content, $shortcodes);
 	}
-	
+
 	/**
 	 * Groups shortcodes for later processing
 	 * @param array $attr Shortcode attributes
@@ -1296,7 +1347,7 @@ class SLB_Lightbox extends SLB_Base {
 		// Wrap shortcode
 		return sprintf( $this->group_get_wrapper(), $code);
 	}
-	
+
 	/**
 	 * Activate groups in content
 	 * @param string $content Content to activate
@@ -1326,9 +1377,9 @@ class SLB_Lightbox extends SLB_Base {
 		}
 		return $this->process_links($content, $group);
 	}
-	
+
 	/*-** Widgets **-*/
-	
+
 	/**
 	 * Set widget up for processing/activation
 	 * Buffers widget output for further processing
@@ -1350,7 +1401,7 @@ class SLB_Lightbox extends SLB_Base {
 		// Begin output buffer
 		ob_start();
 	}
-	
+
 	/**
 	 * Handles inter-widget processing
 	 * After widget output generated, Before next widget starts
@@ -1360,7 +1411,7 @@ class SLB_Lightbox extends SLB_Base {
 		$this->widget_process_finish();
 		return $params;
 	}
-	
+
 	/**
 	 * Complete widget processing
 	 * Activate widget output
@@ -1380,7 +1431,7 @@ class SLB_Lightbox extends SLB_Base {
 		}
 		// Activate widget output
 		$out = $this->activate_links(ob_get_clean());
-		
+
 		// Clear grouping callback
 		if ( $this->options->get_bool('group_widget') ) {
 			$this->util->remove_filter('get_group_id', $this->m('widget_group_id'));
@@ -1391,7 +1442,7 @@ class SLB_Lightbox extends SLB_Base {
 		// Output widget
 		echo $out;
 	}
-	
+
 	/**
 	 * Add widget ID to link group ID
 	 * Widget ID precedes all other group segments
@@ -1406,7 +1457,7 @@ class SLB_Lightbox extends SLB_Base {
 		}
 		return $group_segments;
 	}
-	
+
 	/**
 	 * Handles nested activation in widgets
 	 * @uses widget_processing
@@ -1418,11 +1469,11 @@ class SLB_Lightbox extends SLB_Base {
 		if ( !$this->widget_processing ) {
 			return;
 		}
-		
+
 		// Increment nesting level
 		$this->widget_processing_level++;
 	}
-	
+
 	/**
 	 * Mark the end of a nested widget
 	 * @uses $widget_processing_level
@@ -1433,7 +1484,7 @@ class SLB_Lightbox extends SLB_Base {
 			$this->widget_processing_level--;
 		}
 	}
-	
+
 	/**
 	 * Begin blocking widget activation
 	 * @return void
@@ -1441,7 +1492,7 @@ class SLB_Lightbox extends SLB_Base {
 	public function widget_block_start() {
 		$this->util->add_filter('is_content_valid', $this->m('widget_block_handle'));
 	}
-	
+
 	/**
 	 * Stop blocking widget activation
 	 * @return void
@@ -1449,16 +1500,16 @@ class SLB_Lightbox extends SLB_Base {
 	public function widget_block_finish() {
 		$this->util->remove_filter('is_content_valid', $this->m('widget_block_handle'));
 	}
-	
+
 	/**
 	 * Handle widget activation blocking
 	 */
 	public function widget_block_handle($is_content_valid) {
 		return false;
 	}
-	
+
 	/*-** Menus **-*/
-	
+
 	/**
 	 * Process navigation menu links
 	 *
@@ -1482,16 +1533,16 @@ class SLB_Lightbox extends SLB_Base {
 		} else {
 			$group = null;
 		}
-		
+
 		// Process menu
 		$nav_menu = $this->activate_links($nav_menu, $group);
-		
+
 		return $nav_menu;
 	}
-	
+
 	/**
 	 * Generate unique group ID
-	 * 
+	 *
 	 * @param string $group Group ID to check
 	 * @return string Unique group ID
 	 */
@@ -1506,7 +1557,7 @@ class SLB_Lightbox extends SLB_Base {
 		}
 		return $group;
 	}
-	
+
 	/*-** Helpers **-*/
 
 	/**
@@ -1551,10 +1602,10 @@ class SLB_Lightbox extends SLB_Base {
 		}
 		// Add attribute
 		$attrs = array_merge($attrs, array( $this->make_attribute_name($name) => strval($value) ));
-		
+
 		return $attrs;
 	}
-	
+
 	/**
 	 * Convert attribute string into array
 	 * @param string $attr_string Attribute string
@@ -1578,10 +1629,10 @@ class SLB_Lightbox extends SLB_Base {
 				$ret = $ret_f;
 			}
 		}
-		
+
 		return $ret;
 	}
-	
+
 	/**
 	 * Retrieve attribute value
 	 * @param string|array $attrs Attributes to retrieve attribute value from
@@ -1601,7 +1652,7 @@ class SLB_Lightbox extends SLB_Base {
 		}
 		return $ret;
 	}
-	
+
 	/**
 	 * Checks if attribute exists
 	 * If supplied, the attribute's value is also validated
@@ -1630,7 +1681,7 @@ class SLB_Lightbox extends SLB_Base {
 		}
 		return $ret;
 	}
-	
+
 	/**
 	 * Build JS object of UI strings when initializing lightbox
 	 * @return array UI strings

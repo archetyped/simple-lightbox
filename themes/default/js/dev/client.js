@@ -14,7 +14,7 @@ SLB.View.extend_theme('slb_default', {
 			// Reset layout and overlay state on open
 			var l = v.get_layout().hide(),
 				o = v.get_overlay().hide();
-			
+
 			// Clean UI
 			var thm = this;
 			var d = v.dom_get();
@@ -61,7 +61,7 @@ SLB.View.extend_theme('slb_default', {
 				l.css('opacity', '');
 				dfr.resolve();
 			};
-			if ( v.animation_enabled() && document.documentElement.clientWidth > this.get_breakpoint('small') ) { 
+			if ( v.animation_enabled() && document.documentElement.clientWidth > this.get_breakpoint('small') ) {
 				/* Standard */
 				var anims = {
 					'layout': { opacity: 0, top: $(document).scrollTop() + ( $(window).height() / 2 ) },
@@ -149,7 +149,7 @@ SLB.View.extend_theme('slb_default', {
 				if ( pos.top < pos.top_base ) {
 					pos.top = pos.top_base;
 				}
-				
+
 				// Position/Resize viewer
 				pos = l.animate(pos, spd).promise();
 				dims_item = c.animate(dims_item, spd).promise();

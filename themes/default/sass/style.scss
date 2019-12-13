@@ -19,32 +19,32 @@ $ui_controls_height: 25px;
 
 #slb_viewer_wrap {
 	.slb_theme_slb_default {
-		//General 
+		//General
 		a,
 		a:hover {
 			border-bottom:none;
 			color:#000;
 			text-decoration:underline;
 		}
-		
+
 		.slb_viewer_layout {
-			top: 20px; 
+			top: 20px;
 		}
-		
+
 		.slb_container {
 			box-shadow: 0 0 64px -40px #fcfcfc;
 			border-radius: 5px;
 		}
-		
+
 		.slb_loading {
 			@extend %hide-text;
 		}
-		
+
 		.slb_template_tag_ui {
 			transition: opacity .5s;
 		}
-		
-		//UI 
+
+		//UI
 		.slb_controls {
 			position: absolute;
 			top: 8px;
@@ -55,7 +55,7 @@ $ui_controls_height: 25px;
 				right: inherit;
 				left: 0px;
 			}
-			
+
 			.slb_template_tag_ui {
 				@extend %hide-text;
 				width: $ui_controls_width;
@@ -67,25 +67,25 @@ $ui_controls_height: 25px;
 					float: left;
 				}
 			}
-			
+
 			.slb_template_tag_ui:hover {
 				opacity: 0.8;
 			}
-			
+
 			.slb_slideshow .slb_template_tag {
 				background: url('../images/ui_slideshow_play.png') 0 0 no-repeat;
 			}
-			
+
 			.slb_close .slb_template_tag {
 				background: url('../images/ui_close.png') 0 0 no-repeat;
 			}
 		}
-		
+
 		&.slideshow_active .slb_controls .slb_slideshow .slb_template_tag {
 			background: url('../images/ui_slideshow_pause.png') 0 0 no-repeat;
 		}
-		
-		//Navigation 
+
+		//Navigation
 		$ui_nav_pos: 45%;
 		%ui_nav {
 			@extend %hide-text;
@@ -98,12 +98,12 @@ $ui_controls_height: 25px;
 			background-repeat: no-repeat;
 			opacity: 0.5;
 		}
-		
-		//Content 
+
+		//Content
 		.slb_content {
 			min-height: $nav_height + $ui_controls_height;
 			min-width: $nav_width * 2;
-			
+
 			.slb_prev .slb_template_tag,
 			[dir="rtl"] & .slb_next .slb_template_tag {
 				left: 4px;
@@ -111,7 +111,7 @@ $ui_controls_height: 25px;
 				background-image: url('../images/nav_prev.png');
 				background-position: left $ui_nav_pos;
 			}
-			
+
 			.slb_next .slb_template_tag,
 			[dir="rtl"] & .slb_prev .slb_template_tag {
 				right: 4px;
@@ -119,7 +119,7 @@ $ui_controls_height: 25px;
 				background-image: url('../images/nav_next.png');
 				background-position: right $ui_nav_pos;
 			}
-			
+
 			.slb_prev, .slb_next {
 				.slb_template_tag {
 					@extend %ui_nav;
@@ -129,24 +129,24 @@ $ui_controls_height: 25px;
 				}
 			}
 		}
-		
+
 		.slb_details {
 			line-height: 1.4em;
 			overflow: hidden;
 			position: relative;
-			
+
 			.slb_data {
 				caption-side: bottom;
 			}
-			
+
 			.slb_nav {
 				display: none;
 			}
 		}
-		
-		//Title 
+
+		//Title
 		$title-size: 23px;
-		
+
 		.slb_data_title, .slb_group_status {
 			font-family: 'Yanone Kaffeesatz', arial, sans-serif;
 			font-size: $title-size;
@@ -157,20 +157,20 @@ $ui_controls_height: 25px;
 				margin-right: 0px;
 			}
 		}
-		
+
 		.slb_group_status {
 			color: #777;
 			font-style: italic;
 			font-size: $title-size * .8;
 		}
-		
+
 		.slb_data_desc {
 			display: block;
 			margin-top: 0.5em;
 		}
-		
+
 		//Media
-		
+
 		//Small screen
 		@media screen and (max-width: 480px) {
 			.slb_container {
@@ -181,7 +181,7 @@ $ui_controls_height: 25px;
 				top: 3px;
 				right: 3px;
 			}
-			
+
 			%ui_nav {
 				top: 17%;
 				height: 79%;

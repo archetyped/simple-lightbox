@@ -42,7 +42,7 @@ class SLB_Field_Type extends SLB_Field_Base {
 		$defaults = $this->integrate_id($id);
 		if ( !is_array($parent) )
 			$defaults['parent'] = $parent;
-		
+
 		$props = $this->make_properties($args, $defaults);
 		parent::__construct($props);
 	}
@@ -149,8 +149,6 @@ class SLB_Field_Type extends SLB_Field_Base {
 	function has_caller() {
 		return !empty($this->caller);
 	}
-
-	
 
 	/**
 	 * Sets an element for the field type
@@ -262,75 +260,93 @@ class SLB_Field_Type extends SLB_Field_Base {
 	 *					'attributes' 	=> (array) attributes
 	 */
 	function parse_layout($layout, $search) {
-		$ph_xml = '';
 		$parse_match = '';
+		$result = [];
+
+		// Find all nested layouts in layout.
+		$match_value = preg_match_all( $search, $layout, $parse_match, PREG_PATTERN_ORDER );
+
+		// Stop if no matches found.
+		if ( ! $match_value ) {
+			return $result;
+		}
+
+		/* Process matches */
+
+		$ph_xml = '';
 		$ph_root_tag = 'ph_root_element';
 		$ph_start_xml = '<';
 		$ph_end_xml = ' />';
 		$ph_wrap_start = '<' . $ph_root_tag . '>';
 		$ph_wrap_end = '</' . $ph_root_tag . '>';
-		$parse_result = false;
+		$parse_result = [];
 
-		// Find all nested layouts in layout
-		$match_value = preg_match_all($search, $layout, $parse_match, PREG_PATTERN_ORDER);
+		// Get all matched elements.
+		$parse_match = $parse_match[1];
 
-		if ($match_value !== false && $match_value > 0) {
-			$parse_result = array();
-			// Get all matched elements
-			$parse_match = $parse_match[1];
+		// Build XML string from placeholders.
+		foreach ( $parse_match as $ph ) {
+			$ph_xml .= $ph_start_xml . $ph . $ph_end_xml . ' ';
+		}
+		$ph_xml = $ph_wrap_start . $ph_xml . $ph_wrap_end;
+		// Parse XML data.
+		$ph_prs = xml_parser_create();
+		xml_parser_set_option($ph_prs, XML_OPTION_SKIP_WHITE, 1);
+		xml_parser_set_option($ph_prs, XML_OPTION_CASE_FOLDING, 0);
+		$ph_parsed = xml_parse_into_struct($ph_prs, $ph_xml, $parse_result['values'], $parse_result['index']);
+		xml_parser_free($ph_prs);
 
-			// Build XML string from placeholders
-			foreach ($parse_match as $ph) {
-				$ph_xml .= $ph_start_xml . $ph . $ph_end_xml . ' ';
-			}
-			$ph_xml = $ph_wrap_start . $ph_xml . $ph_wrap_end;
-			// Parse XML data
-			$ph_prs = xml_parser_create();
-			xml_parser_set_option($ph_prs, XML_OPTION_SKIP_WHITE, 1);
-			xml_parser_set_option($ph_prs, XML_OPTION_CASE_FOLDING, 0);
-			$ret = xml_parse_into_struct($ph_prs, $ph_xml, $parse_result['values'], $parse_result['index']);
-			xml_parser_free($ph_prs);
-
-			// Build structured array with all parsed data
-
-			unset($parse_result['index'][$ph_root_tag]);
-
-			// Build structured array
-			$result = array();
-			foreach ($parse_result['index'] as $tag => $instances) {
-				$result[$tag] = array();
-				// Instances
-				foreach ($instances as $instance) {
-					// Skip instance if it doesn't exist in parse results
-					if (!isset($parse_result['values'][$instance]))
-						continue;
-
-					// Stop processing instance if a previously-saved instance with the same options already exists
-					foreach ($result[$tag] as $tag_match) {
-						if ($tag_match['match'] == $parse_match[$instance - 1])
-							continue 2;
-					}
-
-					// Init instance data array
-					$inst_data = array();
-
-					// Add Tag to array
-					$inst_data['tag'] = $parse_result['values'][$instance]['tag'];
-
-					// Add instance data to array
-					$inst_data['attributes'] = (isset($parse_result['values'][$instance]['attributes'])) ? $inst_data['attributes'] = $parse_result['values'][$instance]['attributes'] : '';
-
-					// Add match to array
-					$inst_data['match'] = $parse_match[$instance - 1];
-
-					// Add to result array
-					$result[$tag][] = $inst_data;
-				}
-			}
-			$parse_result = $result;
+		// Stop if placeholder parsing failed.
+		if ( ! $ph_parsed ) {
+			return $result;
 		}
 
-		return $parse_result;
+		unset( $parse_result['index'][$ph_root_tag] );
+
+		// Build structured array with all parsed data.
+		$ph_default = [
+			'tag'        => '',
+			'match'      => '',
+			'attributes' => [],
+		];
+
+		// Build structured array.
+		foreach ( $parse_result['index'] as $tag => $instances ) {
+			// Create container for instances of current placeholder.
+			$result[ $tag ] = [];
+			// Process placeholder instances.
+			foreach ( $instances as $instance ) {
+				// Skip instance if it doesn't exist in parse results.
+				if ( !isset( $parse_result['values'][ $instance ] ) ) {
+					continue;
+				}
+				// Stop processing instance if a previously-saved instance with the same options already exists.
+				foreach ( $result[ $tag ] as $tag_match ) {
+					if ( $tag_match['match'] == $parse_match[ $instance - 1 ] ) {
+						continue 2;
+					}
+				}
+				$instance_parsed = $parse_result['values'][ $instance ];
+				// Init instance data array.
+				$instance_data = $ph_default;
+
+				// Set tag.
+				$instance_data['tag'] = $instance_parsed['tag'];
+
+				// Set attributes.
+				if ( isset( $instance_parsed['attributes'] ) && is_array( $instance_parsed['attributes'] ) ) {
+					$instance_data['attributes'] = $instance_parsed['attributes'];
+				}
+
+				// Add match to array.
+				$instance_data['match'] = $parse_match[ $instance - 1 ];
+
+				// Add to result array.
+				$result[ $tag ][] = $instance_data;
+			}
+		}
+
+		return $result;
 	}
 
 	/**
@@ -346,7 +362,7 @@ class SLB_Field_Type extends SLB_Field_Base {
 		$ph->pattern_layout = '/' . $ph->start . '([a-zA-Z0-9].*?\s+' . $ph->reserved['ref'] . '="layout.*?".*?)' . $ph->end . '/i';
 		return $ph;
 	}
-	
+
 	/**
 	 * Build item output
 	 * @param string $layout (optional) Layout to build
@@ -357,7 +373,7 @@ class SLB_Field_Type extends SLB_Field_Base {
 		echo $this->build_layout($layout, $data);
 		$this->util->do_action_ref_array('build_post', array($this));
 	}
-	
+
 	/**
 	 * Builds HTML for a field based on its properties
 	 * @param string $layout (optional) Name of layout to build
@@ -369,37 +385,61 @@ class SLB_Field_Type extends SLB_Field_Base {
 		$out = $this->get_layout($layout);
 		// Only parse valid layouts
 		if ( $this->is_valid_layout($out) ) {
-			// Parse Layout
-			$ph = $this->get_placeholder_defaults();
-
-			// Search layout for placeholders
-			while ( $ph->match = $this->parse_layout($out, $ph->pattern_general) ) {
-				// Iterate through placeholders (tag, id, etc.)
-				foreach ( $ph->match as $tag => $instances ) {
-					// Iterate through instances of current placeholder
-					foreach ( $instances as $instance ) {
-						// Process value based on placeholder name
-						$target_property = $this->util->apply_filters(array('process_placeholder_' . $tag, false), '', $this, $instance, $layout, $data);
-						// Process value using default processors (if necessary)
-						if ( '' == $target_property ) {
-							$target_property = $this->util->apply_filters(array('process_placeholder', false), $target_property, $this, $instance, $layout, $data);
-						}
-
-						// Clear value if value not a string
-						if ( !is_scalar($target_property) ) {
-							$target_property = '';
-						}
-						
-						// Replace layout placeholder with retrieved item data
-						$out = str_replace($ph->start . $instance['match'] . $ph->end, $target_property, $out);
-					}
-				}
-			}
+			$out = $this->process_placeholders( $out, $layout, $data );
 		} else {
 			$out = $out_default;
 		}
 		/* Return generated value */
 		$out = $this->format_final($out);
 		return $out;
+	}
+
+	/**
+	 * Processes placeholders in a string.
+	 *
+	 * Finds and replaces placeholders in a string to their full values.
+	 *
+	 * @since 2.8.0
+	 *
+	 * @param string  $str String with placeholders to replace.
+	 * @param string  $layout Optional. Name of layout being built.
+	 * @param array   $data Optional. Additional data for current item.
+	 * @return string Original text with placeholders converted to full values.
+	 */
+	public function process_placeholders( $str, $layout = 'form', $data = null ) {
+		// Parse Layout.
+		$ph = $this->get_placeholder_defaults();
+
+		// Search layout for placeholders.
+		while ( $ph->match = $this->parse_layout( $str, $ph->pattern_general ) ) {
+			// Iterate through placeholders (tag, id, etc.)
+			foreach ( $ph->match as $tag => $instances ) {
+				// Iterate through instances of current placeholder
+				foreach ( $instances as $instance ) {
+					// Process value based on placeholder name.
+					$target_property = $this->util->apply_filters_ref_array( "process_placeholder_${tag}", [ '', $this, &$instance, $layout, $data ], false );
+					// Process value using default processors (if necessary).
+					if ( '' === $target_property ) {
+						$target_property = $this->util->apply_filters_ref_array( 'process_placeholder', [ $target_property, $this, &$instance, $layout, $data ], false );
+					}
+					// Format output.
+					if ( ! is_null( $target_property ) ) {
+						$context = ( isset( $instance['attributes']['context'] ) ) ? $instance['attributes']['context'] : '';
+						// Handle special characters.
+						$target_property = $this->preserve_special_chars( $target_property, $context );
+						// Context-specific formatting.
+						$target_property = $this->format( $target_property, $context );
+					}
+
+					// Clear value if value not a string
+					if ( !is_scalar( $target_property ) ) {
+						$target_property = '';
+					}
+					// Replace layout placeholder with retrieved item data
+					$str = str_replace( $ph->start . $instance['match'] . $ph->end, $target_property, $str );
+				}
+			}
+		}
+		return $str;
 	}
 }

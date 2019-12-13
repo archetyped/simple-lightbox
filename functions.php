@@ -7,7 +7,7 @@
  */
 
 /* Template Tags */
- 
+
 /**
  * Activate links in user-defined content
  * @param string $content
