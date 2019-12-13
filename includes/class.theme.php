@@ -8,17 +8,17 @@
  */
 class SLB_Theme extends SLB_Component {
 	/* Properties */
-	
+
 	protected $props_required = array('name');
-	
+
 	/**
 	 * Public flag
 	 * @var bool
 	 */
 	protected $public = true;
-	
+
 	/* Get/Set */
-	
+
 	/**
 	 * Retrieve theme's ancestors
 	 * @param bool $sort_topdown (optional) Ancestor sorting (Default: Nearest to Farthest)
@@ -45,7 +45,7 @@ class SLB_Theme extends SLB_Component {
 		}
 		return $ret;
 	}
-	
+
 	/**
 	 * Set public flag
 	 * @param bool $public
@@ -53,7 +53,7 @@ class SLB_Theme extends SLB_Component {
 	public function set_public($public) {
 		$this->public = !!$public;
 	}
-	
+
 	/**
 	 * Get privacy state
 	 * @return bool
@@ -61,9 +61,9 @@ class SLB_Theme extends SLB_Component {
 	public function get_public() {
 		return !!$this->public;
 	}
-	
+
 	/* Templates */
-	
+
 	/**
 	 * Add template file
 	 * @see `add_file()`
@@ -74,7 +74,7 @@ class SLB_Theme extends SLB_Component {
 	protected function add_template($handle, $src) {
 		return $this->add_file('template', $handle, $src);
 	}
-	
+
 	/**
 	 * Retrieve template file
 	 * @see `get_file()`
@@ -85,9 +85,9 @@ class SLB_Theme extends SLB_Component {
 	protected function get_template($handle, $format = null) {
 		return $this->get_file('template', $handle, $format);
 	}
-	
+
 	/* Layout */
-	
+
 	/**
 	 * Set theme layout
 	 * @uses `add_template()`
@@ -97,7 +97,7 @@ class SLB_Theme extends SLB_Component {
 	public function set_layout($src) {
 		return $this->add_template('layout', $src);
 	}
-	
+
 	/**
 	 * Get layout
 	 * @param string $format (optional) Layout data format

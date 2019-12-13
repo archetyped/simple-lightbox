@@ -13,28 +13,28 @@ SLB.View.extend_template_tag_handler('ui', {
 			// Register event handlers
 
 			/* Close */
-			
+
 			// Close button
 			thm.dom_get_tag('ui', 'close').click(function() {
 				return v.close();
 			});
-			
+
 			/* Navigation */
-			
+
 			thm.dom_get_tag('ui', 'nav_next').click(function() {
 				v.item_next();
 			});
 			thm.dom_get_tag('ui', 'nav_prev').click(function() {
 				v.item_prev();
 			});
-			
+
 			/* Slideshow */
-			
+
 			thm.dom_get_tag('ui', 'slideshow_control').click(function() {
 				v.slideshow_toggle();
 			});
 		});
-		
+
 		v.on('slideshow-toggle', function(ev, v) {
 			// Update slideshow control tag
 			var tags = thm.get_tags('ui', 'slideshow_control');

@@ -8,31 +8,31 @@
  */
 class SLB_Themes extends SLB_Collection_Controller {
 	/* Configuration */
-	
+
 	protected $item_type = 'SLB_Theme';
-	
+
 	public $hook_prefix = 'themes';
-	
+
 	protected $key_prop = 'get_id';
-	
+
 	protected $key_call = true;
-	
+
 	/* Properties */
-	
+
 	protected $id_default = null;
-	
+
 	/* Initialization */
-	
+
 	protected function _hooks() {
 		parent::_hooks();
 		// Register themes
 		$this->util->add_action('init', $this->m('init_defaults'), 1);
-		
+
 		// Client output
 		$this->util->add_action('footer', $this->m('client_output'), 1, 0, false);
 		$this->util->add_filter('footer_script', $this->m('client_output_script'), $this->util->priority('client_footer_output'), 1, false);
 	}
-	
+
 	protected function _options() {
 		$opts = array (
 			'items'	=> array (
@@ -46,10 +46,10 @@ class SLB_Themes extends SLB_Collection_Controller {
 				),
 			)
 		);
-		
+
 		parent::_set_options($opts);
 	}
-	
+
 	/**
 	 * Add default themes
 	 * @param SLB_Themes $themes Themes controller
@@ -90,14 +90,14 @@ class SLB_Themes extends SLB_Collection_Controller {
 				)
 			),
 		);
-		
+
 		foreach ( $defaults as $id => $props ) {
 			$themes->add($id, $props);
 		}
 	}
 
 	/* Collection management */
-	
+
 	/**
 	 * Add theme
 	 * Accepts properties to create new theme or previously-created theme instance
@@ -119,7 +119,7 @@ class SLB_Themes extends SLB_Collection_Controller {
 		// Add to collection
 		return parent::add($o);
 	}
-	
+
 	/**
 	 * Get themes
 	 * @param array $args (optional) Arguments
@@ -134,12 +134,12 @@ class SLB_Themes extends SLB_Collection_Controller {
 		$r = wp_parse_args($args, $args_default);
 		$r['include_public'] = !!$r['include_public'];
 		$r['include_private'] = !!$r['include_private'];
-		
+
 		$items = parent::get($args);
-		
+
 		if ( empty($items) )
 			return $items;
-		
+
 		/* Process custom arguments */
 
 		// Filter
@@ -161,7 +161,7 @@ class SLB_Themes extends SLB_Collection_Controller {
 	}
 
 	/* Helpers */
-	
+
 	/**
 	 * Retrieve default theme ID
 	 * @uses `$id_default`
@@ -173,7 +173,7 @@ class SLB_Themes extends SLB_Collection_Controller {
 		}
 		return $this->id_default;
 	}
-	
+
 	/**
 	 * Retrieve currently-selected theme
 	 * @return SLB_Theme Selected theme
@@ -188,29 +188,29 @@ class SLB_Themes extends SLB_Collection_Controller {
 		}
 		return $thms[$id];
 	}
-	
+
 	/* Output */
-	
+
 	/**
 	 * Build client output
 	 */
 	public function client_output() {
 		// Process active theme
 		$thm = $this->get_selected();
-		
+
 		// Get theme ancestors
 		$thms = $thm->get_ancestors(true);
 		$thms[] = $thm;
-		
+
 		foreach ( $thms as $thm ) {
 			// Load files
 			$thm->enqueue_scripts();
 		}
 	}
-	
+
 	/**
 	 * Client output script
-	 * 
+	 *
 	 * @param array $commands Client script commands
 	 * @return array Modified script commands
 	 */
@@ -221,10 +221,10 @@ class SLB_Themes extends SLB_Collection_Controller {
 		// Process theme ancestors
 		$thms = $thm->get_ancestors(true);
 		$thms[] = $thm;
-		
+
 		$out = array('/* THM */');
 		$code = array();
-		
+
 		// Build output for each theme
 		foreach ( $thms as $thm ) {
 			// Setup client parameters
@@ -248,7 +248,7 @@ class SLB_Themes extends SLB_Collection_Controller {
 			}
 			// Add properties to parameters
 			$params[] = json_encode($thm_props);
-			
+
 			// Add theme to client
 			$code[] = $this->util->call_client_method('View.extend_theme', $params, false);
 		}
@@ -259,9 +259,9 @@ class SLB_Themes extends SLB_Collection_Controller {
 		}
 		return $commands;
 	}
-	
+
 	/* Options */
-	
+
 	/**
 	 * Retrieve themes for use in option field
 	 * @uses self::theme_default
@@ -276,17 +276,17 @@ class SLB_Themes extends SLB_Collection_Controller {
 			$itm_d = $items[$d];
 			unset($items[$d]);
 		}
-		
+
 		// Sort themes by name
 		uasort( $items, function( $a, $b ) {
 			return strcmp( $a->get_name(), $b->get_name() );
 		});
-		
+
 		// Insert default theme at top of array
 		if ( isset($itm_d) ) {
 			$items = array( $d => $itm_d ) + $items;
 		}
-		
+
 		// Build options
 		foreach ( $items as $item ) {
 			$items[$item->get_id()] = $item->get_name();

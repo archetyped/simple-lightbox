@@ -11,42 +11,28 @@ class SLB_Field_Base extends SLB_Base {
 	/*-** Config **-*/
 	protected $mode = 'object';
 	protected $shared = false;
-	
+
 	/*-** Properties **-*/
-	
+
 	/**
 	 * @var string Unique name
 	 */
 	var $id = '';
-	
+
 	/**
-	 * ID formatting options
-	 * Merged with defaults during initialization
-	 * @see $id_formats_default
-	 * @var array
+	 * ID formatting options.
+	 *
+	 * @var array $id_formats
 	 */
-	var $id_formats = null;
-	
+	private $id_formats = [];
+
 	/**
-	 * Default ID Formatting options
-	 * Structure:
-	 * > Key (string): Format name
-	 * > Val (array): Options
-	 * @var array
+	 * Flag for ID format initialization status.
+	 *
+	 * @var bool $id_formats_init
 	 */
-	var $id_formats_default = array(
-		'attr_id' => array(
-			'wrap'			=> array('open' => '_', 'segment_open' => '_'),
-			'prefix'		=> array('get_container', 'get_id', 'add_prefix'),
-			'recursive'		=> true
-		),
-		'attr_name' => array(
-			'wrap'		=> array('open' => '[', 'close' => ']', 'segment_open' => '[', 'segment_close' => ']'),
-			'recursive'	=> true,
-			'prefix'	=> array('get_container', 'get_id', 'add_prefix')
-		)
-	);
-	
+	private $id_formats_init = false;
+
 	/**
 	 * Special characters/phrases
 	 * Used for preserving special characters during formatting
@@ -57,7 +43,7 @@ class SLB_Field_Base extends SLB_Base {
 	 * @var array
 	 */
 	var $special_chars = null;
-	
+
 	var $special_chars_default = array(
 		'{'		=> '%SQB_L%',
 		'}'		=> '%SQB_R%',
@@ -84,13 +70,13 @@ class SLB_Field_Base extends SLB_Base {
 	 * @var array Object Properties
 	 */
 	var $properties = array();
-	
+
 	/**
 	 * Initialization properties
 	 * @var array
 	 */
 	protected $properties_init = null;
-	
+
 	/**
 	 * Structure: Property names stored as keys in group
 	 * Root
@@ -100,33 +86,33 @@ class SLB_Field_Base extends SLB_Base {
 	 * @var array Groupings of Properties
 	 */
 	var $property_groups = array();
-	
+
 	/**
 	 * Keys to filter out of properties array before setting properties
 	 * @var array
 	 */
 	var $property_filter = array('group');
-	
+
 	/**
 	 * Define order of properties
 	 * Useful when processing order is important (e.g. one property depends on another)
 	 * @var array
 	 */
 	var $property_priority = array();
-	
+
 	/**
 	 * Data for object
 	 * May also contain data for nested objects
 	 * @var mixed
 	 */
 	var $data = null;
-	
+
 	/**
 	 * Whether data has been fetched or not
 	 * @var bool
 	 */
-	var $data_loaded = false;
-	
+	protected $data_loaded = false;
+
 	/**
 	 * @var array Script resources to include for object
 	 */
@@ -142,7 +128,7 @@ class SLB_Field_Base extends SLB_Base {
 	 * @var array
 	 */
 	var $hooks = array();
-	
+
 	/**
 	 * Mapping of child properties to parent members
 	 * Allows more flexibility when creating new instances of child objects using property arrays
@@ -152,7 +138,7 @@ class SLB_Field_Base extends SLB_Base {
 	 * @var array
 	 */
 	var $map = null;
-	
+
 	/**
 	 * Options used when building collection (callbacks, etc.)
 	 * Associative array
@@ -161,9 +147,9 @@ class SLB_Field_Base extends SLB_Base {
 	 * @var array
 	 */
 	var $build_vars = array();
-	
+
 	var $build_vars_default = array();
-	
+
 	/**
 	 * Constructor
 	 */
@@ -180,7 +166,7 @@ class SLB_Field_Base extends SLB_Base {
 	}
 
 	/* Getters/Setters */
-	
+
 	/**
 	 * Checks if the specified path exists in the object
 	 * @param array $path Path to check for
@@ -203,7 +189,7 @@ class SLB_Field_Base extends SLB_Base {
 				return false;
 			}
 		}
-		return true; 
+		return true;
 	}
 
 	/**
@@ -303,7 +289,7 @@ class SLB_Field_Base extends SLB_Base {
 			if ( 'parent' == $dir )
 				$ex_val = $this->get_parent_value($member, $name, $default);
 			elseif ( method_exists($this, 'get_container_value') )
-				$ex_val =  $this->get_container_value($member, $name, $default); 
+				$ex_val =  $this->get_container_value($member, $name, $default);
 			// Handle inheritance
 			if ( is_array($val) ) {
 				// Combine Arrays
@@ -336,7 +322,7 @@ class SLB_Field_Base extends SLB_Base {
 			$ret = $object->get_member_value($member, $name, $default, $dir);
 		return $ret;
 	}
-	
+
 	/**
 	 * Set item ID
 	 * @param string $id Unique item ID
@@ -346,7 +332,7 @@ class SLB_Field_Base extends SLB_Base {
 			return false;
 		$this->id = trim($id);
 	}
-	
+
 	/**
 	 * Retrieves field ID
 	 * @param array|string $options (optional) Options or ID of format to use
@@ -355,10 +341,9 @@ class SLB_Field_Base extends SLB_Base {
 	function get_id($options = array()) {
 		$item_id = trim($this->id);
 		$formats = $this->get_id_formats();
-		
 		// Setup options
 		$wrap_default = array('open' => '', 'close' => '', 'segment_open' => '', 'segment_close' => '');
-		
+
 		$options_default = array(
 			'format'			=> null,
 			'wrap'				=> array(),
@@ -366,7 +351,7 @@ class SLB_Field_Base extends SLB_Base {
 			'prefix'			=> '',
 			'recursive'			=> false
 		);
-		
+
 		// Load options based on format
 		if ( !is_array($options) )
 			$options = array('format' => $options);
@@ -380,15 +365,15 @@ class SLB_Field_Base extends SLB_Base {
 
 		// Validate options
 		$wrap = wp_parse_args($wrap, $wrap_default);
-		
+
 		if ( !is_array($segments_pre) )
 			$segments_pre = array($segments_pre);
 		$segments_pre = array_reverse($segments_pre);
-		
+
 		// Format ID based on options
 		$item_id = array($item_id);
 
-		// Add parent objects to ID 
+		// Add parent objects to ID
 		if ( !!$recursive ) {
 			// Create array of ID components
 			$m = 'get_caller';
@@ -403,7 +388,7 @@ class SLB_Field_Base extends SLB_Base {
 			}
 			unset($c);
 		}
-		
+
 		// Additional segments (Pre)
 		foreach ( $segments_pre as $seg ) {
 			if ( is_null($seg) )
@@ -415,7 +400,7 @@ class SLB_Field_Base extends SLB_Base {
 			elseif ( '' != strval($seg) )
 				$item_id[] = strval($seg);
 		}
-		
+
 		// Prefix
 		if ( is_array($prefix) ) {
 			// Array is sequence of instance methods to call on object
@@ -430,7 +415,7 @@ class SLB_Field_Base extends SLB_Base {
 					continue;
 				// Build callback
 				$m = $this->util->m($p, $m);
-				// Call callback 
+				// Call callback
 				$val = call_user_func_array($m, $args);
 				// Returned value may be an instance object
 				if ( is_object($val) )
@@ -444,25 +429,79 @@ class SLB_Field_Base extends SLB_Base {
 		if ( is_numeric($prefix) )
 			$prefix = strval($prefix);
 		if ( empty($prefix) || !is_string($prefix) )
-			$prefix = ''; 
+			$prefix = '';
 
 		// Convert array to string
 		$item_id = $prefix . $wrap['open'] . implode($wrap['segment_close'] . $wrap['segment_open'], array_reverse($item_id)) . $wrap['close'];
 		return $item_id;
 	}
-	
+
 	/**
-	 * Retrieve ID formatting options for class
-	 * Format options arrays are merged together and saved to $id_formats
-	 * @uses $id_formats
-	 * @uses $id_formats_default
-	 * @return array ID Formatting options
+	 * Retrieves ID formats.
+	 *
+	 * @return array ID formats.
 	 */
-	function &get_id_formats() {
-		if ( is_null($this->id_formats) ) {
-			$this->id_formats = wp_parse_args($this->id_formats, $this->id_formats_default);
-		}
+	private function &get_id_formats() {
+		$this->init_id_formats();
 		return $this->id_formats;
+	}
+
+	/**
+	 * Initializes default ID formats.
+	 *
+	 * @since 2.8.0
+	 *
+	 * @return void
+	 */
+	private function init_id_formats() {
+		if ( ! $this->id_formats_init ) {
+			$this->id_formats_init = true;
+			// Initilize default formats.
+			$this->add_id_format(
+				'attr_id',
+				[
+					'wrap' => [ 'open' => '_', 'segment_open' => '_' ],
+					'prefix' => [ 'get_container', 'get_id', 'add_prefix' ],
+					'recursive' => true,
+				],
+				true
+			);
+			$this->add_id_format(
+				'attr_name',
+				[
+					'wrap' => [ 'open' => '[', 'close' => ']', 'segment_open' => '[', 'segment_close' => ']' ],
+					'prefix' => [ 'get_container', 'get_id', 'add_prefix' ],
+					'recursive' =>  true,
+				],
+				true
+			);
+
+		}
+	}
+
+	/**
+	 * Adds custom ID format.
+	 *
+	 * @since 2.8.0
+	 *
+	 * @param string $name Format name.
+	 * @param array $wrap
+	 * @param array $prefix
+	 * @param bool $recursive Optional.
+	 * @param bool $overwrite Optional. Overwrite existing format. Default false.
+	 * @return void
+	 */
+	protected function add_id_format( string $name, array $options, bool $overwrite = false ) {
+		// Init ID formats before adding new ones.
+		$this->init_id_formats();
+		// Do not add format if name matches existing format (when overwriting not allowed).
+		if ( ! $overwrite && in_array( $name, array_keys( $this->id_formats ) ) ) {
+			return;
+		}
+		// Normlize options.
+		$options = wp_parse_args( $options, [ 'wrap' => [], 'prefix' => [], 'recursive' => false ] );
+		// Add format.
+		$this->id_formats[ $name ] = $options;
 	}
 
 	/**
@@ -480,7 +519,7 @@ class SLB_Field_Base extends SLB_Base {
 			$args = wp_parse_args($args[0], $opt_d);
 			extract($args);
 		}
-		
+
 		if ( is_string($top) ) {
 			if ( 'false' == $top )
 				$top = false;
@@ -511,7 +550,7 @@ class SLB_Field_Base extends SLB_Base {
 						$new->load_data();
 					}
 				}
-	
+
 				$obj =& $new;
 				unset($new);
 				// Stop iteration
@@ -557,7 +596,7 @@ class SLB_Field_Base extends SLB_Base {
 		$ref =& $this->get_path_value('data', $name);
 		$ref = $value;
 	}
-	
+
 	/**
 	 * Sets parent object of current instance
 	 * Parent objects must be the same object type as current instance
@@ -573,11 +612,11 @@ class SLB_Field_Base extends SLB_Base {
 		// Parent passed as object reference wrapped in array
 		if ( is_array($parent) && isset($parent[0]) && is_object($parent[0]) )
 			$parent = $parent[0];
-		
+
 		// No parent set but parent ID (previously) set in object
 		if ( empty($parent) && is_string($this->parent) )
 			$parent = $this->parent;
-		
+
 		// Retrieve reference object if ID was supplied
 		if ( is_string($parent) ) {
 			$parent = trim($parent);
@@ -590,7 +629,7 @@ class SLB_Field_Base extends SLB_Base {
 				$parent = $b->fields->get($parent);
 			}
 		}
-		
+
 		// Set parent value on object
 		if ( is_string($parent) || is_object($parent) )
 			$this->parent = $parent;
@@ -638,7 +677,7 @@ class SLB_Field_Base extends SLB_Base {
 		return $this->get_member_value('description', '','', $dir);
 		return $desc;
 	}
-	
+
 	/**
 	 * Sets multiple properties on field type at once
 	 * @param array $properties Properties. Each element is an array containing the arguments to set a new property
@@ -659,7 +698,7 @@ class SLB_Field_Base extends SLB_Base {
 				unset($properties[$prop]);
 			}
 		}
-		
+
 		// Filter properties
 		$properties = $this->filter_properties($properties);
 		// Set additional instance properties
@@ -667,7 +706,7 @@ class SLB_Field_Base extends SLB_Base {
 			$this->set_property($name, $val);
 		}
 	}
-	
+
 	/**
 	 * Remap properties based on $map
 	 * @uses $map For determine how child properties should map to parent properties
@@ -679,7 +718,7 @@ class SLB_Field_Base extends SLB_Base {
 		// Return remapped properties
 		return $this->util->array_remap($properties, $this->map);
 	}
-	
+
 	/**
 	 * Sort properties based on priority
 	 * @uses this::property_priority
@@ -702,7 +741,7 @@ class SLB_Field_Base extends SLB_Base {
 		$props = array_merge($props, $properties);
 		return $props;
 	}
-	
+
 	/**
 	 * Build properties array
 	 * @param array $props Instance properties
@@ -724,15 +763,15 @@ class SLB_Field_Base extends SLB_Base {
 		}
 		return $props;
 	}
-	
+
 	function validate_id($id) {
 		return ( is_scalar($id) && !empty($id) ) ? true : false;
 	}
-	
+
 	function integrate_id($id) {
 		return ( $this->validate_id($id) ) ? array('id' => $id) : array();
 	}
-	
+
 	/**
 	 * Filter property members
 	 * @uses $property_filter to remove define members to remove from $properties
@@ -742,7 +781,7 @@ class SLB_Field_Base extends SLB_Base {
 	function filter_properties($props = array()) {
 		return $this->util->array_filter_keys($props, $this->property_filter);
 	}
-	
+
 	/**
 	 * Add/Set a property on the field definition
 	 * @param string $name Name of property
@@ -775,7 +814,7 @@ class SLB_Field_Base extends SLB_Base {
 		$val = $this->get_member_value('properties', $name);
 		return $val;
 	}
-	
+
 	/**
 	 * Removes a property from item
 	 * @param string $name Property ID
@@ -824,7 +863,7 @@ class SLB_Field_Base extends SLB_Base {
 	function get_group($group) {
 		return $this->get_member_value('property_groups', $group, array());
 	}
-	
+
 	/**
 	 * Save field data
 	 * Child classes will define their own
@@ -834,9 +873,9 @@ class SLB_Field_Base extends SLB_Base {
 	function save() {
 		return true;
 	}
-	
+
 	/*-** Hooks **-*/
-	
+
 	/**
 	 * Retrieve hooks added to object
 	 * @return array Hooks
@@ -844,7 +883,7 @@ class SLB_Field_Base extends SLB_Base {
 	function get_hooks() {
 		return $this->get_member_value('hooks', '', array());
 	}
-	
+
 	/**
 	 * Add hook for object
 	 * @see add_filter() for parameter defaults
@@ -863,11 +902,11 @@ class SLB_Field_Base extends SLB_Base {
 		elseif ( is_array($function_to_add) && !empty($function_to_add) )
 			$id = strval($function_to_add[count($function_to_add) - 1]);
 		else
-			$id = 'function_' . ( count($this->hooks[$tag]) + 1 ); 
+			$id = 'function_' . ( count($this->hooks[$tag]) + 1 );
 		// Add hook
 		$this->hooks[$tag][$id] = func_get_args();
 	}
-	
+
 	/**
 	 * Convenience method for adding an action for object
 	 * @see add_filter() for parameter defaults
@@ -879,7 +918,7 @@ class SLB_Field_Base extends SLB_Base {
 	function add_action($tag, $function_to_add, $priority = 10, $accepted_args = 1) {
 		$this->add_hook($tag, $function_to_add, $priority, $accepted_args);
 	}
-	
+
 	/**
 	 * Convenience method for adding a filter for object
 	 * @see add_filter() for parameter defaults
@@ -891,9 +930,9 @@ class SLB_Field_Base extends SLB_Base {
 	function add_filter($tag, $function_to_add, $priority = 10, $accepted_args = 1) {
 		$this->add_hook($tag, $function_to_add, $priority, $accepted_args);
 	}
-	
+
 	/*-** Dependencies **-*/
-	
+
 	/**
 	 * Adds dependency to object
 	 * @param string $type Type of dependency to add (script, style)
@@ -915,14 +954,14 @@ class SLB_Field_Base extends SLB_Base {
 			// Wrap single contexts in an array
 			if ( is_string($context) )
 				$context = array($context);
-			else 
+			else
 				$context = array();
 		}
 		// Add file to instance property
 		if ( isset($this->{$type}) && is_array($this->{$type}) )
 			$this->{$type}[$handle] = array('context' => $context, 'params' => $args);
 	}
-	
+
 	/**
 	 * Add script to object to be added in specified contexts
 	 * @param array|string $context Array of contexts to add script to page
@@ -947,7 +986,7 @@ class SLB_Field_Base extends SLB_Base {
 	function get_scripts() {
 		return $this->get_member_value('scripts', '', array());
 	}
-	
+
 	/**
 	 * Add style to object to be added in specified contexts
 	 * @param array|string $context Array of contexts to add style to page
@@ -971,9 +1010,9 @@ class SLB_Field_Base extends SLB_Base {
 	function get_styles() {
 		return $this->get_member_value('styles', '', array());
 	}
-	
+
 	/* Helpers */
-	
+
 	/**
 	 * Format value based on specified context
 	 * @param mixed $value Value to format
@@ -992,18 +1031,42 @@ class SLB_Field_Base extends SLB_Base {
 		// Return formatted value
 		return $value;
 	}
-	
+
 	/**
-	 * Format value for output in form field
-	 * @param mixed $value Value to format
-	 * @return mixed Formatted value
+	 * Format value for output as an attribute.
+	 *
+	 * Only strings are formatted.
+	 *
+	 * @since 2.8.0
+	 *
+	 * @param mixed $value Value to format.
+	 * @return mixed Formatted value.
 	 */
-	function format_form($value) {
-		if ( is_string($value) )
-			$value = htmlspecialchars($value);
+	function format_attr( $value ) {
+		if ( is_string( $value ) ) {
+			$value = esc_attr( $value );
+		}
 		return $value;
 	}
-	
+
+	/**
+	 * Formats value for output as plain text.
+	 *
+	 * Escapes HTML, etc.
+	 * Only strings are formatted.
+	 *
+	 * @since 2.8.0
+	 *
+	 * @param mixed $value Value to format.
+	 * @return mixed Formatted value.
+	 */
+	function format_text( $value ) {
+		if ( is_string( $value ) ) {
+			$value = esc_html( $value );
+		}
+		return $value;
+	}
+
 	/**
 	 * Final formatting before output
 	 * Restores special characters, etc.
@@ -1016,25 +1079,25 @@ class SLB_Field_Base extends SLB_Base {
 	function format_final($value, $context = '') {
 		if ( !is_string($value) )
 			return $value;
-		
+
 		// Restore special chars
 		return $this->restore_special_chars($value, $context);
 	}
-	
+
 	function preserve_special_chars($value, $context = '') {
 		if ( !is_string($value) )
 			return $value;
 		$specials = $this->get_special_chars();
 		return str_replace(array_keys($specials), $specials, $value);
 	}
-	
+
 	function restore_special_chars($value, $context = '') {
 		if ( !is_string($value) )
 			return $value;
 		$specials = $this->get_special_chars();
 		return str_replace($specials, array_keys($specials), $value);
 	}
-	
+
 	/**
 	 * Retrieve special characters/placeholders
 	 * Merges defaults with class-specific characters

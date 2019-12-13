@@ -8,19 +8,19 @@
  */
 class SLB_Component extends SLB_Base_Object {
 	/* Properties */
-	
+
 	/**
 	 * Pretty name
 	 * @var string
 	 */
 	protected $name = '';
-	
+
 	protected $props_required = array();
-	
+
 	private $props_required_base = array('id');
-	
+
 	/* Get/Set */
-	
+
 	/**
 	 * Set name
 	 * @param string $name Name
@@ -35,21 +35,21 @@ class SLB_Component extends SLB_Base_Object {
 		}
 		return $this;
 	}
-	
+
 	public function get_name() {
 		return $this->name;
 	}
-	
+
 	public function set_scripts($scripts) {
 		$this->add_files('scripts', $scripts);
 	}
-	
+
 	public function set_styles($styles) {
 		$this->add_files('styles', $styles);
 	}
-	
+
 	/* Assets */
-	
+
 	/**
 	 * Get formatted handle for file
 	 * @param string $base_handle Base handle to format
@@ -58,7 +58,7 @@ class SLB_Component extends SLB_Base_Object {
 	public function get_handle($base_handle) {
 		return $this->add_prefix( array('asset', $this->get_id(), $base_handle), '-');
 	}
-	
+
 	/**
 	 * Enqueue files in client
 	 * @param string $type (optional) Type of file to load (singular) (Default: All client file types)
@@ -82,7 +82,7 @@ class SLB_Component extends SLB_Base_Object {
 				$f = (object) $f;
 				// Format handle
 				$handle = $this->get_handle($f->handle);
-				
+
 				// Format dependencies
 				$deps = array();
 				foreach ( $f->deps as $dep ) {
@@ -96,7 +96,7 @@ class SLB_Component extends SLB_Base_Object {
 			unset($files, $f, $param_final, $handle, $deps, $dep);
 		}
 	}
-	
+
 	/**
 	 * Enqueue scripts
 	 */
@@ -110,9 +110,9 @@ class SLB_Component extends SLB_Base_Object {
 	public function enqueue_styles() {
 		$this->enqueue_client_files('style');
 	}
-	
+
 	/* Helpers */
-	
+
 	/**
 	 * Validate instance
 	 * @see `Base_Object::is_valid()`

@@ -2,22 +2,22 @@
 
 /**
  * Utility methods
- * 
+ *
  * @package Simple Lightbox
  * @subpackage Utilities
  * @author Archetyped
  *
  */
 class SLB_Utilities {
-	
+
 	/* Properties */
-	
+
 	/**
 	 * Instance parent
 	 * @var object
 	 */
 	private $_parent = null;
-	
+
 	/**
 	 * Plugin Base
 	 * @var string
@@ -38,13 +38,13 @@ class SLB_Utilities {
 			'AuthorURI'		=> 'Author URI',
 		)
 	);
-	
+
 	/**
 	 * Plugin base path
 	 * @var string
 	 */
 	private $_path_base = null;
-	
+
 	/**
 	 * Standard hook priorities
 	 * @var array
@@ -55,15 +55,15 @@ class SLB_Utilities {
 		'safe'							=> 15,
 		'client_footer_output'			=> 25,
 	);
-	
+
 	/* Constructors */
-	
+
 	function __construct($obj) {
 		if ( is_object($obj) ) {
 			$this->_parent = $obj;
 		}
 	}
-	
+
 	/**
 	 * Returns callback array to instance method
 	 * @param object $obj Instance object
@@ -81,11 +81,11 @@ class SLB_Utilities {
 		$cb = array($obj, $method);
 		return $cb;
 	}
-	
+
 	/* Helper Functions */
-	
+
 	/*-** Prefix **-*/
-	
+
 	/**
 	 * Get valid separator
 	 * @param string $sep (optional) Separator supplied
@@ -96,7 +96,7 @@ class SLB_Utilities {
 			$sep = '';
 		return ( is_string($sep) ) ? $sep : '_';
 	}
-	
+
 	/**
 	 * Retrieve class prefix (with separator if set)
 	 * @param bool|string $sep Separator to append to class prefix (Default: no separator)
@@ -107,7 +107,7 @@ class SLB_Utilities {
 		$prefix = ( !empty($this->_parent->prefix) ) ? $this->_parent->prefix . $sep : '';
 		return $prefix;
 	}
-	
+
 	/**
 	 * Check if a string is prefixed
 	 * @param string|array $text Text to check for prefix
@@ -122,7 +122,7 @@ class SLB_Utilities {
 		$text = $text[0];
 		return ( !empty($text) && stripos($text, $this->get_prefix($sep)) === 0 );
 	}
-	
+
 	/**
 	 * Prepend plugin prefix to some text
 	 * @param string|array $text Text to add to prefix
@@ -141,7 +141,7 @@ class SLB_Utilities {
 			array_unshift($text, $this->get_prefix());
 		return implode($sep, $text);
 	}
-	
+
 	/**
 	 * Prepend uppercased plugin prefix to some text
 	 * @param string|array $text Text to add to prefix
@@ -155,7 +155,7 @@ class SLB_Utilities {
 		$pre = $this->get_prefix();
 		return str_replace($pre . $sep, strtoupper($pre) . $sep, $var);
 	}
-	
+
 	/**
 	 * Add prefix to variable reference
 	 * Updates actual variable rather than return value
@@ -169,7 +169,7 @@ class SLB_Utilities {
 		$args = func_get_args();
 		$var = call_user_func_array($this->m($this, 'add_prefix'), $args);
 	}
-	
+
 	/**
 	 * Remove prefix from specified string
 	 * @param string $text String to remove prefix from
@@ -180,7 +180,7 @@ class SLB_Utilities {
 			$text = substr($text, strlen($this->get_prefix($sep)));
 		return $text;
 	}
-	
+
 	/**
 	 * Returns Database prefix for plugin-related DB Tables
 	 * @return string Database prefix
@@ -189,9 +189,9 @@ class SLB_Utilities {
 		global $wpdb;
 		return $wpdb->prefix . $this->get_prefix('_');
 	}
-	
+
 	/*-** Priority **-*/
-	
+
 	/**
 	 * Retrieve standard priority
 	 * @var string $id Priority ID to retrieve
@@ -204,9 +204,9 @@ class SLB_Utilities {
 		}
 		return $pri;
 	}
-	
+
 	/* Wrapped Values */
-	
+
 	/**
 	 * Create wrapper object
 	 * Properties
@@ -221,13 +221,13 @@ class SLB_Utilities {
 		// Validate existing wrapper
 		if ( is_object($start) && isset($start->start) && isset($start->end) )
 			return $start;
-		
+
 		// Initialize wrapper
 		$w = array (
 			'start'		=> '[',
 			'end'		=> ']',
 		);
-		
+
 		if ( !empty($start) ) {
 			if ( is_string($start) ) {
 				$w['start'] = $start;
@@ -244,10 +244,10 @@ class SLB_Utilities {
 		if ( is_string($end) ) {
 			$w['end'] = $end;
 		}
-		
+
 		return (object) $w;
 	}
-	
+
 	/**
 	 * Check if text is wrapped by specified character(s)
 	 * @uses this->get_wrapper() to Validate wrapper text
@@ -260,11 +260,11 @@ class SLB_Utilities {
 			return false;
 		// Validate wrapper
 		$w = $this->get_wrapper($start, $end);
-		
+
 		// Check for wrapper
 		return ( substr($text, 0, strlen($w->start)) == $w->start && substr($text, -1, strlen($w->end)) == $w->end ) ? true : false;
 	}
-	
+
 	/**
 	 * Remove wrapper from specified text
 	 * @uses this->has_wrapper() to check if text is wrapped
@@ -279,10 +279,10 @@ class SLB_Utilities {
 			$w = $this->get_wrapper($start, $end);
 			$text = substr($text, strlen($w->start), strlen($text) - strlen($w->start) - strlen($w->end) );
 		}
-		
+
 		return $text;
 	}
-	
+
 	/**
 	 * Add wrapper to specified text
 	 * @uses Utilities::get_wrapper() to retrieve wrapper object
@@ -298,9 +298,9 @@ class SLB_Utilities {
 			$text = $w->start . $text . $w->end;
 		return $text;
 	}
-	
+
 	/*-** Client **-*/
-	
+
 	/**
 	 * Parses client files array
 	 * > Adds ID property (prefixed file key)
@@ -311,11 +311,11 @@ class SLB_Utilities {
 	 * > deps (array) [optional]: Dependencies
 	 *   > Values wrapped in square brackets (`[` & `]`) are internal files
 	 * > callback (string|array) [optional]: Global callback to determine whether file should be loaded
-	 *   > Values wrapped in square brackets (`[` & `]`) are internal methods (of parent object) 
+	 *   > Values wrapped in square brackets (`[` & `]`) are internal methods (of parent object)
 	 * > context (array) [optional]: Context(s) in which to load the file
 	 *   Acceptable values
 	 *   > string: Context name
-	 *   > array: Context name + callback (both must return TRUE to load file) 
+	 *   > array: Context name + callback (both must return TRUE to load file)
 	 *     > Callback follows same pattern as `callback` member
 	 * @param array $files Files array
 	 * @return object Client files
@@ -362,15 +362,15 @@ class SLB_Utilities {
 					else
 						unset($p[$m]);
 				}
-				
+
 				// Normalize file properties
 				$p = array_merge($defaults, $p);
-				
+
 				/* File name */
-				
+
 				// Validate file
 				$file =& $p['file'];
-				
+
 				// Determine if filename or callback
 				if ( !$this->is_file($file) )
 					$file = ( is_callable($file) ) ? $file : null;
@@ -379,9 +379,9 @@ class SLB_Utilities {
 					unset($files[$h]);
 					continue;
 				}
-				
+
 				/* Dependencies */
-				
+
 				// Format internal dependencies
 				foreach ( $p['deps'] as $idx => $dep ) {
 					if ( $this->has_wrapper($dep) ) {
@@ -389,9 +389,9 @@ class SLB_Utilities {
 						$p['deps'][$idx] = $this->add_prefix($dep);
 					}
 				}
-				
+
 				/* Context */
-				
+
 				// Validate callback
 				$cb =& $p['callback'];
 				if ( !is_null($cb) && !is_callable($cb) ) {
@@ -399,7 +399,7 @@ class SLB_Utilities {
 					unset($files[$h]);
 					continue;
 				}
-				
+
 				// Validate contexts
 				$ctxs =& $p['context'];
 				$ctxs = array_unique($ctxs);
@@ -423,7 +423,7 @@ class SLB_Utilities {
 							$ctx = false;
 							break;
 					}
-					
+
 					// Remove invalid contexts
 					if ( empty($ctx) ) {
 						unset($ctxs[$idx]);
@@ -437,9 +437,9 @@ class SLB_Utilities {
 					continue;
 				}
 				$ctxs = array_values($ctxs);
-				
+
 				/* Finalize Properties */
-				
+
 				// Convert properties to object
 				$files[$h] = (object) $p;
 			}
@@ -463,7 +463,7 @@ class SLB_Utilities {
 		}
 		return $obj;
 	}
-	
+
 	/**
 	 * Build jQuery JS expression to add data to specified client object
 	 * @param string|obj $obj Name of client object (Set to root object if not a valid name)
@@ -508,7 +508,7 @@ class SLB_Utilities {
 
 	/**
 	 * Validate client object $obj before running command $cmd
-	 * 
+	 *
 	 * @param string $obj Full object name
 	 * @param string $cmd (optional) Command to wrap in validation
 	 * @return string Command wrapped in validation block
@@ -517,7 +517,7 @@ class SLB_Utilities {
 	public function validate_client_object($obj, $cmd = null) {
 		// Get base object
 		$base = $this->get_client_object();
-		
+
 		// Build condition
 		$sep = '.';
 		$obj = trim($obj, $sep);
@@ -530,14 +530,14 @@ class SLB_Utilities {
 			$fmt .= ' && %1$s.has_child(\'%2$s\')';
 		}
 		$condition = sprintf($fmt, $base, $obj);
-		
+
 		// Wrap command in validation
 		if ( !empty($cmd) && is_string($cmd) ) {
 			$condition = sprintf('if ( %1$s ) { %2$s }', $condition, $cmd);
 		}
 		return $condition;
 	}
-	
+
 	/**
 	 * Build client method call
 	 * @uses get_client_object() to generate the body of the method call
@@ -554,17 +554,17 @@ class SLB_Utilities {
 		}
 		$encode = !!$encode;
 		$validate = !!$validate;
-		
+
 		// Build parameters
 		if ( !is_null($params) ) {
 			if ( $encode ) {
-				$params = json_encode($params);	
+				$params = wp_json_encode($params);
 			} elseif ( is_array($params) ) {
-				$params = implode(',', $params); 
+				$params = implode(',', $params);
 			}
 		}
 		if ( !is_string($params) ) {
-			$params = '';	
+			$params = '';
 		}
 		$ret = sprintf('%s(%s);', $this->get_client_object($method), $params);
 		if ( $validate ) {
@@ -572,9 +572,9 @@ class SLB_Utilities {
 		}
 		return $ret;
 	}
-	
+
 	/*-** WP **-*/
-	
+
 	/**
 	 * Checks if $post is a valid Post object
 	 * If $post is not valid, assigns global post object to $post (if available)
@@ -598,8 +598,8 @@ class SLB_Utilities {
 			return false;
 		return true;
 	}
-	
-	
+
+
 	/**
 	 * Retrieve parent object
 	 * @return obj|bool Parent object (FALSE if no valid parent set)
@@ -609,9 +609,9 @@ class SLB_Utilities {
 			return $this->_parent;
 		} else {
 			return false;
-		} 
+		}
 	}
-	
+
 	/**
 	 * Retrieve parent property value
 	 * @uses self::get_parent()
@@ -621,11 +621,11 @@ class SLB_Utilities {
 	 */
 	function get_parent_property($prop, $default = '') {
 		$p = $this->get_parent();
-		return ( !!$p && property_exists($p, $prop) ) ? $p->{$prop} : $default; 
+		return ( !!$p && property_exists($p, $prop) ) ? $p->{$prop} : $default;
 	}
-	
+
 	/* Hooks */
-	
+
 	/**
 	 * Retrieve formatted name for internal hooks
 	 * Prefixes with parent prefix and hook prefix
@@ -648,7 +648,7 @@ class SLB_Utilities {
 		// Prefix
 		return $this->add_prefix($hook . $tag);
 	}
-	
+
 	/**
 	 * Run internal action
 	 * Namespaces $tag
@@ -667,7 +667,7 @@ class SLB_Utilities {
 		$args[0] = $this->get_hook($tag, $hook_prefix);
 		return call_user_func_array('do_action', $args);
 	}
-	
+
 	/**
 	 * Run internal action passing arguments in array
 	 * @uses do_action_ref_array()
@@ -676,7 +676,7 @@ class SLB_Utilities {
 	function do_action_ref_array($tag, $args, $hook_prefix = true) {
 		return do_action_ref_array($this->get_hook($tag, $hook_prefix), $args);
 	}
-	
+
 	/**
 	 * Run internal filter
 	 * Namespaces $tag
@@ -695,16 +695,16 @@ class SLB_Utilities {
 		$args[0] = $this->get_hook($tag, $hook_prefix);
 		return call_user_func_array('apply_filters', $args);
 	}
-	
+
 	/**
 	 * Run internal filter passing arguments in array
 	 * @uses apply_filters_ref_array()
 	 * @param bool|string $hook_prefix (optional) Secondary prefix to use for hook (Default: Use predefined hook name, FALSE: no secondary hook)
 	 */
 	function apply_filters_ref_array($tag, $args, $hook_prefix = true) {
-		return apply_filters_ref_array($this->get_hook($tag, $hook_prefix), $args);	
+		return apply_filters_ref_array($this->get_hook($tag, $hook_prefix), $args);
 	}
-	
+
 	/**
 	 * Add internal action
 	 * Namespaces $tag
@@ -715,7 +715,7 @@ class SLB_Utilities {
 	function add_action($tag, $function_to_add, $priority = 10, $accepted_args = 1, $hook_prefix = true) {
 		return add_action($this->get_hook($tag, $hook_prefix), $function_to_add, $priority, $accepted_args);
 	}
-	
+
 	/**
 	 * Add internal filter
 	 * Namespaces $tag
@@ -726,7 +726,7 @@ class SLB_Utilities {
 	function add_filter($tag, $function_to_add, $priority = 10, $accepted_args = 1, $hook_prefix = true) {
 		return add_filter($this->get_hook($tag, $hook_prefix), $function_to_add, $priority, $accepted_args);
 	}
-	
+
 	/**
 	 * Remove internal action
 	 * Namespaces $tag
@@ -735,9 +735,9 @@ class SLB_Utilities {
 	 * @param bool|string $hook_prefix (optional) Secondary prefix to use for hook (Default: Use predefined hook name, FALSE: no secondary hook)
 	 */
 	function remove_action($tag, $function_to_remove, $priority = 10, $accepted_args = 1, $hook_prefix = true) {
-		return remove_action($this->get_hook($tag, $hook_prefix), $function_to_remove, $priority, $accepted_args);	
+		return remove_action($this->get_hook($tag, $hook_prefix), $function_to_remove, $priority, $accepted_args);
 	}
-	
+
 	/**
 	 * Remove internal filter
 	 * Namespaces $tag
@@ -748,22 +748,22 @@ class SLB_Utilities {
 	function remove_filter($tag, $function_to_remove, $priority = 10, $accepted_args = 1, $hook_prefix = true) {
 		return remove_filter($this->get_hook($tag, $hook_prefix), $function_to_remove, $priority, $accepted_args);
 	}
-	
+
 	/* Shortcode */
-	
+
 	/**
 	 * Process specific shortcode(s) in content
 	 * Default: Process all existing shortcodes
 	 * @uses $shortcode_tags - array tag => callback
 	 * @uses do_shortcode()
-	 * 
+	 *
 	 * @param string $content Content to process for shortcodes
 	 * @param string|array $shortcode Single tag or array of tags to process
 	 *  > Associative array sets temporary callbacks for shortcodes (`tag => callback`)
 	 */
 	public function do_shortcode($content, $shortcode = null) {
 		global $shortcode_tags;
-		
+
 		// Process custom shortcodes
 		if ( !is_null($shortcode) ) {
 			// Cast to array
@@ -782,19 +782,19 @@ class SLB_Utilities {
 				}
 			}
 		}
-		
+
 		// Process shortcodes in content
 		$content = do_shortcode($content);
-		
+
 		// Restore default shortcode handlers
 		if ( isset($tags_temp) ) {
 			$shortcode_tags = $tags_temp;
 			unset($tags_temp);
 		}
-		
+
 		return $content;
 	}
-	
+
 	/**
 	 * Build shortcode tag
 	 * @param string $tag Shortcode base
@@ -811,7 +811,7 @@ class SLB_Utilities {
 	}
 
 	/* Meta */
-	
+
 	/**
 	 * Retrieves post metadata for internal methods
 	 * Metadata set internally is wrapped in an array so it is unwrapped before returned the retrieved value
@@ -827,7 +827,7 @@ class SLB_Utilities {
 			$meta_value = $meta_value[0];
 		return $meta_value;
 	}
-	
+
 	/**
 	 * Wraps metadata in array for storage in database
 	 * @param mixed $meta_value Value to be set as metadata
@@ -836,7 +836,7 @@ class SLB_Utilities {
 	function post_meta_prepare_value($meta_value) {
 		return array($meta_value);
 	}
-	
+
 	/**
 	 * Adds Metadata for a post to database
 	 * For internal methods
@@ -851,7 +851,7 @@ class SLB_Utilities {
 		$meta_value = $this->post_meta_value_prepare($meta_value);
 		return add_post_meta($post_id, $meta_key, $meta_value, $unique);
 	}
-	
+
 	/**
 	 * Updates post metadata for internal data/methods
 	 * @see update_post_meta()
@@ -865,10 +865,10 @@ class SLB_Utilities {
 		$meta_value = $this->post_meta_prepare_value($meta_value);
 		return update_post_meta($post_id, $meta_key, $meta_value, $prev_value);
 	}
-	
+
 	/**
 	 * Builds postmeta key for custom data set by plugin
-	 * @param string $key Base key name 
+	 * @param string $key Base key name
 	 * @return string Formatted postmeta key
 	 */
 	function post_meta_get_key($key) {
@@ -880,10 +880,10 @@ class SLB_Utilities {
 				return $sep . implode($sep, $key);
 			}
 		}
-		
+
 		return $key;
 	}
-	
+
 	/**
 	 * Creates a meta key for storing post meta data
 	 * Prefixes standard prefixed text with underscore to hide meta data on post edit forms
@@ -893,9 +893,9 @@ class SLB_Utilities {
 	function make_meta_key($text = '') {
 		return '_' . $this->add_prefix($text);
 	}
-	
+
 	/* Class */
-	
+
 	/**
 	 * Retrieve name of internal class
 	 * @param string $class Base name of class
@@ -903,10 +903,10 @@ class SLB_Utilities {
 	 */
 	function get_class($class) {
 		return $this->add_prefix_uc($class);
-	} 
-	
+	}
+
 	/* Context */
-	
+
 	/**
 	 * Retrieve context for current request
 	 * @return array Context
@@ -952,18 +952,18 @@ class SLB_Utilities {
 			$u = wp_get_current_user();
 			$ctx[] = $this->build_context('user', ( $u->ID ) ? 'registered' : 'guest', false);
 		}
-		
+
 		return $ctx;
 	}
-	
+
 	/**
 	 * Builds context from multiple components
 	 * Usage:
 	 * > $prefix can be omitted and context strings can be added as needed
 	 * > Multiple context strings may be passed to be joined together
-	 * 
+	 *
 	 * @param string (optional) $context Variable number of components to add to context
-	 * @param bool (optional) $prefix Whether or not to prefix context with request type (public or admin) [Default: TRUE] 
+	 * @param bool (optional) $prefix Whether or not to prefix context with request type (public or admin) [Default: TRUE]
 	 * @return string Context
 	 */
 	function build_context($context = null, $prefix = true) {
@@ -972,8 +972,8 @@ class SLB_Utilities {
 		if ( !empty($args) ) {
 			$prefix = ( is_bool($args[count($args) - 1]) ) ? array_pop($args) : true;
 		}
-		
-		// Validate 
+
+		// Validate
 		$context = array_filter($args, 'is_string');
 		$sep = '_';
 
@@ -982,7 +982,7 @@ class SLB_Utilities {
 			array_unshift($context, ( is_admin() ) ? 'admin' : 'public' );
 		return implode($sep, $context);
 	}
-	
+
 	/**
 	 * Check if context exists in current request
 	 * @param string $context Context to check for
@@ -1011,9 +1011,9 @@ class SLB_Utilities {
 		$ctx->context = $this->get_context();
 		$this->extend_client_object($ctx, true);
 	}
-	
+
 	/* Path */
-	
+
 	/**
 	 * Joins and normalizes the slashes in the paths passed to method
 	 * All forward/back slashes are converted to forward slashes
@@ -1035,7 +1035,7 @@ class SLB_Utilities {
 			if ( is_bool($arg_last) ) {
 				$arg_last = array($arg_last);
 			}
-			
+
 			if ( is_array($arg_last) && count($arg_last) > 0 && is_bool($arg_last[0]) ) {
 				// Remove slash paramter from args array
 				array_pop($parts);
@@ -1048,19 +1048,19 @@ class SLB_Utilities {
 		}
 		// Extract to slash options local variables
 		list($trailing_slash, $leading_slash) = $slashes;
-		
+
 		// Clean path segments
 		foreach ( $parts as $key => $part ) {
 			// Trim slashes/spaces
 			$parts[$key] = trim($part, " " . $sl_f . $sl_b);
-			
+
 			// Verify path segment still contains value
 			if ( empty($parts[$key]) ) {
 				unset($parts[$key]);
 				continue;
 			}
 		}
-		
+
 		// Join path parts together
 		$parts = implode($sl_b, $parts);
 		$parts = str_replace($sl_b, $sl_f, $parts);
@@ -1074,7 +1074,7 @@ class SLB_Utilities {
 		}
 		return $parts;
 	}
-	
+
 	/**
 	 * Returns URL of file (assumes that it is in plugin directory)
 	 * @param string $file name of file get URL
@@ -1087,7 +1087,7 @@ class SLB_Utilities {
 		}
 		return $file;
 	}
-	
+
 	/**
 	 * Returns path to plugin file
 	 * @param string $file file name
@@ -1100,13 +1100,13 @@ class SLB_Utilities {
 		}
 		return $file;
 	}
-	
+
 	function get_plugin_file_path($file, $trailing_slash = false) {
 		if ( is_string($file) && '' != trim($file) )
 			$file = $this->normalize_path($this->get_plugin_base(), $file, $trailing_slash);
 		return $file;
 	}
-	
+
 	/**
 	 * Checks if value is valid file name
 	 * @param string $filename File name to check
@@ -1116,7 +1116,7 @@ class SLB_Utilities {
 		$ext = $this->get_file_extension($filename);
 		return ( empty($ext) ) ? false : true;
 	}
-	
+
 	/**
 	 * Check if string is valid URI
 	 * @param string $uri String to check
@@ -1125,7 +1125,7 @@ class SLB_Utilities {
 	function is_uri($uri) {
 		return ( preg_match('|^(https?:)?//|', $uri) ) ? true : false;
 	}
-	
+
 	/**
 	 * Retrieves file extension
 	 * @param string $file file name/path
@@ -1142,13 +1142,13 @@ class SLB_Utilities {
 		if ( ( $qpos = strpos($file, '?') ) && $qpos !== false ) {
 			$file = substr($file, 0, $qpos);
 		}
-		if ( ( $rpos = strrpos($file, $sep) ) > 0 ) 
+		if ( ( $rpos = strrpos($file, $sep) ) > 0 )
 			$ret = substr($file, $rpos + 1);
 		if ( !!$lowercase )
 			$ret = strtolower($ret);
 		return $ret;
 	}
-	
+
 	/**
 	 * Checks if file has specified extension
 	 * @uses get_file_extension()
@@ -1163,10 +1163,10 @@ class SLB_Utilities {
 		if ( !$case_sensitive ) {
 			// Normalize extensions
 			$extension = array_map('strtolower', $extension);
-		} 
+		}
 		return ( in_array($this->get_file_extension($file, !$case_sensitive), $extension) ) ? true : false;
 	}
-	
+
 	/**
 	 * Removes file extension from file name
 	 * The extension is the text following the last period ('.') in the file name
@@ -1181,7 +1181,7 @@ class SLB_Utilities {
 		}
 		return $file;
 	}
-	
+
 	/**
 	 * Retrieve base URL for plugin-specific files
 	 * @uses get_plugin_base()
@@ -1208,10 +1208,10 @@ class SLB_Utilities {
 				$ret = $this->get_relative_path($ret, $relative);
 			}
 		}
-		
+
 		return $ret;
 	}
-	
+
 	/**
 	 * Retrieve plugin's base path
 	 * @uses WP_PLUGIN_DIR
@@ -1251,7 +1251,7 @@ class SLB_Utilities {
 		}
 		return $ret;
 	}
-	
+
 	/**
 	 * Retrieve relative path for absolute paths
 	 * @param string $path Path to modify
@@ -1273,7 +1273,7 @@ class SLB_Utilities {
 		}
 		return $path;
 	}
-	
+
 	/**
 	 * Retrieve plugin's base directory
 	 * @uses WP_PLUGIN_DIR
@@ -1288,7 +1288,7 @@ class SLB_Utilities {
 		}
 		return $ret;
 	}
-	
+
 	/**
 	 * Retrieve plugin's base file path
 	 * @uses get_path_base()
@@ -1321,7 +1321,7 @@ class SLB_Utilities {
 		// Return
 		return $ret;
 	}
-	
+
 	/**
 	 * Retrieve plugin's internal name
 	 * Internal name is used by WP core
@@ -1336,13 +1336,13 @@ class SLB_Utilities {
 		}
 		return $ret;
 	}
-	
+
 	private function set_plugin_info($data) {
 		if ( is_array($data) ) {
 			$this->_plugin['data'] = $data;
 		}
 	}
-	
+
 	/**
 	 * Retrieve plugin info
 	 * Parses info comment in main plugin file
@@ -1353,7 +1353,7 @@ class SLB_Utilities {
 		$ret = $this->_plugin['data'];
 		// Get plugin data
 		if ( empty($ret) ) {
-			$this->get_plugin_base_file(); 
+			$this->get_plugin_base_file();
 			$ret = $this->_plugin['data'];
 		}
 		// Return specified field
@@ -1362,7 +1362,7 @@ class SLB_Utilities {
 		}
 		return $ret;
 	}
-	
+
 	/**
 	 * Retrieve plugin version
 	 * @uses get_plugin_info()
@@ -1380,7 +1380,7 @@ class SLB_Utilities {
 		// Return
 		return $ret;
 	}
-	
+
 	/**
 	 * Retrieve current post type based on URL query variables
 	 * @return string|null Current post type
@@ -1395,7 +1395,7 @@ class SLB_Utilities {
 		}
 		return $pt;
 	}
-	
+
 	/**
 	 * Retrieve current action based on URL query variables
 	 * @param mixed $default (optional) Default action if no action exists
@@ -1403,7 +1403,7 @@ class SLB_Utilities {
 	 */
 	function get_action($default = null) {
 		$action = '';
-		
+
 		// Check if action is set in URL
 		if ( isset($_GET['action']) )
 			$action = $_GET['action'];
@@ -1419,7 +1419,7 @@ class SLB_Utilities {
 				'edit'			=> array('edit', 'edit-pages')
 			);
 			$page = basename($_SERVER['SCRIPT_NAME'], '.php');
-			
+
 			foreach ( $actions as $act => $pages ) {
 				if ( in_array($page, $pages) ) {
 					$action = $act;
@@ -1431,13 +1431,13 @@ class SLB_Utilities {
 			$action = $default;
 		return $action;
 	}
-	
+
 	/*-** General **-*/
-	
+
 	/**
 	 * Checks if a property exists in a class or object
 	 * Compatibility method for PHP 4
-	 * @param mixed $class Class or object to check 
+	 * @param mixed $class Class or object to check
 	 * @param string $property Name of property to look for in $class
 	 */
 	function property_exists($class, $property) {
@@ -1449,7 +1449,7 @@ class SLB_Utilities {
 			return array_key_exists($property, $class);
 		}
 	}
-	
+
 	/**
 	 * Retrieve specified property from object or array
 	 * @param object|array $obj Object or array to get property from
@@ -1471,7 +1471,7 @@ class SLB_Utilities {
 				return $cvars[$property];
 		}
 	}
-	
+
 	/**
 	 * Remap array members based on a
 	 * mapping of source/destination keys
@@ -1503,7 +1503,7 @@ class SLB_Utilities {
 		// Return remapped properties
 		return $arr;
 	}
-	
+
 	function array_filter_keys($arr, $keys) {
 		if ( is_array($arr) && !empty($arr) && is_array($keys) && !empty($keys) ) {
 			foreach ( $keys as $rem ) {
@@ -1514,10 +1514,10 @@ class SLB_Utilities {
 
 		return $arr;
 	}
-	
+
 	/**
 	 * Insert an item into an array at the specified position
-	 * @param mixed $item Item to insert into array 
+	 * @param mixed $item Item to insert into array
 	 * @param int $pos Index position to insert item into array
 	 * @return array Modified array
 	 */
@@ -1525,7 +1525,7 @@ class SLB_Utilities {
 		array_splice($array, $pos, 0, $item);
 		return $array;
 	}
-	
+
 	/**
 	 * Merges 1 or more arrays together
 	 * Methodology
@@ -1575,10 +1575,10 @@ class SLB_Utilities {
 		}
 		return $merged;
 	}
-	
+
 	/**
 	 * Replaces string value in one array with the value of the matching element in a another array
-	 * 
+	 *
 	 * @param string $search Text to search for in array
 	 * @param array $arr_replace Array to use for replacing values
 	 * @param array $arr_subject Array to search for specified value
@@ -1596,10 +1596,10 @@ class SLB_Utilities {
 			if (is_array($val) && is_array($arr_replace[$key]))
 				$arr_subject[$key] = $this->array_replace_recursive($search, $arr_replace[$key], $val);
 		}
-		
+
 		return $arr_subject;
 	}
-	
+
 	/**
 	 * Checks if item at specified path in array is set
 	 * @param array $arr Array to check for item
@@ -1610,7 +1610,7 @@ class SLB_Utilities {
 		$f_path = $this->get_array_path($path);
 		return eval('return isset($arr' . $f_path . ');');
 	}
-	
+
 	/**
 	 * Build formatted string based on array values
 	 * Array values in formatted string will be ordered by index order
@@ -1653,7 +1653,7 @@ class SLB_Utilities {
 		}
 		return $fmtd;
 	}
-	
+
 	/**
 	 * Builds array of path elements based on arguments
 	 * Each item in path array represents a deeper level in structure path is for (object, array, filesystem, etc.)
@@ -1663,12 +1663,12 @@ class SLB_Utilities {
 	function build_path() {
 		$path = array();
 		$args = func_get_args();
-		
+
 		// Iterate through parameters and build path
 		foreach ( $args as $arg ) {
 			if ( empty($arg) )
 				continue;
-				
+
 			if (is_array($arg)) {
 				// Recurse through array items to pull out any more arrays
 				foreach ($arg as $key => $val) {
@@ -1679,10 +1679,10 @@ class SLB_Utilities {
 				$path[] = $arg;
 			}
 		}
-		
+
 		return $path;
 	}
-	
+
 	/**
 	 * Build generic element
 	 * @param array $args
@@ -1703,23 +1703,23 @@ class SLB_Utilities {
 		);
 		$args = wp_parse_args($args, $args_default);
 		$args['format'] = wp_parse_args($args['format'], $format_default);
-		
+
 		// Validate
 		if ( !is_string($args['tag']) || empty($args['tag']) ) {
 			return $ret;
 		}
-		
+
 		$args = (object) $args;
-		
+
 		$args->attributes = $this->build_attribute_string($args->attributes);
 		if ( strlen($args->attributes) > 0 ) {
 			$args->attributes = ' ' . $args->attributes;
 		}
-		
+
 		// Build output
 		$args->format = (object) $args->format;
 		$ret = sprintf( $args->format->open, $args->tag . $args->attributes);
-		
+
 		// Wrap content if necessary
 		if ( $args->wrap || ( is_string($args->content) && !empty($args->content) ) ) {
 			$ret .= $args->content . sprintf( $args->format->close, $args->tag);
@@ -1727,7 +1727,7 @@ class SLB_Utilities {
 
 		return $ret;
 	}
-	
+
 	/**
 	 * Parse string of attributes into array
 	 * For XML/XHTML tag attributes
@@ -1755,7 +1755,7 @@ class SLB_Utilities {
 
 		return array_merge($defaults, $attr);
 	}
-	
+
 	/**
 	 * Builds attribute string for HTML element
 	 * @param array $attr Attributes
@@ -1776,8 +1776,8 @@ class SLB_Utilities {
 		}
 		return $ret;
 	}
-	
-	/* HTML */	
+
+	/* HTML */
 
 	/**
 	 * Generate HTML element based on values
@@ -1798,7 +1798,7 @@ class SLB_Utilities {
 		// Build element
 		return $this->build_element($args);
 	}
-	
+
 	/**
 	 * Build HTML link element
 	 * @uses build_html_element() to build link output
@@ -1811,7 +1811,7 @@ class SLB_Utilities {
 		$attributes = array_merge(array('href' => $uri, 'title' => $content), $attributes);
 		return $this->build_html_element(array('tag' => 'a', 'wrap' => true, 'content' => $content, 'attributes' => $attributes));
 	}
-	
+
 	/**
 	 * Generate external stylesheet element
 	 * @param $url Stylesheet URL
@@ -1821,10 +1821,10 @@ class SLB_Utilities {
 		$attributes = array('href' => $url, 'type' => 'text/css', 'rel' => 'stylesheet');
 		return $this->build_html_element(array('tag' => 'link', 'wrap' => false, 'attributes' => $attributes));
 	}
-	
+
 	/**
 	 * Build client-side script element
-	 * 
+	 *
 	 * @param string $content Script content
 	 * @param string $id (optional) Element ID
 	 * @param bool $wrap_jquery (optional) Wrap commands in jQuery? (Default: Yes)
@@ -1844,14 +1844,14 @@ class SLB_Utilities {
 		if ( $wrap_jquery ) {
 			$start[] = 'if ( !!window.jQuery ) {(function($){';
 			$end[] = '})(jQuery);}';
-			
+
 			// Add event handler (if necessary)
 			if ( $wait_doc_ready ) {
 				$start[] = '$(document).ready(function(){';
 				$end[] = '})';
 			}
 		}
-		
+
 		// Reverse order of end values
 		$end = array_reverse($end);
 		$content = implode('', array_merge($start, array($content), $end));

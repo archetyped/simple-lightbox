@@ -8,39 +8,31 @@
 class SLB_Field_Collection extends SLB_Field_Base {
 
 	/* Configuration */
-	
+
 	protected $mode = 'sub';
-	
+
 	/* Properties */
-	
+
 	/**
 	 * Item type
 	 * @var string
 	 */
 	var $item_type = 'SLB_Field';
-	
+
 	/**
 	 * Indexed array of items in collection
 	 * @var array
 	 */
 	var $items = array();
-	
-	var $id_formats = array (
-		'formatted' => array(
-			'wrap'		=> array ( 'open' => '_' ),
-			'recursive'	=> false,
-			'prefix'	=> array('get_prefix')
-		)
-	);
-	
-	var $build_vars_default = array ( 
+
+	var $build_vars_default = array (
 		'groups'		=> array(),
 		'context'		=> '',
 		'layout'		=> 'form',
 		'build'			=> true,
 		'build_groups'	=> true,
 	);
-	
+
 	/**
 	 * Associative array of groups in collection
 	 * Key: Group ID
@@ -52,9 +44,9 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	 * @var array
 	 */
 	var $groups = array();
-	
+
 	protected $properties_init = null;
-	
+
 	/* Constructors */
 
 	/**
@@ -72,20 +64,32 @@ class SLB_Field_Collection extends SLB_Field_Base {
 		$properties = $this->make_properties($args);
 		// Parent constructor
 		parent::__construct($properties);
-		
+
 		// Save initial properties
 		$this->properties_init = $properties;
 	}
-	
+
 	public function _init() {
 		parent::_init();
+
+		// Load properties.
 		$this->load($this->properties_init, false);
+
+		// Add custom ID format(s).
+		$this->add_id_format(
+			'formatted',
+			[
+				'wrap'      => [ 'open' => '_' ],
+				'prefix'    => [ 'get_prefix' ],
+				'recursive' => false,
+			]
+		);
 	}
-	
+
 	/*-** Getters/Setters **-*/
-	
+
 	/* Setup */
-	
+
 	/**
 	 * Load collection with specified properties
 	 * Updates existing properties
@@ -108,9 +112,9 @@ class SLB_Field_Collection extends SLB_Field_Base {
 		}
 		return $this;
 	}
-	
+
 	/* Data */
-	
+
 	/**
 	 * Retrieve external data for items in collection
 	 * Retrieved data is saved to the collection's $data property
@@ -124,7 +128,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	function load_data() {
 		$this->data_loaded = true;
 	}
-	
+
 	/**
 	 * Set data for an item
 	 * @param mixed $item Field to set data for
@@ -155,7 +159,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	}
 
 	/* Item */
-	
+
 	/**
 	 * Adds item to collection
 	 * @param string|obj $id Unique name for item or item instance
@@ -176,7 +180,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 		if ( !is_array($properties) ) {
 			$properties = array();
 		}
-		
+
 		// Handle item instance
 		if ( $id instanceof $this->item_type ) {
 			$item = $id;
@@ -200,21 +204,21 @@ class SLB_Field_Collection extends SLB_Field_Base {
 				$item = new $type($properties);
 			}
 		}
-		
+
 		if ( empty($item) || 0 == strlen($item->get_id()) ) {
 			return false;
 		}
-		
+
 		// Set container
 		$item->set_container($this);
 
 		// Add item to collection
 		$this->items[$item->get_id()] = $item;
-		
+
 		if ( isset($properties['group']) ) {
 			$this->add_to_group($properties['group'], $item->get_id());
 		}
-		
+
 		return $item;
 	}
 
@@ -235,11 +239,11 @@ class SLB_Field_Collection extends SLB_Field_Base {
 		}
 		// Remove item data from collection
 		$this->remove_data($item, false);
-		
+
 		if ( !!$save )
 			$this->save();
 	}
-	
+
 	/**
 	 * Remove item data from collection
 	 * @param string|object $item Object or item ID to remove
@@ -251,7 +255,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 			$item = $this->get($item);
 			$item = $item->get_id();
 		}
-		
+
 		// Remove data from data member
 		if ( is_string($item) && is_array($this->data) ) {
 			unset($this->data[$item]);
@@ -268,7 +272,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	function has($item) {
 		return ( !is_string($item) || empty($item) || is_null($this->get_member_value('items', $item, null)) ) ? false : true;
 	}
-	
+
 	/**
 	 * Retrieve specified item in collection
 	 * @param string|object $item Item object or ID to retrieve
@@ -288,7 +292,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 		} else {
 			$item = false;
 		}
-		
+
 		if ( !!$safe_mode && !is_object($item) ) {
 			// Fallback: Return empty item if no item exists
 			$type = $this->item_type;
@@ -296,7 +300,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 		}
 		return $item;
 	}
-	
+
 	/**
 	 * Retrieve item data
 	 * @param $item Item to get data for
@@ -313,14 +317,14 @@ class SLB_Field_Collection extends SLB_Field_Base {
 		} else {
 			$ret = parent::get_data($context, $top);
 		}
-		
+
 		if ( is_string($item) && is_array($ret) && isset($ret[$item]) )
 			$ret = $ret[$item];
 		return $ret;
 	}
 
 	/* Items (Collection) */
-	
+
 	/**
 	 * Add multiple items to collection
 	 * @param array $items Items to add to collection
@@ -339,7 +343,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 			$this->add($id, $props, $update);
 		}
 	}
-	
+
 	/**
 	 * Retrieve reference to items in collection
 	 * @return array Collection items (reference)
@@ -370,7 +374,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 		}
 		return $items;
 	}
-	
+
 	/**
 	 * Build output for items in specified group
 	 * If no group specified, all items in collection are built
@@ -382,16 +386,16 @@ class SLB_Field_Collection extends SLB_Field_Base {
 		if ( empty($items) ) {
 			return false;
 		}
-		
+
 		$this->util->do_action_ref_array('build_items_pre', array($this));
 		foreach ( $items as $item ) {
 			$item->build();
 		}
 		$this->util->do_action_ref_array('build_items_post', array($this));
 	}
-	
+
 	/* Group */
-	
+
 	/**
 	 * Add groups to collection
 	 * @param array $groups Associative array of group properties
@@ -409,10 +413,10 @@ class SLB_Field_Collection extends SLB_Field_Base {
 			$this->add_group($id, $props, null, $update);
 		}
 	}
-	
+
 	/**
 	 * Adds group to collection
-	 * Groups are used to display related items in the UI 
+	 * Groups are used to display related items in the UI
 	 * @param string $id Unique name for group
 	 * @param string $title Group title
 	 * @param string $description Short description of group's purpose
@@ -484,7 +488,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 		$group->items = array();
 		return $group;
 	}
-	
+
 	/**
 	 * Checks if group exists in collection
 	 * @param string $id Group name
@@ -501,7 +505,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 		}
 		return $ret;
 	}
-	
+
 	/**
 	 * Adds item to a group in the collection
 	 * Group is created if it does not already exist
@@ -513,7 +517,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 		if ( empty($items) || empty($group) || ( !is_string($group) && !is_array($group) ) ) {
 			return false;
 		}
-		
+
 		// Get group ID
 		if ( is_string($group) ) {
 			$group = array($group, $priority);
@@ -527,7 +531,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 		if ( !is_int($priority) ) {
 			$priority = 10;
 		}
-		
+
 		// Prepare group
 		if ( !$this->group_exists($gid) ) {
 			// TODO Follow
@@ -610,7 +614,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 		}
 		return $this->get_member_value('groups', $group);
 	}
-	
+
 	/**
 	 * Retrieve a group's items
 	 * @uses SLB_Field_Collection::get_group() to retrieve group object
@@ -647,14 +651,14 @@ class SLB_Field_Collection extends SLB_Field_Base {
 		}
 		return $groups;
 	}
-	
+
 	/**
 	 * Output groups
 	 * @uses self::build_vars to determine groups to build
 	 */
 	function build_groups() {
 		$this->util->do_action_ref_array('build_groups_pre', array($this));
-		
+
 		// Get groups to build
 		$groups = ( !empty($this->build_vars['groups']) ) ? $this->build_vars['groups'] : array_keys($this->get_groups(array('sort' => 'priority')));
 		// Check options
@@ -667,7 +671,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 				$this->build_group($group);
 			}
 		}
-		
+
 		$this->util->do_action_ref_array('build_groups_post', array($this));
 	}
 
@@ -683,19 +687,19 @@ class SLB_Field_Collection extends SLB_Field_Base {
 		if ( !count($this->get_items($group)) ) {
 			return false;
 		}
-		
+
 		// Pre action
 		$this->util->do_action_ref_array('build_group_pre', array($this, $group));
-		
+
 		// Build items
 		$this->build_items($group);
-		
+
 		// Post action
 		$this->util->do_action_ref_array('build_group_post', array($this, $group));
 	}
 
 	/* Collection */
-	
+
 	/**
 	 * Build entire collection of items
 	 * Prints output
@@ -711,16 +715,16 @@ class SLB_Field_Collection extends SLB_Field_Base {
 		// Post-build output
 		$this->util->do_action_ref_array('build_post', array($this));
 	}
-	
+
 	/**
 	 * Set build variable
 	 * @param string $key Variable name
-	 * @param mixed $val Variable value 
+	 * @param mixed $val Variable value
 	 */
 	function set_build_var($key, $val) {
 		$this->build_vars[$key] = $val;
 	}
-	
+
 	/**
 	 * Retrieve build variable
 	 * @param string $key Variable name
@@ -730,7 +734,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	function get_build_var($key, $default = null) {
 		return ( array_key_exists($key, $this->build_vars) ) ? $this->build_vars[$key] : $default;
 	}
-	
+
 	/**
 	 * Delete build variable
 	 * @param string $key Variable name to delete
@@ -740,7 +744,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 			unset($this->build_vars[$key]);
 		}
 	}
-	
+
 	/**
 	 * Parses build variables prior to use
 	 * @uses this->reset_build_vars() to reset build variables for each request
@@ -748,9 +752,9 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	 */
 	function parse_build_vars($build_vars = array()) {
 		$this->reset_build_vars();
-		$this->build_vars = $this->util->apply_filters('parse_build_vars', wp_parse_args($build_vars, $this->build_vars), $this);		
+		$this->build_vars = $this->util->apply_filters('parse_build_vars', wp_parse_args($build_vars, $this->build_vars), $this);
 	}
-	
+
 	/**
 	 * Reset build variables to defaults
 	 * Default Variables

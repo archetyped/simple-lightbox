@@ -1,7 +1,7 @@
 if ( !!window.SLB && SLB.has_child('View.extend_template_tag_handler') ) {(function() {
 SLB.View.extend_template_tag_handler('item', {
 	/**
-	 * Render Item tag 
+	 * Render Item tag
 	 * @param obj item Content Item
 	 * @param obj tag Tag instance
 	 * @param obj dfr Promise to be resolved when tag is rendered

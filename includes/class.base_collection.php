@@ -8,7 +8,7 @@
  */
 class SLB_Base_Collection extends SLB_Base {
 	/* Configuration */
-	
+
 	/**
 	 * Set object mode
 	 * @var string
@@ -20,28 +20,28 @@ class SLB_Base_Collection extends SLB_Base {
 	 * @var string
 	 */
 	protected $item_type = null;
-	
+
 	/**
 	 * Property to use for item key
 	 * Example: A property or method of the item
 	 * @var string
 	 */
 	protected $key_prop = null;
-	
+
 	/**
 	 * Should $key_prop be called or retrieved?
 	 * Default: Retrieved (FALSE)
 	 * @var bool
 	 */
 	protected $key_call = false;
-	
+
 	/**
 	 * Items in collection unique?
 	 * Default: FALSE
 	 * @var bool
 	 */
 	protected $unique = false;
-	
+
 	/* Properties */
 
 	/**
@@ -49,16 +49,16 @@ class SLB_Base_Collection extends SLB_Base {
 	 * @var array
 	 */
 	protected $items = null;
-	
+
 	/**
 	 * Item metadata
 	 * Indexed by item key
 	 * @var array
 	 */
 	protected $items_meta = array();
-	
+
 	/* Item Management */
-	
+
 	/**
 	 * Initialize collections
 	 * Calls `init` action if collection has a hook prefix
@@ -72,7 +72,7 @@ class SLB_Base_Collection extends SLB_Base {
 			}
 		}
 	}
-	
+
 	/**
 	 * Normalize/Validate item(s)
 	 * TODO: If no items are specified, then collection is normalized
@@ -98,12 +98,12 @@ class SLB_Base_Collection extends SLB_Base {
 		}
 		return $items;
 	}
-	
+
 	protected function item_valid($item) {
-		// Validate item type 
+		// Validate item type
 		return ( empty($this->item_type) || ( $item instanceof $this->item_type ) ) ? true : false;
 	}
-	
+
 	/**
 	 * Validate item key
 	 * Checks collection for existence of key as well
@@ -114,7 +114,7 @@ class SLB_Base_Collection extends SLB_Base {
 		$this->init();
 		return ( ( ( is_string($key) && !empty($key) ) || is_int($key) ) && isset($this->items[$key]) ) ? true : false;
 	}
-	
+
 	/**
 	 * Generate key for item (for storing in collection, etc.)
 	 * @param mixed $item Item to generate key for
@@ -141,7 +141,7 @@ class SLB_Base_Collection extends SLB_Base {
 		}
 		return $ret;
 	}
-	
+
 	/**
 	 * Add item to collection
 	 * @param mixed $item Item to add to collection
@@ -167,11 +167,11 @@ class SLB_Base_Collection extends SLB_Base {
 		}
 		return $this;
 	}
-	
+
 	/**
 	 * Remove item from collection
 	 * @param int|string $item Key of item to remove
-	 * @return Current instance 
+	 * @return Current instance
 	 */
 	public function remove($item) {
 		if ( $this->key_valid($item) ) {
@@ -179,7 +179,7 @@ class SLB_Base_Collection extends SLB_Base {
 		}
 		return $this;
 	}
-	
+
 	/**
 	 * Clear collection
 	 * @return Current instance
@@ -188,7 +188,7 @@ class SLB_Base_Collection extends SLB_Base {
 		$this->items = array();
 		return $this;
 	}
-	
+
 	/**
 	 * Checks if item exists in the collection
 	 * @param mixed $item Item(s) to check for
@@ -198,7 +198,7 @@ class SLB_Base_Collection extends SLB_Base {
 		// Attempt to locate item
 		return false;
 	}
-	
+
 	/**
 	 * Retrieve item(s) from collection
 	 * If no items specified, entire collection returned
@@ -215,9 +215,9 @@ class SLB_Base_Collection extends SLB_Base {
 			'exclude'		=> array(),
 		);
 		$r = wp_parse_args($args, $args_default);
-		
+
 		$items = $this->items;
-		
+
 		/* Sort */
 		if ( !is_null($r['orderby']) ) {
 			// Validate
@@ -260,9 +260,9 @@ class SLB_Base_Collection extends SLB_Base {
 		}
 		return $items;
 	}
-	
+
 	/* Metadata */
-	
+
 	/**
 	 * Add metadata for item
 	 * @param string|int $item Item key
@@ -291,7 +291,7 @@ class SLB_Base_Collection extends SLB_Base {
 		}
 		return $this;
 	}
-	
+
 	/**
 	 * Remove item metadata
 	 * @param string $item Item key
@@ -309,7 +309,7 @@ class SLB_Base_Collection extends SLB_Base {
 		}
 		return $this;
 	}
-	
+
 	/**
 	 * Retrieve metadata
 	 * @param string $item Item key
@@ -327,9 +327,9 @@ class SLB_Base_Collection extends SLB_Base {
 		}
 		return $ret;
 	}
-	
+
 	/* Collection */
-	
+
 	/**
 	 * Build entire collection of items
 	 * Prints output
@@ -345,7 +345,7 @@ class SLB_Base_Collection extends SLB_Base {
 		// Post-build output
 		$this->util->do_action_ref_array('build_post', array($this));
 	}
-	
+
 	/**
 	 * Parses build variables prior to use
 	 * @uses this->reset_build_vars() to reset build variables for each request
@@ -353,9 +353,9 @@ class SLB_Base_Collection extends SLB_Base {
 	 */
 	function parse_build_vars($build_vars = array()) {
 		$this->reset_build_vars();
-		$this->build_vars = $this->util->apply_filters('parse_build_vars', wp_parse_args($build_vars, $this->build_vars), $this);		
+		$this->build_vars = $this->util->apply_filters('parse_build_vars', wp_parse_args($build_vars, $this->build_vars), $this);
 	}
-	
+
 	/**
 	 * Reset build variables to defaults
 	 * Default Variables
