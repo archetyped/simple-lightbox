@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<ruleset name="AR/WP/Plugin ruleset">
+
+    <description>Custom ruleset for AR/WP/Plugins</description>
+
+    <!-- Show progress and sniff codes in all reports. -->
+    <arg value="ps"/>
+
+    <!-- A path to strip from the front of file paths inside reports. -->
+    <arg name="basepath" value="."/>
+    <arg name="colors"/>
+    <arg name="extensions" value="php"/>
+
+    <!-- Exclude the Composer Vendor directory. -->
+    <exclude-pattern>/vendor/*</exclude-pattern>
+
+    <!-- Exclude the Node Modules directory. -->
+    <exclude-pattern>/node_modules/*</exclude-pattern>
+
+    <!-- Set minimum supported WordPress version -->
+    <config name="minimum_supported_wp_version" value="5.3"/>
+
+    <!-- Check for PHP cross-version compatibility. -->
+    <config name="testVersion" value="7.2-"/>
+    <rule ref="PHPCompatibilityWP"/>
+
+    <!-- Include the WordPress standard. -->
+    <rule ref="WordPress">
+        <!-- Use PSR-4 file naming standard instead -->
+        <exclude name="WordPress.Files.FileName"/>
+    </rule>
+
+    <!-- Add in some extra rules from other standards. -->
+    <rule ref="Generic.CodeAnalysis.UnusedFunctionParameter"/>
+    <rule ref="Generic.Commenting.Todo"/>
+    <rule ref="Squiz.Commenting.FunctionComment.SpacingAfter"/>
+
+</ruleset>
