@@ -25,7 +25,7 @@
     <rule ref="PHPCompatibilityWP"/>
 
     <!-- Include the WordPress standard. -->
-    <rule ref="WordPress">
+    <rule ref="WordPress-Extra">
         <!-- Use PSR-4 file naming standard instead -->
         <exclude name="WordPress.Files.FileName"/>
     </rule>
