@@ -11,7 +11,7 @@
  * Description: The highly customizable lightbox for WordPress
  * Version: 0.0.0-dev
  * Requires at least: 5.3
- * Requires PHP: 7.2
+ * Requires PHP: 5.6.20
  * Text Domain: simple-lightbox
  * Domain Path: /l10n
  * Author: Archetyped
