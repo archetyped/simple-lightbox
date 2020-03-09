@@ -3,8 +3,8 @@
 
     <description>Custom ruleset for AR/WP/Plugins</description>
 
-    <!-- Show progress and sniff codes in all reports. -->
-    <arg value="ps"/>
+    <!-- Show progress in all reports. -->
+    <arg value="p"/>
 
     <!-- A path to strip from the front of file paths inside reports. -->
     <arg name="basepath" value="."/>
