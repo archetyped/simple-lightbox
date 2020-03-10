@@ -34,7 +34,7 @@ class SLB_Requirements_Check {
 	 * @var array
 	 */
 	private $deps = array(
-		'php' => '5.4',
+		'php' => '5.6.20',
 	);
 
 	/**

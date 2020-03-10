@@ -1,0 +1,128 @@
+<?xml version="1.0"?>
+<ruleset name="AR/WP/Plugin ruleset">
+
+    <description>Custom ruleset for AR/WP/Plugins</description>
+
+    <!-- Show progress in all reports. -->
+    <arg value="p"/>
+
+    <!-- A path to strip from the front of file paths inside reports. -->
+    <arg name="basepath" value="."/>
+    <arg name="colors"/>
+    <arg name="extensions" value="php"/>
+
+    <!-- Exclude the Composer Vendor directory. -->
+    <exclude-pattern>/vendor/*</exclude-pattern>
+
+    <!-- Exclude the Node Modules directory. -->
+    <exclude-pattern>/node_modules/*</exclude-pattern>
+
+    <!-- Set minimum supported WordPress version -->
+    <config name="minimum_supported_wp_version" value="5.3"/>
+
+    <!-- Check for PHP cross-version compatibility. -->
+    <config name="testVersion" value="5.6-"/>
+    <rule ref="PHPCompatibilityWP"/>
+
+    <!-- Include the WordPress standard. -->
+    <rule ref="WordPress-Extra">
+        <!-- Use PSR-4 file naming standard instead -->
+        <exclude name="WordPress.Files.FileName"/>
+        <!-- Allow short array syntax -->
+        <exclude name="Generic.Arrays.DisallowShortArraySyntax"/>
+        <!-- Temporarily exclude rules -->
+        <!-- ** WordPress-Specific ** -->
+        <exclude name="WordPress.Arrays.CommaAfterArrayItem.NoComma"/>
+        <exclude name="WordPress.CodeAnalysis.AssignmentInCondition.Found"/>
+        <exclude name="WordPress.CodeAnalysis.AssignmentInCondition.FoundInTernaryCondition"/>
+        <exclude name="WordPress.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition"/>
+        <exclude name="WordPress.DB.PreparedSQL.InterpolatedNotPrepared"/>
+        <exclude name="WordPress.DB.PreparedSQL.NotPrepared"/>
+        <exclude name="WordPress.PHP.DontExtract.extract_extract"/>
+        <exclude name="WordPress.PHP.NoSilencedErrors.Discouraged"/>
+        <exclude name="WordPress.PHP.PregQuoteDelimiter.Missing"/>
+        <exclude name="WordPress.PHP.StrictComparisons.LooseComparison"/>
+        <exclude name="WordPress.PHP.StrictInArray.MissingTrueStrict"/>
+        <exclude name="WordPress.PHP.YodaConditions.NotYoda"/>
+        <exclude name="WordPress.Security.EscapeOutput.OutputNotEscaped"/>
+        <exclude name="WordPress.Security.NonceVerification.Missing"/>
+        <exclude name="WordPress.Security.NonceVerification.Recommended"/>
+        <exclude name="WordPress.WP.AlternativeFunctions.json_encode_json_encode"/>
+        <exclude name="WordPress.WP.AlternativeFunctions.parse_url_parse_url"/>
+        <exclude name="WordPress.WP.AlternativeFunctions.rand_mt_rand"/>
+        <exclude name="WordPress.WP.AlternativeFunctions.strip_tags_strip_tags"/>
+        <exclude name="WordPress.WP.GlobalVariablesOverride.Prohibited"/>
+        <exclude name="WordPress.WP.I18n.MissingTranslatorsComment"/>
+        <exclude name="WordPress.WP.I18n.NonSingularStringLiteralText"/>
+        <!-- ** Standard ** -->
+        <exclude name="Generic.CodeAnalysis.ForLoopWithTestFunctionCall.NotAllowed"/>
+        <exclude name="Generic.ControlStructures.InlineControlStructure.NotAllowed"/>
+        <exclude name="Generic.Files.EndFileNewline.NotFound"/>
+        <exclude name="Generic.Files.LineEndings.InvalidEOLChar"/>
+        <exclude name="PEAR.Functions.FunctionCallSignature.CloseBracketLine"/>
+        <exclude name="PEAR.Functions.FunctionCallSignature.ContentAfterOpenBracket"/>
+        <exclude name="PEAR.Functions.FunctionCallSignature.MultipleArguments"/>
+        <exclude name="PHPCompatibility.FunctionUse.ArgumentFunctionsReportCurrentValue.Changed"/>
+        <exclude name="PHPCompatibility.FunctionUse.ArgumentFunctionsReportCurrentValue.NeedsInspection"/>
+        <exclude name="PSR2.Classes.PropertyDeclaration.ScopeMissing"/>
+        <exclude name="PSR2.Classes.PropertyDeclaration.Underscore"/>
+        <exclude name="PSR2.Classes.PropertyDeclaration.VarUsed"/>
+        <exclude name="PSR2.ControlStructures.SwitchDeclaration.TerminatingComment"/>
+        <exclude name="PSR2.Files.ClosingTag.NotAllowed"/>
+        <exclude name="PSR2.Methods.MethodDeclaration.Underscore"/>
+        <exclude name="Squiz.Operators.IncrementDecrementUsage.NoBrackets"/>
+        <exclude name="Squiz.PHP.CommentedOutCode.Found"/>
+        <exclude name="Squiz.PHP.DisallowMultipleAssignments.Found"/>
+        <exclude name="Squiz.PHP.DisallowMultipleAssignments.FoundInControlStructure"/>
+        <exclude name="Squiz.PHP.DisallowSizeFunctionsInLoops.Found"/>
+        <exclude name="Squiz.PHP.Eval.Discouraged"/>
+        <exclude name="Squiz.PHP.NonExecutableCode.Unreachable"/>
+        <exclude name="Squiz.Scope.MethodScope.Missing"/>
+        <exclude name="Squiz.Strings.DoubleQuoteUsage.NotRequired"/>
+        <!-- ** Spacing-Related ** -->
+        <exclude name="Generic.Formatting.SpaceAfterCast.NoSpace"/>
+        <exclude name="Generic.Functions.FunctionCallArgumentSpacing.NoSpaceAfterComma"/>
+        <exclude name="Generic.Functions.OpeningFunctionBraceKernighanRitchie.SpaceBeforeBrace"/>
+        <exclude name="Generic.WhiteSpace.ArbitraryParenthesesSpacing.SpaceAfterOpen"/>
+        <exclude name="Generic.WhiteSpace.ArbitraryParenthesesSpacing.SpaceBeforeClose"/>
+        <exclude name="Generic.WhiteSpace.DisallowSpaceIndent.SpacesUsed"/>
+        <exclude name="Generic.WhiteSpace.ScopeIndent.IncorrectExact"/>
+        <exclude name="PEAR.Functions.FunctionCallSignature.SpaceAfterOpenBracket"/>
+        <exclude name="PEAR.Functions.FunctionCallSignature.SpaceBeforeCloseBracket"/>
+        <exclude name="PSR2.ControlStructures.SwitchDeclaration.SpaceBeforeColonCASE"/>
+        <exclude name="PSR2.ControlStructures.SwitchDeclaration.SpaceBeforeColonDEFAULT"/>
+        <exclude name="Squiz.ControlStructures.ControlSignature.SpaceAfterCloseBrace"/>
+        <exclude name="Squiz.ControlStructures.ControlSignature.SpaceAfterKeyword"/>
+        <exclude name="Squiz.Functions.FunctionDeclarationArgumentSpacing.SpacingAfterOpen"/>
+        <exclude name="Squiz.PHP.EmbeddedPhp.SpacingBeforeClose"/>
+        <exclude name="Squiz.Strings.ConcatenationSpacing.PaddingFound"/>
+        <exclude name="Squiz.WhiteSpace.SemicolonSpacing.Incorrect"/>
+        <exclude name="Squiz.WhiteSpace.SuperfluousWhitespace.EmptyLines"/>
+        <exclude name="WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound"/>
+        <exclude name="WordPress.Arrays.ArrayDeclarationSpacing.NoSpaceAfterArrayOpener"/>
+        <exclude name="WordPress.Arrays.ArrayDeclarationSpacing.NoSpaceBeforeArrayCloser"/>
+        <exclude name="WordPress.Arrays.ArrayDeclarationSpacing.SpaceAfterKeyword"/>
+        <exclude name="WordPress.Arrays.ArrayKeySpacingRestrictions.NoSpacesAroundArrayKeys"/>
+        <exclude name="WordPress.Arrays.CommaAfterArrayItem.NoSpaceAfterComma"/>
+        <exclude name="WordPress.WhiteSpace.CastStructureSpacing.NoSpaceBeforeOpenParenthesis"/>
+        <exclude name="WordPress.WhiteSpace.ControlStructureSpacing.ExtraSpaceAfterCloseParenthesis"/>
+        <exclude name="WordPress.WhiteSpace.ControlStructureSpacing.ExtraSpaceBeforeCloseParenthesis"/>
+        <exclude name="WordPress.WhiteSpace.ControlStructureSpacing.NoSpaceAfterOpenParenthesis"/>
+        <exclude name="WordPress.WhiteSpace.ControlStructureSpacing.NoSpaceBeforeCloseParenthesis"/>
+        <exclude name="WordPress.WhiteSpace.DisallowInlineTabs.NonIndentTabsUsed"/>
+        <exclude name="WordPress.WhiteSpace.OperatorSpacing.NoSpaceAfter"/>
+        <exclude name="WordPress.WhiteSpace.OperatorSpacing.NoSpaceBefore"/>
+        <exclude name="WordPress.WhiteSpace.OperatorSpacing.SpacingAfter"/>
+        <!-- ** Alignment-Related ** -->
+        <exclude name="WordPress.Arrays.ArrayIndentation.CloseBraceNotAligned"/>
+        <exclude name="WordPress.Arrays.ArrayIndentation.ItemNotAligned"/>
+        <exclude name="WordPress.Arrays.MultipleStatementAlignment.DoubleArrowNotAligned"/>
+        <exclude name="Generic.Formatting.MultipleStatementAlignment.NotSameWarning"/>
+    </rule>
+
+    <!-- Add in some extra rules from other standards. -->
+    <!-- <rule ref="Generic.CodeAnalysis.UnusedFunctionParameter"/> -->
+    <!-- <rule ref="Generic.Commenting.Todo"/> -->
+    <rule ref="Squiz.Commenting.FunctionComment.SpacingAfter"/>
+
+</ruleset>
