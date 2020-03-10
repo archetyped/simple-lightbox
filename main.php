@@ -9,9 +9,9 @@
  * Plugin Name: Simple Lightbox
  * Plugin URI: http://archetyped.com/tools/simple-lightbox/
  * Description: The highly customizable lightbox for WordPress
- * Version: 2.8.0
+ * Version: 2.8.1
  * Requires at least: 5.3
- * Requires PHP: 7.2
+ * Requires PHP: 5.6.20
  * Text Domain: simple-lightbox
  * Domain Path: /l10n
  * Author: Archetyped

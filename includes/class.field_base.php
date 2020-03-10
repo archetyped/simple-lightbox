@@ -491,9 +491,16 @@ class SLB_Field_Base extends SLB_Base {
 	 * @param bool $overwrite Optional. Overwrite existing format. Default false.
 	 * @return void
 	 */
-	protected function add_id_format( string $name, array $options, bool $overwrite = false ) {
+	protected function add_id_format( $name, array $options, $overwrite = false ) {
 		// Init ID formats before adding new ones.
 		$this->init_id_formats();
+		// Validate args.
+		$name = trim($name);
+		// Stop if name invalid.
+		if ( empty( $name ) ) {
+			return;
+		}
+		$overwrite = (bool) $overwrite;
 		// Do not add format if name matches existing format (when overwriting not allowed).
 		if ( ! $overwrite && in_array( $name, array_keys( $this->id_formats ) ) ) {
 			return;

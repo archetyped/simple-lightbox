@@ -390,7 +390,7 @@ class SLB_Fields extends SLB_Field_Collection {
 	 *
 	 * @return string Processed value.
 	 */
-	function process_placeholder_data_ext( string $output, SLB_Field $item, array $placeholder, string $layout, array $data ) {
+	function process_placeholder_data_ext( $output, SLB_Field $item, array $placeholder, $layout, array $data ) {
 		$key = ( isset( $placeholder['attributes']['id'] ) ) ? $placeholder['attributes']['id'] : false;
 		if ( !! $key && isset( $data[ $key ] ) && is_scalar( $data[ $key ] ) ) {
 			$output = strval( $data[ $key ] );
