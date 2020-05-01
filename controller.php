@@ -1555,6 +1555,8 @@ class SLB_Lightbox extends SLB_Base {
 			else
 				$group = $group . '-1';
 		}
+		// Add final group ID to array
+		$groups[] = $group;
 		return $group;
 	}
 
