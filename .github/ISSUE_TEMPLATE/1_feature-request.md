@@ -1,7 +1,7 @@
 ---
 name: Feature request
 about: Enhance! Suggest an idea for SLB.
-title: "[Request] "
+title: "[Request]: "
 labels: enhancement
 assignees: ''
 
