@@ -1,7 +1,7 @@
 ---
 name: Support Ticket
 about: Get support for an issue you are experiencing
-title: "[Support] "
+title: ""
 labels: support
 assignees: ''
 
