@@ -9,11 +9,11 @@ assignees: ''
 
 ## Description of feature
 
-
+(Describe your feature or idea here)
 
 ## This feature would be used to
 
-
+(Describe usage here)
 
 ## If you added this feature, I would:
 
