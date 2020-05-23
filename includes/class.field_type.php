@@ -37,14 +37,14 @@ class SLB_Field_Type extends SLB_Field_Base {
 	 */
 	var $caller = null;
 
-	function __construct($id = '', $parent = null) {
+	function __construct( $id = '', $parent = null ) {
 		$args                   = func_get_args();
-		$defaults               = $this->integrate_id($id);
-		if ( !is_array($parent) )
+		$defaults               = $this->integrate_id( $id );
+		if ( ! is_array( $parent ) )
 			$defaults['parent'] = $parent;
 
-		$props = $this->make_properties($args, $defaults);
-		parent::__construct($props);
+		$props = $this->make_properties( $args, $defaults );
+		parent::__construct( $props );
 	}
 
 	/* Getters/Setters */
@@ -55,9 +55,9 @@ class SLB_Field_Type extends SLB_Field_Base {
 	 * @param string $name Value to retrieve from member
 	 * @return mixed Member value if found (Default: empty string)
 	 */
-	function get_container_value($member, $name = '', $default = '') {
+	function get_container_value( $member, $name = '', $default = '' ) {
 		$container =& $this->get_container();
-		return $this->get_object_value($container, $member, $name, $default, 'container');
+		return $this->get_object_value( $container, $member, $name, $default, 'container' );
 	}
 
 	/**
@@ -66,9 +66,9 @@ class SLB_Field_Type extends SLB_Field_Base {
 	 * @param string $name Value to retrieve from member
 	 * @return mixed Member value if found (Default: empty string)
 	 */
-	function get_caller_value($member, $name = '', $default = '') {
+	function get_caller_value( $member, $name = '', $default = '' ) {
 		$caller =& $this->get_caller();
-		return $this->get_object_value($caller, $member, $name, $default, 'caller');
+		return $this->get_object_value( $caller, $member, $name, $default, 'caller' );
 	}
 
 	/**
@@ -76,8 +76,8 @@ class SLB_Field_Type extends SLB_Field_Base {
 	 * Reference is cleared if no valid object is passed to method
 	 * @param object $container
 	 */
-	function set_container(&$container) {
-		if ( !empty($container) && is_object($container) ) {
+	function set_container( &$container ) {
+		if ( ! empty( $container ) && is_object( $container ) ) {
 			// Set as param as container for current field
 			$this->container =& $container;
 		} else {
@@ -109,7 +109,7 @@ class SLB_Field_Type extends SLB_Field_Base {
 	 * @return bool TRUE if field is contained, FALSE otherwise
 	 */
 	function has_container() {
-		return !empty($this->container);
+		return ! empty( $this->container );
 	}
 
 	/**
@@ -117,18 +117,17 @@ class SLB_Field_Type extends SLB_Field_Base {
 	 * Any existing reference is cleared if no valid object is passed to method
 	 * @param object $caller Calling object
 	 */
-	function set_caller(&$caller) {
-		if ( !empty($caller) && is_object($caller) )
+	function set_caller( &$caller ) {
+		if ( ! empty( $caller ) && is_object( $caller ) )
 			$this->caller =& $caller;
-		else
-			$this->clear_caller();
+		else $this->clear_caller();
 	}
 
 	/**
 	 * Clears reference to calling object of current field
 	 */
 	function clear_caller() {
-		unset($this->caller);
+		unset( $this->caller );
 	}
 
 	/**
@@ -147,7 +146,7 @@ class SLB_Field_Type extends SLB_Field_Base {
 	 * @return bool TRUE if field is called by another field, FALSE otherwise
 	 */
 	function has_caller() {
-		return !empty($this->caller);
+		return ! empty( $this->caller );
 	}
 
 	/**
@@ -157,18 +156,18 @@ class SLB_Field_Type extends SLB_Field_Base {
 	 * @param array $properties Properties for element (passed as keyed associative array)
 	 * @param string $id_prop Name of property to set $name to (e.g. ID, etc.)
 	 */
-	function set_element($name, $type, $properties = array(), $id_prop = 'id') {
-		$name = trim(strval($name));
-		if ( empty($name) )
+	function set_element( $name, $type, $properties = array(), $id_prop = 'id' ) {
+		$name = trim( strval( $name ) );
+		if ( empty( $name ) )
 			return false;
 		// Create new field for element
-		$el = new SLB_Field($name, $type);
+		$el = new SLB_Field( $name, $type );
 		// Set container to current field instance
-		$el->set_container($this);
+		$el->set_container( $this );
 		// Add properties to element
-		$el->set_properties($properties);
+		$el->set_properties( $properties );
 		// Save element to current instance
-		$this->elements[$name] =& $el;
+		$this->elements[ $name ] =& $el;
 	}
 
 	/**
@@ -176,11 +175,11 @@ class SLB_Field_Type extends SLB_Field_Base {
 	 * @param string $name Name of layout
 	 * @param string $value Layout text
 	 */
-	function set_layout($name, $value = '') {
-		if ( !is_string($name) )
+	function set_layout( $name, $value = '' ) {
+		if ( ! is_string( $name ) )
 			return false;
-		$name                = trim($name);
-		$this->layout[$name] = $value;
+		$name                  = trim( $name );
+		$this->layout[ $name ] = $value;
 		return true;
 	}
 
@@ -190,27 +189,27 @@ class SLB_Field_Type extends SLB_Field_Base {
 	 * @param bool $parse_nested (optional) Whether nested layouts should be expanded in retreived layout or not (Default: TRUE)
 	 * @return string Specified layout text
 	 */
-	function get_layout($name = 'form', $parse_nested = true) {
+	function get_layout( $name = 'form', $parse_nested = true ) {
 		// Retrieve specified layout (use $name value if no layout by that name exists)
-		if ( empty($name) )
-			$name = $this->get_container_value('build_vars', 'layout', 'form');
-		$layout   = $this->get_member_value('layout', $name, $name);
+		if ( empty( $name ) )
+			$name = $this->get_container_value( 'build_vars', 'layout', 'form' );
+		$layout   = $this->get_member_value( 'layout', $name, $name );
 
 		// Find all nested layouts in current layout
-		if ( !empty($layout) && !!$parse_nested ) {
+		if ( ! empty( $layout ) && ! ! $parse_nested ) {
 			$ph = $this->get_placeholder_defaults();
 
-			while ($ph->match = $this->parse_layout($layout, $ph->pattern_layout)) {
+			while ( $ph->match = $this->parse_layout( $layout, $ph->pattern_layout ) ) {
 				// Iterate through the different types of layout placeholders
-				foreach ($ph->match as $tag => $instances) {
+				foreach ( $ph->match as $tag => $instances ) {
 					// Iterate through instances of a specific type of layout placeholder
-					foreach ($instances as $instance) {
+					foreach ( $instances as $instance ) {
 						// Get nested layout
-						$nested_layout = $this->get_member_value($instance);
+						$nested_layout = $this->get_member_value( $instance );
 
 						// Replace layout placeholder with retrieved item data
-						if ( !empty($nested_layout) )
-							$layout = str_replace($ph->start . $instance['match'] . $ph->end, $nested_layout, $layout);
+						if ( ! empty( $nested_layout ) )
+							$layout = str_replace( $ph->start . $instance['match'] . $ph->end, $nested_layout, $layout );
 					}
 				}
 			}
@@ -225,10 +224,10 @@ class SLB_Field_Type extends SLB_Field_Base {
 	 * @param string $layout Name of layout to check for
 	 * @return bool TRUE if layout exists, FALSE otherwise
 	 */
-	function has_layout($layout) {
+	function has_layout( $layout ) {
 		$ret = false;
-		if ( is_string($layout) && ($layout = trim($layout)) && !empty($layout) ) {
-			$layout  = $this->get_member_value('layout', $layout, false);
+		if ( is_string( $layout ) && ( $layout = trim( $layout ) ) && ! empty( $layout ) ) {
+			$layout  = $this->get_member_value( 'layout', $layout, false );
 			if ( $layout !== false )
 				$ret = true;
 		}
@@ -242,9 +241,9 @@ class SLB_Field_Type extends SLB_Field_Base {
 	 * @param string $layout_content Layout content (markup)
 	 * @return bool TRUE if layout is valid, FALSE otherwise
 	 */
-	function is_valid_layout($layout_content) {
+	function is_valid_layout( $layout_content ) {
 		$ph = $this->get_placeholder_defaults();
-		return preg_match($ph->pattern_general, $layout_content);
+		return preg_match( $ph->pattern_general, $layout_content );
 	}
 
 	/**
@@ -252,14 +251,14 @@ class SLB_Field_Type extends SLB_Field_Base {
 	 * @param string $layout Layout data
 	 * @param string $search Regular expression pattern to search layout for
 	 * @return array Associative array containing all of the regular expression matches in the layout data
-	 * 	Array Structure:
-	 *		root => placeholder tags
-	 *				=> Tag instances (array)
-	 *					'tag'			=> (string) tag name
-	 *					'match' 		=> (string) placeholder match
-	 *					'attributes' 	=> (array) attributes
+	 *  Array Structure:
+	 *      root => placeholder tags
+	 *              => Tag instances (array)
+	 *                  'tag'           => (string) tag name
+	 *                  'match'         => (string) placeholder match
+	 *                  'attributes'    => (array) attributes
 	 */
-	function parse_layout($layout, $search) {
+	function parse_layout( $layout, $search ) {
 		$parse_match = '';
 		$result      = [];
 
@@ -291,17 +290,17 @@ class SLB_Field_Type extends SLB_Field_Base {
 		$ph_xml = $ph_wrap_start . $ph_xml . $ph_wrap_end;
 		// Parse XML data.
 		$ph_prs = xml_parser_create();
-		xml_parser_set_option($ph_prs, XML_OPTION_SKIP_WHITE, 1);
-		xml_parser_set_option($ph_prs, XML_OPTION_CASE_FOLDING, 0);
-		$ph_parsed = xml_parse_into_struct($ph_prs, $ph_xml, $parse_result['values'], $parse_result['index']);
-		xml_parser_free($ph_prs);
+		xml_parser_set_option( $ph_prs, XML_OPTION_SKIP_WHITE, 1 );
+		xml_parser_set_option( $ph_prs, XML_OPTION_CASE_FOLDING, 0 );
+		$ph_parsed = xml_parse_into_struct( $ph_prs, $ph_xml, $parse_result['values'], $parse_result['index'] );
+		xml_parser_free( $ph_prs );
 
 		// Stop if placeholder parsing failed.
 		if ( ! $ph_parsed ) {
 			return $result;
 		}
 
-		unset( $parse_result['index'][$ph_root_tag] );
+		unset( $parse_result['index'][ $ph_root_tag ] );
 
 		// Build structured array with all parsed data.
 		$ph_default = [
@@ -317,7 +316,7 @@ class SLB_Field_Type extends SLB_Field_Base {
 			// Process placeholder instances.
 			foreach ( $instances as $instance ) {
 				// Skip instance if it doesn't exist in parse results.
-				if ( !isset( $parse_result['values'][ $instance ] ) ) {
+				if ( ! isset( $parse_result['values'][ $instance ] ) ) {
 					continue;
 				}
 				// Stop processing instance if a previously-saved instance with the same options already exists.
@@ -357,7 +356,7 @@ class SLB_Field_Type extends SLB_Field_Base {
 		$ph                  = new stdClass();
 		$ph->start           = '{';
 		$ph->end             = '}';
-		$ph->reserved        = array('ref' => 'ref_base');
+		$ph->reserved        = array( 'ref' => 'ref_base' );
 		$ph->pattern_general = '/' . $ph->start . '([a-zA-Z0-9_].*?)' . $ph->end . '/i';
 		$ph->pattern_layout  = '/' . $ph->start . '([a-zA-Z0-9].*?\s+' . $ph->reserved['ref'] . '="layout.*?".*?)' . $ph->end . '/i';
 		return $ph;
@@ -368,10 +367,10 @@ class SLB_Field_Type extends SLB_Field_Base {
 	 * @param string $layout (optional) Layout to build
 	 * @param string $data Data to pass to layout
 	 */
-	function build($layout = null, $data = null) {
-		$this->util->do_action_ref_array('build_pre', array($this));
-		echo $this->build_layout($layout, $data);
-		$this->util->do_action_ref_array('build_post', array($this));
+	function build( $layout = null, $data = null ) {
+		$this->util->do_action_ref_array( 'build_pre', array( $this ) );
+		echo $this->build_layout( $layout, $data );
+		$this->util->do_action_ref_array( 'build_post', array( $this ) );
 	}
 
 	/**
@@ -379,18 +378,18 @@ class SLB_Field_Type extends SLB_Field_Base {
 	 * @param string $layout (optional) Name of layout to build
 	 * @param array $data Additional data for current item
 	 */
-	function build_layout($layout = 'form', $data = null) {
+	function build_layout( $layout = 'form', $data = null ) {
 		$out_default = '';
 		// Get base layout
-		$out = $this->get_layout($layout);
+		$out = $this->get_layout( $layout );
 		// Only parse valid layouts
-		if ( $this->is_valid_layout($out) ) {
+		if ( $this->is_valid_layout( $out ) ) {
 			$out = $this->process_placeholders( $out, $layout, $data );
 		} else {
 			$out = $out_default;
 		}
 		/* Return generated value */
-		$out = $this->format_final($out);
+		$out = $this->format_final( $out );
 		return $out;
 	}
 
@@ -432,7 +431,7 @@ class SLB_Field_Type extends SLB_Field_Base {
 					}
 
 					// Clear value if value not a string
-					if ( !is_scalar( $target_property ) ) {
+					if ( ! is_scalar( $target_property ) ) {
 						$target_property = '';
 					}
 					// Replace layout placeholder with retrieved item data
