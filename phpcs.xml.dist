@@ -75,7 +75,6 @@
         <exclude name="PSR2.Classes.PropertyDeclaration.ScopeMissing"/>
         <exclude name="PSR2.Classes.PropertyDeclaration.Underscore"/>
         <exclude name="PSR2.Methods.MethodDeclaration.Underscore"/>
-        <exclude name="PSR2.Classes.PropertyDeclaration.VarUsed"/>
     </rule>
 
     <!-- Add in some extra rules from other standards. -->

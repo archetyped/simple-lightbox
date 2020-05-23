@@ -15,19 +15,19 @@ class SLB_Option extends SLB_Field {
 	 * Determines whether option will be sent to client
 	 * @var bool
 	 */
-	var $in_client = false;
+	public $in_client = false;
 
 	/**
 	 * Child mapping
 	 * @see SLB_Field_Base::map
 	 * @var array
 	 */
-	var $map = array(
+	public $map = array(
 		'default' => 'data',
 		'attr'    => 'properties'
 	);
 
-	var $property_priority = array( 'id', 'data', 'parent' );
+	public $property_priority = array( 'id', 'data', 'parent' );
 
 	/* Init */
 

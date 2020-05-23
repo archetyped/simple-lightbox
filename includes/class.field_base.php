@@ -17,7 +17,7 @@ class SLB_Field_Base extends SLB_Base {
 	/**
 	 * @var string Unique name
 	 */
-	var $id = '';
+	public $id = '';
 
 	/**
 	 * ID formatting options.
@@ -42,9 +42,9 @@ class SLB_Field_Base extends SLB_Base {
 	 * > Value: Placeholder for special character
 	 * @var array
 	 */
-	var $special_chars = null;
+	public $special_chars = null;
 
-	var $special_chars_default = array(
+	public $special_chars_default = array(
 		'{' => '%SQB_L%',
 		'}' => '%SQB_R%',
 	);
@@ -53,23 +53,23 @@ class SLB_Field_Base extends SLB_Base {
 	 * Reference to parent object that current instance inherits from
 	 * @var object
 	 */
-	var $parent = null;
+	public $parent = null;
 
 	/**
 	 * Title
 	 * @var string
 	 */
-	var $title = '';
+	public $title = '';
 
 	/**
 	 * @var string Short description
 	 */
-	var $description = '';
+	public $description = '';
 
 	/**
 	 * @var array Object Properties
 	 */
-	var $properties = array();
+	public $properties = array();
 
 	/**
 	 * Initialization properties
@@ -85,27 +85,27 @@ class SLB_Field_Base extends SLB_Base {
 	 * Reason: Faster searching over large arrays
 	 * @var array Groupings of Properties
 	 */
-	var $property_groups = array();
+	public $property_groups = array();
 
 	/**
 	 * Keys to filter out of properties array before setting properties
 	 * @var array
 	 */
-	var $property_filter = array( 'group' );
+	public $property_filter = array( 'group' );
 
 	/**
 	 * Define order of properties
 	 * Useful when processing order is important (e.g. one property depends on another)
 	 * @var array
 	 */
-	var $property_priority = array();
+	public $property_priority = array();
 
 	/**
 	 * Data for object
 	 * May also contain data for nested objects
 	 * @var mixed
 	 */
-	var $data = null;
+	public $data = null;
 
 	/**
 	 * Whether data has been fetched or not
@@ -116,18 +116,18 @@ class SLB_Field_Base extends SLB_Base {
 	/**
 	 * @var array Script resources to include for object
 	 */
-	var $scripts = array();
+	public $scripts = array();
 
 	/**
 	 * @var array CSS style resources to include for object
 	 */
-	var $styles = array();
+	public $styles = array();
 
 	/**
 	 * Hooks (Filters/Actions) for object
 	 * @var array
 	 */
-	var $hooks = array();
+	public $hooks = array();
 
 	/**
 	 * Mapping of child properties to parent members
@@ -137,7 +137,7 @@ class SLB_Field_Base extends SLB_Base {
 	 *  > Val: Parent property to map TO
 	 * @var array
 	 */
-	var $map = null;
+	public $map = null;
 
 	/**
 	 * Options used when building collection (callbacks, etc.)
@@ -146,9 +146,9 @@ class SLB_Field_Base extends SLB_Base {
 	 * > Value: Option value
 	 * @var array
 	 */
-	var $build_vars = array();
+	public $build_vars = array();
 
-	var $build_vars_default = array();
+	public $build_vars_default = array();
 
 	/**
 	 * Constructor

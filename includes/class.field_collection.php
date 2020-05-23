@@ -17,15 +17,15 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	 * Item type
 	 * @var string
 	 */
-	var $item_type = 'SLB_Field';
+	public $item_type = 'SLB_Field';
 
 	/**
 	 * Indexed array of items in collection
 	 * @var array
 	 */
-	var $items = array();
+	public $items = array();
 
-	var $build_vars_default = array(
+	public $build_vars_default = array(
 		'groups'       => array(),
 		'context'      => '',
 		'layout'       => 'form',
@@ -43,7 +43,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	 *  > items array Items in group
 	 * @var array
 	 */
-	var $groups = array();
+	public $groups = array();
 
 	protected $properties_init = null;
 

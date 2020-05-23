@@ -12,30 +12,30 @@ class SLB_Field_Type extends SLB_Field_Base {
 	/**
 	 * @var array Array of Field types that make up current Field type
 	 */
-	var $elements = array();
+	public $elements = array();
 
 	/**
 	 * @var array Field type layouts
 	 */
-	var $layout = array();
+	public $layout = array();
 
 	/**
 	 * @var SLB_Field_Type Parent field type (reference)
 	 */
-	var $parent = null;
+	public $parent = null;
 
 	/**
 	 * Object that field is in
 	 * @var SLB_Field|SLB_Field_Type|SLB_Field_Collection
 	 */
-	var $container = null;
+	public $container = null;
 
 	/**
 	 * Object that called field
 	 * Used to determine field hierarchy/nesting
 	 * @var SLB_Field|SLB_Field_Type|SLB_Field_Collection
 	 */
-	var $caller = null;
+	public $caller = null;
 
 	function __construct( $id = '', $parent = null ) {
 		$args                   = func_get_args();

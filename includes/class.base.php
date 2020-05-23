@@ -94,7 +94,7 @@ class SLB_Base {
 	 * Utilities
 	 * @var SLB_Utilities
 	 */
-	var $util = null;
+	public $util = null;
 
 	/**
 	 * Options
@@ -106,7 +106,7 @@ class SLB_Base {
 	 * Admin
 	 * @var SLB_Admin
 	 */
-	var $admin = null;
+	public $admin = null;
 
 	/*-** Initialization **-*/
 

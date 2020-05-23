@@ -20,19 +20,19 @@ class SLB_Lightbox extends SLB_Base {
 	 * Themes collection
 	 * @var SLB_Themes
 	 */
-	var $themes = null;
+	public $themes = null;
 
 	/**
 	 * Content types
 	 * @var SLB_Content_Handlers
 	 */
-	var $handlers = null;
+	public $handlers = null;
 
 	/**
 	 * Template tags
 	 * @var SLB_Template_Tags
 	 */
-	var $template_tags = null;
+	public $template_tags = null;
 
 	/**
 	 * Media item template.

@@ -8,13 +8,13 @@
  */
 class SLB_Fields extends SLB_Field_Collection {
 
-	var $item_type = 'SLB_Field_Type';
+	public $item_type = 'SLB_Field_Type';
 
 	/**
 	 * Placeholder handlers
 	 * @var array
 	 */
-	var $placholders = null;
+	public $placholders = null;
 
 	/* Constructor */
 

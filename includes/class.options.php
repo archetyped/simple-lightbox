@@ -12,7 +12,7 @@ class SLB_Options extends SLB_Field_Collection {
 
 	public $hook_prefix = 'options';
 
-	var $item_type = 'SLB_Option';
+	public $item_type = 'SLB_Option';
 
 	/**
 	 * Key for saving version to DB
@@ -24,11 +24,11 @@ class SLB_Options extends SLB_Field_Collection {
 	 * Whether version has been checked
 	 * @var bool
 	 */
-	var $version_checked = false;
+	public $version_checked = false;
 
-	var $items_migrated = false;
+	public $items_migrated = false;
 
-	var $build_vars = array(
+	public $build_vars = array(
 		'validate_pre'  => false,
 		'validate_post' => false,
 		'save_pre'      => false,
