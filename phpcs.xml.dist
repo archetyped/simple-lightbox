@@ -37,7 +37,6 @@
         <exclude name="Squiz.PHP.Eval.Discouraged"/>
         <exclude name="Squiz.PHP.CommentedOutCode.Found"/>
         <exclude name="Squiz.Scope.MethodScope.Missing"/>
-        <exclude name="PSR2.Classes.PropertyDeclaration.ScopeMissing"/>
         <exclude name="PSR2.Classes.PropertyDeclaration.Underscore"/>
         <exclude name="PSR2.Methods.MethodDeclaration.Underscore"/>
 
