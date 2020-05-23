@@ -180,7 +180,8 @@ class SLB_Field_Base extends SLB_Base {
 		$path = $this->util->build_path( $args );
 		$item =& $this;
 		// Iterate over path and check if each level exists before moving on to the next
-		for ( $x = 0; $x < count( $path ); $x++ ) {
+		$path_size = count( $path );
+		for ( $x = 0; $x < $path_size; $x++ ) {
 			if ( $this->util->property_exists( $item, $path[ $x ] ) ) {
 				// Set $item as reference to next level in path for next iteration
 				$item =& $this->util->get_property( $item, $path[ $x ] );
@@ -203,7 +204,9 @@ class SLB_Field_Base extends SLB_Base {
 		$path = $this->util->build_path( func_get_args() );
 		if ( $this->path_isset( $path ) ) {
 			$ret =& $this;
-			for ( $x = 0; $x < count( $path ); $x++ ) {
+
+			$path_size = count( $path );
+			for ( $x = 0; $x < $path_size; $x++ ) {
 				if ( 0 == $x )
 					$ret  =& $ret->{ $path[ $x ] };
 				else $ret =& $ret[ $path[ $x ] ];
