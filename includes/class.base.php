@@ -85,7 +85,7 @@ class SLB_Base {
 	 */
 	private $client_files = array(
 		'scripts' => array(),
-		'styles'  => array()
+		'styles'  => array(),
 	);
 
 	/*-** Instances **-*/

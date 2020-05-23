@@ -106,7 +106,7 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	private $media_items_raw = [
 		'props' => [],
-		'uri'   => []
+		'uri'   => [],
 	];
 
 	/**
@@ -198,8 +198,8 @@ class SLB_Lightbox extends SLB_Base {
 				'core' => array(
 					'file'    => 'client/css/app.css',
 					'context' => array( 'public' ),
-				)
-			)
+				),
+			),
 		);
 		parent::_client_files( $files );
 	}
@@ -295,167 +295,167 @@ class SLB_Lightbox extends SLB_Base {
 			'groups' => array(
 				'activation' => array(
 					'title'    => __( 'Activation', 'simple-lightbox' ),
-					'priority' => 10
+					'priority' => 10,
 				),
 				'grouping'   => array(
 					'title'    => __( 'Grouping', 'simple-lightbox' ),
-					'priority' => 20
+					'priority' => 20,
 				),
 				'ui'         => array(
 					'title'    => __( 'UI', 'simple-lightbox' ),
-					'priority' => 30
+					'priority' => 30,
 				),
 				'labels'     => array(
 					'title'    => __( 'Labels', 'simple-lightbox' ),
-					'priority' => 40
+					'priority' => 40,
 				),
 			),
 			'items'  => array(
 				'enabled'             => array(
 					'title'   => __( 'Enable Lightbox Functionality', 'simple-lightbox' ),
 					'default' => true,
-					'group'   => array( 'activation', 10 )
+					'group'   => array( 'activation', 10 ),
 				),
 				'enabled_home'        => array(
 					'title'   => __( 'Enable on Home page', 'simple-lightbox' ),
 					'default' => true,
-					'group'   => array( 'activation', 20 )
+					'group'   => array( 'activation', 20 ),
 				),
 				'enabled_post'        => array(
 					'title'   => __( 'Enable on Single Posts', 'simple-lightbox' ),
 					'default' => true,
-					'group'   => array( 'activation', 30 )
+					'group'   => array( 'activation', 30 ),
 				),
 				'enabled_page'        => array(
 					'title'   => __( 'Enable on Pages', 'simple-lightbox' ),
 					'default' => true,
-					'group'   => array( 'activation', 40 )
+					'group'   => array( 'activation', 40 ),
 				),
 				'enabled_archive'     => array(
 					'title'   => __( 'Enable on Archive Pages (tags, categories, etc.)', 'simple-lightbox' ),
 					'default' => true,
-					'group'   => array( 'activation', 50 )
+					'group'   => array( 'activation', 50 ),
 				),
 				'enabled_widget'      => array(
 					'title'   => __( 'Enable for Widgets', 'simple-lightbox' ),
 					'default' => false,
-					'group'   => array( 'activation', 60 )
+					'group'   => array( 'activation', 60 ),
 				),
 				'enabled_menu'        => array(
 					'title'   => __( 'Enable for Menus', 'simple-lightbox' ),
 					'default' => false,
-					'group'   => array( 'activation', 60 )
+					'group'   => array( 'activation', 60 ),
 				),
 				'group_links'         => array(
 					'title'   => __( 'Group items (for displaying as a slideshow)', 'simple-lightbox' ),
 					'default' => true,
-					'group'   => array( 'grouping', 10 )
+					'group'   => array( 'grouping', 10 ),
 				),
 				'group_post'          => array(
 					'title'   => __( 'Group items by Post (e.g. on pages with multiple posts)', 'simple-lightbox' ),
 					'default' => true,
-					'group'   => array( 'grouping', 20 )
+					'group'   => array( 'grouping', 20 ),
 				),
 				'group_gallery'       => array(
 					'title'   => __( 'Group gallery items separately', 'simple-lightbox' ),
 					'default' => false,
-					'group'   => array( 'grouping', 30 )
+					'group'   => array( 'grouping', 30 ),
 				),
 				'group_widget'        => array(
 					'title'   => __( 'Group widget items separately', 'simple-lightbox' ),
 					'default' => false,
-					'group'   => array( 'grouping', 40 )
+					'group'   => array( 'grouping', 40 ),
 				),
 				'group_menu'          => array(
 					'title'   => __( 'Group menu items separately', 'simple-lightbox' ),
 					'default' => false,
-					'group'   => array( 'grouping', 50 )
+					'group'   => array( 'grouping', 50 ),
 				),
 				'ui_autofit'          => array(
 					'title'     => __( 'Resize lightbox to fit in window', 'simple-lightbox' ),
 					'default'   => true,
 					'group'     => array( 'ui', 10 ),
-					'in_client' => true
+					'in_client' => true,
 				),
 				'ui_animate'          => array(
 					'title'     => __( 'Enable animations', 'simple-lightbox' ),
 					'default'   => true,
 					'group'     => array( 'ui', 20 ),
-					'in_client' => true
+					'in_client' => true,
 				),
 				'slideshow_autostart' => array(
 					'title'     => __( 'Start Slideshow Automatically', 'simple-lightbox' ),
 					'default'   => true,
 					'group'     => array( 'ui', 30 ),
-					'in_client' => true
+					'in_client' => true,
 				),
 				'slideshow_duration'  => array(
 					'title'     => __( 'Slide Duration (Seconds)', 'simple-lightbox' ),
 					'default'   => '6',
 					'attr'      => array(
 						'size'      => 3,
-						'maxlength' => 3
+						'maxlength' => 3,
 					),
 					'group'     => array( 'ui', 40 ),
-					'in_client' => true
+					'in_client' => true,
 				),
 				'group_loop'          => array(
 					'title'     => __( 'Loop through items', 'simple-lightbox' ),
 					'default'   => true,
 					'group'     => array( 'ui', 50 ),
-					'in_client' => true
+					'in_client' => true,
 				),
 				'ui_overlay_opacity'  => array(
 					'title'     => __( 'Overlay Opacity (0 - 1)', 'simple-lightbox' ),
 					'default'   => '0.8',
 					'attr'      => array(
 						'size'      => 3,
-						'maxlength' => 3
+						'maxlength' => 3,
 					),
 					'group'     => array( 'ui', 60 ),
-					'in_client' => true
+					'in_client' => true,
 				),
 				'ui_title_default'    => array(
 					'title'     => __( 'Enable default title', 'simple-lightbox' ),
 					'default'   => false,
 					'group'     => array( 'ui', 70 ),
-					'in_client' => true
+					'in_client' => true,
 				),
 				'txt_loading'         => array(
 					'title'   => __( 'Loading indicator', 'simple-lightbox' ),
 					'default' => 'Loading',
-					'group'   => array( 'labels', 20 )
+					'group'   => array( 'labels', 20 ),
 				),
 				'txt_close'           => array(
 					'title'   => __( 'Close button', 'simple-lightbox' ),
 					'default' => 'Close',
-					'group'   => array( 'labels', 10 )
+					'group'   => array( 'labels', 10 ),
 				),
 				'txt_nav_next'        => array(
 					'title'   => __( 'Next Item button', 'simple-lightbox' ),
 					'default' => 'Next',
-					'group'   => array( 'labels', 30 )
+					'group'   => array( 'labels', 30 ),
 				),
 				'txt_nav_prev'        => array(
 					'title'   => __( 'Previous Item button', 'simple-lightbox' ),
 					'default' => 'Previous',
-					'group'   => array( 'labels', 40 )
+					'group'   => array( 'labels', 40 ),
 				),
 				'txt_slideshow_start' => array(
 					'title'   => __( 'Start Slideshow button', 'simple-lightbox' ),
 					'default' => 'Start slideshow',
-					'group'   => array( 'labels', 50 )
+					'group'   => array( 'labels', 50 ),
 				),
 				'txt_slideshow_stop'  => array(
 					'title'   => __( 'Stop Slideshow button', 'simple-lightbox' ),
 					'default' => 'Stop slideshow',
-					'group'   => array( 'labels', 60 )
+					'group'   => array( 'labels', 60 ),
 				),
 				'txt_group_status'    => array(
 					'title'   => __( 'Slideshow status format', 'simple-lightbox' ),
 					'default' => 'Item %current% of %total%',
-					'group'   => array( 'labels', 70 )
-				)
+					'group'   => array( 'labels', 70 ),
+				),
 			),
 			'legacy' => array(
 				'header_activation'       => null,
@@ -488,7 +488,7 @@ class SLB_Lightbox extends SLB_Base {
 				'txt_link_next'           => 'txt_nav_next',
 				'txt_link_prev'           => 'txt_nav_prev',
 				'txt_link_close'          => 'txt_close',
-			)
+			),
 		);
 
 		parent::_set_options( $opts );
@@ -507,7 +507,7 @@ class SLB_Lightbox extends SLB_Base {
 		$lbls_opts = array(
 			'menu'          => __( 'Lightbox', 'simple-lightbox' ),
 			'header'        => __( 'Lightbox Settings', 'simple-lightbox' ),
-			'plugin_action' => __( 'Settings', 'simple-lightbox' )
+			'plugin_action' => __( 'Settings', 'simple-lightbox' ),
 		);
 		$pg_opts   = $this->admin->add_theme_page( 'options', $lbls_opts )
 			->require_form()
@@ -524,7 +524,7 @@ class SLB_Lightbox extends SLB_Base {
 			'title'   => __( 'Reset', 'simple-lightbox' ),
 			'confirm' => __( 'Are you sure you want to reset Simple Lightbox\'s settings?', 'simple-lightbox' ),
 			'success' => __( 'Settings have been reset', 'simple-lightbox' ),
-			'failure' => __( 'Settings were not reset', 'simple-lightbox' )
+			'failure' => __( 'Settings were not reset', 'simple-lightbox' ),
 		);
 		$this->admin->add_action( 'reset', $lbls_reset, $this->options );
 	}
@@ -544,7 +544,7 @@ class SLB_Lightbox extends SLB_Base {
 			$lnk_txt,
 			array(
 				'target' => '_blank',
-				'class'  => 'button'
+				'class'  => 'button',
 			)
 		);
 	}
@@ -705,7 +705,7 @@ class SLB_Lightbox extends SLB_Base {
 			$uri_proto = (object) array(
 				'raw'    => '',
 				'source' => '',
-				'parts'  => ''
+				'parts'  => '',
 			);
 		}
 		$uri_parts_required = array( 'host' => '' );
@@ -716,7 +716,7 @@ class SLB_Lightbox extends SLB_Base {
 			'attr'          => 'group',
 			'base'          => '',
 			'legacy_prefix' => 'lightbox[',
-			'legacy_suffix' => ']'
+			'legacy_suffix' => ']',
 		);
 		if ( $g_props->enabled ) {
 			$g_props->base = ( is_scalar( $group ) ) ? trim( strval( $group ) ) : '';
@@ -1067,7 +1067,7 @@ class SLB_Lightbox extends SLB_Base {
 			$atts = get_posts(
 				array(
 					'post_type' => 'attachment',
-					'include'   => $pids_flat
+					'include'   => $pids_flat,
 				)
 			);
 
@@ -1100,7 +1100,7 @@ class SLB_Lightbox extends SLB_Base {
 				$props_post_map = [
 					'title'       => 'post_title',
 					'caption'     => 'post_excerpt',
-					'description' => 'post_content'
+					'description' => 'post_content',
 				];
 
 				foreach ( $atts as $att ) {
@@ -1285,7 +1285,7 @@ class SLB_Lightbox extends SLB_Base {
 			$tags         = (object) array(
 				'base'  => $base,
 				'open'  => $this->util->add_wrapper( $base ),
-				'close' => $this->util->add_wrapper( $base, '[/', ']' )
+				'close' => $this->util->add_wrapper( $base, '[/', ']' ),
 			);
 			$tags->search = '#' . preg_quote( $tags->open ) . '(.*?)' . preg_quote( $tags->close ) . '#s';
 		}
@@ -1321,7 +1321,7 @@ class SLB_Lightbox extends SLB_Base {
 				'close' => '}}',
 				'attrs' => array(
 					'group' => '',
-					'key'   => ''
+					'key'   => '',
 				),
 			);
 			// Search Patterns

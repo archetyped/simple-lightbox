@@ -36,7 +36,7 @@ class SLB_Utilities {
 			'Description' => 'Description',
 			'Author'      => 'Author',
 			'AuthorURI'   => 'Author URI',
-		)
+		),
 	);
 
 	/**
@@ -339,7 +339,7 @@ class SLB_Utilities {
 				'callback' => null,
 				'context'  => array(),
 				'enqueue'  => true,
-				'enqueued' => false
+				'enqueued' => false,
 			);
 			switch ( $type ) {
 				case 'styles':
@@ -1453,7 +1453,7 @@ class SLB_Utilities {
 			$actions = array(
 				'add'       => array( 'page-new', 'post-new' ),
 				'edit-item' => array( 'page', 'post' ),
-				'edit'      => array( 'edit', 'edit-pages' )
+				'edit'      => array( 'edit', 'edit-pages' ),
 			);
 			$page    = basename( $_SERVER['SCRIPT_NAME'], '.php' );
 
@@ -1843,7 +1843,7 @@ class SLB_Utilities {
 		$args_default   = array(
 			'tag'        => 'span',
 			'content'    => '',
-			'attributes' => array()
+			'attributes' => array(),
 		);
 		$args           = wp_parse_args( $args, $args_default );
 		$args['format'] = array(
@@ -1866,7 +1866,7 @@ class SLB_Utilities {
 		$attributes = array_merge(
 			array(
 				'href'  => $uri,
-				'title' => $content
+				'title' => $content,
 			),
 			$attributes
 		);
@@ -1875,7 +1875,7 @@ class SLB_Utilities {
 				'tag'        => 'a',
 				'wrap'       => true,
 				'content'    => $content,
-				'attributes' => $attributes
+				'attributes' => $attributes,
 			)
 		);
 	}
@@ -1889,13 +1889,13 @@ class SLB_Utilities {
 		$attributes = array(
 			'href' => $url,
 			'type' => 'text/css',
-			'rel'  => 'stylesheet'
+			'rel'  => 'stylesheet',
 		);
 		return $this->build_html_element(
 			array(
 				'tag'        => 'link',
 				'wrap'       => false,
-				'attributes' => $attributes
+				'attributes' => $attributes,
 			)
 		);
 	}
@@ -1941,7 +1941,7 @@ class SLB_Utilities {
 				'tag'        => 'script',
 				'content'    => $content,
 				'wrap'       => true,
-				'attributes' => $attributes
+				'attributes' => $attributes,
 			)
 		) . PHP_EOL;
 	}

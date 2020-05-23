@@ -66,12 +66,12 @@ class SLB_Template_Tags extends SLB_Collection_Controller {
 			'item' => array(
 				'scripts' => array(
 					array( 'base', "$src_base/item/$js_path/tag.item.js" ),
-				)
+				),
 			),
 			'ui'   => array(
 				'scripts' => array(
 					array( 'base', "$src_base/ui/$js_path/tag.ui.js" ),
-				)
+				),
 			),
 		);
 		foreach ( $defaults as $id => $props ) {

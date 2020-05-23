@@ -37,7 +37,7 @@ class SLB_Base_Object extends SLB_Base {
 	 */
 	protected $files = array(
 		'scripts' => array(),
-		'styles'  => array()
+		'styles'  => array(),
 	);
 
 	/**
@@ -173,7 +173,7 @@ class SLB_Base_Object extends SLB_Base {
 			$this->files[ $type ][ $handle ] = array(
 				'handle' => $handle,
 				'uri'    => $src,
-				'deps'   => $deps
+				'deps'   => $deps,
 			);
 		}
 		return $this;

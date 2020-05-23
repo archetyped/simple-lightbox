@@ -190,7 +190,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 		} elseif ( class_exists( $this->item_type ) ) {
 			$defaults   = array(
 				'parent' => null,
-				'group'  => null
+				'group'  => null,
 			);
 			$properties = array_merge( $defaults, $properties );
 			if ( is_string( $id ) ) {
@@ -432,7 +432,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 		$default = array(
 			'title'       => '',
 			'description' => '',
-			'priority'    => 10
+			'priority'    => 10,
 		);
 		$p       = ( is_array( $properties ) ) ? array_merge( $default, $properties ) : $default;
 		if ( ! is_int( $p['priority'] ) || $p['priority'] < 0 ) {

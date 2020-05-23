@@ -27,7 +27,7 @@ class SLB_Admin extends SLB_Base {
 	protected $messages = array(
 		'reset'         => 'The settings have been reset',
 		'beta'          => '<strong class="%1$s">Notice:</strong> This update is a <strong class="%1$s">Beta version</strong>. It is highly recommended that you test the update on a test server before updating the plugin on a production server.',
-		'access_denied' => 'You do not have sufficient permissions'
+		'access_denied' => 'You do not have sufficient permissions',
 	);
 
 	/* Views */
@@ -117,9 +117,9 @@ class SLB_Admin extends SLB_Base {
 			'styles'  => array(
 				'admin' => array(
 					'file'    => 'client/css/admin.css',
-					'context' => array( "admin_page_$pfx", 'admin_page_plugins' )
-				)
-			)
+					'context' => array( "admin_page_$pfx", 'admin_page_plugins' ),
+				),
+			),
 		);
 		parent::_client_files( $files );
 	}
@@ -516,7 +516,7 @@ class SLB_Admin extends SLB_Base {
 						'id'         => $views . '_' . $view->get_id(),
 						'label'      => $view->get_label( $type ),
 						'uri'        => $view->get_uri(),
-						'attributes' => array()
+						'attributes' => array(),
 					);
 				}
 			}
@@ -532,7 +532,7 @@ class SLB_Admin extends SLB_Base {
 					'id'         => $id,
 					'label'      => $a->get_label( $type ),
 					'uri'        => $a->get_uri(),
-					'attributes' => $a->get_link_attr()
+					'attributes' => $a->get_link_attr(),
 				);
 			}
 			unset( $a );

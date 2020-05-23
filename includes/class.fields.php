@@ -347,7 +347,7 @@ class SLB_Fields extends SLB_Field_Collection {
 		$attr_defaults = array(
 			'layout'      => '',
 			'layout_data' => null,
-			'data'        => ''
+			'data'        => '',
 		);
 		$attr          = wp_parse_args( $placeholder['attributes'], $attr_defaults );
 		if ( is_null( $attr['layout_data'] ) ) {
@@ -378,7 +378,7 @@ class SLB_Fields extends SLB_Field_Collection {
 				// Prep extended item data
 				$data_ext = array(
 					'option_value' => $value,
-					'option_text'  => $label
+					'option_text'  => $label,
 				);
 				$out[]    = $item->build_layout( $layout, $data_ext );
 			}
@@ -422,7 +422,7 @@ class SLB_Fields extends SLB_Field_Collection {
 		$classnames = (object) array(
 			'multi'    => 'multi_field',
 			'single'   => 'single_field',
-			'elements' => 'has_elements'
+			'elements' => 'has_elements',
 		);
 
 		// Stop execution if group does not exist

@@ -42,9 +42,9 @@ class SLB_Themes extends SLB_Collection_Controller {
 					'group'     => array( 'ui', 0 ),
 					'parent'    => 'option_select',
 					'options'   => $this->m( 'opt_get_field_values' ),
-					'in_client' => true
+					'in_client' => true,
 				),
-			)
+			),
 		);
 
 		parent::_set_options( $opts );
@@ -86,8 +86,8 @@ class SLB_Themes extends SLB_Collection_Controller {
 				'name'   => __( 'Default (Dark)', 'simple-lightbox' ),
 				'parent' => $this->get_default_id(),
 				'styles' => array(
-					array( 'base', "$src_base/black/css/style.css" )
-				)
+					array( 'base', "$src_base/black/css/style.css" ),
+				),
 			),
 		);
 
@@ -148,7 +148,7 @@ class SLB_Themes extends SLB_Collection_Controller {
 		// Identify excluded themes
 		$filter_props = array(
 			'include_public'  => true,
-			'include_private' => false
+			'include_private' => false,
 		);
 		foreach ( $filter_props as $filter_prop => $filter_value ) {
 			if ( ! $r[ $filter_prop ] ) {

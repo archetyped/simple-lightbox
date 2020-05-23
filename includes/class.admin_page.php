@@ -49,7 +49,7 @@ class SLB_Admin_Page extends SLB_Admin_View {
 			'callback'      => $callback,
 			'context'       => $context,
 			'priority'      => $priority,
-			'callback_args' => $callback_args
+			'callback_args' => $callback_args,
 		];
 		return parent::add_content( $id, $opts );
 	}

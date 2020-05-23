@@ -32,7 +32,7 @@ class SLB_Options extends SLB_Field_Collection {
 		'validate_pre'  => false,
 		'validate_post' => false,
 		'save_pre'      => false,
-		'save_post'     => false
+		'save_post'     => false,
 	);
 
 	/* Init */
@@ -246,7 +246,7 @@ class SLB_Options extends SLB_Field_Collection {
 				$l->field_pre,
 				$l->form,
 				$l->field_post,
-				$l->opt_post
+				$l->opt_post,
 			)
 		);
 
@@ -588,8 +588,8 @@ class SLB_Options extends SLB_Field_Collection {
 			}
 			$hooks = array(
 				'filter' => array(
-					'parse_build_vars' => array( $this->m( 'admin_parse_build_vars' ), 10, 2 )
-				)
+					'parse_build_vars' => array( $this->m( 'admin_parse_build_vars' ), 10, 2 ),
+				),
 			);
 
 			// Add hooks
@@ -647,7 +647,7 @@ class SLB_Options extends SLB_Field_Collection {
 				$state->priority,
 				array(
 					'group' => $g->id,
-					'page'  => $page
+					'page'  => $page,
 				)
 			);
 		}

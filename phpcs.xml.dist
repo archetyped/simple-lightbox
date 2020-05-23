@@ -43,7 +43,6 @@
         <exclude name="PHPCompatibility.FunctionUse.ArgumentFunctionsReportCurrentValue.NeedsInspection"/>
 
         <!-- ** WordPress-Specific ** -->
-        <exclude name="WordPress.Arrays.CommaAfterArrayItem.NoComma"/>
         <exclude name="WordPress.CodeAnalysis.AssignmentInCondition.Found"/>
         <exclude name="WordPress.CodeAnalysis.AssignmentInCondition.FoundInTernaryCondition"/>
         <exclude name="WordPress.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition"/>

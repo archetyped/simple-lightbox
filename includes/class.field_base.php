@@ -357,7 +357,7 @@ class SLB_Field_Base extends SLB_Base {
 			'open'          => '',
 			'close'         => '',
 			'segment_open'  => '',
-			'segment_close' => ''
+			'segment_close' => '',
 		);
 
 		$options_default = array(
@@ -365,7 +365,7 @@ class SLB_Field_Base extends SLB_Base {
 			'wrap'         => array(),
 			'segments_pre' => null,
 			'prefix'       => '',
-			'recursive'    => false
+			'recursive'    => false,
 		);
 
 		// Load options based on format
@@ -489,7 +489,7 @@ class SLB_Field_Base extends SLB_Base {
 				[
 					'wrap'      => [
 						'open'         => '_',
-						'segment_open' => '_'
+						'segment_open' => '_',
 					],
 					'prefix'    => [ 'get_container', 'get_id', 'add_prefix' ],
 					'recursive' => true,
@@ -503,7 +503,7 @@ class SLB_Field_Base extends SLB_Base {
 						'open'          => '[',
 						'close'         => ']',
 						'segment_open'  => '[',
-						'segment_close' => ']'
+						'segment_close' => ']',
 					],
 					'prefix'    => [ 'get_container', 'get_id', 'add_prefix' ],
 					'recursive' => true,
@@ -546,7 +546,7 @@ class SLB_Field_Base extends SLB_Base {
 			[
 				'wrap'      => [],
 				'prefix'    => [],
-				'recursive' => false
+				'recursive' => false,
 			]
 		);
 		// Add format.
@@ -562,7 +562,7 @@ class SLB_Field_Base extends SLB_Base {
 	function get_data( $context = '', $top = true ) {
 		$opt_d = array(
 			'context' => '',
-			'top'     => true
+			'top'     => true,
 		);
 		$args  = func_get_args();
 		$a     = false;
@@ -1028,7 +1028,7 @@ class SLB_Field_Base extends SLB_Base {
 		if ( isset( $this->{$type} ) && is_array( $this->{$type} ) ) {
 			$this->{$type}[ $handle ] = array(
 				'context' => $context,
-				'params'  => $args
+				'params'  => $args,
 			);
 		}
 	}

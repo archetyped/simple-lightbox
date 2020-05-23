@@ -96,7 +96,7 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 */
 	private $_required = array(
 		'id'     => 'string',
-		'labels' => 'array'
+		'labels' => 'array',
 	);
 
 	/* Init */

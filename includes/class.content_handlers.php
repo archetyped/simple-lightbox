@@ -116,7 +116,7 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 	public function match( $uri ) {
 		$ret = (object) array(
 			'handler' => null,
-			'props'   => array()
+			'props'   => array(),
 		);
 		foreach ( $this->get() as $handler ) {
 			$props = $handler->match( $uri, $this );
@@ -201,7 +201,7 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 				'scripts' => array(
 					array( 'base', "$src_base/image/$js_path/handler.image.js" ),
 				),
-			)
+			),
 		);
 		foreach ( $defaults as $id => $props ) {
 			$handlers->add( $id, $props );

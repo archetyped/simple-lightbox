@@ -24,7 +24,7 @@ class SLB_Option extends SLB_Field {
 	 */
 	public $map = array(
 		'default' => 'data',
-		'attr'    => 'properties'
+		'attr'    => 'properties',
 	);
 
 	public $property_priority = array( 'id', 'data', 'parent' );
@@ -43,7 +43,7 @@ class SLB_Option extends SLB_Field {
 		$args     = func_get_args();
 		$defaults = array(
 			'title'   => '',
-			'default' => ''
+			'default' => '',
 		);
 		$props    = $this->make_properties( $args, $defaults );
 		// Validate

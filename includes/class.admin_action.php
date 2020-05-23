@@ -79,14 +79,14 @@ class SLB_Admin_Action extends SLB_Admin_View {
 			'action'                     => $this->add_prefix( 'admin' ),
 			$this->add_prefix( 'type' )  => 'view',
 			$this->add_prefix( 'group' ) => 'action',
-			$this->add_prefix( 'obj' )   => $this->get_id_raw()
+			$this->add_prefix( 'obj' )   => $this->get_id_raw(),
 		);
 	}
 
 	protected function get_query_args_remove() {
 		$args_r = array(
 			'_wpnonce',
-			$this->add_prefix( 'action' )
+			$this->add_prefix( 'action' ),
 		);
 
 		return array_unique( array_merge( array_keys( $this->get_query_args() ), $args_r ) );
@@ -95,7 +95,7 @@ class SLB_Admin_Action extends SLB_Admin_View {
 	public function get_link_attr() {
 		return array(
 			'class'   => $this->util->get_hook( $this->get_id_raw() ),
-			'onclick' => "return confirm('" . esc_js( $this->get_label( 'confirm' ) ) . "')"
+			'onclick' => "return confirm('" . esc_js( $this->get_label( 'confirm' ) ) . "')",
 		);
 	}
 
