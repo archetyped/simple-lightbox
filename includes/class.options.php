@@ -235,14 +235,17 @@ class SLB_Options extends SLB_Field_Collection {
 		$o = $this->get_field_elements();
 		$l =& $o->layout;
 
-		$form = implode('', array(
-			$l->opt_pre,
-			$l->label_ref,
-			$l->field_pre,
-			$l->form,
-			$l->field_post,
-			$l->opt_post
-		));
+		$form = implode(
+			'',
+			array(
+				$l->opt_pre,
+				$l->label_ref,
+				$l->field_pre,
+				$l->form,
+				$l->field_post,
+				$l->opt_post
+			)
+		);
 
 		// Text input
 		$otxt = new SLB_Field_Type( 'option_text', 'text' );
@@ -628,10 +631,18 @@ class SLB_Options extends SLB_Field_Collection {
 			}
 			// Add meta box for each group
 			$g = $groups_all[ $gid ];
-			add_meta_box( $g->id, $g->title, $this->m( 'admin_build_group' ), $state->screen, $state->context, $state->priority, array(
-				'group' => $g->id,
-				'page'  => $page
-			) );
+			add_meta_box(
+				$g->id,
+				$g->title,
+				$this->m( 'admin_build_group' ),
+				$state->screen,
+				$state->context,
+				$state->priority,
+				array(
+					'group' => $g->id,
+					'page'  => $page
+				)
+			);
 		}
 	}
 

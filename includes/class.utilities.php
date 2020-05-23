@@ -801,11 +801,13 @@ class SLB_Utilities {
 	 * @return string Shortcode tag
 	 */
 	public function make_shortcode( $tag, $attr = null, $content = null ) {
-		return $this->build_element(array(
-			'tag'        => $tag,
-			'attributes' => $attr,
-			'content'    => $content,
-		));
+		return $this->build_element(
+			array(
+				'tag'        => $tag,
+				'attributes' => $attr,
+				'content'    => $content,
+			)
+		);
 	}
 
 	/* Meta */
@@ -1805,16 +1807,21 @@ class SLB_Utilities {
 	 * @return string HTML link element
 	 */
 	function build_html_link( $uri, $content, $attributes = array() ) {
-		$attributes = array_merge( array(
-			'href'  => $uri,
-			'title' => $content
-		), $attributes );
-		return $this->build_html_element( array(
-			'tag'        => 'a',
-			'wrap'       => true,
-			'content'    => $content,
-			'attributes' => $attributes
-		) );
+		$attributes = array_merge(
+			array(
+				'href'  => $uri,
+				'title' => $content
+			),
+			$attributes
+		);
+		return $this->build_html_element(
+			array(
+				'tag'        => 'a',
+				'wrap'       => true,
+				'content'    => $content,
+				'attributes' => $attributes
+			)
+		);
 	}
 
 	/**
@@ -1828,11 +1835,13 @@ class SLB_Utilities {
 			'type' => 'text/css',
 			'rel'  => 'stylesheet'
 		);
-		return $this->build_html_element( array(
-			'tag'        => 'link',
-			'wrap'       => false,
-			'attributes' => $attributes
-		) );
+		return $this->build_html_element(
+			array(
+				'tag'        => 'link',
+				'wrap'       => false,
+				'attributes' => $attributes
+			)
+		);
 	}
 
 	/**
@@ -1871,11 +1880,13 @@ class SLB_Utilities {
 		if ( is_string( $id ) && ! empty( $id ) ) {
 			$attributes['id'] = $this->add_prefix( $id );
 		}
-		return $this->build_html_element( array(
-			'tag'        => 'script',
-			'content'    => $content,
-			'wrap'       => true,
-			'attributes' => $attributes
-		) ) . PHP_EOL;
+		return $this->build_html_element(
+			array(
+				'tag'        => 'script',
+				'content'    => $content,
+				'wrap'       => true,
+				'attributes' => $attributes
+			)
+		) . PHP_EOL;
 	}
 }

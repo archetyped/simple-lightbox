@@ -539,10 +539,14 @@ class SLB_Lightbox extends SLB_Base {
 		// Link
 		$lnk_uri = $this->util->get_plugin_info( 'SupportURI' );
 		$lnk_txt = __( 'Get Support &amp; Provide Feedback', 'simple-lightbox' );
-		echo $this->util->build_html_link( $lnk_uri, $lnk_txt, array(
-			'target' => '_blank',
-			'class'  => 'button'
-		) );
+		echo $this->util->build_html_link(
+			$lnk_uri,
+			$lnk_txt,
+			array(
+				'target' => '_blank',
+				'class'  => 'button'
+			)
+		);
 	}
 
 	/**
@@ -1053,10 +1057,12 @@ class SLB_Lightbox extends SLB_Base {
 		if ( ! empty( $pids ) ) {
 			$pids_flat = array_keys( $pids );
 			// Retrieve attachment post data.
-			$atts = get_posts( array(
-				'post_type' => 'attachment',
-				'include'   => $pids_flat
-			) );
+			$atts = get_posts(
+				array(
+					'post_type' => 'attachment',
+					'include'   => $pids_flat
+				)
+			);
 
 			// Process attachments.
 			if ( $atts ) {
@@ -1171,11 +1177,14 @@ class SLB_Lightbox extends SLB_Base {
 			if ( is_array( $props ) && ! empty( $props ) ) {
 				$i = array_merge( $i, $props );
 			}
-			$i = array_merge( $i, [
-				'type'     => $type,
-				'source'   => $uri->source,
-				'internal' => $internal,
-			] );
+			$i = array_merge(
+				$i,
+				[
+					'type'     => $type,
+					'source'   => $uri->source,
+					'internal' => $internal,
+				]
+			);
 			// Cache item properties.
 			$this->media_items_raw['props'][ $key ] = (object) $i;
 			// Cache Source URI (point to properties object).
@@ -1840,9 +1849,12 @@ class SLB_Lightbox extends SLB_Base {
 		$ret = array();
 		/* Get all UI options */
 		$prefix      = 'txt_';
-		$opt_strings = array_filter( array_keys( $this->options->get_items() ), function ( $opt ) use ( $prefix ) {
-			return ( strpos( $opt, $prefix ) === 0 );
-		} );
+		$opt_strings = array_filter(
+			array_keys( $this->options->get_items() ),
+			function ( $opt ) use ( $prefix ) {
+				return ( strpos( $opt, $prefix ) === 0 );
+			}
+		);
 		if ( count( $opt_strings ) ) {
 			/* Build array of UI options */
 			foreach ( $opt_strings as $key ) {

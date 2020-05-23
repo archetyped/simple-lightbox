@@ -518,11 +518,14 @@ class SLB_Field_Base extends SLB_Base {
 			return;
 		}
 		// Normlize options.
-		$options = wp_parse_args( $options, [
-			'wrap'      => [],
-			'prefix'    => [],
-			'recursive' => false
-		] );
+		$options = wp_parse_args(
+			$options,
+			[
+				'wrap'      => [],
+				'prefix'    => [],
+				'recursive' => false
+			]
+		);
 		// Add format.
 		$this->id_formats[ $name ] = $options;
 	}

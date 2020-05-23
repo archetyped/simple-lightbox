@@ -39,6 +39,8 @@
         <exclude name="Squiz.Scope.MethodScope.Missing"/>
         <exclude name="PSR2.Classes.PropertyDeclaration.Underscore"/>
         <exclude name="PSR2.Methods.MethodDeclaration.Underscore"/>
+        <exclude name="PHPCompatibility.FunctionUse.ArgumentFunctionsReportCurrentValue.Changed"/>
+        <exclude name="PHPCompatibility.FunctionUse.ArgumentFunctionsReportCurrentValue.NeedsInspection"/>
 
         <!-- ** WordPress-Specific ** -->
         <exclude name="WordPress.Arrays.CommaAfterArrayItem.NoComma"/>
@@ -67,11 +69,6 @@
         <!-- ** Standard ** -->
         <exclude name="Generic.CodeAnalysis.ForLoopWithTestFunctionCall.NotAllowed"/>
         <exclude name="Generic.ControlStructures.InlineControlStructure.NotAllowed"/>
-        <exclude name="PEAR.Functions.FunctionCallSignature.CloseBracketLine"/>
-        <exclude name="PEAR.Functions.FunctionCallSignature.ContentAfterOpenBracket"/>
-        <exclude name="PEAR.Functions.FunctionCallSignature.MultipleArguments"/>
-        <exclude name="PHPCompatibility.FunctionUse.ArgumentFunctionsReportCurrentValue.Changed"/>
-        <exclude name="PHPCompatibility.FunctionUse.ArgumentFunctionsReportCurrentValue.NeedsInspection"/>
     </rule>
 
     <!-- Add in some extra rules from other standards. -->
