@@ -1049,7 +1049,7 @@ class SLB_Utilities {
 		// Clean path segments
 		foreach ( $parts as $key => $part ) {
 			// Trim slashes/spaces
-			$parts[ $key ] = trim( $part, " " . $sl_f . $sl_b );
+			$parts[ $key ] = trim( $part, ' ' . $sl_f . $sl_b );
 
 			// Verify path segment still contains value
 			if ( empty( $parts[ $key ] ) ) {

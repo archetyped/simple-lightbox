@@ -534,7 +534,7 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	public function theme_page_callback_support() {
 		// Description
-		$desc = __( "<p>Simple Lightbox thrives on your feedback!</p><p>Click the button below to <strong>get help</strong>, <strong>request a feature</strong>, or <strong>provide some feedback</strong>!</p>", 'simple-lightbox' );
+		$desc = __( '<p>Simple Lightbox thrives on your feedback!</p><p>Click the button below to <strong>get help</strong>, <strong>request a feature</strong>, or <strong>provide some feedback</strong>!</p>', 'simple-lightbox' );
 		echo $desc;
 		// Link
 		$lnk_uri = $this->util->get_plugin_info( 'SupportURI' );
@@ -551,7 +551,7 @@ class SLB_Lightbox extends SLB_Base {
 	 * @return string Modified link text
 	 */
 	public function admin_plugin_row_meta_support( $text ) {
-		return __( "Feedback &amp; Support", 'simple-lightbox' );
+		return __( 'Feedback &amp; Support', 'simple-lightbox' );
 	}
 
 	/*-** Functionality **-*/
@@ -1283,11 +1283,11 @@ class SLB_Lightbox extends SLB_Base {
 	 * @param string $type (optional) Tag to retrieve (open or close)
 	 * @return string Exclusion tag
 	 */
-	private function get_exclude_tag( $type = "open" ) {
+	private function get_exclude_tag( $type = 'open' ) {
 		// Validate
 		$tags = $this->get_exclude_tags();
 		if ( ! isset( $tags->{$type} ) ) {
-			$type = "open";
+			$type = 'open';
 		}
 		return $tags->{$type};
 	}
@@ -1331,7 +1331,7 @@ class SLB_Lightbox extends SLB_Base {
 	private function exclude_wrap( $content ) {
 		// Validate
 		if ( ! is_string( $content ) ) {
-			$content = "";
+			$content = '';
 		}
 		// Wrap
 		$tags = $this->get_exclude_tags();
