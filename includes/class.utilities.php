@@ -481,6 +481,7 @@ class SLB_Utilities {
 				} else {
 					break;
 				}
+				// no break.
 			case 1:
 				$data = $args[0];
 				$obj  = null;
