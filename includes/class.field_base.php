@@ -701,7 +701,6 @@ class SLB_Field_Base extends SLB_Base {
 	function get_description() {
 		$dir = 'current';
 		return $this->get_member_value( 'description', '', '', $dir );
-		return $desc;
 	}
 
 	/**
