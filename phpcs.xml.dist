@@ -31,11 +31,15 @@
         <!-- Allow short array syntax -->
         <exclude name="Generic.Arrays.DisallowShortArraySyntax"/>
         <!-- Temporarily exclude rules -->
-        <!-- ** Refactor-required ** -->
+        <!-- ** Audit-usage ** -->
         <exclude name="Squiz.PHP.DisallowMultipleAssignments.Found"/>
         <exclude name="Squiz.PHP.DisallowMultipleAssignments.FoundInControlStructure"/>
         <exclude name="Squiz.PHP.Eval.Discouraged"/>
         <exclude name="Squiz.PHP.CommentedOutCode.Found"/>
+        <exclude name="Squiz.Scope.MethodScope.Missing"/>
+        <exclude name="PSR2.Classes.PropertyDeclaration.ScopeMissing"/>
+        <exclude name="PSR2.Classes.PropertyDeclaration.Underscore"/>
+        <exclude name="PSR2.Methods.MethodDeclaration.Underscore"/>
 
         <!-- ** WordPress-Specific ** -->
         <exclude name="WordPress.Arrays.CommaAfterArrayItem.NoComma"/>
@@ -71,10 +75,6 @@
         <exclude name="PEAR.Functions.FunctionCallSignature.MultipleArguments"/>
         <exclude name="PHPCompatibility.FunctionUse.ArgumentFunctionsReportCurrentValue.Changed"/>
         <exclude name="PHPCompatibility.FunctionUse.ArgumentFunctionsReportCurrentValue.NeedsInspection"/>
-        <exclude name="Squiz.Scope.MethodScope.Missing"/>
-        <exclude name="PSR2.Classes.PropertyDeclaration.ScopeMissing"/>
-        <exclude name="PSR2.Classes.PropertyDeclaration.Underscore"/>
-        <exclude name="PSR2.Methods.MethodDeclaration.Underscore"/>
     </rule>
 
     <!-- Add in some extra rules from other standards. -->
