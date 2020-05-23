@@ -47,10 +47,12 @@ class SLB_Option extends SLB_Field {
 		);
 		$props    = $this->make_properties( $args, $defaults );
 		// Validate
-		if ( is_scalar( $id ) )
-			$props['id']    = $id;
-		if ( ! is_string( $props['title'] ) )
+		if ( is_scalar( $id ) ) {
+			$props['id'] = $id;
+		}
+		if ( ! is_string( $props['title'] ) ) {
 			$props['title'] = '';
+		}
 		// Send to parent constructor
 		parent::__construct( $props );
 	}
@@ -71,11 +73,12 @@ class SLB_Option extends SLB_Field {
 	function set_parent( $parent = null ) {
 		$p = $this->get_parent();
 		if ( empty( $parent ) && empty( $p ) ) {
-			$parent     = 'text';
-			$d          = $this->get_default();
-			if ( is_bool( $d ) )
+			$parent = 'text';
+			$d      = $this->get_default();
+			if ( is_bool( $d ) ) {
 				$parent = 'checkbox';
-			$parent     = 'option_' . $parent;
+			}
+			$parent = 'option_' . $parent;
 		} elseif ( ! empty( $p ) && ! is_object( $p ) ) {
 			$parent =& $p;
 		}
@@ -114,9 +117,11 @@ class SLB_Option extends SLB_Field {
 		if ( ! is_string( $value ) ) {
 			if ( is_bool( $value ) ) {
 				$value = ( $value ) ? __( 'Enabled', 'simple-lightbox' ) : __( 'Disabled', 'simple-lightbox' );
-			} elseif ( is_null( $value ) )
-				$value  = '';
-			else $value = strval( $value );
+			} elseif ( is_null( $value ) ) {
+				$value = '';
+			} else {
+				$value = strval( $value );
+			}
 		} elseif ( empty( $value ) ) {
 			$value = 'empty';
 		}
@@ -133,12 +138,14 @@ class SLB_Option extends SLB_Field {
 	function format_default( $value, $context = '' ) {
 		// Get default value
 		$d = $this->get_default();
-		if ( empty( $d ) )
+		if ( empty( $d ) ) {
 			return $value;
-		if ( is_bool( $d ) )
+		}
+		if ( is_bool( $d ) ) {
 			$value = $this->format_bool( $value );
-		elseif ( is_string( $d ) )
+		} elseif ( is_string( $d ) ) {
 			$value = $this->format_string( $value );
+		}
 		return $value;
 	}
 
@@ -150,8 +157,9 @@ class SLB_Option extends SLB_Field {
 	 * @return bool Option value
 	 */
 	function format_bool( $value, $context = '' ) {
-		if ( ! is_bool( $value ) )
+		if ( ! is_bool( $value ) ) {
 			$value = ! ! $value;
+		}
 		return $value;
 	}
 

@@ -33,10 +33,12 @@ class SLB_Admin_Section extends SLB_Admin_View {
 	 * @return string Section URI
 	 */
 	public function get_uri( $file = null, $format = null ) {
-		if ( ! is_string( $file ) )
-			$file   = 'options-' . $this->get_parent() . '.php';
-		if ( ! is_string( $format ) )
+		if ( ! is_string( $file ) ) {
+			$file = 'options-' . $this->get_parent() . '.php';
+		}
+		if ( ! is_string( $format ) ) {
 			$format = '%1$s#%2$s';
+		}
 		return parent::get_uri( $file, $format );
 	}
 

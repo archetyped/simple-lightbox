@@ -161,10 +161,12 @@ class SLB_Fields extends SLB_Field_Collection {
 	 * @return void
 	 */
 	function register_placeholder( $placeholder, $callback, $priority = 10 ) {
-		if ( 'all' == $placeholder )
-			$placeholder  = '';
-		else $placeholder = '_' . $placeholder;
-		$hook             = $this->add_prefix( 'process_placeholder' . $placeholder );
+		if ( 'all' == $placeholder ) {
+			$placeholder = '';
+		} else {
+			$placeholder = '_' . $placeholder;
+		}
+		$hook = $this->add_prefix( 'process_placeholder' . $placeholder );
 		add_filter( $hook, $callback, $priority, 5 );
 	}
 
@@ -283,8 +285,9 @@ class SLB_Fields extends SLB_Field_Collection {
 		// Check if item has label property (e.g. sub-elements)
 		$out = $item->get_property( 'label' );
 		// If property not set, use item title
-		if ( empty( $out ) )
+		if ( empty( $out ) ) {
 			$out = $item->get_title();
+		}
 		return $out;
 	}
 
@@ -303,8 +306,9 @@ class SLB_Fields extends SLB_Field_Collection {
 		$out = $item->get_data( $opts );
 		if ( ! is_null( $out ) ) {
 			// Get specific member in value (e.g. value from a specific item element)
-			if ( isset( $opts['element'] ) && is_array( $out ) && ( $el = $opts['element'] ) && isset( $out[ $el ] ) )
+			if ( isset( $opts['element'] ) && is_array( $out ) && ( $el = $opts['element'] ) && isset( $out[ $el ] ) ) {
 				$out = $out[ $el ];
+			}
 		}
 
 		// Return data
@@ -322,8 +326,9 @@ class SLB_Fields extends SLB_Field_Collection {
 		$c   = $item->get_container();
 		$d   = ( isset( $c->data[ $item->get_id() ] ) ) ? $c->data[ $item->get_id() ] : null;
 		$item->set_property( 'd', true );
-		if ( $item->get_data() )
+		if ( $item->get_data() ) {
 			$out = 'checked="checked"';
+		}
 		$item->set_property( 'd', false );
 		return $out;
 	}
@@ -339,21 +344,23 @@ class SLB_Fields extends SLB_Field_Collection {
 	 */
 	function process_placeholder_loop( $output, $item, $placeholder, $layout, $data ) {
 		// Setup loop options
-		$attr_defaults           = array(
+		$attr_defaults = array(
 			'layout'      => '',
 			'layout_data' => null,
 			'data'        => ''
 		);
-		$attr                    = wp_parse_args( $placeholder['attributes'], $attr_defaults );
-		if ( is_null( $attr['layout_data'] ) )
+		$attr          = wp_parse_args( $placeholder['attributes'], $attr_defaults );
+		if ( is_null( $attr['layout_data'] ) ) {
 			$attr['layout_data'] =& $attr['layout'];
+		}
 		// Get data for loop
 		$path      = explode( '.', $attr['data'] );
 		$loop_data = $item->get_member_value( $path );
 
 		// Check if data is callback
-		if ( is_callable( $loop_data ) )
+		if ( is_callable( $loop_data ) ) {
 			$loop_data = call_user_func( $loop_data );
+		}
 
 		// Get item data
 		$data = $item->get_data();
@@ -365,8 +372,9 @@ class SLB_Fields extends SLB_Field_Collection {
 				// Load appropriate layout based on item value
 				$layout = ( ( $data === 0 && $value === $data ) xor $data == $value ) ? $attr['layout_data'] : $attr['layout'];
 				// Stop processing if no valid layout is returned
-				if ( empty( $layout ) )
+				if ( empty( $layout ) ) {
 					continue;
+				}
 				// Prep extended item data
 				$data_ext = array(
 					'option_value' => $value,
@@ -438,8 +446,9 @@ class SLB_Fields extends SLB_Field_Collection {
 			}
 			$out[] = '</div>'; // Close items container
 			// Add description if exists
-			if ( ! empty( $group->description ) )
+			if ( ! empty( $group->description ) ) {
 				$out[] = '<p class=' . $this->add_prefix( 'group_description' ) . '>' . $group->description . '</p>';
+			}
 		}
 
 		// Return group output

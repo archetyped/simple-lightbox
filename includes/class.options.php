@@ -126,8 +126,9 @@ class SLB_Options extends SLB_Field_Collection {
 	 * @param bool $full Whether to perform a full migration or not (Default: No)
 	 */
 	function migrate( $full = false ) {
-		if ( ! $full && $this->items_migrated )
+		if ( ! $full && $this->items_migrated ) {
 			return false;
+		}
 
 		// Legacy options
 		$d = null;
@@ -155,9 +156,11 @@ class SLB_Options extends SLB_Field_Collection {
 			// Normalize legacy map
 			foreach ( $l as $opt => $dest ) {
 				if ( ! is_array( $dest ) ) {
-					if ( is_string( $dest ) )
+					if ( is_string( $dest ) ) {
 						$l[ $opt ] = array( $dest );
-					else unset( $l[ $opt ] );
+					} else {
+						unset( $l[ $opt ] );
+					}
 				}
 			}
 
@@ -281,16 +284,18 @@ class SLB_Options extends SLB_Field_Collection {
 	 * @return void
 	 */
 	function set_parents( $fields ) {
-		if ( ! is_admin() )
+		if ( ! is_admin() ) {
 			return false;
+		}
 		$items = &$this->get_items();
 		foreach ( array_keys( $items ) as $opt ) {
 			$items[ $opt ]->set_parent();
 		}
 		foreach ( $this->items as $opt ) {
-			$p     = $opt->parent;
-			if ( is_object( $p ) )
+			$p = $opt->parent;
+			if ( is_object( $p ) ) {
 				$p = 'o:' . $p->id;
+			}
 		}
 	}
 
@@ -412,9 +417,10 @@ class SLB_Options extends SLB_Field_Collection {
 			// Sanitize loaded data based on default values
 			foreach ( $data as $id => $val ) {
 				if ( $this->has( $id ) ) {
-					$opt             = $this->get( $id );
-					if ( is_bool( $opt->get_default() ) )
+					$opt = $this->get( $id );
+					if ( is_bool( $opt->get_default() ) ) {
 						$data[ $id ] = ! ! $val;
+					}
 				}
 			}
 		}
@@ -551,8 +557,9 @@ class SLB_Options extends SLB_Field_Collection {
 		$items = $this->get_items();
 		$out   = array();
 		foreach ( $items as $option ) {
-			if ( ! $option->get_in_client() )
+			if ( ! $option->get_in_client() ) {
 				continue;
+			}
 			$out[ $option->get_id() ] = $option->get_data( 'default' );
 		}
 		return $out;

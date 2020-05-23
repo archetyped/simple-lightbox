@@ -41,8 +41,9 @@ class SLB_Admin_Action extends SLB_Admin_View {
 	 */
 	public function handle() {
 		// Validate user
-		if ( ! current_user_can( 'activate_plugins' ) || ! check_admin_referer( $this->get_id() ) )
+		if ( ! current_user_can( 'activate_plugins' ) || ! check_admin_referer( $this->get_id() ) ) {
 			wp_die( __( 'Access Denied', 'simple-lightbox' ) );
+		}
 
 		// Get data
 		$content = $this->get_content();

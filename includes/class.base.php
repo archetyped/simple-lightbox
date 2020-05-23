@@ -136,8 +136,9 @@ class SLB_Base {
 	 */
 	public function _init() {
 		self::$_init_passed = true;
-		if ( $this->_init || ! isset( $this ) || ! $this->can( 'init' ) )
+		if ( $this->_init || ! isset( $this ) || ! $this->can( 'init' ) ) {
 			return false;
+		}
 		$this->_init = true;
 		// Environment
 		$this->_env();
@@ -147,8 +148,9 @@ class SLB_Base {
 			$this->_options();
 
 			// Admin
-			if ( is_admin() )
+			if ( is_admin() ) {
 				$this->_admin();
+			}
 		}
 
 		// Hooks
@@ -237,13 +239,15 @@ class SLB_Base {
 		$base = $this->util->get_plugin_base_file();
 		// Activation
 		$func_activate = '_activate';
-		if ( method_exists( $this, $func_activate ) )
+		if ( method_exists( $this, $func_activate ) ) {
 			register_activation_hook( $base, $this->m( $func_activate ) );
+		}
 
 		// Deactivation
 		$func_deactivate = '_deactivate';
-		if ( method_exists( $this, $func_deactivate ) )
+		if ( method_exists( $this, $func_deactivate ) ) {
 			register_deactivation_hook( $base, $this->m( $func_deactivate ) );
+		}
 	}
 
 	/**
@@ -290,8 +294,9 @@ class SLB_Base {
 		$v = $this->util->get_plugin_version();
 		foreach ( $this->client_files as $type => $files ) {
 			$func = $this->get_client_files_handler( $type, 'register' );
-			if ( ! $func )
+			if ( ! $func ) {
 				continue;
+			}
 			foreach ( $files as $f ) {
 				// Get file URI
 				$f->file = ( ! $this->util->is_file( $f->file ) && is_callable( $f->file ) ) ? call_user_func( $f->file ) : $this->util->get_file_url( $f->file, true );
@@ -356,8 +361,9 @@ class SLB_Base {
 						// Context + Callback
 						if ( is_array( $ctx ) ) {
 							// Stop checking context if callback is invalid
-							if ( ! is_callable( $ctx[1] ) || ! call_user_func( $ctx[1] ) )
+							if ( ! is_callable( $ctx[1] ) || ! call_user_func( $ctx[1] ) ) {
 								continue;
+							}
 							$ctx = $ctx[0];
 						}
 						// Stop checking context if valid context found
@@ -388,9 +394,10 @@ class SLB_Base {
 	 * Build function name for handling client operations
 	 */
 	function get_client_files_handler( $type, $action ) {
-		$func     = 'wp_' . $action . '_' . substr( $type, 0, -1 );
-		if ( ! function_exists( $func ) )
+		$func = 'wp_' . $action . '_' . substr( $type, 0, -1 );
+		if ( ! function_exists( $func ) ) {
 			$func = false;
+		}
 		return $func;
 	}
 
@@ -401,9 +408,10 @@ class SLB_Base {
 	 * @return object|bool Base object (FALSE if object does not exist)
 	 */
 	function &get_base() {
-		$base     = false;
-		if ( isset( $GLOBALS[ $this->base ] ) )
+		$base = false;
+		if ( isset( $GLOBALS[ $this->base ] ) ) {
 			$base =& $GLOBALS[ $this->base ];
+		}
 		return $base;
 	}
 
@@ -543,10 +551,11 @@ class SLB_Base {
 	 * @return bool TRUE if options are valid, FALSE otherwise
 	 */
 	function is_options_valid( $data, $check_var = true ) {
-		$class   = $this->util->get_class( 'Options' );
-		$ret     = ( empty( $data ) || ! is_array( $data ) || ! class_exists( $class ) ) ? false : true;
-		if ( $ret && $check_var && ! ( $this->options instanceof $class ) )
+		$class = $this->util->get_class( 'Options' );
+		$ret   = ( empty( $data ) || ! is_array( $data ) || ! class_exists( $class ) ) ? false : true;
+		if ( $ret && $check_var && ! ( $this->options instanceof $class ) ) {
 			$ret = false;
+		}
 		return $ret;
 	}
 }

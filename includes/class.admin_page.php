@@ -138,8 +138,9 @@ class SLB_Admin_Page extends SLB_Admin_View {
 	 * @uses wp_die() to end execution when user does not have permission to access page
 	 */
 	public function handle() {
-		if ( ! current_user_can( $this->get_capability() ) )
+		if ( ! current_user_can( $this->get_capability() ) ) {
 			wp_die( __( 'Access Denied', 'simple-lightbox' ) );
+		}
 		wp_enqueue_script( 'postbox' );
 		?>
 		<div class="wrap slb">

@@ -137,8 +137,9 @@ class SLB_Themes extends SLB_Collection_Controller {
 
 		$items = parent::get( $args );
 
-		if ( empty( $items ) )
+		if ( empty( $items ) ) {
 			return $items;
+		}
 
 		/* Process custom arguments */
 

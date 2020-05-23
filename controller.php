@@ -600,17 +600,20 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	protected function is_content_valid( $content ) {
 		// Invalid hooks
-		if ( doing_filter( 'get_the_excerpt' ) )
+		if ( doing_filter( 'get_the_excerpt' ) ) {
 			return false;
+		}
 
 		// Non-string value
-		if ( ! is_string( $content ) )
+		if ( ! is_string( $content ) ) {
 			return false;
+		}
 
 		// Empty string
 		$content = trim( $content );
-		if ( empty( $content ) )
+		if ( empty( $content ) ) {
 			return false;
+		}
 
 		// Content is valid
 		return $this->util->apply_filters( 'is_content_valid', true, $content );
@@ -869,9 +872,10 @@ class SLB_Lightbox extends SLB_Base {
 		$rgx   = "/\<a\b(?:(?!\shref=|\>).)*\shref=[^\>\<]++\>/i";
 		$links = [];
 		preg_match_all( $rgx, $content, $links );
-		$links     = $links[0];
-		if ( $unique )
+		$links = $links[0];
+		if ( $unique ) {
 			$links = array_unique( $links );
+		}
 		return $links;
 	}
 
@@ -886,15 +890,17 @@ class SLB_Lightbox extends SLB_Base {
 	protected function validate_uri( $uri ) {
 		static $patterns = null;
 		// Previously-validated URI
-		if ( isset( $this->validated_uris[ $uri ] ) )
+		if ( isset( $this->validated_uris[ $uri ] ) ) {
 			return $this->validated_uris[ $uri ];
+		}
 
 		$valid = true;
 		// Boilerplate validation
 		if ( empty( $uri ) // Empty
 			|| 0 === strpos( $uri, '#' ) // Anchor
-			)
+			) {
 			$valid = false;
+		}
 
 		// Regex matching
 		if ( $valid ) {
@@ -962,8 +968,9 @@ class SLB_Lightbox extends SLB_Base {
 	 * @uses `_wp_attachment_metadata` to retrieve attachment metadata
 	 */
 	function client_footer() {
-		if ( ! $this->has_cached_media_items() )
+		if ( ! $this->has_cached_media_items() ) {
 			return false;
+		}
 
 		// Set up hooks
 		add_action( 'wp_print_footer_scripts', $this->m( 'client_footer_script' ) );
@@ -1707,10 +1714,12 @@ class SLB_Lightbox extends SLB_Base {
 	public function group_id_unique( $group ) {
 		static $groups = array();
 		while ( in_array( $group, $groups ) ) {
-			$patt       = '#-(\d+)$#';
-			if ( preg_match( $patt, $group, $matches ) )
-				$group  = preg_replace( $patt, '-' . ( ++$matches[1] ), $group );
-			else $group = $group . '-1';
+			$patt = '#-(\d+)$#';
+			if ( preg_match( $patt, $group, $matches ) ) {
+				$group = preg_replace( $patt, '-' . ( ++$matches[1] ), $group );
+			} else {
+				$group = $group . '-1';
+			}
 		}
 		// Add final group ID to array
 		$groups[] = $group;

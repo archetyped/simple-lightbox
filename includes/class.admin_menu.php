@@ -33,8 +33,9 @@ class SLB_Admin_Menu extends SLB_Admin_View {
 	 * @return obj Current instance
 	 */
 	public function set_position( $position ) {
-		if ( is_int( $position ) )
+		if ( is_int( $position ) ) {
 			$this->position = $position;
+		}
 		return $this;
 	}
 }

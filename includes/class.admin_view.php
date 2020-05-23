@@ -120,8 +120,9 @@ class SLB_Admin_View extends SLB_Base_Object {
 	protected function init_required() {
 		$this->required = array_merge( $this->_required, $this->required );
 		// Check for parent requirement
-		if ( $this->parent_required )
+		if ( $this->parent_required ) {
 			$this->required['parent'] = 'string';
+		}
 	}
 
 	/**
@@ -153,8 +154,9 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 */
 	public function get_id( $formatted = true ) {
 		$id = parent::get_id();
-		if ( $formatted )
+		if ( $formatted ) {
 			$this->add_prefix_ref( $id );
+		}
 		return $id;
 	}
 
@@ -175,8 +177,9 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 */
 	public function get_label( $type, $default = null ) {
 		// Retrieve existing label type
-		if ( $this->has_label( $type ) )
+		if ( $this->has_label( $type ) ) {
 			return $this->labels[ $type ];
+		}
 		// Use default label if type is not set
 		if ( empty( $default ) && ! empty( $this->labels ) ) {
 			reset( $this->labels );
@@ -192,8 +195,9 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 * @return obj Current instance
 	 */
 	public function set_labels( $labels ) {
-		if ( empty( $labels ) )
+		if ( empty( $labels ) ) {
 			return this;
+		}
 		// Single string
 		if ( is_string( $labels ) ) {
 			$labels = array( $labels );
@@ -297,8 +301,9 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 * @return array Messages
 	 */
 	protected function &get_messages() {
-		if ( ! is_array( $this->messages ) )
+		if ( ! is_array( $this->messages ) ) {
 			$this->messages = array();
+		}
 		return $this->messages;
 	}
 
@@ -310,8 +315,9 @@ class SLB_Admin_View extends SLB_Base_Object {
 	public function set_message( $text ) {
 		$msgs =& $this->get_messages();
 		$text = trim( $text );
-		if ( empty( $msgs ) && ! empty( $text ) )
+		if ( empty( $msgs ) && ! empty( $text ) ) {
 			$this->util->add_filter( 'admin_messages', $this->m( 'do_messages' ), 10, 1, false );
+		}
 		$msgs[] = $text;
 		return $this;
 	}
@@ -323,9 +329,10 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 * @return array Merged messages array
 	 */
 	public function do_messages( $msgs = array() ) {
-		$m        =& $this->get_messages();
-		if ( ! empty( $m ) )
+		$m =& $this->get_messages();
+		if ( ! empty( $m ) ) {
 			$msgs = array_merge( $msgs, $m );
+		}
 		return $msgs;
 	}
 
@@ -376,8 +383,9 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 * @return obj Current instance
 	 */
 	public function set_capability( $capability ) {
-		if ( is_string( $capability ) && ! empty( $capability ) )
+		if ( is_string( $capability ) && ! empty( $capability ) ) {
 			$this->capability = $capability;
+		}
 		return $this;
 	}
 
@@ -387,8 +395,9 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 * @return obj Current instance
 	 */
 	public function set_icon( $icon ) {
-		if ( ! empty( $icon ) && is_string( $icon ) )
+		if ( ! empty( $icon ) && is_string( $icon ) ) {
 			$this->icon = $icon;
+		}
 		return $this;
 	}
 
@@ -402,8 +411,9 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 * @return obj Current instance
 	 */
 	public function set_hookname( $hookname ) {
-		if ( ! empty( $hookname ) && is_string( $hookname ) )
+		if ( ! empty( $hookname ) && is_string( $hookname ) ) {
 			$this->hookname = $hookname;
+		}
 		return $this;
 	}
 
@@ -425,8 +435,9 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 */
 	public function set_parent( $parent ) {
 		if ( $this->parent_required ) {
-			if ( ! empty( $parent ) && is_string( $parent ) )
-			$this->parent = $parent;
+			if ( ! empty( $parent ) && is_string( $parent ) ) {
+				$this->parent = $parent;
+			}
 		} else {
 			$this->parent = null;
 		}
@@ -470,15 +481,17 @@ class SLB_Admin_View extends SLB_Base_Object {
 	public function get_uri( $file = null, $format = null ) {
 		static $page_hooks = null;
 		$uri               = '';
-		if ( empty( $file ) )
-			$file          = 'admin.php';
+		if ( empty( $file ) ) {
+			$file = 'admin.php';
+		}
 		if ( $this->is_child() ) {
 			$parent = str_replace( '_page_' . $this->get_id(), '', $this->get_hookname() );
 			if ( is_null( $page_hooks ) ) {
 				$page_hooks = array_flip( $GLOBALS['admin_page_hooks'] );
 			}
-			if ( isset( $page_hooks[ $parent ] ) )
+			if ( isset( $page_hooks[ $parent ] ) ) {
 				$file = $page_hooks[ $parent ];
+			}
 		}
 
 		if ( empty( $format ) ) {

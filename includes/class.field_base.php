@@ -174,8 +174,9 @@ class SLB_Field_Base extends SLB_Base {
 	 */
 	function path_isset( $path = '' ) {
 		// Stop execution if no path is supplied
-		if ( empty( $path ) )
+		if ( empty( $path ) ) {
 			return false;
+		}
 		$args = func_get_args();
 		$path = $this->util->build_path( $args );
 		$item =& $this;
@@ -207,9 +208,11 @@ class SLB_Field_Base extends SLB_Base {
 
 			$path_size = count( $path );
 			for ( $x = 0; $x < $path_size; $x++ ) {
-				if ( 0 == $x )
-					$ret  =& $ret->{ $path[ $x ] };
-				else $ret =& $ret[ $path[ $x ] ];
+				if ( 0 == $x ) {
+					$ret =& $ret->{ $path[ $x ] };
+				} else {
+					$ret =& $ret[ $path[ $x ] ];
+				}
 			}
 		}
 		return $ret;
@@ -247,8 +250,9 @@ class SLB_Field_Base extends SLB_Base {
 		$path = array();
 		if ( is_array( $member ) && isset( $member['tag'] ) ) {
 			if ( isset( $member['attributes']['ref_base'] ) ) {
-				if ( 'root' != $member['attributes']['ref_base'] )
+				if ( 'root' != $member['attributes']['ref_base'] ) {
 					$path[] = $member['attributes']['ref_base'];
+				}
 			} else {
 				$path[] = 'properties';
 			}
@@ -276,26 +280,30 @@ class SLB_Field_Base extends SLB_Base {
 
 		$deeper = false;
 
-		if ( ! $this->path_isset( $path ) )
+		if ( ! $this->path_isset( $path ) ) {
 			$deeper = true;
-		else {
+		} else {
 			$val = $this->get_path_value( $path );
-			if ( ! is_object( $val ) && ( is_array( $val ) || ( $inherit = strpos( $val, $inherit_tag ) ) !== false ) )
-				$deeper  = true;
-			else $deeper = false;
+			if ( ! is_object( $val ) && ( is_array( $val ) || ( $inherit = strpos( $val, $inherit_tag ) ) !== false ) ) {
+				$deeper = true;
+			} else {
+				$deeper = false;
+			}
 		}
 		if ( $deeper && 'current' != $dir ) {
 			$ex_val = '';
 			// Get Parent value (recursive)
-			if ( 'parent' == $dir )
+			if ( 'parent' == $dir ) {
 				$ex_val = $this->get_parent_value( $member, $name, $default );
-			elseif ( method_exists( $this, 'get_container_value' ) )
+			} elseif ( method_exists( $this, 'get_container_value' ) ) {
 				$ex_val = $this->get_container_value( $member, $name, $default );
+			}
 			// Handle inheritance
 			if ( is_array( $val ) ) {
 				// Combine Arrays
-				if ( is_array( $ex_val ) )
+				if ( is_array( $ex_val ) ) {
 					$val = array_merge( $ex_val, $val );
+				}
 			} elseif ( $inherit !== false ) {
 				// Replace placeholder with inherited string
 				$val = str_replace( $inherit_tag, $ex_val, $val );
@@ -318,9 +326,10 @@ class SLB_Field_Base extends SLB_Base {
 	 * @return mixed Member value if found (Default: $default)
 	 */
 	function get_object_value( &$object, $member, $name = '', $default = '', $dir = 'parent' ) {
-		$ret     = $default;
-		if ( is_object( $object ) && method_exists( $object, 'get_member_value' ) )
+		$ret = $default;
+		if ( is_object( $object ) && method_exists( $object, 'get_member_value' ) ) {
 			$ret = $object->get_member_value( $member, $name, $default, $dir );
+		}
 		return $ret;
 	}
 
@@ -329,8 +338,9 @@ class SLB_Field_Base extends SLB_Base {
 	 * @param string $id Unique item ID
 	 */
 	function set_id( $id ) {
-		if ( empty( $id ) || ! is_string( $id ) )
+		if ( empty( $id ) || ! is_string( $id ) ) {
 			return false;
+		}
 		$this->id = trim( $id );
 	}
 
@@ -359,11 +369,14 @@ class SLB_Field_Base extends SLB_Base {
 		);
 
 		// Load options based on format
-		if ( ! is_array( $options ) )
-			$options         = array( 'format' => $options );
-		if ( isset( $options['format'] ) && is_string( $options['format'] ) && isset( $formats[ $options['format'] ] ) )
+		if ( ! is_array( $options ) ) {
+			$options = array( 'format' => $options );
+		}
+		if ( isset( $options['format'] ) && is_string( $options['format'] ) && isset( $formats[ $options['format'] ] ) ) {
 			$options_default = wp_parse_args( $formats[ $options['format'] ], $options_default );
-		else unset( $options['format'] );
+		} else {
+			unset( $options['format'] );
+		}
 		$options = wp_parse_args( $options, $options_default );
 		// Import options into function
 		extract( $options );
@@ -371,9 +384,10 @@ class SLB_Field_Base extends SLB_Base {
 		// Validate options
 		$wrap = wp_parse_args( $wrap, $wrap_default );
 
-		if ( ! is_array( $segments_pre ) )
+		if ( ! is_array( $segments_pre ) ) {
 			$segments_pre = array( $segments_pre );
-		$segments_pre     = array_reverse( $segments_pre );
+		}
+		$segments_pre = array_reverse( $segments_pre );
 
 		// Format ID based on options
 		$item_id = array( $item_id );
@@ -385,8 +399,9 @@ class SLB_Field_Base extends SLB_Base {
 			$c = ( method_exists( $this, $m ) ) ? $this->{$m}() : null;
 			while ( ! ! $c ) {
 				// Add ID of current caller to array
-				if ( method_exists( $c, 'get_id' ) && ( $itemp = $c->get_id() ) && ! empty( $itemp ) )
+				if ( method_exists( $c, 'get_id' ) && ( $itemp = $c->get_id() ) && ! empty( $itemp ) ) {
 					$item_id = $itemp;
+				}
 				// Get parent object
 				$c     = ( method_exists( $c, $m ) ) ? $c->{$m}() : null;
 				$itemp = '';
@@ -396,14 +411,17 @@ class SLB_Field_Base extends SLB_Base {
 
 		// Additional segments (Pre)
 		foreach ( $segments_pre as $seg ) {
-			if ( is_null( $seg ) )
+			if ( is_null( $seg ) ) {
 				continue;
-			if ( is_object( $seg ) )
-				$seg       = (array) $seg;
-			if ( is_array( $seg ) )
-				$item_id   = array_merge( $item_id, array_reverse( $seg ) );
-			elseif ( '' != strval( $seg ) )
+			}
+			if ( is_object( $seg ) ) {
+				$seg = (array) $seg;
+			}
+			if ( is_array( $seg ) ) {
+				$item_id = array_merge( $item_id, array_reverse( $seg ) );
+			} elseif ( '' != strval( $seg ) ) {
 				$item_id[] = strval( $seg );
+			}
 		}
 
 		// Prefix
@@ -416,24 +434,29 @@ class SLB_Field_Base extends SLB_Base {
 			$val   = '';
 			// Iterate through methods
 			foreach ( $prefix as $m ) {
-				if ( ! method_exists( $p, $m ) )
+				if ( ! method_exists( $p, $m ) ) {
 					continue;
+				}
 				// Build callback
 				$m = $this->util->m( $p, $m );
 				// Call callback
 				$val = call_user_func_array( $m, $args );
 				// Returned value may be an instance object
-				if ( is_object( $val ) )
+				if ( is_object( $val ) ) {
 					$p = $val; // Use returned object in next round
-				else array_unshift( $args, $val ); // Pass returned value as parameter to next method on using current object
+				} else {
+					array_unshift( $args, $val ); // Pass returned value as parameter to next method on using current object
+				}
 			}
 			$prefix = $val;
 			unset( $p, $val );
 		}
-		if ( is_numeric( $prefix ) )
+		if ( is_numeric( $prefix ) ) {
 			$prefix = strval( $prefix );
-		if ( empty( $prefix ) || ! is_string( $prefix ) )
+		}
+		if ( empty( $prefix ) || ! is_string( $prefix ) ) {
 			$prefix = '';
+		}
 
 		// Convert array to string
 		$item_id = $prefix . $wrap['open'] . implode( $wrap['segment_close'] . $wrap['segment_open'], array_reverse( $item_id ) ) . $wrap['close'];
@@ -550,12 +573,13 @@ class SLB_Field_Base extends SLB_Base {
 		}
 
 		if ( is_string( $top ) ) {
-			if ( 'false' == $top )
+			if ( 'false' == $top ) {
 				$top = false;
-			elseif ( 'true' == $top )
+			} elseif ( 'true' == $top ) {
 				$top = true;
-			elseif ( is_numeric( $top ) )
+			} elseif ( is_numeric( $top ) ) {
 				$top = intval( $top );
+			}
 		}
 		$top      = ! ! $top;
 		$obj      =& $this;
@@ -597,8 +621,9 @@ class SLB_Field_Base extends SLB_Base {
 		$obj_path = array_reverse( $obj_path );
 		// Build path for data location
 		foreach ( $obj_path as $obj ) {
-			if ( method_exists( $obj, 'get_id' ) )
+			if ( method_exists( $obj, 'get_id' ) ) {
 				$path[] = $obj->get_id();
+			}
 		}
 		// Iterate through objects
 		while ( ! empty( $obj_path ) ) {
@@ -636,15 +661,18 @@ class SLB_Field_Base extends SLB_Base {
 	 */
 	function set_parent( $parent = null ) {
 		// Stop processing if parent empty
-		if ( empty( $parent ) && ! is_string( $this->parent ) )
+		if ( empty( $parent ) && ! is_string( $this->parent ) ) {
 			return false;
+		}
 		// Parent passed as object reference wrapped in array
-		if ( is_array( $parent ) && isset( $parent[0] ) && is_object( $parent[0] ) )
+		if ( is_array( $parent ) && isset( $parent[0] ) && is_object( $parent[0] ) ) {
 			$parent = $parent[0];
+		}
 
 		// No parent set but parent ID (previously) set in object
-		if ( empty( $parent ) && is_string( $this->parent ) )
+		if ( empty( $parent ) && is_string( $this->parent ) ) {
 			$parent = $this->parent;
+		}
 
 		// Retrieve reference object if ID was supplied
 		if ( is_string( $parent ) ) {
@@ -660,8 +688,9 @@ class SLB_Field_Base extends SLB_Base {
 		}
 
 		// Set parent value on object
-		if ( is_string( $parent ) || is_object( $parent ) )
+		if ( is_string( $parent ) || is_object( $parent ) ) {
 			$this->parent = $parent;
+		}
 	}
 
 	/**
@@ -678,8 +707,9 @@ class SLB_Field_Base extends SLB_Base {
 	 * @param string $plural Plural form of title
 	 */
 	function set_title( $title = '' ) {
-		if ( is_scalar( $title ) )
+		if ( is_scalar( $title ) ) {
 			$this->title = strip_tags( trim( $title ) );
+		}
 	}
 
 	/**
@@ -754,12 +784,14 @@ class SLB_Field_Base extends SLB_Base {
 	 */
 	function sort_properties( $properties ) {
 		// Stop if sorting not necessary
-		if ( empty( $properties ) || ! is_array( $properties ) || empty( $this->property_priority ) || ! is_array( $this->property_priority ) )
+		if ( empty( $properties ) || ! is_array( $properties ) || empty( $this->property_priority ) || ! is_array( $this->property_priority ) ) {
 			return $properties;
+		}
 		$props = array();
 		foreach ( $this->property_priority as $prop ) {
-			if ( ! array_key_exists( $prop, $properties ) )
+			if ( ! array_key_exists( $prop, $properties ) ) {
 				continue;
+			}
 			// Add to new array
 			$props[ $prop ] = $properties[ $prop ];
 			// Remove from old array
@@ -819,8 +851,9 @@ class SLB_Field_Base extends SLB_Base {
 	 */
 	function set_property( $name, $value = '', $group = null ) {
 		// Do not add if property name is not a string
-		if ( ! is_string( $name ) )
+		if ( ! is_string( $name ) ) {
 			return false;
+		}
 		// Create property array
 		$prop_arr          = array();
 		$prop_arr['value'] = $value;
@@ -849,8 +882,9 @@ class SLB_Field_Base extends SLB_Base {
 	 */
 	function remove_property( $name ) {
 		// Remove property
-		if ( isset( $this->properties[ $name ] ) )
+		if ( isset( $this->properties[ $name ] ) ) {
 			unset( $this->properties[ $name ] );
+		}
 		// Remove from group
 		foreach ( array_keys( $this->property_groups ) as $g ) {
 			if ( isset( $this->property_groups[ $g ][ $name ] ) ) {
@@ -866,8 +900,9 @@ class SLB_Field_Base extends SLB_Base {
 	 * @param string $property Property to add to group
 	 */
 	function set_group_property( $group, $property ) {
-		if ( is_string( $group ) && isset( $this->property_groups[ $group ][ $property ] ) )
+		if ( is_string( $group ) && isset( $this->property_groups[ $group ][ $property ] ) ) {
 			return;
+		}
 		if ( ! is_array( $group ) ) {
 			$group = array( $group );
 		}
@@ -875,8 +910,9 @@ class SLB_Field_Base extends SLB_Base {
 		foreach ( $group as $g ) {
 			$g = trim( $g );
 			// Initialize group if it doesn't already exist
-			if ( ! isset( $this->property_groups[ $g ] ) )
+			if ( ! isset( $this->property_groups[ $g ] ) ) {
 				$this->property_groups[ $g ] = array();
+			}
 
 			// Add property to group
 			$this->property_groups[ $g ][ $property ] = null;
@@ -922,14 +958,17 @@ class SLB_Field_Base extends SLB_Base {
 	 */
 	function add_hook( $tag, $function_to_add, $priority = 10, $accepted_args = 1 ) {
 		// Create new array for tag (if not already set)
-		if ( ! isset( $this->hooks[ $tag ] ) )
+		if ( ! isset( $this->hooks[ $tag ] ) ) {
 			$this->hooks[ $tag ] = array();
+		}
 		// Build Unique ID
-		if ( is_string( $function_to_add ) )
-			$id  = $function_to_add;
-		elseif ( is_array( $function_to_add ) && ! empty( $function_to_add ) )
-			$id  = strval( $function_to_add[ count( $function_to_add ) - 1 ] );
-		else $id = 'function_' . ( count( $this->hooks[ $tag ] ) + 1 );
+		if ( is_string( $function_to_add ) ) {
+			$id = $function_to_add;
+		} elseif ( is_array( $function_to_add ) && ! empty( $function_to_add ) ) {
+			$id = strval( $function_to_add[ count( $function_to_add ) - 1 ] );
+		} else {
+			$id = 'function_' . ( count( $this->hooks[ $tag ] ) + 1 );
+		}
 		// Add hook
 		$this->hooks[ $tag ][ $id ] = func_get_args();
 	}
@@ -979,16 +1018,19 @@ class SLB_Field_Base extends SLB_Base {
 		// Set context
 		if ( ! is_array( $context ) ) {
 			// Wrap single contexts in an array
-			if ( is_string( $context ) )
-				$context  = array( $context );
-			else $context = array();
+			if ( is_string( $context ) ) {
+				$context = array( $context );
+			} else {
+				$context = array();
+			}
 		}
 		// Add file to instance property
-		if ( isset( $this->{$type} ) && is_array( $this->{$type} ) )
+		if ( isset( $this->{$type} ) && is_array( $this->{$type} ) ) {
 			$this->{$type}[ $handle ] = array(
 				'context' => $context,
 				'params'  => $args
 			);
+		}
 	}
 
 	/**
@@ -1106,23 +1148,26 @@ class SLB_Field_Base extends SLB_Base {
 	 * @return mixed Formatted value
 	 */
 	function format_final( $value, $context = '' ) {
-		if ( ! is_string( $value ) )
+		if ( ! is_string( $value ) ) {
 			return $value;
+		}
 
 		// Restore special chars
 		return $this->restore_special_chars( $value, $context );
 	}
 
 	function preserve_special_chars( $value, $context = '' ) {
-		if ( ! is_string( $value ) )
+		if ( ! is_string( $value ) ) {
 			return $value;
+		}
 		$specials = $this->get_special_chars();
 		return str_replace( array_keys( $specials ), $specials, $value );
 	}
 
 	function restore_special_chars( $value, $context = '' ) {
-		if ( ! is_string( $value ) )
+		if ( ! is_string( $value ) ) {
 			return $value;
+		}
 		$specials = $this->get_special_chars();
 		return str_replace( $specials, array_keys( $specials ), $value );
 	}

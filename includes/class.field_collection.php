@@ -152,10 +152,12 @@ class SLB_Field_Collection extends SLB_Field_Base {
 			$item = $item->get_id();
 		}
 		// Set data
-		if ( is_string( $item ) && ! empty( $item ) && ( isset( $this->items[ $item ] ) || ! ! $force_set ) )
+		if ( is_string( $item ) && ! empty( $item ) && ( isset( $this->items[ $item ] ) || ! ! $force_set ) ) {
 			$this->data[ $item ] = $value;
-		if ( ! ! $save )
+		}
+		if ( ! ! $save ) {
 			$this->save();
+		}
 	}
 
 	/* Item */
@@ -240,8 +242,9 @@ class SLB_Field_Collection extends SLB_Field_Base {
 		// Remove item data from collection
 		$this->remove_data( $item, false );
 
-		if ( ! ! $save )
+		if ( ! ! $save ) {
 			$this->save();
+		}
 	}
 
 	/**
@@ -259,8 +262,9 @@ class SLB_Field_Collection extends SLB_Field_Base {
 		// Remove data from data member
 		if ( is_string( $item ) && is_array( $this->data ) ) {
 			unset( $this->data[ $item ] );
-			if ( ! ! $save )
+			if ( ! ! $save ) {
 				$this->save();
+			}
 		}
 	}
 
@@ -317,8 +321,9 @@ class SLB_Field_Collection extends SLB_Field_Base {
 			$ret = parent::get_data( $context, $top );
 		}
 
-		if ( is_string( $item ) && is_array( $ret ) && isset( $ret[ $item ] ) )
+		if ( is_string( $item ) && is_array( $ret ) && isset( $ret[ $item ] ) ) {
 			$ret = $ret[ $item ];
+		}
 		return $ret;
 	}
 
@@ -576,8 +581,9 @@ class SLB_Field_Collection extends SLB_Field_Base {
 		// Get ID of item to remove or stop execution if item invalid
 		$item = $this->get( $item );
 		$item = $item->get_id();
-		if ( ! $item )
+		if ( ! $item ) {
 			return false;
+		}
 
 		// Remove item from group
 		if ( ! empty( $group ) ) {

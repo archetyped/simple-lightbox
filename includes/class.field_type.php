@@ -38,10 +38,11 @@ class SLB_Field_Type extends SLB_Field_Base {
 	public $caller = null;
 
 	function __construct( $id = '', $parent = null ) {
-		$args                   = func_get_args();
-		$defaults               = $this->integrate_id( $id );
-		if ( ! is_array( $parent ) )
+		$args     = func_get_args();
+		$defaults = $this->integrate_id( $id );
+		if ( ! is_array( $parent ) ) {
 			$defaults['parent'] = $parent;
+		}
 
 		$props = $this->make_properties( $args, $defaults );
 		parent::__construct( $props );
@@ -98,9 +99,10 @@ class SLB_Field_Type extends SLB_Field_Base {
 	 * @return object Reference to container object
 	 */
 	function &get_container() {
-		$ret     = null;
-		if ( $this->has_container() )
+		$ret = null;
+		if ( $this->has_container() ) {
 			$ret =& $this->container;
+		}
 		return $ret;
 	}
 
@@ -118,9 +120,11 @@ class SLB_Field_Type extends SLB_Field_Base {
 	 * @param object $caller Calling object
 	 */
 	function set_caller( &$caller ) {
-		if ( ! empty( $caller ) && is_object( $caller ) )
+		if ( ! empty( $caller ) && is_object( $caller ) ) {
 			$this->caller =& $caller;
-		else $this->clear_caller();
+		} else {
+			$this->clear_caller();
+		}
 	}
 
 	/**
@@ -135,9 +139,10 @@ class SLB_Field_Type extends SLB_Field_Base {
 	 * @return object Reference to caller object
 	 */
 	function &get_caller() {
-		$ret     = null;
-		if ( $this->has_caller() )
+		$ret = null;
+		if ( $this->has_caller() ) {
 			$ret =& $this->caller;
+		}
 		return $ret;
 	}
 
@@ -158,8 +163,9 @@ class SLB_Field_Type extends SLB_Field_Base {
 	 */
 	function set_element( $name, $type, $properties = array(), $id_prop = 'id' ) {
 		$name = trim( strval( $name ) );
-		if ( empty( $name ) )
+		if ( empty( $name ) ) {
 			return false;
+		}
 		// Create new field for element
 		$el = new SLB_Field( $name, $type );
 		// Set container to current field instance
@@ -176,8 +182,9 @@ class SLB_Field_Type extends SLB_Field_Base {
 	 * @param string $value Layout text
 	 */
 	function set_layout( $name, $value = '' ) {
-		if ( ! is_string( $name ) )
+		if ( ! is_string( $name ) ) {
 			return false;
+		}
 		$name                  = trim( $name );
 		$this->layout[ $name ] = $value;
 		return true;
@@ -191,9 +198,10 @@ class SLB_Field_Type extends SLB_Field_Base {
 	 */
 	function get_layout( $name = 'form', $parse_nested = true ) {
 		// Retrieve specified layout (use $name value if no layout by that name exists)
-		if ( empty( $name ) )
+		if ( empty( $name ) ) {
 			$name = $this->get_container_value( 'build_vars', 'layout', 'form' );
-		$layout   = $this->get_member_value( 'layout', $name, $name );
+		}
+		$layout = $this->get_member_value( 'layout', $name, $name );
 
 		// Find all nested layouts in current layout
 		if ( ! empty( $layout ) && ! ! $parse_nested ) {
@@ -208,8 +216,9 @@ class SLB_Field_Type extends SLB_Field_Base {
 						$nested_layout = $this->get_member_value( $instance );
 
 						// Replace layout placeholder with retrieved item data
-						if ( ! empty( $nested_layout ) )
+						if ( ! empty( $nested_layout ) ) {
 							$layout = str_replace( $ph->start . $instance['match'] . $ph->end, $nested_layout, $layout );
+						}
 					}
 				}
 			}
@@ -227,9 +236,10 @@ class SLB_Field_Type extends SLB_Field_Base {
 	function has_layout( $layout ) {
 		$ret = false;
 		if ( is_string( $layout ) && ( $layout = trim( $layout ) ) && ! empty( $layout ) ) {
-			$layout  = $this->get_member_value( 'layout', $layout, false );
-			if ( $layout !== false )
+			$layout = $this->get_member_value( 'layout', $layout, false );
+			if ( $layout !== false ) {
 				$ret = true;
+			}
 		}
 
 		return $ret;

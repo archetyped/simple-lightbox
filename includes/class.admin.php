@@ -71,8 +71,9 @@ class SLB_Admin extends SLB_Base {
 	public function __construct( &$parent ) {
 		parent::__construct();
 		// Set parent
-		if ( is_object( $parent ) )
+		if ( is_object( $parent ) ) {
 			$this->parent = $parent;
+		}
 	}
 
 	/* Init */
@@ -157,8 +158,9 @@ class SLB_Admin extends SLB_Base {
 		$msgs = $this->util->apply_filters( 'admin_messages', array() );
 		foreach ( $msgs as $mid => $msg ) {
 			// Filter out empty messages
-			if ( empty( $msg ) )
+			if ( empty( $msg ) ) {
 				continue;
+			}
 			// Build and display message
 			$mid = $this->add_prefix( 'msg_' . $mid );
 			?>
@@ -239,10 +241,11 @@ class SLB_Admin extends SLB_Base {
 			$collection = null;
 		}
 		// Create new instance
-		$r                              = new ReflectionClass( $class );
-		$view                           = $r->newInstanceArgs( $args );
-		if ( $view->is_valid() && ! empty( $collection ) && property_exists( $this, $collection ) && is_array( $this->{$collection} ) )
+		$r    = new ReflectionClass( $class );
+		$view = $r->newInstanceArgs( $args );
+		if ( $view->is_valid() && ! empty( $collection ) && property_exists( $this, $collection ) && is_array( $this->{$collection} ) ) {
 			$this->{$collection}[ $id ] =& $view;
+		}
 		unset( $r );
 		return $view;
 	}
@@ -477,8 +480,9 @@ class SLB_Admin extends SLB_Base {
 		$section = $this->add_view( 'section', $id, $args );
 
 		// Add Section
-		if ( $section->is_valid() )
+		if ( $section->is_valid() ) {
 			$this->sections[ $id ] = $section;
+		}
 
 		return $section;
 	}
@@ -505,8 +509,9 @@ class SLB_Admin extends SLB_Base {
 			/* Get view links */
 			foreach ( array( 'menus', 'pages', 'sections' ) as $views ) {
 				foreach ( $this->{$views} as $view ) {
-					if ( ! $view->has_label( $type ) )
+					if ( ! $view->has_label( $type ) ) {
 						continue;
+					}
 					$acts[] = (object) array(
 						'id'         => $views . '_' . $view->get_id(),
 						'label'      => $view->get_label( $type ),
@@ -519,8 +524,9 @@ class SLB_Admin extends SLB_Base {
 			/* Get action links */
 			$type = 'title';
 			foreach ( $this->actions as $a ) {
-				if ( ! $a->has_label( $type ) )
+				if ( ! $a->has_label( $type ) ) {
 					continue;
+				}
 				$id     = 'action_' . $a->get_id();
 				$acts[] = (object) array(
 					'id'         => $id,
@@ -574,8 +580,9 @@ class SLB_Admin extends SLB_Base {
 	* @var object $r Update response data
 	*/
 	public function plugin_update_message( $plugin_data, $r ) {
-		if ( ! isset( $r->new_version ) )
+		if ( ! isset( $r->new_version ) ) {
 			return false;
+		}
 		if ( stripos( $r->new_version, 'beta' ) !== false ) {
 			$cls_notice = $this->add_prefix( 'notice' );
 			echo '<br />' . $this->plugin_update_get_message( $r );
@@ -607,8 +614,9 @@ class SLB_Admin extends SLB_Base {
 	protected function plugin_update_get_message( $r ) {
 		$msg        = '';
 		$cls_notice = $this->add_prefix( 'notice' );
-		if ( ! is_object( $r ) || ! isset( $r->new_version ) )
+		if ( ! is_object( $r ) || ! isset( $r->new_version ) ) {
 			return $msg;
+		}
 		if ( stripos( $r->new_version, 'beta' ) !== false ) {
 			$msg = sprintf( $this->get_message( 'beta' ), $cls_notice );
 		}

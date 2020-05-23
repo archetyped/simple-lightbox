@@ -187,8 +187,9 @@ class SLB_Base_Object extends SLB_Base {
 	 * @return object Current instance
 	 */
 	protected function add_files( $type, $files ) {
-		if ( ! is_array( $files ) || empty( $files ) )
+		if ( ! is_array( $files ) || empty( $files ) ) {
 			return false;
+		}
 		$m = $this->m( 'add_file' );
 		foreach ( $files as $file ) {
 			if ( ! is_array( $file ) || empty( $file ) ) {
