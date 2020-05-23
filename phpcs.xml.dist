@@ -31,6 +31,12 @@
         <!-- Allow short array syntax -->
         <exclude name="Generic.Arrays.DisallowShortArraySyntax"/>
         <!-- Temporarily exclude rules -->
+        <!-- ** Refactor-required ** -->
+        <exclude name="Squiz.PHP.DisallowMultipleAssignments.Found"/>
+        <exclude name="Squiz.PHP.DisallowMultipleAssignments.FoundInControlStructure"/>
+        <exclude name="Squiz.PHP.Eval.Discouraged"/>
+        <exclude name="Squiz.PHP.CommentedOutCode.Found"/>
+
         <!-- ** WordPress-Specific ** -->
         <exclude name="WordPress.Arrays.CommaAfterArrayItem.NoComma"/>
         <exclude name="WordPress.CodeAnalysis.AssignmentInCondition.Found"/>
@@ -54,6 +60,7 @@
         <exclude name="WordPress.WP.GlobalVariablesOverride.Prohibited"/>
         <exclude name="WordPress.WP.I18n.MissingTranslatorsComment"/>
         <exclude name="WordPress.WP.I18n.NonSingularStringLiteralText"/>
+        
         <!-- ** Standard ** -->
         <exclude name="Generic.CodeAnalysis.ForLoopWithTestFunctionCall.NotAllowed"/>
         <exclude name="Generic.ControlStructures.InlineControlStructure.NotAllowed"/>
@@ -64,17 +71,13 @@
         <exclude name="PEAR.Functions.FunctionCallSignature.MultipleArguments"/>
         <exclude name="PHPCompatibility.FunctionUse.ArgumentFunctionsReportCurrentValue.Changed"/>
         <exclude name="PHPCompatibility.FunctionUse.ArgumentFunctionsReportCurrentValue.NeedsInspection"/>
+        <exclude name="Squiz.Scope.MethodScope.Missing"/>
         <exclude name="PSR2.Classes.PropertyDeclaration.ScopeMissing"/>
         <exclude name="PSR2.Classes.PropertyDeclaration.Underscore"/>
         <exclude name="PSR2.Classes.PropertyDeclaration.VarUsed"/>
         <exclude name="PSR2.ControlStructures.SwitchDeclaration.TerminatingComment"/>
         <exclude name="PSR2.Files.ClosingTag.NotAllowed"/>
         <exclude name="PSR2.Methods.MethodDeclaration.Underscore"/>
-        <exclude name="Squiz.PHP.CommentedOutCode.Found"/>
-        <exclude name="Squiz.PHP.DisallowMultipleAssignments.Found"/>
-        <exclude name="Squiz.PHP.DisallowMultipleAssignments.FoundInControlStructure"/>
-        <exclude name="Squiz.PHP.Eval.Discouraged"/>
-        <exclude name="Squiz.Scope.MethodScope.Missing"/>
     </rule>
 
     <!-- Add in some extra rules from other standards. -->
