@@ -38,8 +38,8 @@ class SLB_Field_Type extends SLB_Field_Base {
 	var $caller = null;
 
 	function __construct($id = '', $parent = null) {
-		$args = func_get_args();
-		$defaults = $this->integrate_id($id);
+		$args                   = func_get_args();
+		$defaults               = $this->integrate_id($id);
 		if ( !is_array($parent) )
 			$defaults['parent'] = $parent;
 
@@ -98,7 +98,7 @@ class SLB_Field_Type extends SLB_Field_Base {
 	 * @return object Reference to container object
 	 */
 	function &get_container() {
-		$ret = null;
+		$ret     = null;
 		if ( $this->has_container() )
 			$ret =& $this->container;
 		return $ret;
@@ -136,7 +136,7 @@ class SLB_Field_Type extends SLB_Field_Base {
 	 * @return object Reference to caller object
 	 */
 	function &get_caller() {
-		$ret = null;
+		$ret     = null;
 		if ( $this->has_caller() )
 			$ret =& $this->caller;
 		return $ret;
@@ -179,7 +179,7 @@ class SLB_Field_Type extends SLB_Field_Base {
 	function set_layout($name, $value = '') {
 		if ( !is_string($name) )
 			return false;
-		$name = trim($name);
+		$name                = trim($name);
 		$this->layout[$name] = $value;
 		return true;
 	}
@@ -194,7 +194,7 @@ class SLB_Field_Type extends SLB_Field_Base {
 		// Retrieve specified layout (use $name value if no layout by that name exists)
 		if ( empty($name) )
 			$name = $this->get_container_value('build_vars', 'layout', 'form');
-		$layout = $this->get_member_value('layout', $name, $name);
+		$layout   = $this->get_member_value('layout', $name, $name);
 
 		// Find all nested layouts in current layout
 		if ( !empty($layout) && !!$parse_nested ) {
@@ -228,7 +228,7 @@ class SLB_Field_Type extends SLB_Field_Base {
 	function has_layout($layout) {
 		$ret = false;
 		if ( is_string($layout) && ($layout = trim($layout)) && !empty($layout) ) {
-			$layout = $this->get_member_value('layout', $layout, false);
+			$layout  = $this->get_member_value('layout', $layout, false);
 			if ( $layout !== false )
 				$ret = true;
 		}
@@ -261,7 +261,7 @@ class SLB_Field_Type extends SLB_Field_Base {
 	 */
 	function parse_layout($layout, $search) {
 		$parse_match = '';
-		$result = [];
+		$result      = [];
 
 		// Find all nested layouts in layout.
 		$match_value = preg_match_all( $search, $layout, $parse_match, PREG_PATTERN_ORDER );
@@ -273,13 +273,13 @@ class SLB_Field_Type extends SLB_Field_Base {
 
 		/* Process matches */
 
-		$ph_xml = '';
-		$ph_root_tag = 'ph_root_element';
-		$ph_start_xml = '<';
-		$ph_end_xml = ' />';
+		$ph_xml        = '';
+		$ph_root_tag   = 'ph_root_element';
+		$ph_start_xml  = '<';
+		$ph_end_xml    = ' />';
 		$ph_wrap_start = '<' . $ph_root_tag . '>';
-		$ph_wrap_end = '</' . $ph_root_tag . '>';
-		$parse_result = [];
+		$ph_wrap_end   = '</' . $ph_root_tag . '>';
+		$parse_result  = [];
 
 		// Get all matched elements.
 		$parse_match = $parse_match[1];
@@ -354,12 +354,12 @@ class SLB_Field_Type extends SLB_Field_Base {
 	 * @return object Object with properties for evaluating layout placeholders
 	 */
 	function get_placeholder_defaults() {
-		$ph = new stdClass();
-		$ph->start = '{';
-		$ph->end = '}';
-		$ph->reserved = array('ref' => 'ref_base');
+		$ph                  = new stdClass();
+		$ph->start           = '{';
+		$ph->end             = '}';
+		$ph->reserved        = array('ref' => 'ref_base');
 		$ph->pattern_general = '/' . $ph->start . '([a-zA-Z0-9_].*?)' . $ph->end . '/i';
-		$ph->pattern_layout = '/' . $ph->start . '([a-zA-Z0-9].*?\s+' . $ph->reserved['ref'] . '="layout.*?".*?)' . $ph->end . '/i';
+		$ph->pattern_layout  = '/' . $ph->start . '([a-zA-Z0-9].*?\s+' . $ph->reserved['ref'] . '="layout.*?".*?)' . $ph->end . '/i';
 		return $ph;
 	}
 

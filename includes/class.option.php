@@ -23,8 +23,8 @@ class SLB_Option extends SLB_Field {
 	 * @var array
 	 */
 	var $map = array (
-		'default'	=> 'data',
-		'attr'		=> 'properties'
+		'default' => 'data',
+		'attr'    => 'properties'
 	);
 
 	var $property_priority = array ('id', 'data', 'parent');
@@ -40,12 +40,12 @@ class SLB_Option extends SLB_Field {
 	 */
 	function __construct($id, $title = '', $default = '') {
 		// Normalize properties
-		$args = func_get_args();
+		$args     = func_get_args();
 		$defaults = array ('title' => '', 'default' => '');
-		$props = $this->make_properties($args, $defaults);
+		$props    = $this->make_properties($args, $defaults);
 		// Validate
 		if ( is_scalar($id) )
-			$props['id'] = $id;
+			$props['id']    = $id;
 		if ( !is_string($props['title']) )
 			$props['title'] = '';
 		// Send to parent constructor
@@ -68,11 +68,11 @@ class SLB_Option extends SLB_Field {
 	function set_parent($parent = null) {
 		$p = $this->get_parent();
 		if ( empty($parent) && empty($p) ) {
-			$parent = 'text';
-			$d = $this->get_default();
+			$parent     = 'text';
+			$d          = $this->get_default();
 			if ( is_bool($d) )
 				$parent = 'checkbox';
-			$parent = 'option_' . $parent;
+			$parent     = 'option_' . $parent;
 		} elseif ( !empty($p) && !is_object($p) ) {
 			$parent =& $p;
 		}

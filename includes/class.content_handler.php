@@ -76,7 +76,7 @@ class SLB_Content_Handler extends SLB_Component {
 		}
 		// Filter
 		$hook = sprintf('content_handler_%s_attributes', $this->get_id());
-		$ret = $this->util->apply_filters($hook, $ret);
+		$ret  = $this->util->apply_filters($hook, $ret);
 		return ( is_array($ret) ) ? $ret : array();
 	}
 }

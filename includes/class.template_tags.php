@@ -59,17 +59,17 @@ class SLB_Template_Tags extends SLB_Collection_Controller {
 	 * @param SLB_Template_Tags $tags Tags controller
 	 */
 	public function init_defaults($tags) {
-		$js_path = 'js/';
+		$js_path  = 'js/';
 		$js_path .= ( SLB_DEV ) ? 'dev' : 'prod';
 		$src_base = $this->util->get_file_url('template-tags', true);
 		$defaults = array (
-			'item'		=> array (
-				'scripts'		=> array (
+			'item' => array (
+				'scripts' => array (
 					array ( 'base', "$src_base/item/$js_path/tag.item.js" ),
 				)
 			),
-			'ui'		=> array (
-				'scripts'		=> array (
+			'ui'   => array (
+				'scripts' => array (
 					array ( 'base', "$src_base/ui/$js_path/tag.ui.js" ),
 				)
 			),
@@ -97,7 +97,7 @@ class SLB_Template_Tags extends SLB_Collection_Controller {
 	 * @return array Modified script commands
 	 */
 	public function client_output_script($commands) {
-		$out = array('/* TPLT */');
+		$out  = array('/* TPLT */');
 		$code = array();
 
 		foreach ( $this->get() as $tag ) {
@@ -106,7 +106,7 @@ class SLB_Template_Tags extends SLB_Collection_Controller {
 				continue;
 			}
 			// Setup client parameters
-			$params = array(
+			$params   = array(
 				sprintf("'%s'", $tag->get_id()),
 			);
 			$params[] = json_encode( array('styles' => array_values($styles)) );
@@ -114,7 +114,7 @@ class SLB_Template_Tags extends SLB_Collection_Controller {
 			$code[] = $this->util->call_client_method('View.extend_template_tag_handler', $params, false);
 		}
 		if ( !empty($code) ) {
-			$out[] = implode('', $code);
+			$out[]      = implode('', $code);
 			$commands[] = implode(PHP_EOL, $out);
 		}
 		return $commands;

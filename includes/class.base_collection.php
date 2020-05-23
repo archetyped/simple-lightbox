@@ -156,7 +156,7 @@ class SLB_Base_Collection extends SLB_Base {
 			$key = $this->get_key($item);
 			if ( !$key ) {
 				$this->items[] = $item;
-				$key = key($this->items);
+				$key           = key($this->items);
 			} else {
 				$this->items[$key] = $item;
 			}
@@ -209,12 +209,12 @@ class SLB_Base_Collection extends SLB_Base {
 		$this->init();
 		// Parse args
 		$args_default = array(
-			'orderby'		=> null,
-			'order'			=> 'DESC',
-			'include'		=> array(),
-			'exclude'		=> array(),
+			'orderby' => null,
+			'order'   => 'DESC',
+			'include' => array(),
+			'exclude' => array(),
 		);
-		$r = wp_parse_args($args, $args_default);
+		$r            = wp_parse_args($args, $args_default);
 
 		$items = $this->items;
 

@@ -45,7 +45,7 @@ class SLB_Options extends SLB_Field_Collection {
 			$id = 'options';
 		}
 		$defaults = $this->integrate_id($id);
-		$props = $this->make_properties($args, $defaults);
+		$props    = $this->make_properties($args, $defaults);
 		parent::__construct($props);
 		$this->add_prefix_ref($this->version_key);
 	}
@@ -75,7 +75,7 @@ class SLB_Options extends SLB_Field_Collection {
 	function check_update() {
 		if ( !$this->version_checked ) {
 			$this->version_checked = true;
-			$version_changed = false;
+			$version_changed       = false;
 			// Get version from DB
 			$vo = $this->get_version();
 			// Get current version
@@ -139,7 +139,7 @@ class SLB_Options extends SLB_Field_Collection {
 		if ( $full ) {
 			foreach ( $items as $opt => $props ) {
 				$oid = $this->add_prefix($opt);
-				$o = get_option($oid, $d);
+				$o   = get_option($oid, $d);
 				if ( $o !== $d ) {
 					// Migrate value to data array
 					$this->set_data($opt, $o, false);
@@ -166,7 +166,7 @@ class SLB_Options extends SLB_Field_Collection {
 			if ( $full ) {
 				foreach ( $l as $opt => $dest ) {
 					$oid = $this->add_prefix($opt);
-					$o = get_option($oid, $d);
+					$o   = get_option($oid, $d);
 					// Only migrate valid values
 					if ( $o !== $d ) {
 						// Process destinations
@@ -212,14 +212,14 @@ class SLB_Options extends SLB_Field_Collection {
 		if ( empty($o) ) {
 			$o = new stdClass();
 			/* Layout */
-			$layout = new stdClass();
-			$layout->label = '<label for="{field_id}" class="title block">{label}</label>';
-			$layout->label_ref = '{label ref_base="layout"}';
-			$layout->field_pre = '<div class="input block">';
+			$layout             = new stdClass();
+			$layout->label      = '<label for="{field_id}" class="title block">{label}</label>';
+			$layout->label_ref  = '{label ref_base="layout"}';
+			$layout->field_pre  = '<div class="input block">';
 			$layout->field_post = '</div>';
-			$layout->opt_pre = '<div class="' . $this->add_prefix('option_item') . '">';
-			$layout->opt_post = '</div>';
-			$layout->form = '<{form_attr ref_base="layout"} /> <span class="description">(' . __('Default', 'simple-lightbox') . ': {data context="display" top="0"})</span>';
+			$layout->opt_pre    = '<div class="' . $this->add_prefix('option_item') . '">';
+			$layout->opt_post   = '</div>';
+			$layout->form       = '<{form_attr ref_base="layout"} /> <span class="description">(' . __('Default', 'simple-lightbox') . ': {data context="display" top="0"})</span>';
 			/* Combine */
 			$o->layout =& $layout;
 		}
@@ -286,7 +286,7 @@ class SLB_Options extends SLB_Field_Collection {
 			$items[$opt]->set_parent();
 		}
 		foreach ( $this->items as $opt ) {
-			$p = $opt->parent;
+			$p     = $opt->parent;
 			if ( is_object($p) )
 				$p = 'o:' . $p->id;
 		}
@@ -414,7 +414,7 @@ class SLB_Options extends SLB_Field_Collection {
 			// Sanitize loaded data based on default values
 			foreach ( $data as $id => $val ) {
 				if ( $this->has($id) ) {
-					$opt = $this->get($id);
+					$opt           = $this->get($id);
 					if ( is_bool($opt->get_default()) )
 						$data[$id] = !!$val;
 				}
@@ -494,7 +494,7 @@ class SLB_Options extends SLB_Field_Collection {
 	function &add($id, $properties = array(), $update = false) {
 		// Create item
 		$args = func_get_args();
-		$ret = call_user_func_array(array('parent', 'add'), $args);
+		$ret  = call_user_func_array(array('parent', 'add'), $args);
 		return $ret;
 	}
 
@@ -551,7 +551,7 @@ class SLB_Options extends SLB_Field_Collection {
 	 */
 	function build_client_output() {
 		$items = $this->get_items();
-		$out = array();
+		$out   = array();
 		foreach ( $items as $option ) {
 			if ( !$option->get_in_client() )
 				continue;
@@ -572,7 +572,7 @@ class SLB_Options extends SLB_Field_Collection {
 		$groups = null;
 		if ( is_array($opts) && count($opts) == 2 ) {
 			$groups = $opts[1];
-			$opts = $opts[0];
+			$opts   = $opts[0];
 		}
 		if ( $opts === $this ) {
 			// Set build variables and callbacks
@@ -582,8 +582,8 @@ class SLB_Options extends SLB_Field_Collection {
 				$this->set_build_var('groups', $groups);
 			}
 			$hooks = array (
-				'filter'	=> array (
-					'parse_build_vars'		=> array( $this->m('admin_parse_build_vars'), 10, 2 )
+				'filter' => array (
+					'parse_build_vars' => array( $this->m('admin_parse_build_vars'), 10, 2 )
 				)
 			);
 
@@ -616,8 +616,8 @@ class SLB_Options extends SLB_Field_Collection {
 	 * Builds option groups output
 	 */
 	public function admin_build_groups() {
-		$page = $this->get_build_var('admin_page');
-		$state = $this->get_build_var('admin_state');
+		$page   = $this->get_build_var('admin_page');
+		$state  = $this->get_build_var('admin_state');
 		$groups = $this->get_build_var('groups');
 
 		// Get all groups
@@ -643,7 +643,7 @@ class SLB_Options extends SLB_Field_Collection {
 	 * @param array $box Meta box properties
 	 */
 	public function admin_build_group($obj, $box) {
-		$a = $box['args'];
+		$a     = $box['args'];
 		$group = $a['group'];
 		$this->build_group($group);
 	}

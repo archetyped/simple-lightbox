@@ -36,8 +36,8 @@ class SLB_Base_Object extends SLB_Base {
 	 * > styles		array Stylesheets
 	 */
 	protected $files = array(
-		'scripts'	=> array(),
-		'styles'	=> array()
+		'scripts' => array(),
+		'styles'  => array()
 	);
 
 	/**
@@ -139,7 +139,7 @@ class SLB_Base_Object extends SLB_Base {
 	 * @return array Ancestors
 	 */
 	public function get_ancestors() {
-		$ret = array();
+		$ret  = array();
 		$curr = $this;
 		while ( $curr->has_parent() ) {
 			// Add ancestor

@@ -84,8 +84,8 @@ class SLB_Base {
 	 * Array is processed and converted to an object on init
 	 */
 	private $client_files = array (
-		'scripts'	=> array(),
-		'styles'	=> array()
+		'scripts' => array(),
+		'styles'  => array()
 	);
 
 	/*-** Instances **-*/
@@ -166,8 +166,8 @@ class SLB_Base {
 			return false;
 		}
 		// Localization
-		$ldir = 'l10n';
-		$lpath = $this->util->get_plugin_file_path($ldir, array(false, false));
+		$ldir      = 'l10n';
+		$lpath     = $this->util->get_plugin_file_path($ldir, array(false, false));
 		$lpath_abs = $this->util->get_file_path($ldir);
 		if ( is_dir($lpath_abs) ) {
 			load_plugin_textdomain('simple-lightbox', false, $lpath);
@@ -189,7 +189,7 @@ class SLB_Base {
 	 */
 	protected function _set_options($options_config = null) {
 		$class = $this->util->get_class('Options');
-		$key = 'options';
+		$key   = 'options';
 		if ( $this->shares($key) ) {
 			$opts = $this->gvar($key);
 			// Setup options instance
@@ -216,7 +216,7 @@ class SLB_Base {
 			return false;
 		}
 		$class = $this->util->get_class('Admin');
-		$key = 'admin';
+		$key   = 'admin';
 		if ( $this->shares($key) ) {
 			$adm = $this->gvar($key);
 			// Setup options instance
@@ -274,8 +274,8 @@ class SLB_Base {
 		add_action('init', $this->m('register_client_files'));
 
 		// Enqueue
-		$hk_prfx = ( ( is_admin() ) ? 'admin' : 'wp' );
-		$hk_enqueue = $hk_prfx . '_enqueue_scripts' ;
+		$hk_prfx       = ( ( is_admin() ) ? 'admin' : 'wp' );
+		$hk_enqueue    = $hk_prfx . '_enqueue_scripts' ;
 		$hk_enqueue_ft = $hk_prfx . '_footer';
 		add_action($hk_enqueue, $this->m('enqueue_client_files'), 10, 0);
 		add_action($hk_enqueue_ft, $this->m('enqueue_client_files_footer'), 1);
@@ -296,7 +296,7 @@ class SLB_Base {
 			foreach ( $files as $f ) {
 				// Get file URI
 				$f->file = ( !$this->util->is_file($f->file) && is_callable($f->file) ) ? call_user_func($f->file) : $this->util->get_file_url($f->file, true);
-				$params = array($f->id, $f->file, $f->deps, $v);
+				$params  = array($f->id, $f->file, $f->deps, $v);
 				// Set additional parameters based on file type (script, style, etc.)
 				switch ( $type ) {
 					case 'scripts':
@@ -389,7 +389,7 @@ class SLB_Base {
 	 * Build function name for handling client operations
 	 */
 	function get_client_files_handler($type, $action) {
-		$func = 'wp_' . $action . '_' . substr($type, 0, -1);
+		$func     = 'wp_' . $action . '_' . substr($type, 0, -1);
 		if ( !function_exists($func) )
 			$func = false;
 		return $func;
@@ -402,7 +402,7 @@ class SLB_Base {
 	 * @return object|bool Base object (FALSE if object does not exist)
 	 */
 	function &get_base() {
-		$base = false;
+		$base     = false;
 		if ( isset($GLOBALS[$this->base]) )
 			$base =& $GLOBALS[$this->base];
 		return $base;
@@ -475,7 +475,7 @@ class SLB_Base {
 	 * @return void
 	 */
 	function add_prefix_ref(&$var, $sep = null, $once = true) {
-		$args = func_get_args();
+		$args    = func_get_args();
 		$args[0] =& $var;
 		call_user_func_array($this->util->m($this->util, 'add_prefix_ref'), $args);
 	}
@@ -496,9 +496,9 @@ class SLB_Base {
 		if ( is_null($this->caps) ) {
 			// Build capabilities based on instance properties
 			$this->caps = array(
-				'init'			=> ( 'object' != $this->mode ) ? true : false,
-				'singleton'		=> ( !!$this->model ) ? true : false,
-				'control'		=> ( 'sub' == $this->mode || 'object' == $this->mode ) ? false : true,
+				'init'      => ( 'object' != $this->mode ) ? true : false,
+				'singleton' => ( !!$this->model ) ? true : false,
+				'control'   => ( 'sub' == $this->mode || 'object' == $this->mode ) ? false : true,
 			);
 		}
 		return ( isset($this->caps[$cap]) ) ? $this->caps[$cap] : false;
@@ -544,8 +544,8 @@ class SLB_Base {
 	 * @return bool TRUE if options are valid, FALSE otherwise
 	 */
 	function is_options_valid($data, $check_var = true) {
-		$class = $this->util->get_class('Options');
-		$ret = ( empty($data) || !is_array($data) || !class_exists($class) ) ? false : true;
+		$class   = $this->util->get_class('Options');
+		$ret     = ( empty($data) || !is_array($data) || !class_exists($class) ) ? false : true;
 		if ( $ret && $check_var && !($this->options instanceof $class) )
 			$ret = false;
 		return $ret;

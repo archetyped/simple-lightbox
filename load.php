@@ -14,7 +14,7 @@ if ( !defined('SLB_DEV') ) {
  */
 function slb_autoload($classname) {
 	$prefix = 'slb_';
-	$cls = strtolower($classname);
+	$cls    = strtolower($classname);
 	// Remove prefix
 	if ( 0 !== strpos($cls, $prefix) ) {
 		return false;

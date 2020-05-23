@@ -43,15 +43,15 @@ class SLB_Admin_Page extends SLB_Admin_View {
 	 * @return object Page instance reference
 	 */
 	public function add_content($id, $title, $callback = null, $context = 'primary', $priority = 'default', $callback_args = null) {
-		return parent::add_content($id, array(
+		$opts = [
 			'id'			=> $id,
 			'title'			=> $title,
 			'callback'		=> $callback,
 			'context'		=> $context,
 			'priority'		=> $priority,
 			'callback_args'	=> $callback_args
-			)
-		);
+		];
+		return parent::add_content($id, $opts);
 	}
 
 	/**
@@ -86,7 +86,7 @@ class SLB_Admin_Page extends SLB_Admin_View {
 			return false;
 		}
 		$content = $content[$context];
-		$out = '';
+		$out     = '';
 		// Render content
 		?>
 		<div class="content-wrap">
@@ -149,9 +149,9 @@ class SLB_Admin_Page extends SLB_Admin_View {
 				if ( $this->is_required_form() ) {
 					// Build form output
 					$form_id = $this->add_prefix('admin_form_' . $this->get_id_raw());
-					$nonce = (object) [
+					$nonce   = (object) [
 						'action' => $this->get_id(),
-						'name' => $this->get_id() . '_nonce',
+						'name'   => $this->get_id() . '_nonce',
 					];
 					?>
 					<form id="<?php esc_attr_e($form_id); ?>" name="<?php esc_attr_e($form_id); ?>" action="" method="post">

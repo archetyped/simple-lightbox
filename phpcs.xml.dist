@@ -113,11 +113,6 @@
         <exclude name="WordPress.WhiteSpace.OperatorSpacing.NoSpaceAfter"/>
         <exclude name="WordPress.WhiteSpace.OperatorSpacing.NoSpaceBefore"/>
         <exclude name="WordPress.WhiteSpace.OperatorSpacing.SpacingAfter"/>
-        <!-- ** Alignment-Related ** -->
-        <exclude name="WordPress.Arrays.ArrayIndentation.CloseBraceNotAligned"/>
-        <exclude name="WordPress.Arrays.ArrayIndentation.ItemNotAligned"/>
-        <exclude name="WordPress.Arrays.MultipleStatementAlignment.DoubleArrowNotAligned"/>
-        <exclude name="Generic.Formatting.MultipleStatementAlignment.NotSameWarning"/>
     </rule>
 
     <!-- Add in some extra rules from other standards. -->

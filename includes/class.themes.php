@@ -36,7 +36,7 @@ class SLB_Themes extends SLB_Collection_Controller {
 	protected function _options() {
 		$opts = array (
 			'items'	=> array (
-				'theme_default'		=> array (
+				'theme_default' => array (
 					'title'		=> __('Theme', 'simple-lightbox'),
 					'default' 	=> $this->get_default_id(),
 					'group' 	=> array('ui', 0),
@@ -55,37 +55,37 @@ class SLB_Themes extends SLB_Collection_Controller {
 	 * @param SLB_Themes $themes Themes controller
 	 */
 	function init_defaults($themes) {
-		$js_path = 'js/';
+		$js_path  = 'js/';
 		$js_path .= ( SLB_DEV ) ? 'dev' : 'prod';
-		$scheme = is_ssl() ? 'https' : 'http';
+		$scheme   = is_ssl() ? 'https' : 'http';
 		$baseline = $this->add_prefix('baseline');
 		$src_base = $this->util->get_file_url('themes', true);
 		$defaults = array (
-			$baseline					=> array (
-				'name'			=> __('Baseline', 'simple-lightbox'),
-				'public'		=> false,
-				'layout'		=> "$src_base/baseline/layout.html",
-				'scripts'		=> array (
+			$baseline                  => array (
+				'name'    => __('Baseline', 'simple-lightbox'),
+				'public'  => false,
+				'layout'  => "$src_base/baseline/layout.html",
+				'scripts' => array (
 					array ( 'base', $src_base . "/baseline/$js_path/client.js" ),
 				),
-				'styles'		=> array (
+				'styles'  => array (
 					array ( 'base', "$src_base/baseline/css/style.css" ),
 				),
 			),
-			$this->get_default_id()		=> array (
-				'name'			=> __('Default (Light)', 'simple-lightbox'),
-				'parent'		=> $baseline,
-				'scripts'		=> array (
+			$this->get_default_id()    => array (
+				'name'    => __('Default (Light)', 'simple-lightbox'),
+				'parent'  => $baseline,
+				'scripts' => array (
 					array ( 'base', $src_base . "/default/$js_path/client.js" ),
 				),
-				'styles'		=> array (
+				'styles'  => array (
 					array ( 'base', "$src_base/default/css/style.css" ),
 				),
 			),
-			$this->add_prefix('black')	=> array (
-				'name'			=> __('Default (Dark)', 'simple-lightbox'),
-				'parent'		=> $this->get_default_id(),
-				'styles'		=> array (
+			$this->add_prefix('black') => array (
+				'name'   => __('Default (Dark)', 'simple-lightbox'),
+				'parent' => $this->get_default_id(),
+				'styles' => array (
 					array ( 'base', "$src_base/black/css/style.css" )
 				)
 			),
@@ -109,7 +109,7 @@ class SLB_Themes extends SLB_Collection_Controller {
 	public function add($id, $props = array()) {
 		// Prepare parent
 		if ( isset($props['parent']) && !($props['parent'] instanceof $this->item_type) ) {
-			$pid = $props['parent'];
+			$pid   = $props['parent'];
 			$items = $this->get(array('include_private' => true));
 			if ( isset($items[$pid]) ) {
 				$props['parent'] = $items[$pid];
@@ -127,12 +127,12 @@ class SLB_Themes extends SLB_Collection_Controller {
 	 */
 	public function get($args = null) {
 		// Normalize arguments
-		$args_default = array(
-			'include_public'	=> true,
-			'include_private'	=> false,
+		$args_default         = array(
+			'include_public'  => true,
+			'include_private' => false,
 		);
-		$r = wp_parse_args($args, $args_default);
-		$r['include_public'] = !!$r['include_public'];
+		$r                    = wp_parse_args($args, $args_default);
+		$r['include_public']  = !!$r['include_public'];
 		$r['include_private'] = !!$r['include_private'];
 
 		$items = parent::get($args);
@@ -199,7 +199,7 @@ class SLB_Themes extends SLB_Collection_Controller {
 		$thm = $this->get_selected();
 
 		// Get theme ancestors
-		$thms = $thm->get_ancestors(true);
+		$thms   = $thm->get_ancestors(true);
 		$thms[] = $thm;
 
 		foreach ( $thms as $thm ) {
@@ -219,10 +219,10 @@ class SLB_Themes extends SLB_Collection_Controller {
 		$thm = $this->get_selected();
 
 		// Process theme ancestors
-		$thms = $thm->get_ancestors(true);
+		$thms   = $thm->get_ancestors(true);
 		$thms[] = $thm;
 
-		$out = array('/* THM */');
+		$out  = array('/* THM */');
 		$code = array();
 
 		// Build output for each theme
@@ -233,9 +233,9 @@ class SLB_Themes extends SLB_Collection_Controller {
 			);
 			// Theme properties
 			$thm_props = array(
-				'name'			=> $thm->get_name(),
-				'parent'		=> ( $thm->has_parent() ) ? $thm->get_parent()->get_id() : '',
-				'styles'		=> array_values($thm->get_styles(array('uri_format'=>'full'))),
+				'name'   => $thm->get_name(),
+				'parent' => ( $thm->has_parent() ) ? $thm->get_parent()->get_id() : '',
+				'styles' => array_values($thm->get_styles(array('uri_format'=>'full'))),
 			);
 			/* Optional properties */
 			// Layout
@@ -254,7 +254,7 @@ class SLB_Themes extends SLB_Collection_Controller {
 		}
 
 		if ( !empty($code) ) {
-			$out[] = implode('', $code);
+			$out[]      = implode('', $code);
 			$commands[] = implode(PHP_EOL, $out);
 		}
 		return $commands;
@@ -270,7 +270,7 @@ class SLB_Themes extends SLB_Collection_Controller {
 	public function opt_get_field_values() {
 		// Get themes
 		$items = $this->get();
-		$d = $this->get_default_id();
+		$d     = $this->get_default_id();
 		// Pop out default theme
 		if ( isset($items[$d]) ) {
 			$itm_d = $items[$d];

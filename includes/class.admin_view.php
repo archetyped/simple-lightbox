@@ -104,10 +104,10 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 */
 	public function __construct($id, $labels, $callback = null, $capability = null, $icon = null) {
 		$props = array(
-			'labels'		=> $labels,
-			'callback'		=> $callback,
-			'capability'	=> $capability,
-			'icon'			=> $icon,
+			'labels'     => $labels,
+			'callback'   => $callback,
+			'capability' => $capability,
+			'icon'       => $icon,
 		);
 		parent::__construct($id, $props);
 		$this->init_required();
@@ -321,7 +321,7 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 * @return array Merged messages array
 	 */
 	public function do_messages($msgs = array()) {
-		$m =& $this->get_messages();
+		$m        =& $this->get_messages();
 		if ( !empty($m) )
 			$msgs = array_merge($msgs, $m);
 		return $msgs;
@@ -467,9 +467,9 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 */
 	public function get_uri($file = null, $format = null) {
 		static $page_hooks = null;
-		$uri = '';
+		$uri               = '';
 		if ( empty($file) )
-			$file = 'admin.php';
+			$file          = 'admin.php';
 		if ( $this->is_child() ) {
 			$parent = str_replace('_page_' . $this->get_id(), '', $this->get_hookname());
 			if ( is_null($page_hooks) ) {
@@ -480,7 +480,7 @@ class SLB_Admin_View extends SLB_Base_Object {
 		}
 
 		if ( empty($format) ) {
-			$delim = ( strpos($file, '?') === false ) ? '?' : '&amp;';
+			$delim  = ( strpos($file, '?') === false ) ? '?' : '&amp;';
 			$format = '%1$s' . $delim . 'page=%2$s';
 		}
 		$uri = sprintf($format, $file, $this->get_id());

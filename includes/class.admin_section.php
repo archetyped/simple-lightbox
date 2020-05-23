@@ -11,7 +11,7 @@ class SLB_Admin_Section extends SLB_Admin_View {
 	/* Properties */
 
 	protected $parent_required = true;
-	protected $parent_custom = false;
+	protected $parent_custom   = false;
 
 	/* Init */
 
@@ -34,7 +34,7 @@ class SLB_Admin_Section extends SLB_Admin_View {
 	 */
 	public function get_uri($file = null, $format = null) {
 		if ( !is_string($file) )
-			$file = 'options-' . $this->get_parent() . '.php';
+			$file   = 'options-' . $this->get_parent() . '.php';
 		if ( !is_string($format) )
 			$format = '%1$s#%2$s';
 		return parent::get_uri($file, $format);

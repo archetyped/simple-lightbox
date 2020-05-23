@@ -71,12 +71,12 @@ class SLB_Component extends SLB_Base_Object {
 			$type = array ( $type );
 		}
 		foreach ( $type as $t ) {
-			$m = (object) array (
-				'get'		=> $this->m('get_' . $t . 's'),
-				'enqueue'	=> 'wp_enqueue_' . $t,
+			$m           = (object) array (
+				'get'     => $this->m('get_' . $t . 's'),
+				'enqueue' => 'wp_enqueue_' . $t,
 			);
-			$v = $this->util->get_plugin_version();
-			$files = call_user_func($m->get);
+			$v           = $this->util->get_plugin_version();
+			$files       = call_user_func($m->get);
 			$param_final = ( 'script' == $t ) ? true : 'all';
 			foreach ( $files as $f ) {
 				$f = (object) $f;

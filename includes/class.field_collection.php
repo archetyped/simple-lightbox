@@ -26,11 +26,11 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	var $items = array();
 
 	var $build_vars_default = array (
-		'groups'		=> array(),
-		'context'		=> '',
-		'layout'		=> 'form',
-		'build'			=> true,
-		'build_groups'	=> true,
+		'groups'       => array(),
+		'context'      => '',
+		'layout'       => 'form',
+		'build'        => true,
+		'build_groups' => true,
 	);
 
 	/**
@@ -60,7 +60,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	 * @param array $properties (optional) Properties to set for collection (Default: none)
 	 */
 	public function __construct($id, $properties = null) {
-		$args = func_get_args();
+		$args       = func_get_args();
 		$properties = $this->make_properties($args);
 		// Parent constructor
 		parent::__construct($properties);
@@ -98,7 +98,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	 * @return object Current instance
 	 */
 	public function load($properties, $update = true) {
-		$args = func_get_args();
+		$args       = func_get_args();
 		$properties = $this->make_properties($args);
 		if ( !empty($properties) ) {
 			// Groups
@@ -186,9 +186,9 @@ class SLB_Field_Collection extends SLB_Field_Base {
 			$item = $id;
 			$item->set_properties($properties);
 		} elseif ( class_exists($this->item_type) ) {
-			$defaults = array (
-				'parent'		=> null,
-				'group'			=> null
+			$defaults   = array (
+				'parent' => null,
+				'group'  => null
 			);
 			$properties = array_merge($defaults, $properties);
 			if ( is_string($id) ) {
@@ -313,7 +313,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 		$ret = null;
 		if ( $this->has($item) ) {
 			$item = $this->get($item);
-			$ret = $item->get_data($context, $top);
+			$ret  = $item->get_data($context, $top);
 		} else {
 			$ret = parent::get_data($context, $top);
 		}
@@ -426,21 +426,21 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	function &add_group($id, $properties = array(), $items = array(), $update = false) {
 		// Create new group and set properties
 		$default = array (
-			'title'			=> '',
-			'description'	=> '',
-			'priority'		=> 10
+			'title'       => '',
+			'description' => '',
+			'priority'    => 10
 		);
-		$p = ( is_array($properties) ) ? array_merge($default, $properties) : $default;
+		$p       = ( is_array($properties) ) ? array_merge($default, $properties) : $default;
 		if ( !is_int($p['priority']) || $p['priority'] < 0 ) {
 			$p['priority'] = $default['priority'];
 		}
 		$id = trim($id);
 		// Retrieve or init group
 		if ( !!$update && $this->group_exists($id) ) {
-			$grp = $this->get_group($id);
-			$grp->title = $p['title'];
+			$grp              = $this->get_group($id);
+			$grp->title       = $p['title'];
 			$grp->description = $p['description'];
-			$grp->priority = $p['priority'];
+			$grp->priority    = $p['priority'];
 		} else {
 			$this->groups[$id] =& $this->create_group($id, $p['title'], $p['description'], $p['priority']);
 		}
@@ -474,13 +474,13 @@ class SLB_Field_Collection extends SLB_Field_Base {
 		$group = new stdClass();
 		/* Set group properties */
 		// Set ID
-		$id = ( is_scalar($id) ) ? trim($id) : '';
+		$id        = ( is_scalar($id) ) ? trim($id) : '';
 		$group->id = $id;
 		// Set Title
-		$title = ( is_scalar($title) ) ? trim($title) : '';
+		$title        = ( is_scalar($title) ) ? trim($title) : '';
 		$group->title = $title;
 		// Set Description
-		$description = ( is_scalar($description) ) ? trim($description) : '';
+		$description        = ( is_scalar($description) ) ? trim($description) : '';
 		$group->description = $description;
 		// Priority
 		$group->priority = ( is_int($priority) ) ? $priority : 10;
@@ -523,7 +523,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 			$group = array($group, $priority);
 		}
 		list($gid, $priority) = $group;
-		$gid = trim(sanitize_title_with_dashes($gid));
+		$gid                  = trim(sanitize_title_with_dashes($gid));
 		if ( empty($gid) ) {
 			return false;
 		}

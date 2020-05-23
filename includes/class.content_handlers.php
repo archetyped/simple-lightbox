@@ -143,8 +143,8 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 	 * @return array Cached items (Default: empty array)
 	 */
 	protected function get_cache() {
-		$cprops= $this->get_cache_props();
-		$items = wp_cache_get($cprops->key, $cprops->group);
+		$cprops = $this->get_cache_props();
+		$items  = wp_cache_get($cprops->key, $cprops->group);
 		return ( is_array($items) ) ? $items : array();
 	}
 
@@ -175,7 +175,7 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 	protected function get_cache_props() {
 		if ( !is_object($this->cache_props) ) {
 			$this->cache_props = (object) array (
-				'key' => $this->hook_prefix . '_items',
+				'key'   => $this->hook_prefix . '_items',
 				'group' => $this->get_prefix(),
 			);
 		}
@@ -190,12 +190,12 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 	 */
 	public function init_defaults($handlers) {
 		$src_base = $this->util->get_file_url('content-handlers', true);
-		$js_path = 'js/';
+		$js_path  = 'js/';
 		$js_path .= ( SLB_DEV ) ? 'dev' : 'prod';
 		$defaults = array (
-			'image'		=> array (
-				'match'			=> $this->m('match_image'),
-				'scripts'		=> array (
+			'image' => array (
+				'match'   => $this->m('match_image'),
+				'scripts' => array (
 					array ( 'base', "$src_base/image/$js_path/handler.image.js" ),
 				),
 			)
@@ -246,7 +246,7 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 	 * @return array Modified script commands
 	 */
 	public function client_output_script($commands) {
-		$out = array('/* CHDL */');
+		$out  = array('/* CHDL */');
 		$code = array();
 
 		foreach ( $this->request_matches as $handler ) {
@@ -269,7 +269,7 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 			$code[] = $this->util->call_client_method('View.extend_content_handler', $params, false);
 		}
 		if ( !empty($code) ) {
-			$out[] = implode('', $code);
+			$out[]      = implode('', $code);
 			$commands[] = implode(PHP_EOL, $out);
 		}
 		return $commands;

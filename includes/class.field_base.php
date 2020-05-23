@@ -9,7 +9,7 @@
  */
 class SLB_Field_Base extends SLB_Base {
 	/*-** Config **-*/
-	protected $mode = 'object';
+	protected $mode   = 'object';
 	protected $shared = false;
 
 	/*-** Properties **-*/
@@ -45,8 +45,8 @@ class SLB_Field_Base extends SLB_Base {
 	var $special_chars = null;
 
 	var $special_chars_default = array(
-		'{'		=> '%SQB_L%',
-		'}'		=> '%SQB_R%',
+		'{' => '%SQB_L%',
+		'}' => '%SQB_R%',
 	);
 
 	/**
@@ -156,8 +156,8 @@ class SLB_Field_Base extends SLB_Base {
 	function __construct($id = '', $properties = null) {
 		parent::__construct();
 		// Normalize Properties
-		$args = func_get_args();
-		$defaults = $this->integrate_id($id);
+		$args       = func_get_args();
+		$defaults   = $this->integrate_id($id);
 		$properties = $this->make_properties($args, $defaults);
 		// Save init properties
 		$this->properties_init = $properties;
@@ -199,7 +199,7 @@ class SLB_Field_Base extends SLB_Base {
 	 * @return mixed Value at specified path
 	 */
 	function &get_path_value($path = '') {
-		$ret = '';
+		$ret  = '';
 		$path = $this->util->build_path(func_get_args());
 		if ( $this->path_isset($path) ) {
 			$ret =& $this;
@@ -258,8 +258,8 @@ class SLB_Field_Base extends SLB_Base {
 
 		$path = $this->util->build_path($path, $name);
 		// Set defaults and prepare data
-		$val = $default;
-		$inherit = false;
+		$val         = $default;
+		$inherit     = false;
 		$inherit_tag = '{inherit}';
 
 		/* Determine whether the value must be retrieved from a parent/container object
@@ -317,7 +317,7 @@ class SLB_Field_Base extends SLB_Base {
 	 * @return mixed Member value if found (Default: $default)
 	 */
 	function get_object_value(&$object, $member, $name = '', $default = '', $dir = 'parent') {
-		$ret = $default;
+		$ret     = $default;
 		if ( is_object($object) && method_exists($object, 'get_member_value') )
 			$ret = $object->get_member_value($member, $name, $default, $dir);
 		return $ret;
@@ -345,16 +345,16 @@ class SLB_Field_Base extends SLB_Base {
 		$wrap_default = array('open' => '', 'close' => '', 'segment_open' => '', 'segment_close' => '');
 
 		$options_default = array(
-			'format'			=> null,
-			'wrap'				=> array(),
-			'segments_pre'		=> null,
-			'prefix'			=> '',
-			'recursive'			=> false
+			'format'       => null,
+			'wrap'         => array(),
+			'segments_pre' => null,
+			'prefix'       => '',
+			'recursive'    => false
 		);
 
 		// Load options based on format
 		if ( !is_array($options) )
-			$options = array('format' => $options);
+			$options         = array('format' => $options);
 		if ( isset($options['format']) && is_string($options['format']) && isset($formats[$options['format']]) )
 			$options_default = wp_parse_args($formats[$options['format']], $options_default);
 		else
@@ -368,7 +368,7 @@ class SLB_Field_Base extends SLB_Base {
 
 		if ( !is_array($segments_pre) )
 			$segments_pre = array($segments_pre);
-		$segments_pre = array_reverse($segments_pre);
+		$segments_pre     = array_reverse($segments_pre);
 
 		// Format ID based on options
 		$item_id = array($item_id);
@@ -383,7 +383,7 @@ class SLB_Field_Base extends SLB_Base {
 				if ( method_exists($c, 'get_id') && ( $itemp = $c->get_id() ) && !empty($itemp) )
 					$item_id = $itemp;
 				// Get parent object
-				$c = ( method_exists($c, $m) ) ? $c->{$m}() : null;
+				$c     = ( method_exists($c, $m) ) ? $c->{$m}() : null;
 				$itemp = '';
 			}
 			unset($c);
@@ -394,9 +394,9 @@ class SLB_Field_Base extends SLB_Base {
 			if ( is_null($seg) )
 				continue;
 			if ( is_object($seg) )
-				$seg = (array)$seg;
+				$seg       = (array)$seg;
 			if ( is_array($seg) )
-				$item_id = array_merge($item_id, array_reverse($seg));
+				$item_id   = array_merge($item_id, array_reverse($seg));
 			elseif ( '' != strval($seg) )
 				$item_id[] = strval($seg);
 		}
@@ -406,9 +406,9 @@ class SLB_Field_Base extends SLB_Base {
 			// Array is sequence of instance methods to call on object
 			// Last array member can be an array of parameters to pass to methods
 			$count = count($prefix);
-			$args = ( $count > 1 && is_array($prefix[$count - 1]) ) ? array_pop($prefix) : array();
-			$p = $this;
-			$val = '';
+			$args  = ( $count > 1 && is_array($prefix[$count - 1]) ) ? array_pop($prefix) : array();
+			$p     = $this;
+			$val   = '';
 			// Iterate through methods
 			foreach ( $prefix as $m ) {
 				if ( !method_exists($p, $m) )
@@ -460,8 +460,8 @@ class SLB_Field_Base extends SLB_Base {
 			$this->add_id_format(
 				'attr_id',
 				[
-					'wrap' => [ 'open' => '_', 'segment_open' => '_' ],
-					'prefix' => [ 'get_container', 'get_id', 'add_prefix' ],
+					'wrap'      => [ 'open' => '_', 'segment_open' => '_' ],
+					'prefix'    => [ 'get_container', 'get_id', 'add_prefix' ],
 					'recursive' => true,
 				],
 				true
@@ -469,8 +469,8 @@ class SLB_Field_Base extends SLB_Base {
 			$this->add_id_format(
 				'attr_name',
 				[
-					'wrap' => [ 'open' => '[', 'close' => ']', 'segment_open' => '[', 'segment_close' => ']' ],
-					'prefix' => [ 'get_container', 'get_id', 'add_prefix' ],
+					'wrap'      => [ 'open' => '[', 'close' => ']', 'segment_open' => '[', 'segment_close' => ']' ],
+					'prefix'    => [ 'get_container', 'get_id', 'add_prefix' ],
 					'recursive' =>  true,
 				],
 				true
@@ -519,10 +519,10 @@ class SLB_Field_Base extends SLB_Base {
 	 */
 	function get_data($context = '', $top = true) {
 		$opt_d = array('context' => '', 'top' => true);
-		$args = func_get_args();
-		$a = false;
+		$args  = func_get_args();
+		$a     = false;
 		if ( count($args) == 1 && is_array($args[0]) && !empty($args[0]) ) {
-			$a = true;
+			$a    = true;
 			$args = wp_parse_args($args[0], $opt_d);
 			extract($args);
 		}
@@ -535,10 +535,10 @@ class SLB_Field_Base extends SLB_Base {
 			elseif ( is_numeric($top) )
 				$top = intval($top);
 		}
-		$top = !!$top;
-		$obj =& $this;
+		$top      = !!$top;
+		$obj      =& $this;
 		$obj_path = array($this);
-		$path = array();
+		$path     = array();
 		if ( $top ) {
 			// Iterate through hiearchy to get top-most object
 			while ( !empty($obj) ) {
@@ -546,12 +546,12 @@ class SLB_Field_Base extends SLB_Base {
 				// Try to get caller first
 				if ( method_exists($obj, 'get_caller') ) {
 					$checked = true;
-					$new =& $obj->get_caller();
+					$new     =& $obj->get_caller();
 				}
 				// Try to get container if no caller found
 				if ( empty($new) && method_exists($obj, 'get_container') ) {
 					$checked = true;
-					$new =& $obj->get_container();
+					$new     =& $obj->get_container();
 					// Load data
 					if ( method_exists($new, 'load_data') ) {
 						$new->load_data();
@@ -801,7 +801,7 @@ class SLB_Field_Base extends SLB_Base {
 		if ( !is_string($name) )
 			return false;
 		// Create property array
-		$prop_arr = array();
+		$prop_arr          = array();
 		$prop_arr['value'] = $value;
 		// Add to properties array
 		$this->properties[$name] = $value;

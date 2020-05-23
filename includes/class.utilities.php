@@ -23,19 +23,19 @@ class SLB_Utilities {
 	 * @var string
 	 */
 	private $_plugin = array(
-		'base'		=> null,
-		'file'		=> null,
-		'name'		=> null,
-		'data'		=> null,
-		'uri'		=> null,
-		'headers'	=> array (
-			'Name'			=> 'Plugin Name',
-			'PluginURI'		=> 'Plugin URI',
-			'SupportURI'	=> 'Support URI',
-			'Version'		=> 'Version',
-			'Description'	=> 'Description',
-			'Author'		=> 'Author',
-			'AuthorURI'		=> 'Author URI',
+		'base'    => null,
+		'file'    => null,
+		'name'    => null,
+		'data'    => null,
+		'uri'     => null,
+		'headers' => array (
+			'Name'        => 'Plugin Name',
+			'PluginURI'   => 'Plugin URI',
+			'SupportURI'  => 'Support URI',
+			'Version'     => 'Version',
+			'Description' => 'Description',
+			'Author'      => 'Author',
+			'AuthorURI'   => 'Author URI',
 		)
 	);
 
@@ -50,10 +50,10 @@ class SLB_Utilities {
 	 * @var array
 	 */
 	private $_priorities = array (
-		'high'							=> 1,
-		'low'							=> 99,
-		'safe'							=> 15,
-		'client_footer_output'			=> 25,
+		'high'                 => 1,
+		'low'                  => 99,
+		'safe'                 => 15,
+		'client_footer_output' => 25,
 	);
 
 	/* Constructors */
@@ -73,7 +73,7 @@ class SLB_Utilities {
 	function m($obj, $method = '') {
 		if ( is_string($obj) ) {
 			$method = $obj;
-			$obj = null;
+			$obj    = null;
 		}
 		if ( !is_object($obj) && isset($this) ) {
 			$obj = $this;
@@ -103,7 +103,7 @@ class SLB_Utilities {
 	 * @return string Class prefix
 	 */
 	function get_prefix($sep = null) {
-		$sep = $this->get_sep($sep);
+		$sep    = $this->get_sep($sep);
 		$prefix = ( !empty($this->_parent->prefix) ) ? $this->_parent->prefix . $sep : '';
 		return $prefix;
 	}
@@ -118,8 +118,8 @@ class SLB_Utilities {
 			return false;
 		if ( !is_array($text) )
 			$text = array($text);
-		$text = array_values($text);
-		$text = $text[0];
+		$text     = array_values($text);
+		$text     = $text[0];
 		return ( !empty($text) && stripos($text, $this->get_prefix($sep)) === 0 );
 	}
 
@@ -151,8 +151,8 @@ class SLB_Utilities {
 	 */
 	function add_prefix_uc($text, $sep = '_', $once = true) {
 		$args = func_get_args();
-		$var = call_user_func_array($this->m($this, 'add_prefix'), $args);
-		$pre = $this->get_prefix();
+		$var  = call_user_func_array($this->m($this, 'add_prefix'), $args);
+		$pre  = $this->get_prefix();
 		return str_replace($pre . $sep, strtoupper($pre) . $sep, $var);
 	}
 
@@ -167,7 +167,7 @@ class SLB_Utilities {
 	 */
 	function add_prefix_ref(&$var, $sep = null, $once = true) {
 		$args = func_get_args();
-		$var = call_user_func_array($this->m($this, 'add_prefix'), $args);
+		$var  = call_user_func_array($this->m($this, 'add_prefix'), $args);
 	}
 
 	/**
@@ -224,8 +224,8 @@ class SLB_Utilities {
 
 		// Initialize wrapper
 		$w = array (
-			'start'		=> '[',
-			'end'		=> ']',
+			'start' => '[',
+			'end'   => ']',
 		);
 
 		if ( !empty($start) ) {
@@ -276,7 +276,7 @@ class SLB_Utilities {
 	 */
 	function remove_wrapper($text, $start = null, $end = null) {
 		if ( $this->has_wrapper($text, $start, $end) ) {
-			$w = $this->get_wrapper($start, $end);
+			$w    = $this->get_wrapper($start, $end);
 			$text = substr($text, strlen($w->start), strlen($text) - strlen($w->start) - strlen($w->end) );
 		}
 
@@ -293,7 +293,7 @@ class SLB_Utilities {
 	 * @return string Wrapped text
 	 */
 	function add_wrapper($text, $start = null, $end = null, $once = true) {
-		$w = $this->get_wrapper($start, $end);
+		$w        = $this->get_wrapper($start, $end);
 		if ( !$once || !$this->has_wrapper($text, $w) )
 			$text = $w->start . $text . $w->end;
 		return $text;
@@ -324,12 +324,12 @@ class SLB_Utilities {
 		if ( is_array($files) && !empty($files) ) {
 			// Defaults
 			$defaults = array(
-				'file'		=> null,
-				'deps' 		=> array(),
-				'callback'	=> null,
-				'context'	=> array(),
-				'enqueue'	=> true,
-				'enqueued'  => false
+				'file'     => null,
+				'deps'     => array(),
+				'callback' => null,
+				'context'  => array(),
+				'enqueue'  => true,
+				'enqueued' => false
 			);
 			switch ( $type ) {
 				case 'styles':
@@ -385,7 +385,7 @@ class SLB_Utilities {
 				// Format internal dependencies
 				foreach ( $p['deps'] as $idx => $dep ) {
 					if ( $this->has_wrapper($dep) ) {
-						$dep = $this->remove_wrapper($dep);
+						$dep             = $this->remove_wrapper($dep);
 						$p['deps'][$idx] = $this->add_prefix($dep);
 					}
 				}
@@ -401,8 +401,8 @@ class SLB_Utilities {
 				}
 
 				// Validate contexts
-				$ctxs =& $p['context'];
-				$ctxs = array_unique($ctxs);
+				$ctxs         =& $p['context'];
+				$ctxs         = array_unique($ctxs);
 				$has_contexts = ( count($ctxs) > 0 ) ? true : false;
 				foreach ( $ctxs as $idx => $ctx ) {
 					// Convert to array
@@ -459,7 +459,7 @@ class SLB_Utilities {
 		if ( !empty($path) && is_string($path) ) {
 			if ( 0 !== strpos($path, '[') )
 				$obj .= '.';
-			$obj .= $path;
+			$obj     .= $path;
 		}
 		return $obj;
 	}
@@ -484,7 +484,7 @@ class SLB_Utilities {
 				}
 			case 1:
 				$data = $args[0];
-				$obj = null;
+				$obj  = null;
 				break;
 		}
 		// Default client object
@@ -499,7 +499,7 @@ class SLB_Utilities {
 			$ret = '';
 		} else {
 			$c_obj = $this->get_client_object($obj);
-			$ret = $this->validate_client_object($obj, sprintf('{$.extend(%1$s, %2$s);}', $c_obj, json_encode($data)) );
+			$ret   = $this->validate_client_object($obj, sprintf('{$.extend(%1$s, %2$s);}', $c_obj, json_encode($data)) );
 			if ( $out )
 				echo $this->build_script_element($ret, 'context', true, true);
 		}
@@ -552,7 +552,7 @@ class SLB_Utilities {
 		if ( !is_string($method) || empty($method) ) {
 			return $ret;
 		}
-		$encode = !!$encode;
+		$encode   = !!$encode;
 		$validate = !!$validate;
 
 		// Build parameters
@@ -584,7 +584,7 @@ class SLB_Utilities {
 	function check_post(&$post) {
 		if (empty($post)) {
 			if (isset($GLOBALS['post'])) {
-				$post = $GLOBALS['post'];
+				$post            = $GLOBALS['post'];
 				$GLOBALS['post'] =& $post;
 			}
 			else
@@ -661,9 +661,9 @@ class SLB_Utilities {
 		$hook_prefix = true;
 		if ( is_array($tag) ) {
 			$hook_prefix = $tag[1];
-			$tag = $tag[0];
+			$tag         = $tag[0];
 		}
-		$args = func_get_args();
+		$args    = func_get_args();
 		$args[0] = $this->get_hook($tag, $hook_prefix);
 		return call_user_func_array('do_action', $args);
 	}
@@ -689,9 +689,9 @@ class SLB_Utilities {
 		$hook_prefix = true;
 		if ( is_array($tag) ) {
 			$hook_prefix = $tag[1];
-			$tag = $tag[0];
+			$tag         = $tag[0];
 		}
-		$args = func_get_args();
+		$args    = func_get_args();
 		$args[0] = $this->get_hook($tag, $hook_prefix);
 		return call_user_func_array('apply_filters', $args);
 	}
@@ -769,7 +769,7 @@ class SLB_Utilities {
 			// Cast to array
 			$shortcode = (array) $shortcode;
 			// Backup and reset shortcode handlers
-			$tags_temp = $shortcode_tags;
+			$tags_temp      = $shortcode_tags;
 			$shortcode_tags = array();
 			// Register specified tags
 			foreach ( $shortcode as $key => $val ) {
@@ -804,9 +804,9 @@ class SLB_Utilities {
 	 */
 	public function make_shortcode($tag, $attr = null, $content = null) {
 		return $this->build_element(array (
-			'tag'			=> $tag,
-			'attributes'	=> $attr,
-			'content'		=> $content,
+			'tag'        => $tag,
+			'attributes' => $attr,
+			'content'    => $content,
 		));
 	}
 
@@ -822,7 +822,7 @@ class SLB_Utilities {
 	 * @return mixed Retrieved post metadata
 	 */
 	function post_meta_get($post_id, $key, $single = false) {
-		$meta_value = get_post_meta($post_id, $this->post_meta_get_key($key), $single);
+		$meta_value     = get_post_meta($post_id, $this->post_meta_get_key($key), $single);
 		if (is_array($meta_value) && count($meta_value) == 1)
 			$meta_value = $meta_value[0];
 		return $meta_value;
@@ -930,7 +930,7 @@ class SLB_Utilities {
 			// Admin page
 			if ( is_admin() ) {
 				global $pagenow;
-				$pg = $this->strip_file_extension($pagenow);
+				$pg    = $this->strip_file_extension($pagenow);
 				$ctx[] = $this->build_context('page', $pg);
 				// Query String
 				if ( isset($_SERVER['QUERY_STRING']) ) {
@@ -949,7 +949,7 @@ class SLB_Utilities {
 				}
 			}
 			// User
-			$u = wp_get_current_user();
+			$u     = wp_get_current_user();
 			$ctx[] = $this->build_context('user', ( $u->ID ) ? 'registered' : 'guest', false);
 		}
 
@@ -975,7 +975,7 @@ class SLB_Utilities {
 
 		// Validate
 		$context = array_filter($args, 'is_string');
-		$sep = '_';
+		$sep     = '_';
 
 		// Context Prefix
 		if ( $prefix )
@@ -989,11 +989,11 @@ class SLB_Utilities {
 	 * @return bool TRUE if context exists FALSE otherwise
 	 */
 	function is_context($context) {
-		$ret = false;
+		$ret         = false;
 		if ( is_scalar($context) )
 			$context = array($context);
 		if ( is_array($context) && !empty($context) ) {
-			$ictx = array_intersect($this->get_context(), $context);
+			$ictx    = array_intersect($this->get_context(), $context);
 			if ( !empty($ictx) )
 				$ret = true;
 		}
@@ -1007,7 +1007,7 @@ class SLB_Utilities {
 	 * @return void
 	 */
 	function set_client_context() {
-		$ctx = new stdClass();
+		$ctx          = new stdClass();
 		$ctx->context = $this->get_context();
 		$this->extend_client_object($ctx, true);
 	}
@@ -1024,8 +1024,8 @@ class SLB_Utilities {
 	 * If multiple path segments are passed, $trailing_slash will be the LAST parameter (default value used if omitted)
 	 */
 	function normalize_path($path, $trailing_slash = false) {
-		$sl_f = '/';
-		$sl_b = '\\';
+		$sl_f  = '/';
+		$sl_b  = '\\';
 		$parts = func_get_args();
 		// Slash defaults (trailing, leading);
 		$slashes = array(false, true);
@@ -1224,7 +1224,7 @@ class SLB_Utilities {
 		if ( empty($ret) ) {
 			// Get base directory of parent object
 			if ( $this->get_parent() ) {
-				$r = new ReflectionClass(get_class($this->get_parent()));
+				$r    = new ReflectionClass(get_class($this->get_parent()));
 				$base = $r->getFileName();
 				unset($r);
 			} else {
@@ -1233,7 +1233,7 @@ class SLB_Utilities {
 			// Extract base path
 			$base = $this->normalize_path($base);
 			if ( 0 === strpos($base, $this->normalize_path(WP_PLUGIN_DIR)) ) {
-				$end = strpos($base, '/', strlen(WP_PLUGIN_DIR) + 1);
+				$end  = strpos($base, '/', strlen(WP_PLUGIN_DIR) + 1);
 				$base = substr($base, 0, $end);
 			}
 			$ret = $this->_path_base = $base;
@@ -1265,7 +1265,7 @@ class SLB_Utilities {
 		}
 		if ( !empty($relative) && !empty($path) ) {
 			$relative = $this->normalize_path($relative);
-			$path = $this->normalize_path($path);
+			$path     = $this->normalize_path($path);
 			// Strip base path
 			if ( strpos($path, $relative) === 0 ) {
 				$path = substr($path, strlen($relative));
@@ -1414,11 +1414,11 @@ class SLB_Utilities {
 		// Determine action for core admin pages
 		if ( ( !isset($_GET['page']) || empty($action) ) && isset($_SERVER['SCRIPT_NAME']) ) {
 			$actions = array(
-				'add'			=> array('page-new', 'post-new'),
-				'edit-item'		=> array('page', 'post'),
-				'edit'			=> array('edit', 'edit-pages')
+				'add'       => array('page-new', 'post-new'),
+				'edit-item' => array('page', 'post'),
+				'edit'      => array('edit', 'edit-pages')
 			);
-			$page = basename($_SERVER['SCRIPT_NAME'], '.php');
+			$page    = basename($_SERVER['SCRIPT_NAME'], '.php');
 
 			foreach ( $actions as $act => $pages ) {
 				if ( in_array($page, $pages) ) {
@@ -1636,9 +1636,9 @@ class SLB_Utilities {
 				case 'attribute':
 					// Join segments
 					$delim = '_';
-					$fmtd = implode($delim, $attribute);
+					$fmtd  = implode($delim, $attribute);
 					// Replace white space and repeating delimiters
-					$fmtd = str_replace(' ', $delim, $fmtd);
+					$fmtd     = str_replace(' ', $delim, $fmtd);
 					while (strpos($fmtd, $delim.$delim) !== false)
 						$fmtd = str_replace($delim.$delim, $delim, $fmtd);
 					// Prefix formatted value with delimeter for metadata keys
@@ -1689,19 +1689,19 @@ class SLB_Utilities {
 	 * @return string Element output
 	 */
 	public function build_element($args = array()) {
-		$ret = '';
-		$args_default = array(
-			'tag'			=> '',
-			'wrap'			=> false,
-			'content'		=> '',
-			'attributes'	=> array(),
-			'format'		=> array(),
+		$ret            = '';
+		$args_default   = array(
+			'tag'        => '',
+			'wrap'       => false,
+			'content'    => '',
+			'attributes' => array(),
+			'format'     => array(),
 		);
 		$format_default = array(
 			'open'	=> '[%s]',
 			'close'	=> '[/%s]',
 		);
-		$args = wp_parse_args($args, $args_default);
+		$args           = wp_parse_args($args, $args_default);
 		$args['format'] = wp_parse_args($args['format'], $format_default);
 
 		// Validate
@@ -1718,7 +1718,7 @@ class SLB_Utilities {
 
 		// Build output
 		$args->format = (object) $args->format;
-		$ret = sprintf( $args->format->open, $args->tag . $args->attributes);
+		$ret          = sprintf( $args->format->open, $args->tag . $args->attributes);
 
 		// Wrap content if necessary
 		if ( $args->wrap || ( is_string($args->content) && !empty($args->content) ) ) {
@@ -1735,7 +1735,7 @@ class SLB_Utilities {
 	 * @return array Attributes as associative array
 	 */
 	function parse_attribute_string($txt, $defaults = array()) {
-		$txt = trim($txt, ' >');
+		$txt     = trim($txt, ' >');
 		$matches = $attr = array();
 		// Strip tag
 		if ( $txt[0] == '<' && ($s = strpos($txt, ' ')) && $s !== false ) {
@@ -1785,15 +1785,15 @@ class SLB_Utilities {
 	 * @return string Generated HTML element
 	 */
 	public function build_html_element($args) {
-		$args_default = array(
-			'tag'			=> 'span',
-			'content'		=> '',
-			'attributes'	=> array()
+		$args_default   = array(
+			'tag'        => 'span',
+			'content'    => '',
+			'attributes' => array()
 		);
-		$args = wp_parse_args($args, $args_default);
+		$args           = wp_parse_args($args, $args_default);
 		$args['format'] = array(
-			'open'		=> '<%s>',
-			'close'		=> '</%s>',
+			'open'  => '<%s>',
+			'close' => '</%s>',
 		);
 		// Build element
 		return $this->build_element($args);
@@ -1839,21 +1839,21 @@ class SLB_Utilities {
 			return '';
 		}
 		$attributes = array('type' => 'text/javascript');
-		$start = array('/* <![CDATA[ */');
-		$end = array('/* ]]> */');
+		$start      = array('/* <![CDATA[ */');
+		$end        = array('/* ]]> */');
 		if ( $wrap_jquery ) {
 			$start[] = 'if ( !!window.jQuery ) {(function($){';
-			$end[] = '})(jQuery);}';
+			$end[]   = '})(jQuery);}';
 
 			// Add event handler (if necessary)
 			if ( $wait_doc_ready ) {
 				$start[] = '$(document).ready(function(){';
-				$end[] = '})';
+				$end[]   = '})';
 			}
 		}
 
 		// Reverse order of end values
-		$end = array_reverse($end);
+		$end     = array_reverse($end);
 		$content = implode('', array_merge($start, array($content), $end));
 		if ( is_string($id) && !empty($id) ) {
 			$attributes['id'] = $this->add_prefix($id);

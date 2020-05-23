@@ -101,10 +101,10 @@ class SLB_Admin extends SLB_Base {
 	 * @return void
 	 */
 	protected function _client_files($files = null) {
-		$js_path = 'client/js/';
+		$js_path  = 'client/js/';
 		$js_path .= ( SLB_DEV ) ? 'dev' : 'prod';
-		$pfx = $this->get_prefix();
-		$files = array (
+		$pfx      = $this->get_prefix();
+		$files    = array (
 			'scripts' => array (
 				'admin'	=> array (
 					'file'		=> "$js_path/lib.admin.js",
@@ -113,10 +113,10 @@ class SLB_Admin extends SLB_Base {
 					'in_footer'	=> true,
 				),
 			),
-			'styles' => array (
+			'styles'  => array (
 				'admin'	=> array (
-					'file'		=> 'client/css/admin.css',
-					'context'	=> array( "admin_page_$pfx", 'admin_page_plugins' )
+					'file'    => 'client/css/admin.css',
+					'context' => array( "admin_page_$pfx", 'admin_page_plugins' )
 				)
 			)
 		);
@@ -194,7 +194,7 @@ class SLB_Admin extends SLB_Base {
 		foreach ( $this->pages as $page ) {
 			// Build Arguments
 			$args = array ( $page->get_label('header'), $page->get_label('menu'), $page->get_capability(), $page->get_id(), $page->get_callback() );
-			$f = null;
+			$f    = null;
 			// Handle pages for default WP menus
 			if ( $page->is_parent_wp() ) {
 				$f = 'add_' . $page->get_parent() . '_page';
@@ -232,15 +232,15 @@ class SLB_Admin extends SLB_Base {
 	 */
 	protected function add_view($type, $id, $args) {
 		// Validate request
-		$class = $this->add_prefix('admin_' . $type);
+		$class      = $this->add_prefix('admin_' . $type);
 		$collection = $type . 's';
 		if ( !class_exists($class) ) {
-			$class = $this->add_prefix('admin_view');
+			$class      = $this->add_prefix('admin_view');
 			$collection = null;
 		}
 		// Create new instance
-		$r = new ReflectionClass($class);
-		$view = $r->newInstanceArgs($args);
+		$r                            = new ReflectionClass($class);
+		$view                         = $r->newInstanceArgs($args);
 		if ( $view->is_valid() && !empty($collection) && property_exists($this, $collection) && is_array($this->{$collection}) )
 			$this->{$collection}[$id] =& $view;
 		unset($r);
@@ -473,7 +473,7 @@ class SLB_Admin extends SLB_Base {
 	 * @return obj Section instance
 	 */
 	public function add_section($id, $parent, $labels) {
-		$args = func_get_args();
+		$args    = func_get_args();
 		$section = $this->add_view('section', $id, $args);
 
 		// Add Section
@@ -508,10 +508,10 @@ class SLB_Admin extends SLB_Base {
 					if ( !$view->has_label($type) )
 						continue;
 					$acts[] = (object) array (
-						'id'	=> $views . '_' . $view->get_id(),
-						'label'	=> $view->get_label($type),
-						'uri'	=> $view->get_uri(),
-						'attributes'	=> array()
+						'id'	     => $views . '_' . $view->get_id(),
+						'label'	     => $view->get_label($type),
+						'uri'	     => $view->get_uri(),
+						'attributes' => array()
 					);
 				}
 			}
@@ -521,12 +521,12 @@ class SLB_Admin extends SLB_Base {
 			foreach ( $this->actions as $a ) {
 				if ( !$a->has_label($type) )
 					continue;
-				$id = 'action_' . $a->get_id();
+				$id     = 'action_' . $a->get_id();
 				$acts[] = (object) array (
-					'id'			=> $id,
-					'label'			=> $a->get_label($type),
-					'uri'			=> $a->get_uri(),
-					'attributes'	=> $a->get_link_attr()
+					'id'         => $id,
+					'label'      => $a->get_label($type),
+					'uri'        => $a->get_uri(),
+					'attributes' => $a->get_link_attr()
 				);
 			}
 			unset($a);
@@ -552,14 +552,14 @@ class SLB_Admin extends SLB_Base {
 	 * @return array Updated plugin metadata
 	 */
 	public function plugin_row_meta($plugin_meta, $plugin_file, $plugin_data, $status) {
-		$u = ( is_object($this->parent) && isset($this->parent->util) ) ? $this->parent->util : $this->util;
+		$u         = ( is_object($this->parent) && isset($this->parent->util) ) ? $this->parent->util : $this->util;
 		$hook_base = 'admin_plugin_row_meta_';
 		if ( $plugin_file == $u->get_plugin_base_name() ) {
 			// Add metadata
 			//  Support
 			$l = $u->get_plugin_info('SupportURI');
 			if ( !empty($l) ) {
-				$t = __( $this->util->apply_filters($hook_base . 'support', 'Get Support'), 'simple-lightbox');
+				$t             = __( $this->util->apply_filters($hook_base . 'support', 'Get Support'), 'simple-lightbox');
 				$plugin_meta[] = $u->build_html_link($l, $t);
 			}
 		}
@@ -592,7 +592,7 @@ class SLB_Admin extends SLB_Base {
 	public function plugin_update_transient($transient) {
 		$n = $this->util->get_plugin_base_name();
 		if ( isset($transient->response) && isset($transient->response[$n]) && is_object($transient->response[$n]) && !isset($transient->response[$n]->upgrade_notice) ) {
-			$r =& $transient->response[$n];
+			$r                 =& $transient->response[$n];
 			$r->upgrade_notice = $this->plugin_update_get_message($r);
 		}
 		return $transient;
@@ -605,7 +605,7 @@ class SLB_Admin extends SLB_Base {
 	* @return string Message (Default: empty string)
 	*/
 	protected function plugin_update_get_message($r) {
-		$msg = '';
+		$msg        = '';
 		$cls_notice = $this->add_prefix('notice');
 		if ( !is_object($r) || !isset($r->new_version) )
 			return $msg;
@@ -623,7 +623,7 @@ class SLB_Admin extends SLB_Base {
 	* @return string Message text
 	*/
 	public function get_message($msg_id) {
-		$msg = '';
+		$msg  = '';
 		$msgs = $this->get_messages();
 		if ( is_string($msg_id) && isset($msgs[$msg_id]) ) {
 			$msg = $msgs[$msg_id];

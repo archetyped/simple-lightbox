@@ -165,7 +165,7 @@ class SLB_Fields extends SLB_Field_Collection {
 			$placeholder = '';
 		else
 			$placeholder = '_' . $placeholder;
-		$hook = $this->add_prefix('process_placeholder' . $placeholder);
+		$hook            = $this->add_prefix('process_placeholder' . $placeholder);
 		add_filter($hook, $callback, $priority, 5);
 	}
 
@@ -241,7 +241,7 @@ class SLB_Fields extends SLB_Field_Collection {
 	 */
 	function process_placeholder_id( $output, $item, &$placeholder, $layout, $data ) {
 		// Get attributes
-		$args = wp_parse_args($placeholder['attributes'], array('format' => 'attr_id'));
+		$args   = wp_parse_args($placeholder['attributes'], array('format' => 'attr_id'));
 		$output = $item->get_id($args);
 		// Set default placeholder context.
 		if ( ! isset( $placeholder['attributes']['context'] ) ) {
@@ -266,7 +266,7 @@ class SLB_Fields extends SLB_Field_Collection {
 	 */
 	function process_placeholder_name($output, $item, &$placeholder, $layout, $data) {
 		// Get attributes
-		$args = wp_parse_args($placeholder['attributes'], array('format' => 'attr_name'));
+		$args   = wp_parse_args($placeholder['attributes'], array('format' => 'attr_name'));
 		$output = $item->get_id($args);
 		// Set default placeholder context.
 		if ( ! isset( $placeholder['attributes']['context'] ) ) {
@@ -320,8 +320,8 @@ class SLB_Fields extends SLB_Field_Collection {
 	 */
 	function process_placeholder_checked($output, $item, $placeholder, $layout, $data) {
 		$out = '';
-		$c = $item->get_container();
-		$d = ( isset($c->data[$item->get_id()]) ) ? $c->data[$item->get_id()] : null;
+		$c   = $item->get_container();
+		$d   = ( isset($c->data[$item->get_id()]) ) ? $c->data[$item->get_id()] : null;
 		$item->set_property('d', true);
 		if ( $item->get_data() )
 			$out = 'checked="checked"';
@@ -340,16 +340,16 @@ class SLB_Fields extends SLB_Field_Collection {
 	 */
 	function process_placeholder_loop($output, $item, $placeholder, $layout, $data) {
 		// Setup loop options
-		$attr_defaults = array (
-								'layout'		=> '',
-								'layout_data'	=> null,
-								'data'			=> ''
-								);
-		$attr = wp_parse_args($placeholder['attributes'], $attr_defaults);
+		$attr_defaults           = array (
+			'layout'      => '',
+			'layout_data' => null,
+			'data'        => ''
+		);
+		$attr                    = wp_parse_args($placeholder['attributes'], $attr_defaults);
 		if ( is_null($attr['layout_data']) )
 			$attr['layout_data'] =& $attr['layout'];
 		// Get data for loop
-		$path = explode('.', $attr['data']);
+		$path      = explode('.', $attr['data']);
 		$loop_data = $item->get_member_value($path);
 
 		// Check if data is callback
@@ -370,7 +370,7 @@ class SLB_Fields extends SLB_Field_Collection {
 					continue;
 				// Prep extended item data
 				$data_ext = array('option_value' => $value, 'option_text' => $label);
-				$out[] = $item->build_layout($layout, $data_ext);
+				$out[]    = $item->build_layout($layout, $data_ext);
 			}
 		}
 
@@ -408,25 +408,25 @@ class SLB_Fields extends SLB_Field_Collection {
 	 * TODO Make compatible with parent::build_group()
 	 */
 	function build_group($group) {
-		$out = array();
+		$out        = array();
 		$classnames = (object) array(
-			'multi'		=> 'multi_field',
-			'single'	=> 'single_field',
-			'elements'	=> 'has_elements'
+			'multi'    => 'multi_field',
+			'single'   => 'single_field',
+			'elements' => 'has_elements'
 		);
 
 		// Stop execution if group does not exist
 		if ( $this->group_exists($group) && $group =& $this->get_group($group) ) {
 			$group_items = ( count($group->items) > 1 ) ? $classnames->multi : $classnames->single . ( ( ( $fs = array_keys($group->items) ) && ( $f =& $group->items[$fs[0]] ) && ( $els = $f->get_member_value('elements', '', null) ) && !empty($els) ) ? '_' . $classnames->elements : '' );
-			$classname = array($this->add_prefix('attributes_wrap'), $group_items);
-			$out[] = '<div class="' . implode(' ', $classname) . '">'; // Wrap all items in group
+			$classname   = array($this->add_prefix('attributes_wrap'), $group_items);
+			$out[]       = '<div class="' . implode(' ', $classname) . '">'; // Wrap all items in group
 
 			// Build layout for each item in group
 			foreach ( array_keys($group->items) as $item_id ) {
 				$item =& $group->items[$item_id];
 				$item->set_caller($this);
 				// Start item output
-				$id = $this->add_prefix('field_' . $item->get_id());
+				$id    = $this->add_prefix('field_' . $item->get_id());
 				$out[] = '<div id="' . $id . '_wrap" class=' . $this->add_prefix('attribute_wrap') . '>';
 				// Build item layout
 				$out[] = $item->build_layout();
