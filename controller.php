@@ -1522,7 +1522,7 @@ class SLB_Lightbox extends SLB_Base {
 		}
 		//  Automatically-generated group
 		if ( empty( $group ) ) {
-			$group = 'auto_' . ++$this->groups['auto'];
+			$group = 'auto_' . ( ++$this->groups['auto'] );
 		}
 		return $this->process_links( $content, $group );
 	}
@@ -1700,7 +1700,7 @@ class SLB_Lightbox extends SLB_Base {
 		while ( in_array( $group, $groups ) ) {
 			$patt       = '#-(\d+)$#';
 			if ( preg_match( $patt, $group, $matches ) )
-				$group  = preg_replace( $patt, '-' . ++$matches[1], $group );
+				$group  = preg_replace( $patt, '-' . ( ++$matches[1] ), $group );
 			else $group = $group . '-1';
 		}
 		// Add final group ID to array

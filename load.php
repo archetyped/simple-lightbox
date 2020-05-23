@@ -22,7 +22,7 @@ function slb_autoload( $classname ) {
 	// Format class for filename
 	$fn = 'class.' . substr( $cls, strlen( $prefix ) ) . '.php';
 	// Build path
-	$path = dirname( __FILE__ ) . '/' . 'includes/' . $fn;
+	$path = dirname( __FILE__ ) . '/includes/' . $fn;
 	// Load file
 	if ( is_readable( $path ) ) {
 		require $path;

@@ -70,15 +70,11 @@
         <exclude name="PSR2.ControlStructures.SwitchDeclaration.TerminatingComment"/>
         <exclude name="PSR2.Files.ClosingTag.NotAllowed"/>
         <exclude name="PSR2.Methods.MethodDeclaration.Underscore"/>
-        <exclude name="Squiz.Operators.IncrementDecrementUsage.NoBrackets"/>
         <exclude name="Squiz.PHP.CommentedOutCode.Found"/>
         <exclude name="Squiz.PHP.DisallowMultipleAssignments.Found"/>
         <exclude name="Squiz.PHP.DisallowMultipleAssignments.FoundInControlStructure"/>
-        <exclude name="Squiz.PHP.DisallowSizeFunctionsInLoops.Found"/>
         <exclude name="Squiz.PHP.Eval.Discouraged"/>
-        <exclude name="Squiz.PHP.NonExecutableCode.Unreachable"/>
         <exclude name="Squiz.Scope.MethodScope.Missing"/>
-        <exclude name="Squiz.Strings.DoubleQuoteUsage.NotRequired"/>
     </rule>
 
     <!-- Add in some extra rules from other standards. -->
