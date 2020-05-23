@@ -68,8 +68,6 @@
         <!-- ** Standard ** -->
         <exclude name="Generic.CodeAnalysis.ForLoopWithTestFunctionCall.NotAllowed"/>
         <exclude name="Generic.ControlStructures.InlineControlStructure.NotAllowed"/>
-        <exclude name="Generic.Files.EndFileNewline.NotFound"/>
-        <exclude name="Generic.Files.LineEndings.InvalidEOLChar"/>
         <exclude name="PEAR.Functions.FunctionCallSignature.CloseBracketLine"/>
         <exclude name="PEAR.Functions.FunctionCallSignature.ContentAfterOpenBracket"/>
         <exclude name="PEAR.Functions.FunctionCallSignature.MultipleArguments"/>
