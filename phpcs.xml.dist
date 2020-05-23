@@ -74,10 +74,9 @@
         <exclude name="Squiz.Scope.MethodScope.Missing"/>
         <exclude name="PSR2.Classes.PropertyDeclaration.ScopeMissing"/>
         <exclude name="PSR2.Classes.PropertyDeclaration.Underscore"/>
+        <exclude name="PSR2.Methods.MethodDeclaration.Underscore"/>
         <exclude name="PSR2.Classes.PropertyDeclaration.VarUsed"/>
         <exclude name="PSR2.ControlStructures.SwitchDeclaration.TerminatingComment"/>
-        <exclude name="PSR2.Files.ClosingTag.NotAllowed"/>
-        <exclude name="PSR2.Methods.MethodDeclaration.Underscore"/>
     </rule>
 
     <!-- Add in some extra rules from other standards. -->

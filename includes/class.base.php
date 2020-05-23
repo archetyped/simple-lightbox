@@ -550,5 +550,3 @@ class SLB_Base {
 		return $ret;
 	}
 }
-
-?>
