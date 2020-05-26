@@ -144,7 +144,7 @@ class SLB_Admin_Page extends SLB_Admin_View {
 		wp_enqueue_script( 'postbox' );
 		?>
 		<div class="wrap slb">
-			<h2><?php esc_html_e( $this->get_label( 'header' ) ); ?></h2>
+			<h2><?php echo esc_html( $this->get_label( 'header' ) ); ?></h2>
 			<?php
 				// Form submission support
 			if ( $this->is_required_form() ) {
@@ -155,7 +155,7 @@ class SLB_Admin_Page extends SLB_Admin_View {
 					'name'   => $this->get_id() . '_nonce',
 				];
 				?>
-					<form id="<?php esc_attr_e( $form_id ); ?>" name="<?php esc_attr_e( $form_id ); ?>" action="" method="post">
+					<form id="<?php echo esc_attr( $form_id ); ?>" name="<?php echo esc_attr( $form_id ); ?>" action="" method="post">
 					<?php
 					wp_nonce_field( $nonce->action, $nonce->name );
 			}
