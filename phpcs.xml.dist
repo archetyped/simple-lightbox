@@ -62,7 +62,6 @@
         <exclude name="WordPress.WP.AlternativeFunctions.rand_mt_rand"/>
         <exclude name="WordPress.WP.AlternativeFunctions.strip_tags_strip_tags"/>
         <exclude name="WordPress.WP.GlobalVariablesOverride.Prohibited"/>
-        <exclude name="WordPress.WP.I18n.MissingTranslatorsComment"/>
     </rule>
 
     <!-- Add in some extra rules from other standards. -->
