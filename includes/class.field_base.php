@@ -708,7 +708,7 @@ class SLB_Field_Base extends SLB_Base {
 	 */
 	function set_title( $title = '' ) {
 		if ( is_scalar( $title ) ) {
-			$this->title = strip_tags( trim( $title ) );
+			$this->title = wp_strip_all_tags( trim( $title ) );
 		}
 	}
 
@@ -724,7 +724,7 @@ class SLB_Field_Base extends SLB_Base {
 	 * @param string $description Description for object
 	 */
 	function set_description( $description = '' ) {
-		$this->description = strip_tags( trim( $description ) );
+		$this->description = wp_strip_all_tags( trim( $description ) );
 	}
 
 	/**
