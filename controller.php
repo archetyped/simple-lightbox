@@ -213,7 +213,6 @@ class SLB_Lightbox extends SLB_Base {
 
 		/* Admin */
 		add_action( 'admin_menu', $this->m( 'admin_menus' ) );
-		$this->util->add_filter( 'admin_plugin_row_meta_support', $this->m( 'admin_plugin_row_meta_support' ) );
 
 		/* Init */
 		add_action( 'wp', $this->m( '_hooks_init' ) );
@@ -547,15 +546,6 @@ class SLB_Lightbox extends SLB_Base {
 				'class'  => 'button',
 			)
 		);
-	}
-
-	/**
-	 * Filter support link text in plugin metadata
-	 * @param string $text Original link text
-	 * @return string Modified link text
-	 */
-	public function admin_plugin_row_meta_support( $text ) {
-		return __( 'Feedback &amp; Support', 'simple-lightbox' );
 	}
 
 	/*-** Functionality **-*/

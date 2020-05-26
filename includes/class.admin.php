@@ -565,7 +565,7 @@ class SLB_Admin extends SLB_Base {
 			//  Support
 			$l = $u->get_plugin_info( 'SupportURI' );
 			if ( ! empty( $l ) ) {
-				$t             = __( $this->util->apply_filters( $hook_base . 'support', 'Get Support' ), 'simple-lightbox' );
+				$t             = __( 'Feedback &amp; Support', 'simple-lightbox' );
 				$plugin_meta[] = $u->build_html_link( $l, $t );
 			}
 		}
