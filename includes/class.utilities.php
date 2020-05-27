@@ -516,7 +516,7 @@ class SLB_Utilities {
 			$ret = '';
 		} else {
 			$c_obj = $this->get_client_object( $obj );
-			$ret   = $this->validate_client_object( $obj, sprintf( '{$.extend(%1$s, %2$s);}', $c_obj, json_encode( $data ) ) );
+			$ret   = $this->validate_client_object( $obj, sprintf( '{$.extend(%1$s, %2$s);}', $c_obj, wp_json_encode( $data ) ) );
 			if ( $out ) {
 				echo $this->build_script_element( $ret, 'context', true, true );
 			}

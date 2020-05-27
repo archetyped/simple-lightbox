@@ -251,7 +251,7 @@ class SLB_Themes extends SLB_Collection_Controller {
 				$thm_props['layout_raw'] = $layout;
 			}
 			// Add properties to parameters
-			$params[] = json_encode( $thm_props );
+			$params[] = wp_json_encode( $thm_props );
 
 			// Add theme to client
 			$code[] = $this->util->call_client_method( 'View.extend_theme', $params, false );

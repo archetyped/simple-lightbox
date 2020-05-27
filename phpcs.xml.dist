@@ -59,7 +59,6 @@
         <exclude name="WordPress.Security.EscapeOutput.OutputNotEscaped"/>
         <exclude name="WordPress.Security.NonceVerification.Missing"/>
         <exclude name="WordPress.Security.NonceVerification.Recommended"/>
-        <exclude name="WordPress.WP.AlternativeFunctions.json_encode_json_encode"/>
     </rule>
 
     <!-- Add in some extra rules from other standards. -->

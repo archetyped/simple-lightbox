@@ -266,7 +266,7 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 			// Setup client parameters
 			$params = array(
 				sprintf( "'%s'", $handler->get_id() ),
-				json_encode( $attrs ),
+				wp_json_encode( $attrs ),
 			);
 			// Extend handler in client
 			$code[] = $this->util->call_client_method( 'View.extend_content_handler', $params, false );

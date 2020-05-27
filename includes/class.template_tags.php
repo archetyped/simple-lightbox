@@ -109,7 +109,7 @@ class SLB_Template_Tags extends SLB_Collection_Controller {
 			$params   = array(
 				sprintf( "'%s'", $tag->get_id() ),
 			);
-			$params[] = json_encode( array( 'styles' => array_values( $styles ) ) );
+			$params[] = wp_json_encode( array( 'styles' => array_values( $styles ) ) );
 			// Extend handler in client
 			$code[] = $this->util->call_client_method( 'View.extend_template_tag_handler', $params, false );
 		}
