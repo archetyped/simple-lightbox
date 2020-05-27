@@ -141,10 +141,19 @@ class SLB_Admin extends SLB_Base {
 
 		// Retrieve view that initiated the action
 		if ( isset( $r[ $t ] ) && 'view' == $r[ $t ] ) {
-			if ( isset( $r[ $g ] ) && ( $prop = $r[ $g ] . 's' ) && property_exists( $this, $prop ) && is_array( $this->{$prop} ) && isset( $r[ $o ] ) && isset( $this->{$prop}[ $r[ $o ] ] ) ) {
+			if (
+				isset( $r[ $g ] )
+				&& ( $prop = $r[ $g ] . 's' )
+				&& property_exists( $this, $prop )
+				&& is_array( $this->{$prop} )
+				&& isset( $r[ $o ] )
+				&& isset( $this->{$prop}[ $r[ $o ] ] )
+			) {
 				$view =& $this->{$prop}[ $r[ $o ] ];
-				// Pass request to view
-				$view->do_callback();
+				if ( $view instanceof SLB_Admin_View ) {
+					// Pass request to view
+					$view->do_callback();
+				}
 			}
 		}
 	}
