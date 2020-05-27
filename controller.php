@@ -688,7 +688,7 @@ class SLB_Lightbox extends SLB_Base {
 		static $uri_origin = null;
 		if ( ! is_array( $uri_origin ) ) {
 			$uri_parts  = array_fill_keys( array( 'scheme', 'host', 'path' ), '' );
-			$uri_origin = wp_parse_args( parse_url( strtolower( home_url() ) ), $uri_parts );
+			$uri_origin = wp_parse_args( wp_parse_url( strtolower( home_url() ) ), $uri_parts );
 		}
 		static $uri_proto = null;
 		if ( empty( $uri_proto ) ) {
@@ -749,7 +749,7 @@ class SLB_Lightbox extends SLB_Base {
 
 			// Internal URI? (e.g. attachments)
 			if ( ! $key ) {
-				$uri->parts = array_merge( $uri_parts_required, (array) parse_url( $uri->source ) );
+				$uri->parts = array_merge( $uri_parts_required, (array) wp_parse_url( $uri->source ) );
 				$internal   = ( $uri->parts['host'] === $uri_origin['host'] ) ? true : false;
 
 				// Attachment?
