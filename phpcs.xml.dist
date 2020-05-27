@@ -43,6 +43,8 @@
         <exclude name="PSR2.Methods.MethodDeclaration.Underscore"/>
         <exclude name="PHPCompatibility.FunctionUse.ArgumentFunctionsReportCurrentValue.Changed"/>
         <exclude name="PHPCompatibility.FunctionUse.ArgumentFunctionsReportCurrentValue.NeedsInspection"/>
+        <exclude name="WordPress.Security.NonceVerification.Missing"/>
+        <exclude name="WordPress.Security.NonceVerification.Recommended"/>
 
         <!-- ** WordPress-Specific ** -->
         <exclude name="WordPress.CodeAnalysis.AssignmentInCondition.Found"/>
@@ -57,8 +59,6 @@
         <exclude name="WordPress.PHP.StrictInArray.MissingTrueStrict"/>
         <exclude name="WordPress.PHP.YodaConditions.NotYoda"/>
         <exclude name="WordPress.Security.EscapeOutput.OutputNotEscaped"/>
-        <exclude name="WordPress.Security.NonceVerification.Missing"/>
-        <exclude name="WordPress.Security.NonceVerification.Recommended"/>
     </rule>
 
     <!-- Add in some extra rules from other standards. -->
