@@ -1144,7 +1144,7 @@ class SLB_Utilities {
 			return $ret;
 		}
 		// Strip query string (if necessary)
-		if ( ( $qpos = strpos( $file, '?' ) ) && $qpos !== false ) {
+		if ( ( $qpos = strpos( $file, '?' ) ) && false !== $qpos ) {
 			$file = substr( $file, 0, $qpos );
 		}
 		if ( ( $rpos = strrpos( $file, $sep ) ) > 0 ) {
@@ -1416,7 +1416,7 @@ class SLB_Utilities {
 		// Check if action is set in URL
 		if ( isset( $_GET['action'] ) ) {
 			$action = $_GET['action'];
-		} elseif ( isset( $_GET['page'] ) && ( $pos = strrpos( $_GET['page'], '-' ) ) && $pos !== false && ( $pos != strlen( $_GET['page'] ) - 1 ) ) {
+		} elseif ( isset( $_GET['page'] ) && ( $pos = strrpos( $_GET['page'], '-' ) ) && false !== $pos && ( ( strlen( $_GET['page'] ) - 1 ) !== $pos ) ) {
 			// Otherwise, Determine action based on plugin admin page suffix
 			$action = trim( substr( $_GET['page'], $pos + 1 ), '-_' );
 		}
@@ -1765,7 +1765,7 @@ class SLB_Utilities {
 		$txt     = trim( $txt, ' >' );
 		$matches = $attr = array();
 		// Strip tag
-		if ( $txt[0] == '<' && ( $s = strpos( $txt, ' ' ) ) && $s !== false ) {
+		if ( '<' === $txt[0] && ( $s = strpos( $txt, ' ' ) ) && false !== $s ) {
 			$txt = trim( substr( $txt, $s + 1 ) );
 		}
 		// Parse attributes

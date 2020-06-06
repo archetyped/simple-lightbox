@@ -1824,12 +1824,12 @@ class SLB_Lightbox extends SLB_Base {
 	function has_attribute( $attrs, $attr, $value = null, $internal = true ) {
 		$a   = $this->get_attribute( $attrs, $attr, $internal );
 		$ret = false;
-		if ( $a !== false ) {
+		if ( false !== $a ) {
 			$ret = true;
 			// Check value
 			if ( ! is_null( $value ) ) {
 				if ( is_string( $value ) ) {
-					$ret = ( $a == strval( $value ) ) ? true : false;
+					$ret = ( strval( $value ) === $a ) ? true : false;
 				} elseif ( is_bool( $value ) ) {
 					$ret = ( ! ! $a == $value ) ? true : false;
 				} else {

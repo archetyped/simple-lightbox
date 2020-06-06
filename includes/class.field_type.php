@@ -237,7 +237,7 @@ class SLB_Field_Type extends SLB_Field_Base {
 		$ret = false;
 		if ( is_string( $layout ) && ( $layout = trim( $layout ) ) && ! empty( $layout ) ) {
 			$layout = $this->get_member_value( 'layout', $layout, false );
-			if ( $layout !== false ) {
+			if ( false !== $layout ) {
 				$ret = true;
 			}
 		}

@@ -370,7 +370,7 @@ class SLB_Fields extends SLB_Field_Collection {
 		if ( is_array( $loop_data ) && ! empty( $loop_data ) ) {
 			foreach ( $loop_data as $value => $label ) {
 				// Load appropriate layout based on item value
-				$layout = ( ( $data === 0 && $value === $data ) xor $data == $value ) ? $attr['layout_data'] : $attr['layout'];
+				$layout = ( ( 0 === $data && $value === $data ) xor $data == $value ) ? $attr['layout_data'] : $attr['layout'];
 				// Stop processing if no valid layout is returned
 				if ( empty( $layout ) ) {
 					continue;

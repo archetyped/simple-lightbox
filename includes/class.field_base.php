@@ -304,7 +304,7 @@ class SLB_Field_Base extends SLB_Base {
 				if ( is_array( $ex_val ) ) {
 					$val = array_merge( $ex_val, $val );
 				}
-			} elseif ( $inherit !== false ) {
+			} elseif ( false !== $inherit ) {
 				// Replace placeholder with inherited string
 				$val = str_replace( $inherit_tag, $ex_val, $val );
 			} else {
