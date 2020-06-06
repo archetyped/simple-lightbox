@@ -125,7 +125,7 @@ class SLB_Base_Collection extends SLB_Base {
 		if ( $this->unique || ! ! $check_existing ) {
 			// Check for item in collection
 			if ( $this->has( $item ) ) {
-				$ret = array_search( $item, $this->items );
+				$ret = array_search( $item, $this->items, true );
 			} elseif ( ! ! $this->key_prop && ( is_object( $item ) || is_array( $item ) ) ) {
 				if ( ! ! $this->key_call ) {
 					$cb = $this->util->m( $item, $this->key_prop );

@@ -537,7 +537,7 @@ class SLB_Field_Base extends SLB_Base {
 		}
 		$overwrite = (bool) $overwrite;
 		// Do not add format if name matches existing format (when overwriting not allowed).
-		if ( ! $overwrite && in_array( $name, array_keys( $this->id_formats ) ) ) {
+		if ( ! $overwrite && in_array( $name, array_keys( $this->id_formats ), true ) ) {
 			return;
 		}
 		// Normlize options.

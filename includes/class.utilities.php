@@ -1172,7 +1172,7 @@ class SLB_Utilities {
 			// Normalize extensions
 			$extension = array_map( 'strtolower', $extension );
 		}
-		return ( in_array( $this->get_file_extension( $file, ! $case_sensitive ), $extension ) ) ? true : false;
+		return ( in_array( $this->get_file_extension( $file, ! $case_sensitive ), $extension, true ) ) ? true : false;
 	}
 
 	/**
@@ -1431,7 +1431,7 @@ class SLB_Utilities {
 			$page    = basename( $_SERVER['SCRIPT_NAME'], '.php' );
 
 			foreach ( $actions as $act => $pages ) {
-				if ( in_array( $page, $pages ) ) {
+				if ( in_array( $page, $pages, true ) ) {
 					$action = $act;
 					break;
 				}

@@ -1703,7 +1703,7 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	public function group_id_unique( $group ) {
 		static $groups = array();
-		while ( in_array( $group, $groups ) ) {
+		while ( in_array( $group, $groups, true ) ) {
 			$patt = '#-(\d+)$#';
 			if ( preg_match( $patt, $group, $matches ) ) {
 				$group = preg_replace( $patt, '-' . ( ++$matches[1] ), $group );

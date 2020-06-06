@@ -540,7 +540,7 @@ class SLB_Base {
 	}
 
 	private function shares( $name ) {
-		return ( ! empty( $this->shared ) && in_array( $name, $this->shared ) ) ? true : false;
+		return ( ! empty( $this->shared ) && in_array( $name, $this->shared, true ) ) ? true : false;
 	}
 
 	/*-** Options **-*/
