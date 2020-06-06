@@ -271,7 +271,7 @@ class SLB_Utilities {
 		$w = $this->get_wrapper( $start, $end );
 
 		// Check for wrapper
-		return ( substr( $text, 0, strlen( $w->start ) ) == $w->start && substr( $text, -1, strlen( $w->end ) ) == $w->end ) ? true : false;
+		return ( substr( $text, 0, strlen( $w->start ) ) === $w->start && substr( $text, -1, strlen( $w->end ) ) === $w->end ) ? true : false;
 	}
 
 	/**
@@ -819,7 +819,7 @@ class SLB_Utilities {
 	 */
 	function post_meta_get( $post_id, $key, $single = false ) {
 		$meta_value = get_post_meta( $post_id, $this->post_meta_get_key( $key ), $single );
-		if ( is_array( $meta_value ) && count( $meta_value ) == 1 ) {
+		if ( is_array( $meta_value ) && count( $meta_value ) === 1 ) {
 			$meta_value = $meta_value[0];
 		}
 		return $meta_value;
@@ -1085,7 +1085,7 @@ class SLB_Utilities {
 	 * @return string File URL
 	 */
 	function get_file_url( $file, $relative = null ) {
-		if ( is_string( $file ) && '' != trim( $file ) ) {
+		if ( is_string( $file ) && '' !== trim( $file ) ) {
 			$file = str_replace( ' ', '%20', $this->normalize_path( $this->get_url_base( false, $relative ), $file ) );
 		}
 		return $file;
@@ -1098,14 +1098,14 @@ class SLB_Utilities {
 	 */
 	function get_file_path( $file, $relative = null ) {
 		// Build path
-		if ( is_string( $file ) && '' != trim( $file ) ) {
+		if ( is_string( $file ) && '' !== trim( $file ) ) {
 			$file = $this->normalize_path( $this->get_path_base( $relative ), $file );
 		}
 		return $file;
 	}
 
 	function get_plugin_file_path( $file, $trailing_slash = false ) {
-		if ( is_string( $file ) && '' != trim( $file ) ) {
+		if ( is_string( $file ) && '' !== trim( $file ) ) {
 			$file = $this->normalize_path( $this->get_plugin_base(), $file, $trailing_slash );
 		}
 		return $file;
@@ -1667,7 +1667,7 @@ class SLB_Utilities {
 						$fmtd = str_replace( $delim . $delim, $delim, $fmtd );
 					}
 					// Prefix formatted value with delimeter for metadata keys
-					if ( 'metadata' == $format ) {
+					if ( 'metadata' === $format ) {
 						$fmtd = $delim . $fmtd;
 					}
 					break;

@@ -153,7 +153,7 @@ class SLB_Themes extends SLB_Collection_Controller {
 		foreach ( $filter_props as $filter_prop => $filter_value ) {
 			if ( ! $r[ $filter_prop ] ) {
 				foreach ( $items as $id => $item ) {
-					if ( $item->get_public() == $filter_value ) {
+					if ( $item->get_public() === $filter_value ) {
 						$items_exclude[] = $id;
 					}
 				}

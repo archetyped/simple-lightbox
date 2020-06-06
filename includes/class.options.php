@@ -81,7 +81,7 @@ class SLB_Options extends SLB_Field_Collection {
 			// Get current version
 			$vn = $this->util->get_plugin_version();
 			// Compare versions
-			if ( $vo != $vn ) {
+			if ( $vo !== $vn ) {
 				// Update saved version
 				$this->set_version( $vn );
 				// Migrate old version to new version
@@ -575,7 +575,7 @@ class SLB_Options extends SLB_Field_Collection {
 	 */
 	public function admin_page_render_content( $opts, $page, $state ) {
 		$groups = null;
-		if ( is_array( $opts ) && count( $opts ) == 2 ) {
+		if ( is_array( $opts ) && count( $opts ) === 2 ) {
 			$groups = $opts[1];
 			$opts   = $opts[0];
 		}

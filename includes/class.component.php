@@ -77,7 +77,7 @@ class SLB_Component extends SLB_Base_Object {
 			);
 			$v           = $this->util->get_plugin_version();
 			$files       = call_user_func( $m->get );
-			$param_final = ( 'script' == $t ) ? true : 'all';
+			$param_final = ( 'script' === $t ) ? true : 'all';
 			foreach ( $files as $f ) {
 				$f = (object) $f;
 				// Format handle

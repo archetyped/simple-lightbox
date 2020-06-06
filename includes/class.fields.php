@@ -161,7 +161,7 @@ class SLB_Fields extends SLB_Field_Collection {
 	 * @return void
 	 */
 	function register_placeholder( $placeholder, $callback, $priority = 10 ) {
-		if ( 'all' == $placeholder ) {
+		if ( 'all' === $placeholder ) {
 			$placeholder = '';
 		} else {
 			$placeholder = '_' . $placeholder;
@@ -199,7 +199,7 @@ class SLB_Fields extends SLB_Field_Collection {
 
 				// Find items matching criteria in $output
 				// Check for group criteria
-				if ( 'properties' == $placeholder['tag'] && ( $prop_group = $item->get_group( $placeholder['attributes']['group'] ) ) && ! empty( $prop_group ) ) {
+				if ( 'properties' === $placeholder['tag'] && ( $prop_group = $item->get_group( $placeholder['attributes']['group'] ) ) && ! empty( $prop_group ) ) {
 					/* Process group */
 					$group_out = array();
 					// Iterate through properties in group and build string.
@@ -370,7 +370,7 @@ class SLB_Fields extends SLB_Field_Collection {
 		if ( is_array( $loop_data ) && ! empty( $loop_data ) ) {
 			foreach ( $loop_data as $value => $label ) {
 				// Load appropriate layout based on item value
-				$layout = ( ( 0 === $data && $value === $data ) xor $data == $value ) ? $attr['layout_data'] : $attr['layout'];
+				$layout = ( ( 0 === $data && $value === $data ) xor $data === $value ) ? $attr['layout_data'] : $attr['layout'];
 				// Stop processing if no valid layout is returned
 				if ( empty( $layout ) ) {
 					continue;

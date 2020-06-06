@@ -341,7 +341,7 @@ class SLB_Base {
 				}
 				// Enqueue files only for current location (header/footer)
 				if ( isset( $f->in_footer ) ) {
-					if ( $f->in_footer != $footer ) {
+					if ( $f->in_footer !== $footer ) {
 						continue;
 					}
 				} elseif ( $footer ) {
@@ -503,9 +503,9 @@ class SLB_Base {
 		if ( is_null( $this->caps ) ) {
 			// Build capabilities based on instance properties
 			$this->caps = array(
-				'init'      => ( 'object' != $this->mode ) ? true : false,
+				'init'      => ( 'object' !== $this->mode ) ? true : false,
 				'singleton' => ( ! ! $this->model ) ? true : false,
-				'control'   => ( 'sub' == $this->mode || 'object' == $this->mode ) ? false : true,
+				'control'   => ( 'sub' === $this->mode || 'object' === $this->mode ) ? false : true,
 			);
 		}
 		return ( isset( $this->caps[ $cap ] ) ) ? $this->caps[ $cap ] : false;

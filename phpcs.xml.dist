@@ -55,7 +55,6 @@
         <exclude name="WordPress.PHP.DontExtract.extract_extract"/>
         <exclude name="WordPress.PHP.NoSilencedErrors.Discouraged"/>
         <exclude name="WordPress.PHP.PregQuoteDelimiter.Missing"/>
-        <exclude name="WordPress.PHP.StrictComparisons.LooseComparison"/>
         <exclude name="WordPress.PHP.StrictInArray.MissingTrueStrict"/>
         <exclude name="WordPress.Security.EscapeOutput.OutputNotEscaped"/>
     </rule>

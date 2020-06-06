@@ -208,7 +208,7 @@ class SLB_Field_Base extends SLB_Base {
 
 			$path_size = count( $path );
 			for ( $x = 0; $x < $path_size; $x++ ) {
-				if ( 0 == $x ) {
+				if ( 0 === $x ) {
 					$ret =& $ret->{ $path[ $x ] };
 				} else {
 					$ret =& $ret[ $path[ $x ] ];
@@ -250,7 +250,7 @@ class SLB_Field_Base extends SLB_Base {
 		$path = array();
 		if ( is_array( $member ) && isset( $member['tag'] ) ) {
 			if ( isset( $member['attributes']['ref_base'] ) ) {
-				if ( 'root' != $member['attributes']['ref_base'] ) {
+				if ( 'root' !== $member['attributes']['ref_base'] ) {
 					$path[] = $member['attributes']['ref_base'];
 				}
 			} else {
@@ -290,10 +290,10 @@ class SLB_Field_Base extends SLB_Base {
 				$deeper = false;
 			}
 		}
-		if ( $deeper && 'current' != $dir ) {
+		if ( $deeper && 'current' !== $dir ) {
 			$ex_val = '';
 			// Get Parent value (recursive)
-			if ( 'parent' == $dir ) {
+			if ( 'parent' === $dir ) {
 				$ex_val = $this->get_parent_value( $member, $name, $default );
 			} elseif ( method_exists( $this, 'get_container_value' ) ) {
 				$ex_val = $this->get_container_value( $member, $name, $default );
@@ -419,7 +419,7 @@ class SLB_Field_Base extends SLB_Base {
 			}
 			if ( is_array( $seg ) ) {
 				$item_id = array_merge( $item_id, array_reverse( $seg ) );
-			} elseif ( '' != strval( $seg ) ) {
+			} elseif ( '' !== strval( $seg ) ) {
 				$item_id[] = strval( $seg );
 			}
 		}
@@ -566,16 +566,16 @@ class SLB_Field_Base extends SLB_Base {
 		);
 		$args  = func_get_args();
 		$a     = false;
-		if ( count( $args ) == 1 && is_array( $args[0] ) && ! empty( $args[0] ) ) {
+		if ( count( $args ) === 1 && is_array( $args[0] ) && ! empty( $args[0] ) ) {
 			$a    = true;
 			$args = wp_parse_args( $args[0], $opt_d );
 			extract( $args );
 		}
 
 		if ( is_string( $top ) ) {
-			if ( 'false' == $top ) {
+			if ( 'false' === $top ) {
 				$top = false;
-			} elseif ( 'true' == $top ) {
+			} elseif ( 'true' === $top ) {
 				$top = true;
 			} elseif ( is_numeric( $top ) ) {
 				$top = intval( $top );

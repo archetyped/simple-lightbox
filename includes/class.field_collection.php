@@ -144,7 +144,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 			$this->data = wp_parse_args( $item, $this->data );
 			// Update save option
 			$args = func_get_args();
-			if ( 2 == count( $args ) && is_bool( $args[1] ) ) {
+			if ( 2 === count( $args ) && is_bool( $args[1] ) ) {
 				$save = $args[1];
 			}
 		} elseif ( is_object( $item ) && method_exists( $item, 'get_id' ) ) {
@@ -207,7 +207,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 			}
 		}
 
-		if ( empty( $item ) || 0 == strlen( $item->get_id() ) ) {
+		if ( empty( $item ) || 0 === strlen( $item->get_id() ) ) {
 			return false;
 		}
 
@@ -364,7 +364,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 		if ( ! empty( $items ) ) {
 			// Sort items
 			if ( ! empty( $sort ) && is_string( $sort ) ) {
-				if ( 'priority' == $sort ) {
+				if ( 'priority' === $sort ) {
 					if ( $gset ) {
 						// Sort by priority
 						ksort( $items, SORT_NUMERIC );
@@ -645,7 +645,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 					$sfunc = function ( $a, $b ) use ( $sort ) {
 						$ap = $a->$sort;
 						$bp = $b->$sort;
-						if ( $ap == $bp ) {
+						if ( $ap === $bp ) {
 							return 0;
 						}
 						return ( $ap > $bp ) ? 1 : -1;

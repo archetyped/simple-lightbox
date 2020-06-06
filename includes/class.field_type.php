@@ -331,7 +331,7 @@ class SLB_Field_Type extends SLB_Field_Base {
 				}
 				// Stop processing instance if a previously-saved instance with the same options already exists.
 				foreach ( $result[ $tag ] as $tag_match ) {
-					if ( $tag_match['match'] == $parse_match[ $instance - 1 ] ) {
+					if ( $tag_match['match'] === $parse_match[ $instance - 1 ] ) {
 						continue 2;
 					}
 				}

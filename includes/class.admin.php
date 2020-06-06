@@ -140,7 +140,7 @@ class SLB_Admin extends SLB_Base {
 		$r =& $_REQUEST;
 
 		// Retrieve view that initiated the action
-		if ( isset( $r[ $t ] ) && 'view' == $r[ $t ] ) {
+		if ( isset( $r[ $t ] ) && 'view' === $r[ $t ] ) {
 			if (
 				isset( $r[ $g ] )
 				&& ( $prop = $r[ $g ] . 's' )
@@ -569,7 +569,7 @@ class SLB_Admin extends SLB_Base {
 	public function plugin_row_meta( $plugin_meta, $plugin_file, $plugin_data, $status ) {
 		$u         = ( is_object( $this->parent ) && isset( $this->parent->util ) ) ? $this->parent->util : $this->util;
 		$hook_base = 'admin_plugin_row_meta_';
-		if ( $plugin_file == $u->get_plugin_base_name() ) {
+		if ( $plugin_file === $u->get_plugin_base_name() ) {
 			// Add metadata
 			//  Support
 			$l = $u->get_plugin_info( 'SupportURI' );

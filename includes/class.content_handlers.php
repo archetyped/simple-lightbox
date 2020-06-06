@@ -55,7 +55,7 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 		} else {
 			// Remap parameters
 			$handler = func_get_arg( 0 );
-			if ( func_num_args() == 2 ) {
+			if ( func_num_args() === 2 ) {
 				$priority = func_get_arg( 1 );
 			}
 		}

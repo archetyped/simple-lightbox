@@ -845,7 +845,7 @@ class SLB_Lightbox extends SLB_Base {
 		}
 
 		// Handle widget content
-		if ( ! ! $this->widget_processing && 'the_content' == current_filter() ) {
+		if ( ! ! $this->widget_processing && 'the_content' === current_filter() ) {
 			$content = $this->exclude_wrap( $content );
 		}
 
@@ -1164,7 +1164,7 @@ class SLB_Lightbox extends SLB_Base {
 		// Check if URI already cached.
 		$key = $this->get_media_item_id( $uri->source );
 		// Cache new item.
-		if ( null == $key ) {
+		if ( null === $key ) {
 			// Generate Unique ID.
 			do {
 				$key = (string) wp_rand();
@@ -1219,7 +1219,7 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	private function get_cached_media_item( $uri ) {
 		$key = $this->get_media_item_id( $uri );
-		if ( null != $key ) {
+		if ( null !== $key ) {
 			return $this->media_items_raw['props'][ $key ];
 		}
 		return null;
@@ -1270,7 +1270,7 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	private function get_exclude_tags() {
 		static $tags = null;
-		if ( null == $tags ) {
+		if ( null === $tags ) {
 			$base         = $this->add_prefix( 'exclude' );
 			$tags         = (object) array(
 				'base'  => $base,
@@ -1779,7 +1779,7 @@ class SLB_Lightbox extends SLB_Base {
 		if ( ! empty( $ret ) && is_bool( $internal ) && $internal ) {
 			$ret_f = array();
 			foreach ( $ret as $key => $val ) {
-				if ( strpos( $key, $this->make_attribute_name() ) == 0 ) {
+				if ( strpos( $key, $this->make_attribute_name() ) === 0 ) {
 					$ret_f[ $key ] = $val;
 				}
 			}
@@ -1831,7 +1831,7 @@ class SLB_Lightbox extends SLB_Base {
 				if ( is_string( $value ) ) {
 					$ret = ( strval( $value ) === $a ) ? true : false;
 				} elseif ( is_bool( $value ) ) {
-					$ret = ( ! ! $a == $value ) ? true : false;
+					$ret = ( ! ! $a === $value ) ? true : false;
 				} else {
 					$ret = false;
 				}

@@ -257,7 +257,7 @@ class SLB_Base_Object extends SLB_Base {
 						$ret = $this->util->normalize_path( site_url(), $ret );
 					}
 					$get = wp_safe_remote_get( $ret );
-					$ret = ( ! is_wp_error( $get ) && 200 == $get['response']['code'] ) ? $get['body'] : '';
+					$ret = ( ! is_wp_error( $get ) && 200 === $get['response']['code'] ) ? $get['body'] : '';
 					break;
 			}
 		}

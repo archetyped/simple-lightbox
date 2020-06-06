@@ -229,7 +229,7 @@ class SLB_Base_Collection extends SLB_Base {
 			// Sort
 			foreach ( $r['orderby'] as $stype => $sval ) {
 				/* Meta sorting */
-				if ( 'meta' == $stype ) {
+				if ( 'meta' === $stype ) {
 					// Build sorting buckets
 					$buckets = array();
 					foreach ( $metas as $item => $meta ) {
