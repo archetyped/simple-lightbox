@@ -54,7 +54,6 @@
         <exclude name="WordPress.DB.PreparedSQL.NotPrepared"/>
         <exclude name="WordPress.PHP.DontExtract.extract_extract"/>
         <exclude name="WordPress.PHP.NoSilencedErrors.Discouraged"/>
-        <exclude name="WordPress.PHP.PregQuoteDelimiter.Missing"/>
         <exclude name="WordPress.Security.EscapeOutput.OutputNotEscaped"/>
     </rule>
 
