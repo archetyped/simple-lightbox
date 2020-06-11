@@ -1271,16 +1271,28 @@ class SLB_Lightbox extends SLB_Base {
 	private function get_exclude_tags() {
 		static $tags = null;
 		if ( null === $tags ) {
-			$base         = $this->add_prefix( 'exclude' );
-			$tags         = (object) array(
-				'base'  => $base,
-				'open'  => $this->util->add_wrapper( $base ),
-				'close' => $this->util->add_wrapper( $base, '[/', ']' ),
-			);
-			$tags->search = '#' . preg_quote( $tags->open ) . '(.*?)' . preg_quote( $tags->close ) . '#s';
+			/* Init tag elements */
+			$tags = (object) [
+				// Tag base.
+				'base' => $this->add_prefix( 'exclude' ),
+			];
+			// Opening tag.
+			$tags->open = $this->util->add_wrapper( $tags->base );
+			// Closing tag.
+			$tags->close = $this->util->add_wrapper( $tags->base, '[/', ']' );
+
+			/* Build tag search pattern */
+
+			// Pattern delimeter.
+			$dlm = '#';
+			// Pattern flags.
+			$flags = 's';
+			// Tag search pattern.
+			$tags->search = $dlm . preg_quote( $tags->open, $dlm ) . '(.*?)' . preg_quote( $tags->close, $dlm ) . $dlm . $flags;
 		}
 		return $tags;
 	}
+
 
 	/**
 	 * Get exclusion tag ("[slb_exclude]")
