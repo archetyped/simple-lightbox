@@ -1328,7 +1328,9 @@ class SLB_Lightbox extends SLB_Base {
 			);
 			// Search Patterns
 			$sub              = '(.+?)';
-			$ph->search       = '#' . preg_quote( $ph->open ) . $ph->base . '\s+' . $sub . preg_quote( $ph->close ) . '#s';
+			$dlm              = '#';
+			$flags            = 's';
+			$ph->search       = $dlm . preg_quote( $ph->open, $dlm ) . $ph->base . '\s+' . $sub . preg_quote( $ph->close, $dlm ) . $dlm . $flags;
 			$ph->search_group = str_replace( $sub, '(group="%s"\s+.?)', $ph->search );
 			// Templates
 			$attr_string = '';
