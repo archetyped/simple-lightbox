@@ -1756,32 +1756,61 @@ class SLB_Utilities {
 	}
 
 	/**
-	 * Parse string of attributes into array
-	 * For XML/XHTML tag attributes
-	 * @param string $txt Attribute text (Can be full tag or just attributes)
-	 * @return array Attributes as associative array
+	 * Parses string of attributes into associative array.
+	 *
+	 * For parsing XML/XHTML tag attributes.
+	 *
+	 * @param string $attrs Attribute string. Can be full tag or just attributes.
+	 * @param array $defaults Optional. Default attributes.
+	 * @return array Attributes as associative array.
 	 */
-	function parse_attribute_string( $txt, $defaults = array() ) {
-		$txt     = trim( $txt, ' >' );
-		$matches = $attr = array();
-		// Strip tag
-		if ( '<' === $txt[0] && ( $s = strpos( $txt, ' ' ) ) && false !== $s ) {
-			$txt = trim( substr( $txt, $s + 1 ) );
+	function parse_attribute_string( $attrs, $defaults = array() ) {
+		/**
+		 * Builds output.
+		 *
+		 * Merges defaults into attributes array.
+		 *
+		 * @param array $attrs Attributes array.
+		 * @return array Attributes (including defaults).
+		 */
+		$output = function( $attrs ) use ( $defaults ) {
+			// Validate attributes array.
+			if ( ! is_array( $attrs ) ) {
+				$attrs = [];
+			}
+			// Validate defaults.
+			if ( ! is_array( $defaults ) ) {
+				$defaults = [];
+			}
+			return array_merge( $defaults, $attrs );
+		};
+
+		// Handle invalid or non-string attributes.
+		if ( ! is_string( $attrs ) || false === strpos( $attrs, '=' ) ) {
+			return $output( $attrs );
 		}
-		// Parse attributes
-		$rgx = "/\b(\w+.*?)=([\"'])(.*?)\\2(?:\s|$)/i";
-		preg_match_all( $rgx, $txt, $matches );
-		if ( count( $matches ) > 3 ) {
-			foreach ( $matches[1] as $sub_idx => $val ) {
-				if ( isset( $matches[3][ $sub_idx ] ) ) {
-					$attr[ trim( $val ) ] = trim( $matches[3][ $sub_idx ] );
-				}
+		// Clean up attribute string.
+		$attrs = trim( $attrs );
+		// Strip tag (if necessary).
+		if ( '<' === $attrs[0] || '>' === $attrs[-1] ) {
+			$rgx   = '/^(?:(?:<\w.*?)\s+)?([^\s].+?)\s*(?:\/?>)?$/i';
+			$attrs = preg_replace( $rgx, '$1', $attrs );
+		}
+		unset( $rgx );
+
+		// Parse attributes.
+		$rgx = '/\b(?<attr>\w[^\s]+?)=(?<quote>["\'])(?<val>.*?)(?P=quote)(?:\s+|$)/i';
+		preg_match_all( $rgx, $attrs, $matches, PREG_SET_ORDER );
+		if ( ! empty( $matches ) ) {
+			$attrs = [];
+			foreach ( $matches as $match ) {
+				$attrs[ $match['attr'] ] = $match['val'];
 			}
 		}
-		// Destroy parsing vars
-		unset( $txt, $matches );
+		unset( $rgx, $matches, $match );
 
-		return array_merge( $defaults, $attr );
+		// Return parsed attributes (merged with defaults).
+		return $output( $attrs );
 	}
 
 	/**
