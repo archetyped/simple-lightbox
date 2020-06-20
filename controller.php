@@ -1779,30 +1779,28 @@ class SLB_Lightbox extends SLB_Base {
 	}
 
 	/**
-	 * Convert attribute string into array
-	 * @param string $attr_string Attribute string
-	 * @param bool (optional) $internal Whether only internal attributes should be evaluated (Default: TRUE)
-	 * @return array Attributes as associative array
+	 * Converts attribute string into array.
+	 *
+	 * @param string|array $attrs Attribute string to convert. Associative array also accepted.
+	 * @param bool $internal Optional. Return only internal attributes. Default True.
+	 * @return array Associative array of attributes (`attribute-name => attribute-value`).
 	 */
-	function get_attributes( $attr_string, $internal = true ) {
-		if ( is_string( $attr_string ) ) {
-			$attr_string = $this->util->parse_attribute_string( $attr_string );
-		}
-		$ret = ( is_array( $attr_string ) ) ? $attr_string : array();
-		// Filter out external attributes
-		if ( ! empty( $ret ) && is_bool( $internal ) && $internal ) {
-			$ret_f = array();
-			foreach ( $ret as $key => $val ) {
-				if ( strpos( $key, $this->make_attribute_name() ) === 0 ) {
-					$ret_f[ $key ] = $val;
-				}
-			}
-			if ( ! empty( $ret_f ) ) {
-				$ret = $ret_f;
-			}
+	function get_attributes( $attrs, $internal = true ) {
+		// Parse attribute string.
+		$attrs = $this->util->parse_attribute_string( $attrs );
+		// Include only internal attributes (if necessary).
+		if ( ! ! $internal && ! empty( $attrs ) ) {
+			$prefix = $this->make_attribute_name();
+			$attrs  = array_filter(
+				$attrs,
+				function( $key ) use ( $prefix ) {
+					return ( strpos( $key, $prefix ) === 0 );
+				},
+				ARRAY_FILTER_USE_KEY
+			);
 		}
 
-		return $ret;
+		return $attrs;
 	}
 
 	/**
