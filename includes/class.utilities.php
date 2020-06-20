@@ -1814,23 +1814,39 @@ class SLB_Utilities {
 	}
 
 	/**
-	 * Builds attribute string for HTML element
-	 * @param array $attr Attributes
-	 * @return string Formatted attribute string
+	 * Builds attribute string.
+	 *
+	 * Attribute string formatted for HTML/XML elements.
+	 *
+	 * @param array $attr Attributes to build string from.
+	 * @return string Formatted attribute string.
 	 */
 	function build_attribute_string( $attr ) {
 		$ret = '';
 		if ( is_object( $attr ) ) {
 			$attr = (array) $attr;
 		}
-		if ( is_array( $attr ) && ! empty( $attr ) ) {
-			array_map( 'esc_attr', $attr );
-			$attr_str = array();
-			foreach ( $attr as $key => $val ) {
-				$attr_str[] = $key . '="' . $val . '"';
-			}
-			$ret = implode( ' ', $attr_str );
+		// Stop processing invalid/empty attributes.
+		if ( ! is_array( $attr ) || empty( $attr ) ) {
+			return $ret;
 		}
+		// Build attribute string.
+		$attr_str = array();
+		foreach ( $attr as $key => $val ) {
+			// Skip attributes with invalid names or values.
+			if ( ! is_string( $key ) || ! is_scalar( $val ) ) {
+				continue;
+			}
+			// Format attribute output.
+			$attr_str[] = sprintf(
+				'%1$s="%2$s"',
+				// Remove spaces from attribute name.
+				esc_attr( str_replace( [ ' ', '=' ], '-', $key ) ),
+				esc_attr( $val )
+			);
+		}
+
+		$ret = implode( ' ', $attr_str );
 		return $ret;
 	}
 
