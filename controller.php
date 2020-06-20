@@ -1804,22 +1804,40 @@ class SLB_Lightbox extends SLB_Base {
 	}
 
 	/**
-	 * Retrieve attribute value
-	 * @param string|array $attrs Attributes to retrieve attribute value from
-	 * @param string $attr Attribute name to retrieve
-	 * @param bool (optional) $internal Whether only internal attributes should be evaluated (Default: TRUE)
-	 * @return string|bool Attribute value (Default: FALSE)
+	 * Retrieves an attributes value from attribute string or array.
+	 *
+	 * @param string|array $attrs Attribute string to retrieve attribute value from.
+	 *                            Associative array also accepted.
+	 * @param string $attr Attribute to retrieve value for.
+	 * @param bool $internal Optional. Retrieve internal attribute. Default true.
+	 * @return scalar|null Attribute value. Null if attribute is invalid or does not exist.
 	 */
 	function get_attribute( $attrs, $attr, $internal = true ) {
-		$ret = false;
-		// Validate
+		// Validate.
+		$invalid = null;
+		if ( ! is_string( $attr ) || empty( trim( $attr ) ) ) {
+			return $invalid;
+		}
 		$attrs = $this->get_attributes( $attrs, $internal );
-		if ( $internal ) {
-			$attr = $this->make_attribute_name( $attr );
+		if ( empty( $attrs ) ) {
+			return $invalid;
 		}
-		if ( isset( $attrs[ $attr ] ) ) {
-			$ret = $attrs[ $attr ];
+		// Format attribute name.
+		$attr = ( ! ! $internal ) ? $this->make_attribute_name( $attr ) : trim( $attr );
+		// Stop if attribute does not exist or value is invalid.
+		if ( ! isset( $attrs[ $attr ] ) || ! is_scalar( $attrs[ $attr ] ) ) {
+			return $invalid;
 		}
+		// Retreive value.
+		$ret = $attrs[ $attr ];
+		// Validate value (type-specific).
+		if ( is_string( $ret ) ) {
+			$ret = trim( $ret );
+			if ( '' === $ret ) {
+				return $invalid;
+			}
+		}
+
 		return $ret;
 	}
 
