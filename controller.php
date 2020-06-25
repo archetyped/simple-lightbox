@@ -1842,32 +1842,16 @@ class SLB_Lightbox extends SLB_Base {
 	}
 
 	/**
-	 * Checks if attribute exists
-	 * If supplied, the attribute's value is also validated
-	 * @param string|array $attrs Attributes to retrieve attribute value from
-	 * @param string $attr Attribute name to retrieve
-	 * @param mixed $value (optional) Attribute value to check for
-	 * @param bool $internal (optional) Whether to check only internal attributes (Default: TRUE)
-	 * @see get_attribute()
-	 * @return bool Whether or not attribute (with matching value if specified) exists
+	 * Checks if attribute exists.
+	 *
+	 * @param string|array $attrs Attribute string to retrieve attribute value from.
+	 *                            Associative array also accepted.
+	 * @param string $attr Attribute to retrieve value for.
+	 * @param bool $internal Optional. Retrieve internal attribute. Default true.
+	 * @return bool True if attribute exists. False if attribute does not exist.
 	 */
-	function has_attribute( $attrs, $attr, $value = null, $internal = true ) {
-		$a   = $this->get_attribute( $attrs, $attr, $internal );
-		$ret = false;
-		if ( false !== $a ) {
-			$ret = true;
-			// Check value
-			if ( ! is_null( $value ) ) {
-				if ( is_string( $value ) ) {
-					$ret = ( strval( $value ) === $a ) ? true : false;
-				} elseif ( is_bool( $value ) ) {
-					$ret = ( ! ! $a === $value ) ? true : false;
-				} else {
-					$ret = false;
-				}
-			}
-		}
-		return $ret;
+	function has_attribute( $attrs, $attr, $internal = true ) {
+		return ( null !== $this->get_attribute( $attrs, $attr, $internal ) );
 	}
 
 	/**
