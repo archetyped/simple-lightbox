@@ -736,7 +736,7 @@ class SLB_Lightbox extends SLB_Base {
 
 			// Stop processing invalid links
 			if ( ! $this->validate_uri( $uri->raw )
-				|| $this->has_attribute( $attrs, 'active', false ) // Previously-processed
+				|| $this->has_attribute( $attrs, 'active' ) // Previously-processed.
 				) {
 				continue;
 			}
