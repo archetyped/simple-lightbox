@@ -1756,24 +1756,24 @@ class SLB_Lightbox extends SLB_Base {
 	}
 
 	/**
-	 * Set attribute to array
-	 * Attribute is added to array if it does not exist
-	 * @param array $attrs Array to add attribute to (Passed by reference)
-	 * @param string $name Name of attribute to add
-	 * @param string (optional) $value Attribute value
-	 * @return array Updated attribute array
+	 * Sets attribute value.
+	 *
+	 * Attribute is added to array if it does not already exist.
+	 *
+	 * @param string|array $attrs Array to set attribute on (Passed by reference).
+	 * @param string $name Name of attribute to set.
+	 * @param scalar $value Optional. Attribute value.
+	 * @return array Updated attributes.
 	 */
 	function set_attribute( &$attrs, $name, $value = true ) {
 		// Validate
 		$attrs = $this->get_attributes( $attrs, false );
-		if ( ! is_string( $name ) || empty( $name ) ) {
+		// Stop if attribute name or value is invalid.
+		if ( ! is_string( $name ) || empty( trim( $name ) ) || ! is_scalar( $value ) ) {
 			return $attrs;
 		}
-		if ( ! is_scalar( $value ) ) {
-			$value = true;
-		}
-		// Add attribute
-		$attrs = array_merge( $attrs, array( $this->make_attribute_name( $name ) => strval( $value ) ) );
+		// Set attribute value.
+		$attrs = array_merge( $attrs, array( $this->make_attribute_name( $name ) => $value ) );
 
 		return $attrs;
 	}
