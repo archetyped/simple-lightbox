@@ -569,8 +569,12 @@ class SLB_Lightbox extends SLB_Base {
 					$opt = 'archive';
 				}
 				// Check sub-option
-				if ( ! empty( $opt ) && ( $opt = 'enabled_' . $opt ) && $this->options->has( $opt ) ) {
-					$ret = $this->options->get_bool( $opt );
+				if ( ! empty( $opt ) ) {
+					// Prefix option name.
+					$opt = 'enabled_' . $opt;
+					if ( $this->options->has( $opt ) ) {
+						$ret = $this->options->get_bool( $opt );
+					}
 				}
 			}
 		}
@@ -809,8 +813,8 @@ class SLB_Lightbox extends SLB_Base {
 				$group = array();
 				// Get preset group attribute
 				$g = ( $this->has_attribute( $attrs, $g_props->attr ) ) ? $this->get_attribute( $attrs, $g_props->attr ) : '';
-				if ( is_string( $g ) && ( $g = trim( $g ) ) && ! empty( $g ) ) {
-					$group[] = $g;
+				if ( ! empty( $g ) ) {
+						$group[] = $g;
 				} elseif ( ! empty( $g_props->base ) ) {
 					$group[] = $g_props->base;
 				}
@@ -942,7 +946,8 @@ class SLB_Lightbox extends SLB_Base {
 		$options = $this->options->build_client_output();
 
 		// Load UI Strings
-		if ( ( $labels = $this->build_labels() ) && ! empty( $labels ) ) {
+		$labels = $this->build_labels();
+		if ( ! empty( $labels ) ) {
 			$options['ui_labels'] = $labels;
 		}
 
