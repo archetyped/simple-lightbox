@@ -1351,36 +1351,40 @@ class SLB_Utilities {
 	}
 
 	/**
-	 * Retrieve plugin's base file path
-	 * @uses get_path_base()
-	 * @uses get_file_path()
-	 * @return string Base file path
+	 * Retrieves plugin's base file path.
+	 *
+	 * @return string Full path to plugin's base file.
 	 */
 	function get_plugin_base_file() {
-		$ret = $this->_plugin['file'];
-		if ( empty( $ret ) ) {
-			$dir = @opendir( $this->get_path_base() );
-			if ( $dir ) {
-				while ( ( $ftemp = readdir( $dir ) ) !== false ) {
-					// Only process PHP files
-					$ftemp = $this->get_file_path( $ftemp );
-					if ( ! $this->has_file_extension( $ftemp, 'php' ) || ! is_readable( $ftemp ) ) {
-						continue;
-					}
-					// Check for data
-					$data = get_file_data( $ftemp, $this->_plugin['headers'] );
-					if ( ! empty( $data['Name'] ) ) {
-						// Set base file
-						$ret = $ftemp;
-						// Save plugin data
-						$this->set_plugin_info( $data );
-						break;
-					}
-				}
-			}
-			@closedir( $dir );
+		// Get stored data (if previously set).
+		$key = 'file';
+		$ret = $this->get_meta( $key );
+		if ( ! empty( $ret ) ) {
+			return $ret;
 		}
-		// Return
+
+		// Scan directory (DirectoryIterator)
+		foreach ( new DirectoryIterator( $this->get_path_base() ) as $f_info ) {
+			// Stop processing invalid items.
+			if ( $f_info->isDot() || ! $f_info->isFile() || $f_info->getExtension() !== 'php' || ! $f_info->isReadable() ) {
+				continue;
+			}
+
+			$ftemp = $f_info->getPathname();
+			// Check for metadata.
+			$data = get_file_data( $ftemp, $this->get_meta( 'headers' ) );
+			// Stop processing if no metadata found.
+			if ( empty( $data['Name'] ) ) {
+				continue;
+			}
+			// Set base file.
+			$ret = $this->set_meta( $key, $ftemp );
+			// Save plugin data.
+			$this->set_plugin_info( $data );
+			// Stop processing files.
+			break;
+		}
+		// Return base file.
 		return $ret;
 	}
 
