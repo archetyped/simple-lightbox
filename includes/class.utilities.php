@@ -19,10 +19,15 @@ class SLB_Utilities {
 	private $_parent = null;
 
 	/**
-	 * Plugin Base
+	 * Plugin metadata
+	 *
+	 * @since 1.5.5 Stores plugin headers.
+	 * @since 2.0.0 Visibility set to private.
+	 * @since 2.2.0 Expanded to include all plugin metadata.
+	 * @since 0.0.0-dev Changed to static.
 	 * @var string
 	 */
-	private $_plugin = array(
+	private static $plugin_meta = array(
 		'base'    => null,
 		'file'    => null,
 		'name'    => null,
@@ -1299,7 +1304,7 @@ class SLB_Utilities {
 	private function get_meta( $key ) {
 		$key = sanitize_key( $key );
 		// Get metadata value.
-		return ( strlen( $key ) > 0 && isset( $this->_plugin[ $key ] ) ) ? $this->_plugin[ $key ] : null;
+		return ( strlen( $key ) > 0 && isset( static::$plugin_meta[ $key ] ) ) ? static::$plugin_meta[ $key ] : null;
 	}
 
 	/**
@@ -1325,7 +1330,7 @@ class SLB_Utilities {
 		$key = sanitize_key( $key );
 		if ( strlen( $key ) > 0 ) {
 			// Set metadata.
-			$this->_plugin[ $key ] = $val;
+			static::$plugin_meta[ $key ] = $val;
 		}
 		return $val;
 	}
