@@ -127,7 +127,9 @@ class SLB_Admin extends SLB_Base {
 	/* Handlers */
 
 	/**
-	 * Handle routing of internal action to appropriate handler
+	 * Handles routing of internal action to appropriate handler.
+	 *
+	 * @return void
 	 */
 	public function handle_action() {
 		// Parse action
@@ -139,22 +141,27 @@ class SLB_Admin extends SLB_Base {
 		$this->add_prefix_ref( $o );
 		$r =& $_REQUEST;
 
-		// Retrieve view that initiated the action
-		if ( isset( $r[ $t ] ) && 'view' === $r[ $t ] ) {
-			if (
-				isset( $r[ $g ] )
-				&& ( $prop = $r[ $g ] . 's' )
-				&& property_exists( $this, $prop )
-				&& is_array( $this->{$prop} )
-				&& isset( $r[ $o ] )
-				&& isset( $this->{$prop}[ $r[ $o ] ] )
-			) {
-				$view =& $this->{$prop}[ $r[ $o ] ];
-				if ( $view instanceof SLB_Admin_View ) {
-					// Pass request to view
-					$view->do_callback();
-				}
-			}
+		// Confirm request contains necessary parameters.
+		if (
+			! isset( $r[ $t ], $r[ $g ], $r[ $o ] )
+			|| 'view' !== $r[ $t ]
+		) {
+			return;
+		}
+		// Confirm specified view instance exists.
+		$prop = $r[ $g ] . 's';
+		if (
+			! property_exists( $this, $prop )
+			|| ! is_array( $this->{$prop} )
+			|| ! isset( $this->{$prop}[ $r[ $o ] ] )
+		) {
+			return;
+		}
+		// Get view instance.
+		$view =& $this->{$prop}[ $r[ $o ] ];
+		// Pass request to view instance.
+		if ( $view instanceof SLB_Admin_View ) {
+			$view->do_callback();
 		}
 	}
 

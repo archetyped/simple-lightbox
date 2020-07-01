@@ -518,15 +518,24 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 * @return bool TRUE if valid, FALSE if not valid
 	 */
 	public function is_valid() {
-		$valid = true;
+		$invalid = false;
 		foreach ( $this->required as $prop => $type ) {
-			if ( empty( $this->{$prop} )
-				|| ( ! empty( $type ) && is_string( $type ) && ( $f = 'is_' . $type ) && function_exists( $f ) && ! $f( $this->{$prop} ) ) ) {
-				$valid = false;
-				break;
+			// Baseline validation.
+			if (
+				empty( $this->{$prop} )
+				|| empty( $type )
+				|| ! is_string( $type )
+			) {
+				return $invalid;
+			}
+
+			// Validate data type.
+			$f = 'is_' . $type;
+			if ( ! function_exists( $f ) || ! $f( $this->{$prop} ) ) {
+				return $invalid;
 			}
 		}
-		return $valid;
+		return true;
 	}
 
 	protected function is_child() {
