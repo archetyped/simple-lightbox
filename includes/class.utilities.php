@@ -1205,7 +1205,7 @@ class SLB_Utilities {
 	 * @return string Base URL
 	 */
 	function get_url_base( $trailing_slash = false, $relative = null ) {
-		$ret = $this->_plugin['uri'];
+		$ret = $this->get_meta( 'uri' );
 		if ( empty( $ret ) ) {
 			$ret = $this->normalize_path( plugins_url(), $this->get_plugin_base() );
 		}
@@ -1291,6 +1291,46 @@ class SLB_Utilities {
 	}
 
 	/**
+	 * Retrieves plugin metadata.
+	 *
+	 * @param string $key Metadata key to retrieve.
+	 * @return mixed Value of specified metadata key. Null if key does not exist.
+	 */
+	private function get_meta( $key ) {
+		$key = sanitize_key( $key );
+		// Get metadata value.
+		return ( strlen( $key ) > 0 && isset( $this->_plugin[ $key ] ) ) ? $this->_plugin[ $key ] : null;
+	}
+
+	/**
+	 * Checks if plugin metadata exists.
+	 *
+	 * @param string $key Metadata key to check for.
+	 * @return bool True if metadata key is set. False if not.
+	 */
+	private function has_meta( $key ) {
+		$val = $this->get_meta( $key );
+		return ( ! is_null( $val ) );
+	}
+
+	/**
+	 * Sets plugin metadata.
+	 *
+	 * @param string $key Metadata key to set.
+	 * @param mixed $val Metadata value to set.
+	 * @return mixed Metadata value set.
+	 */
+	private function set_meta( $key, $val ) {
+		// Validate key.
+		$key = sanitize_key( $key );
+		if ( strlen( $key ) > 0 ) {
+			// Set metadata.
+			$this->_plugin[ $key ] = $val;
+		}
+		return $val;
+	}
+
+	/**
 	 * Retrieve plugin's base directory
 	 * @uses WP_PLUGIN_DIR
 	 * @uses Utilities::get_path_base() to retrieve plugin base path
@@ -1298,9 +1338,9 @@ class SLB_Utilities {
 	 * @return string Base directory
 	 */
 	function get_plugin_base() {
-		$ret = $this->_plugin['base'];
+		$ret = $this->get_meta( 'base' );
 		if ( empty( $ret ) ) {
-			$ret = $this->_plugin['base'] = basename( $this->get_path_base() );
+			$ret = $this->set_meta( 'base', basename( $this->get_path_base() ) );
 		}
 		return $ret;
 	}
@@ -1347,34 +1387,41 @@ class SLB_Utilities {
 	 * @return string Internal plugin name
 	 */
 	function get_plugin_base_name() {
-		$ret = $this->_plugin['name'];
+		$ret = $this->get_meta( 'name' );
 		if ( empty( $ret ) ) {
-			$ret = $this->_plugin['name'] = plugin_basename( $this->get_plugin_base_file() );
+			$ret = $this->set_meta( 'name', plugin_basename( $this->get_plugin_base_file() ) );
 		}
 		return $ret;
 	}
 
+	/**
+	 * Sets plugin information.
+	 *
+	 * @param array $data Plugin info to set.
+	 * @return void
+	 */
 	private function set_plugin_info( $data ) {
 		if ( is_array( $data ) ) {
-			$this->_plugin['data'] = $data;
+			$this->set_meta( 'data', $data );
 		}
 	}
 
 	/**
-	 * Retrieve plugin info
-	 * Parses info comment in main plugin file
-	 * @uses get_plugin_base_file() to retrieve plugin info
-	 * @return array|string Plugin info (specific value if field set)
+	 * Retrieves plugin info.
+	 *
+	 * @param string $field Plugin info to retrieve.
+	 * @return array|string Full plugin info array, or specific field value.
 	 */
-	function get_plugin_info( $field = null ) {
-		$ret = $this->_plugin['data'];
-		// Get plugin data
-		if ( empty( $ret ) ) {
+	public function get_plugin_info( $field = null ) {
+		$key = 'data';
+		// Initialize plugin headers (if necessary).
+		if ( ! $this->has_meta( $key ) ) {
 			$this->get_plugin_base_file();
-			$ret = $this->_plugin['data'];
 		}
-		// Return specified field
-		if ( ! empty( $field ) ) {
+		// Get plugin data.
+		$ret = $this->get_meta( $key );
+		// Return specified field.
+		if ( ! empty( $field ) && is_string( $field ) ) {
 			$ret = ( is_array( $ret ) && isset( $ret[ $field ] ) ) ? $ret[ $field ] : '';
 		}
 		return $ret;
