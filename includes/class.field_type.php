@@ -228,21 +228,19 @@ class SLB_Field_Type extends SLB_Field_Base {
 	}
 
 	/**
-	 * Checks if specified layout exists
-	 * Finds layout if it exists in current object or any of its parents
-	 * @param string $layout Name of layout to check for
-	 * @return bool TRUE if layout exists, FALSE otherwise
+	 * Checks if specified layout exists.
+	 *
+	 * Finds layout if it exists in current object or any of its parents.
+	 *
+	 * @param string $layout Name of layout to check for.
+	 * @return bool True if layout exists, False otherwise.
 	 */
 	function has_layout( $layout ) {
-		$ret = false;
-		if ( is_string( $layout ) && ( $layout = trim( $layout ) ) && ! empty( $layout ) ) {
-			$layout = $this->get_member_value( 'layout', $layout, false );
-			if ( false !== $layout ) {
-				$ret = true;
-			}
+		if ( is_string( $layout ) && ! empty( trim( $layout ) ) ) {
+			return false;
 		}
-
-		return $ret;
+		$layout = $this->get_member_value( 'layout', trim( $layout ), false );
+		return ( false !== $layout );
 	}
 
 	/**
