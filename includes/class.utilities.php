@@ -1131,25 +1131,33 @@ class SLB_Utilities {
 	}
 
 	/**
-	 * Retrieves file extension
-	 * @param string $file file name/path
-	 * @param bool (optional) $lowercase Whether lowercase extension should be returned (Default: TRUE)
-	 * @return string File's extension
+	 * Retrieves file extension.
+	 *
+	 * @param string $file File path.
+	 * @param bool $lowercase Optional. Format extension as lowercase. Default true.
+	 * @return string Extension of file. Empty string if no extension found.
 	 */
 	function get_file_extension( $file, $lowercase = true ) {
 		$ret = '';
 		$sep = '.';
-		// Validate
-		if ( ! is_string( $file ) ) {
+		// Validate: String must contain extension separator.
+		if ( ! is_string( $file ) || false === strrpos( $file, $sep ) ) {
 			return $ret;
 		}
-		// Strip query string (if necessary)
-		if ( ( $qpos = strpos( $file, '?' ) ) && false !== $qpos ) {
+		// Strip query string if necessary.
+		$qpos = strpos( $file, '?' );
+		if ( false !== $qpos ) {
 			$file = substr( $file, 0, $qpos );
 		}
-		if ( ( $rpos = strrpos( $file, $sep ) ) > 0 ) {
+		// Get basename.
+		$file = wp_basename( $file );
+
+		// Get extension.
+		$rpos = strrpos( $file, $sep );
+		if ( $rpos > 0 ) {
 			$ret = substr( $file, $rpos + 1 );
 		}
+		// Format output.
 		if ( ! ! $lowercase ) {
 			$ret = strtolower( $ret );
 		}
@@ -1406,9 +1414,10 @@ class SLB_Utilities {
 	}
 
 	/**
-	 * Retrieve current action based on URL query variables
-	 * @param mixed $default (optional) Default action if no action exists
-	 * @return string Current action
+	 * Retrieves current action based on URL query variables.
+	 *
+	 * @param mixed $default Optional. Default action if no action exists. Default null.
+	 * @return string Current action.
 	 */
 	function get_action( $default = null ) {
 		$action = '';
@@ -1416,9 +1425,12 @@ class SLB_Utilities {
 		// Check if action is set in URL
 		if ( isset( $_GET['action'] ) ) {
 			$action = $_GET['action'];
-		} elseif ( isset( $_GET['page'] ) && ( $pos = strrpos( $_GET['page'], '-' ) ) && false !== $pos && ( ( strlen( $_GET['page'] ) - 1 ) !== $pos ) ) {
-			// Otherwise, Determine action based on plugin admin page suffix
-			$action = trim( substr( $_GET['page'], $pos + 1 ), '-_' );
+		} elseif ( isset( $_GET['page'] ) ) {
+			$pos = strrpos( $_GET['page'], '-' );
+			if ( false !== $pos && ( ( strlen( $_GET['page'] ) - 1 ) !== $pos ) ) {
+				// Otherwise, Determine action based on plugin admin page suffix
+				$action = trim( substr( $_GET['page'], $pos + 1 ), '-_' );
+			}
 		}
 
 		// Determine action for core admin pages
