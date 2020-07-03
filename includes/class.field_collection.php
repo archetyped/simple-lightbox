@@ -322,7 +322,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	 * @param $item Item to get data for
 	 * @param $context (optional) Context
 	 * @param $top (optional) Iterate through ancestors to get data (Default: Yes)
-	 * @return mixed Item data
+	 * @return mixed|null Item data. Null if no data retrieved.
 	 */
 	function get_data( $item = null, $context = '', $top = true ) {
 		$this->load_data();
