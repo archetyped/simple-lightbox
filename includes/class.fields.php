@@ -304,11 +304,14 @@ class SLB_Fields extends SLB_Field_Collection {
 		}
 		// Get data
 		$out = $item->get_data( $opts );
-		if ( ! is_null( $out ) ) {
-			// Get specific member in value (e.g. value from a specific item element)
-			if ( isset( $opts['element'] ) && is_array( $out ) && ( $el = $opts['element'] ) && isset( $out[ $el ] ) ) {
-				$out = $out[ $el ];
-			}
+		// Get specific member in value (e.g. value from a specific item element).
+		if (
+			is_array( $out )
+			&& is_array( $opts )
+			&& isset( $opts['element'] )
+			&& isset( $out[ $opts['element'] ] )
+		) {
+			$out = $out[ $opts['element'] ];
 		}
 
 		// Return data
