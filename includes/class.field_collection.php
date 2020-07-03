@@ -170,9 +170,9 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	 * @return object Newly-added item
 	 */
 	function add( $id, $properties = array(), $update = false ) {
-		$item;
+		$item = null;
 		$args = func_get_args();
-		// Properties
+		// Get properties.
 		foreach ( array_reverse( $args ) as $arg ) {
 			if ( is_array( $arg ) ) {
 				$properties = $arg;
@@ -183,11 +183,13 @@ class SLB_Field_Collection extends SLB_Field_Base {
 			$properties = array();
 		}
 
-		// Handle item instance
+		// Prep item.
 		if ( $id instanceof $this->item_type ) {
+			// Use existing item.
 			$item = $id;
 			$item->set_properties( $properties );
 		} elseif ( class_exists( $this->item_type ) ) {
+			// Create new item.
 			$defaults   = array(
 				'parent' => null,
 				'group'  => null,
@@ -207,7 +209,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 			}
 		}
 
-		if ( empty( $item ) || 0 === strlen( $item->get_id() ) ) {
+		if ( empty( $item ) || strlen( $item->get_id() ) === 0 ) {
 			return false;
 		}
 
@@ -269,39 +271,50 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	}
 
 	/**
-	 * Checks if item exists in the collection
-	 * @param string $item Item ID
-	 * @return bool TRUE if item exists, FALSE otherwise
+	 * Checks if item exists in the collection.
+	 *
+	 * @param string|object $item Item ID or instance.
+	 * @return bool True if item is in collection, False otherwise.
 	 */
 	function has( $item ) {
-		return ( ! is_string( $item ) || empty( $item ) || is_null( $this->get_member_value( 'items', $item, null ) ) ) ? false : true;
+		// Item ID.
+		if ( is_string( $item ) ) {
+			return in_array( $item, array_keys( $this->get_items() ), true );
+		}
+			// Item instance.
+		if ( $item instanceof $this->item_type ) {
+			$items = $this->get_items( null, false );
+			$id    = $item->get_id();
+			return ( isset( $items[ $id ] ) && $item === $items[ $id ] );
+		}
+		return false;
 	}
 
 	/**
-	 * Retrieve specified item in collection
-	 * @param string|object $item Item object or ID to retrieve
-	 * @return SLB_Field Specified item
+	 * Retrieve specified item in collection.
+	 *
+	 * @param string|object $item Item ID or instance to retrieve.
+	 * @return SLB_Field|null Specified item. Null if item is not in collection.
 	 */
 	function get( $item, $safe_mode = false ) {
-		if ( $this->has( $item ) ) {
-			if ( ! is_object( $item ) || ! ( $item instanceof $this->item_type ) ) {
-				if ( is_string( $item ) ) {
-					$item = trim( $item );
-					$item =& $this->items[ $item ];
-				} else {
-					$item = false;
-				}
+		$invalid = null;
+		// Stop processing if item is not in collection.
+		if ( ! $this->has( $item ) ) {
+			return $invalid;
+		}
+		// Get item instance from ID.
+		if ( is_string( $item ) ) {
+			$items = $this->get_items( null, false );
+			if ( isset( $items[ $item ] ) ) {
+				$item = $items[ $item ];
 			}
-		} else {
-			$item = false;
 		}
-
-		if ( ! ! $safe_mode && ! is_object( $item ) ) {
-			// Fallback: Return empty item if no item exists
-			$type = $this->item_type;
-			$item = new $type( '' );
+		// Return valid item instance.
+		if ( $item instanceof $this->item_type ) {
+			return $item;
 		}
-		return $item;
+		// Invalid item.
+		return $invalid;
 	}
 
 	/**
@@ -401,6 +414,23 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	/* Group */
 
 	/**
+	 * Sanitizes group ID.
+	 *
+	 * @param string $id Group ID.
+	 * @param bool $fallback Optional. Use fallback group if ID is invalid. Default true.
+	 * @return string Sanitized group ID.
+	 */
+	protected function sanitize_group_id( $id, $fallback = true ) {
+		// Sanitize.
+		$id = sanitize_title_with_dashes( $id );
+		// Use default ID (if necessary).
+		if ( strlen( $id ) === 0 && ! ! $fallback ) {
+			$id = 'default';
+		}
+		return $id;
+	}
+
+	/**
 	 * Add groups to collection
 	 * @param array $groups Associative array of group properties
 	 * Array structure:
@@ -438,7 +468,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 		if ( ! is_int( $p['priority'] ) || $p['priority'] < 0 ) {
 			$p['priority'] = $default['priority'];
 		}
-		$id = trim( $id );
+		$id = $this->sanitize_group_id( $id );
 		// Retrieve or init group
 		if ( ! ! $update && $this->group_exists( $id ) ) {
 			$grp              = $this->get_group( $id );
@@ -467,11 +497,24 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	}
 
 	/**
-	 * Standardized method to create a new item group
+	 * Creates a new item group.
+	 *
 	 * @param string $title Group title (used in meta boxes, etc.)
 	 * @param string $description Short description of group's purpose
 	 * @param int $priority (optional) Group priority (e.g. used to sort groups during output)
-	 * @return object Group object
+	 * @return object {
+	 *     Group object.
+	 *
+	 *     @type string $id ID.
+	 *     @type string $title Title.
+	 *     @type string $description Description.
+	 *     @type int $priority Priority (relative to other groups in collection).
+	 *     @type array $items {
+	 *         Group items. Grouped by item priority.
+	 *         Items indexed by item ID.
+	 *         Example: `$items[10]['item_id'] = {item}
+	 *     }
+	 * }
 	 */
 	function &create_group( $id = '', $title = '', $description = '', $priority = 10 ) {
 		// Create new group object
@@ -494,129 +537,155 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	}
 
 	/**
-	 * Checks if group exists in collection
-	 * @param string $id Group name
-	 * @return bool TRUE if group exists, FALSE otherwise
+	 * Checks if group exists in collection.
+	 *
+	 * @param string|object $id Group name or object.
+	 * @return bool True if group exists, False otherwise.
 	 */
 	function group_exists( $group ) {
-		$ret = false;
 		if ( is_object( $group ) ) {
-			$ret = true;
-		} elseif ( is_string( $group ) && ( $group = trim( $group ) ) && strlen( $group ) > 0 ) {
-			$group = trim( $group );
-			// Check if group exists
-			$ret = ! is_null( $this->get_member_value( 'groups', $group, null ) );
+			return true;
 		}
-		return $ret;
+		if ( ! is_string( $group ) ) {
+			return false;
+		}
+		$group = $this->sanitize_group_id( $group );
+		if ( strlen( $group ) === 0 ) {
+			return false;
+		}
+		// Check if group exists
+		return ( ! is_null( $this->get_member_value( 'groups', $group, null ) ) );
 	}
 
 	/**
-	 * Adds item to a group in the collection
-	 * Group is created if it does not already exist
-	 * @param string|array $group ID of group (or group parameters if new group) to add item to
-	 * @param string|array $items Name or array of item(s) to add to group
+	 * Adds item to a group in the collection.
+	 *
+	 * Group is created if it does not already exist.
+	 *
+	 * @param string|array $group {
+	 *     Group ID (or parameters array) to add item to.
+	 *
+	 *     Array structure:
+	 *
+	 *     @type string $0 Group ID.
+	 *     @type int $1 Item priority in group.
+	 * }
+	 * @param string|object|array $items Item ID/Instance or array of items to add to group.
+	 * @param int $priority Optional. Default priority to set for items in group. Default 10.
+	 * @return bool True if item(s) successfully added to group.
+	 *              False if item(s) not added to group.
 	 */
 	function add_to_group( $group, $items, $priority = 10 ) {
-		// Validate
+		// Validate.
 		if ( empty( $items ) || empty( $group ) || ( ! is_string( $group ) && ! is_array( $group ) ) ) {
 			return false;
 		}
-
-		// Get group ID
+		// Parse group properties.
 		if ( is_string( $group ) ) {
-			$group = array( $group, $priority );
+			$gid = $group;
+		} elseif ( is_array( $group ) ) {
+			$group = array_values( $group );
+			if ( count( $group ) < 2 ) {
+				$group[] = $priority;
+			}
+			list( $gid, $priority ) = $group;
 		}
-		list($gid, $priority) = $group;
-		$gid                  = trim( sanitize_title_with_dashes( $gid ) );
-		if ( empty( $gid ) ) {
+
+		// Format group ID.
+		$gid = $this->sanitize_group_id( $gid );
+		if ( strlen( $gid ) === 0 ) {
 			return false;
 		}
-		// Item priority
-		if ( ! is_int( $priority ) ) {
-			$priority = 10;
-		}
 
-		// Prepare group
-		if ( ! $this->group_exists( $gid ) ) {
-			// TODO Follow
-			call_user_func( $this->m( 'add_group' ), $gid, $group );
-		}
+		// Item priority.
+		$priority = (int) $priority;
+
 		// Prepare items
 		if ( ! is_array( $items ) ) {
-			$items = array( $items );
+			$items = [ $items ];
 		}
-		// Add Items
+
+		// Add Items.
+		$items_skipped = [];
 		foreach ( $items as $item ) {
-			// Skip if not in current collection
+			// Skip if item is not in current collection.
 			$itm_ref = $this->get( $item );
 			if ( ! $itm_ref ) {
+				$items_skipped[] = $item;
 				continue;
 			}
-			$itm_id = $itm_ref->get_id();
-			// Remove item from any other group it's in (items can only be in one group)
-			foreach ( $this->get_groups() as $group ) {
-				foreach ( $group->items as $tmp_pri => $tmp_items ) {
-					if ( isset( $group->items[ $tmp_pri ][ $itm_id ] ) ) {
-						unset( $group->items[ $tmp_pri ][ $itm_id ] );
-					}
-				}
-			}
-			// Add reference to item in group
+			// Remove item from all groups (items can only be in one group).
+			$this->remove_from_group( $itm_ref );
+			// Add reference to item in group.
 			$items =& $this->get_group( $gid )->items;
+			// Ensure priority level exists for group.
 			if ( ! isset( $items[ $priority ] ) ) {
 				$items[ $priority ] = array();
 			}
-			$items[ $priority ][ $itm_id ] = $itm_ref;
+			// Add item to group.
+			$items[ $priority ][ $itm_ref->get_id() ] = $itm_ref;
 		}
 		unset( $itm_ref );
+		return ( count( $items_skipped ) < count( $items ) );
 	}
 
 	/**
-	 * Remove item from a group
-	 * If no group is specified, then item is removed from all groups
-	 * @param string|object $item Object or ID of item to remove from group
-	 * @param string $group (optional) Group ID to remove item from
+	 * Removes item from a group.
+	 *
+	 * If group is not specified, item is removed from all groups.
+	 *
+	 * @param string|object $item ID or object of item to remove from group.
+	 * @param string|object|array $groups Optional. Group(s) to remove item from. Default null.
+	 *     - @type string Group ID.
+	 *     - @type object Group object.
+	 *     - @type array Multiple groups (ID or object).
+	 * @return void
 	 */
-	function remove_from_group( $item, $group = '' ) {
-		// Get ID of item to remove or stop execution if item invalid
+	function remove_from_group( $item, $groups = null ) {
+		// Validate item.
 		$item = $this->get( $item );
-		$item = $item->get_id();
 		if ( ! $item ) {
-			return false;
+			return;
+		}
+		// Get item ID.
+		$item = $item->get_id();
+		// Validate item ID.
+		if ( ! $item ) {
+			return;
 		}
 
-		// Remove item from group
-		if ( ! empty( $group ) ) {
-			// Remove item from single group
-			if ( ( $group =& $this->get_group( $group ) ) && isset( $group->items[ $item ] ) ) {
-				unset( $group->items[ $item ] );
-			}
-		} else {
-			// Remove item from all groups
-			foreach ( array_keys( $this->groups ) as $group ) {
-				if ( ( $group =& $this->get_group( $group ) ) && isset( $group->items[ $item ] ) ) {
-					unset( $group->items[ $item ] );
-				}
+		// Setup groups.
+		if ( is_string( $groups ) || is_object( $groups ) ) {
+			$groups = [ $groups ];
+		} elseif ( ! is_array( $groups ) ) {
+			$groups = array_keys( $this->get_groups() );
+		}
+
+		// Remove item from group(s).
+		foreach ( $groups as $group ) {
+			$group = $this->get_group( $group );
+			foreach ( array_keys( $group->items ) as $priority ) {
+				unset( $group->items[ $priority ][ $item ] );
 			}
 		}
 	}
 
 	/**
-	 * Retrieve specified group
-	 * @param string $group ID of group to retrieve
-	 * @return object Reference to specified group
+	 * Retrieves specified group.
+	 *
+	 * @param string|object $group Group ID or object to retrieve.
+	 * @return object Reference to specified group.
 	 */
 	function &get_group( $group ) {
 		if ( is_object( $group ) ) {
 			return $group;
 		}
-		if ( is_string( $group ) ) {
-			$group = trim( $group );
-		}
-		// Create group if it doesn't already exist
+		// Create group if it doesn't already exist.
 		if ( ! $this->group_exists( $group ) ) {
-			$this->add_group( $group );
+			return $this->add_group( $group );
 		}
+		// Get existing group.
+		$group = $this->sanitize_group_id( $group );
 		return $this->get_member_value( 'groups', $group );
 	}
 
@@ -633,7 +702,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 
 	/**
 	 * Retrieve all groups in collection
-	 * @return array Reference to group objects
+	 * @return object[] Reference to group objects
 	 */
 	function &get_groups( $opts = array() ) {
 		$groups =& $this->get_member_value( 'groups' );
