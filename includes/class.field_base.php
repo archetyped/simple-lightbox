@@ -230,20 +230,22 @@ class SLB_Field_Base extends SLB_Base {
 	}
 
 	/**
-	 * Retrieves specified member value
-	 * Handles inherited values
-	 * Merging corresponding parents if value is an array (e.g. for property groups)
-	 * @param string|array $member Member to search.  May also contain a path to the desired member
-	 * @param string $name Value to retrieve from member
-	 * @param mixed $default Default value if no value found (Default: empty string)
-	 * @param string $dir Direction to move through hierarchy to find value
-	 * Possible Values:
-	 *  parent (default)    - Search through field parents
-	 *  current             - Do not search through connected objects
-	 *  container           - Search through field containers
-	 *  caller              - Search through field callers
-	 * @return mixed Specified member value
-	 * @todo Return reference
+	 * Retrieves specified member value.
+	 *
+	 * Handles inherited values and merges corresponding parents
+	 * if value is an array (e.g. for property groups).
+	 *
+	 * @param string|array $member Member to get value from.
+	 * @param string|array $name Optional. Element/Path to Element to retrieve from member. Default none.
+	 * @param mixed $default Optional. Default value to return if no data retrieved. Default empty string.
+	 * @param string $dir Optional. Direction to move through hierarchy to find value.
+	 *     Possible Values:
+	 *         * parent (default) - Search through field parents.
+	 *         * current          - Do not search through connected objects.
+	 *         * container        - Search through field containers.
+	 *         * caller           - Search through field callers.
+	 * @return mixed Specified member value.
+	 * @todo Return reference.
 	 */
 	function &get_member_value( $member, $name = '', $default = '', $dir = 'parent' ) {
 		// Check if path to member is supplied
@@ -261,35 +263,45 @@ class SLB_Field_Base extends SLB_Base {
 		} else {
 			$path = $member;
 		}
-
+		// Prep name.
+		if ( is_string( $name ) ) {
+			$name = trim( $name );
+		}
 		$path = $this->util->build_path( $path, $name );
 		// Set defaults and prepare data
 		$val         = $default;
 		$inherit     = false;
 		$inherit_tag = '{inherit}';
 
-		/* Determine whether the value must be retrieved from a parent/container object
+		/**
+		 * Determines whether the value must be retrieved from a parent/container object.
+		 *
 		 * Conditions:
-		 * > Path does not exist in current field
-		 * > Path exists and is not an object, but at least one of the following is true:
-		 *   > Value at path is an array (e.g. properties, elements, etc. array)
-		 *     > Parent/container values should be merged with retrieved array
-		 *   > Value at path is a string that inherits from another field
-		 *     > Value from other field will be retrieved and will replace inheritance placeholder in retrieved value
-		 */
-
+		 *
+		 * 1. Path does not exist in current field.
+		 * 2. Path exists and is not an object, but at least one of the following is true:
+		 *     * Value at path is an array (e.g. properties, elements, etc. array):
+		 *         * - Parent/container values should be merged with retrieved array.
+		 *     * Value at path is a string that inherits from another field:
+		 *         * - Value from other field will be retrieved and will replace
+		 *           inheritance placeholder in retrieved value
+		 * @var bool
+		*/
 		$deeper = false;
 
 		if ( ! $this->path_isset( $path ) ) {
 			$deeper = true;
 		} else {
 			$val = $this->get_path_value( $path );
-			if ( ! is_object( $val ) && ( is_array( $val ) || ( $inherit = strpos( $val, $inherit_tag ) ) !== false ) ) {
+			if ( is_array( $val ) ) {
 				$deeper = true;
-			} else {
-				$deeper = false;
+			} elseif ( is_string( $val ) && false !== strpos( $val, $inherit_tag ) ) {
+				$deeper = true;
+				// Value inherits from another field.
+				$inherit = true;
 			}
 		}
+
 		if ( $deeper && 'current' !== $dir ) {
 			$ex_val = '';
 			// Get Parent value (recursive)
@@ -399,12 +411,11 @@ class SLB_Field_Base extends SLB_Base {
 			$c = ( method_exists( $this, $m ) ) ? $this->{$m}() : null;
 			while ( ! ! $c ) {
 				// Add ID of current caller to array
-				if ( method_exists( $c, 'get_id' ) && ( $itemp = $c->get_id() ) && ! empty( $itemp ) ) {
-					$item_id = $itemp;
+				if ( method_exists( $c, 'get_id' ) && ! strlen( $c->get_id() ) > 0 ) {
+					$item_id = $c->get_id();
 				}
 				// Get parent object
-				$c     = ( method_exists( $c, $m ) ) ? $c->{$m}() : null;
-				$itemp = '';
+				$c = ( method_exists( $c, $m ) ) ? $c->{$m}() : null;
 			}
 			unset( $c );
 		}
@@ -737,24 +748,31 @@ class SLB_Field_Base extends SLB_Base {
 	}
 
 	/**
-	 * Sets multiple properties on field type at once
-	 * @param array $properties Properties. Each element is an array containing the arguments to set a new property
-	 * @return boolean TRUE if successful, FALSE otherwise
+	 * Sets multiple properties on field type at once.
+	 *
+	 * @param array $properties Properties to set - each element is an
+	 *                          array containing the arguments to set a
+	 *                          new property.
+	 * @return void
+	 * @todo Test refactored code.
 	 */
 	function set_properties( $properties ) {
 		if ( ! is_array( $properties ) ) {
-			return false;
+			return;
 		}
 		// Normalize properties
 		$properties = $this->remap_properties( $properties );
 		$properties = $this->sort_properties( $properties );
-		// Set Member properties
+
+		// Set Member properties.
 		foreach ( $properties as $prop => $val ) {
-			if ( ( $m = 'set_' . $prop ) && method_exists( $this, $m ) ) {
+			$m = 'set_' . $prop;
+			if ( method_exists( $this, $m ) ) {
 				$this->{$m}( $val );
 				// Remove member property from array
 				unset( $properties[ $prop ] );
 			}
+			unset( $m );
 		}
 
 		// Filter properties
