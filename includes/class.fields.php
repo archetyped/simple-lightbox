@@ -412,46 +412,93 @@ class SLB_Fields extends SLB_Field_Collection {
 	/* Build */
 
 	/**
-	 * Output items in a group
-	 * @param string $group ID of Group to output
-	 * @return string Group output
-	 * TODO Make compatible with parent::build_group()
+	 * Outputs items in a group.
+	 *
+	 * @param string $group ID of Group to output.
+	 * @return string Group output.
+	 * @todo Make compatible with parent::build_group()
 	 */
 	function build_group( $group ) {
-		$out        = array();
-		$classnames = (object) array(
-			'multi'    => 'multi_field',
-			'single'   => 'single_field',
-			'elements' => 'has_elements',
-		);
+		$out = array();
 
-		// Stop execution if group does not exist
-		if ( $this->group_exists( $group ) && $group =& $this->get_group( $group ) ) {
-			$group_items = ( count( $group->items ) > 1 ) ? $classnames->multi : $classnames->single . ( ( ( $fs = array_keys( $group->items ) ) && ( $f =& $group->items[ $fs[0] ] ) && ( $els = $f->get_member_value( 'elements', '', null ) ) && ! empty( $els ) ) ? '_' . $classnames->elements : '' );
-			$classname   = array( $this->add_prefix( 'attributes_wrap' ), $group_items );
-			$out[]       = '<div class="' . implode( ' ', $classname ) . '">'; // Wrap all items in group
+		/**
+		 * Renders group output as a string.
+		 *
+		 * @uses $out Array containing group output.
+		 * @return string Group output.
+		 */
+		$render_output = function() use ( $out ) {
+			// Combine output.
+			return implode( '', $out );
+		};
 
-			// Build layout for each item in group
-			foreach ( array_keys( $group->items ) as $item_id ) {
-				$item =& $group->items[ $item_id ];
-				$item->set_caller( $this );
-				// Start item output
-				$id    = $this->add_prefix( 'field_' . $item->get_id() );
-				$out[] = '<div id="' . $id . '_wrap" class=' . $this->add_prefix( 'attribute_wrap' ) . '>';
-				// Build item layout
-				$out[] = $item->build_layout();
-				// end item output
-				$out[] = '</div>';
-				$item->clear_caller();
-			}
-			$out[] = '</div>'; // Close items container
-			// Add description if exists
-			if ( ! empty( $group->description ) ) {
-				$out[] = '<p class=' . $this->add_prefix( 'group_description' ) . '>' . $group->description . '</p>';
-			}
+		// Stop if group does not exist.
+		if ( ! $this->group_exists( $group ) ) {
+			return $render_output();
 		}
 
-		// Return group output
-		return implode( $out );
+		// Classnames.
+		$cls = (object) [
+			'multi'      => 'multi_field',
+			'single'     => 'single_field',
+			'elements'   => 'has_elements',
+			'group_desc' => $this->add_prefix( 'group_description' ),
+			'group_wrap' => $this->add_prefix( 'attributes_wrap' ),
+			'item_wrap'  => $this->add_prefix( 'attribute_wrap' ),
+		];
+		// Templates.
+		$tpl = (object) [
+			'container_start' => '<div class="%s">',
+			'container_end'   => '</div>',
+			'item_start'      => '<div id="%1$s_wrap" class="%2$s">',
+			'item_end'        => '</div>',
+			'text_block'      => '<p class="%1$s">%2$s</p>',
+		];
+
+		// Process group.
+		$group       = $this->get_group( $group );
+		$group_items = ( count( $group->items ) > 1 ) ? $cls->multi : $cls->single;
+		$fs          = array_keys( $group->items );
+		$f           =& $group->items[ $fs[0] ];
+		$els         = $f->get_member_value( 'elements', '', null );
+
+		if ( ! empty( $els ) ) {
+			$group_items .= '_' . $cls->elements;
+		}
+
+		// Wrap items with container element.
+		$classname = array( $cls->group_wrap, $group_items );
+		$out[]     = sprintf( $tpl->container_start, implode( ' ', $classname ) );
+
+		// Clear temp variables.
+		unset( $fs, $f, $els, $classname );
+
+		// Build layout for each item in group
+		foreach ( array_keys( $group->items ) as $item_id ) {
+			// Init item.
+			$item =& $group->items[ $item_id ];
+			$item->set_caller( $this );
+
+			// Start item output.
+			$id    = $this->add_prefix( 'field_' . $item->get_id() );
+			$out[] = sprintf( $tpl->item_start, $id, $cls->item_wrap );
+			// Build item layout.
+			$out[] = $item->build_layout();
+			// End item output.
+			$out[] = $tpl->item_end;
+
+			// Cleanup.
+			$item->clear_caller();
+			unset( $item, $id );
+		}
+		// Close items container.
+		$out[] = $tpl->container_end;
+
+		// Add description if exists
+		if ( ! empty( $group->description ) ) {
+			$out[] = sprintf( $tpl->text_block, $cls->group_desc, $group->description );
+		}
+		// Render and return output.
+		return $render_output();
 	}
 }
