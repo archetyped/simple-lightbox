@@ -171,56 +171,67 @@ class SLB_Fields extends SLB_Field_Collection {
 	}
 
 	/**
-	 * Default placeholder processing
-	 * To be executed when current placeholder has not been handled by another handler
-	 * @param string $output Value to be used in place of placeholder
-	 * @param SLB_Field $item Field containing placeholder
-	 * @param array $placeholder Current placeholder
-	 * @see SLB_Field::parse_layout for structure of $placeholder array
-	 * @param string $layout Layout to build
-	 * @param array $data Extended data for item
-	 * @return string Value to use in place of current placeholder
+	 * Handles default placeholder processing.
+	 *
+	 * Processes placeholders that have not been processed by another handler.
+	 *
+	 * @param string $output Value to be used in place of placeholder. Should be empty.
+	 * @param SLB_Field $item Field containing placeholder.
+	 * @param array $placeholder Current placeholder.
+	 * @see SLB_Field::parse_layout for structure of `$placeholder` array.
+	 * @param string $layout Layout to build.
+	 * @param array $data Extended data for item.
+	 * @return string Value to use in place of current placeholder.
 	 */
 	function process_placeholder_default( $output, $item, $placeholder, $layout, $data ) {
-		// Validate parameters before processing
-		if ( empty( $output ) && ( $item instanceof SLB_Field_Type ) && is_array( $placeholder ) ) {
-			// Build path to replacement data
-			$output = $item->get_member_value( $placeholder );
+		// Validate parameters before processing.
+		if (
+			! empty( $output )
+			|| ( ! $item instanceof SLB_Field_Type )
+			|| ! is_array( $placeholder )
+		) {
+			return $output;
+		}
 
-			// Check if value is group (properties, etc.)
-			// All groups must have additional attributes (beyond reserved attributes) that define how items in group are used
-			if ( is_array( $output )
-				&& ! empty( $placeholder['attributes'] )
-				&& is_array( $placeholder['attributes'] )
-				&& ( $ph = $item->get_placeholder_defaults() )
-				&& $attribs = array_diff( array_keys( $placeholder['attributes'] ), array_values( $ph->reserved ) )
-			) {
-				/* Targeted property is an array, but the placeholder contains additional options on how property is to be used */
+		// Build path to replacement data.
+		$output = $item->get_member_value( $placeholder );
 
-				// Find items matching criteria in $output
-				// Check for group criteria
-				if ( 'properties' === $placeholder['tag'] && ( $prop_group = $item->get_group( $placeholder['attributes']['group'] ) ) && ! empty( $prop_group ) ) {
-					/* Process group */
-					$group_out = array();
-					// Iterate through properties in group and build string.
-					foreach ( array_keys( $prop_group ) as $prop_key ) {
-						$prop_val = $item->get_property( $prop_key );
-						if ( ! is_null( $prop_val ) ) {
-							// Process placeholders.
-							$prop_val = $item->process_placeholders( $prop_val, $layout, $data );
-							// Add property to attribute string output.
-							$group_out[] = esc_attr( $prop_key ) . '="' . esc_attr( $prop_val ) . '"';
-						}
+		// Check if value is group (properties, etc.)
+		// All groups must have additional attributes (beyond reserved attributes) that define how items in group are used
+		if (
+			is_array( $output )
+			&& ! empty( $placeholder['attributes'] )
+			&& is_array( $placeholder['attributes'] )
+			&& 'properties' === $placeholder['tag']
+		) {
+			// Targeted property is an array.
+			// Placeholder contains additional options on how property is to be used.
+
+			// Find items matching criteria in $output
+			// Check for group criteria
+			$prop_group = $item->get_group( $placeholder['attributes']['group'] );
+			if ( ! empty( $prop_group ) ) {
+				/* Process group */
+				$group_out = array();
+				// Iterate through properties in group and build string.
+				foreach ( array_keys( $prop_group ) as $prop_key ) {
+					$prop_val = $item->get_property( $prop_key );
+					if ( is_null( $prop_val ) ) {
+						continue;
 					}
-					$output = implode( ' ', $group_out );
+					// Process placeholders.
+					$prop_val = $item->process_placeholders( $prop_val, $layout, $data );
+					// Add property to attribute string output.
+					$group_out[] = esc_attr( $prop_key ) . '="' . esc_attr( $prop_val ) . '"';
 				}
-			} elseif ( is_object( $output ) && ( $output instanceof $item->base_class ) ) {
-				/* Targeted property is actually a nested item */
-				// Set caller to current item
-				$output->set_caller( $item );
-				// Build layout for nested element
-				$output = $output->build_layout( $layout );
+				$output = implode( ' ', $group_out );
 			}
+		} elseif ( is_object( $output ) && ( $output instanceof $item->base_class ) ) {
+			/* Targeted property is actually a nested item */
+			// Set caller to current item
+			$output->set_caller( $item );
+			// Build layout for nested element
+			$output = $output->build_layout( $layout );
 		}
 
 		return $output;
