@@ -47,7 +47,6 @@
         <exclude name="WordPress.Security.NonceVerification.Recommended"/>
 
         <!-- ** WordPress-Specific ** -->
-        <exclude name="WordPress.CodeAnalysis.AssignmentInCondition.Found"/>
         <exclude name="WordPress.CodeAnalysis.AssignmentInCondition.FoundInTernaryCondition"/>
         <exclude name="WordPress.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition"/>
         <exclude name="WordPress.DB.PreparedSQL.InterpolatedNotPrepared"/>
