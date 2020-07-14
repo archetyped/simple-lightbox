@@ -206,8 +206,9 @@ class SLB_Field_Type extends SLB_Field_Base {
 		// Find all nested layouts in current layout
 		if ( ! empty( $layout ) && ! ! $parse_nested ) {
 			$ph = $this->get_placeholder_defaults();
-
-			while ( $ph->match = $this->parse_layout( $layout, $ph->pattern_layout ) ) {
+			// Check layout for placeholders.
+			$ph->match = $this->parse_layout( $layout, $ph->pattern_layout );
+			while ( ! empty( $ph->match ) ) {
 				// Iterate through the different types of layout placeholders
 				foreach ( $ph->match as $tag => $instances ) {
 					// Iterate through instances of a specific type of layout placeholder
@@ -215,12 +216,16 @@ class SLB_Field_Type extends SLB_Field_Base {
 						// Get nested layout
 						$nested_layout = $this->get_member_value( $instance );
 
-						// Replace layout placeholder with retrieved item data
-						if ( ! empty( $nested_layout ) ) {
-							$layout = str_replace( $ph->start . $instance['match'] . $ph->end, $nested_layout, $layout );
+						if ( empty( $nested_layout ) ) {
+							continue;
 						}
+
+						// Replace layout placeholder with retrieved item data.
+						$layout = str_replace( $ph->start . $instance['match'] . $ph->end, $nested_layout, $layout );
 					}
 				}
+				// Check layout for placeholders.
+				$ph->match = $this->parse_layout( $layout, $ph->pattern_layout );
 			}
 		}
 
@@ -417,8 +422,11 @@ class SLB_Field_Type extends SLB_Field_Base {
 		// Parse Layout.
 		$ph = $this->get_placeholder_defaults();
 
-		// Search layout for placeholders.
-		while ( $ph->match = $this->parse_layout( $str, $ph->pattern_general ) ) {
+		// Check layout for placeholders.
+		$ph->match = $this->parse_layout( $str, $ph->pattern_general );
+
+		// Parse placeholders in layout.
+		while ( ! empty( $ph->match ) ) {
 			// Iterate through placeholders (tag, id, etc.)
 			foreach ( $ph->match as $tag => $instances ) {
 				// Iterate through instances of current placeholder
@@ -446,6 +454,8 @@ class SLB_Field_Type extends SLB_Field_Base {
 					$str = str_replace( $ph->start . $instance['match'] . $ph->end, $target_property, $str );
 				}
 			}
+			// Check layout for placeholders.
+			$ph->match = $this->parse_layout( $str, $ph->pattern_general );
 		}
 		return $str;
 	}
