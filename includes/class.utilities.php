@@ -1234,15 +1234,14 @@ class SLB_Utilities {
 	}
 
 	/**
-	 * Retrieve plugin's base path
-	 * @uses WP_PLUGIN_DIR
-	 * @uses get_plugin_base()
-	 * @uses normalize_path()
-	 * @return string Base path
+	 * Retrieves the plugin's base path.
+	 *
+	 * @param bool|string $relative Optional. Return a path relative to WordPress (true) or a custom directory (string). Default null.
+	 * @return string Plugin's base path.
 	 */
 	function get_path_base( $relative = null ) {
-		$ret = $this->_path_base;
-		if ( empty( $ret ) ) {
+		// Get base path (if necessary).
+		if ( empty( $this->_path_base ) ) {
 			// Get base directory of parent object
 			if ( $this->get_parent() ) {
 				$r    = new ReflectionClass( get_class( $this->get_parent() ) );
@@ -1257,18 +1256,25 @@ class SLB_Utilities {
 				$end  = strpos( $base, '/', strlen( WP_PLUGIN_DIR ) + 1 );
 				$base = substr( $base, 0, $end );
 			}
-			$ret = $this->_path_base = $base;
+			// Save base path.
+			$this->_path_base = $base;
 		}
-		// Make relative path
-		if ( ! empty( $relative ) ) {
-			// Default
-			if ( is_bool( $relative ) ) {
-				$relative = ABSPATH;
-			}
-			// Custom
-			if ( is_string( $relative ) ) {
-				$ret = $this->get_relative_path( $ret, $relative );
-			}
+
+		// Return full base path (based on parameters).
+		if ( empty( $relative ) ) {
+			return $this->_path_base;
+		}
+
+		// Make relative path.
+		$ret = $this->_path_base;
+
+		// Default: Relative to WordPress absolute path.
+		if ( is_bool( $relative ) ) {
+			$relative = ABSPATH;
+		}
+		// Get relative path.
+		if ( is_string( $relative ) ) {
+			$ret = $this->get_relative_path( $ret, $relative );
 		}
 		return $ret;
 	}
