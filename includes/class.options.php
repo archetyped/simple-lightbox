@@ -671,7 +671,8 @@ class SLB_Options extends SLB_Field_Collection {
 	public function admin_parse_build_vars( $vars, $opts ) {
 		// Handle form submission
 		if ( isset( $_POST[ $opts->get_id( 'formatted' ) ] ) ) {
-			$vars['validate_pre'] = $vars['save_pre'] = true;
+			$vars['save_pre']     = true;
+			$vars['validate_pre'] = true;
 		}
 		return $vars;
 	}

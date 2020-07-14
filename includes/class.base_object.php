@@ -142,11 +142,12 @@ class SLB_Base_Object extends SLB_Base {
 		$ret  = array();
 		$curr = $this;
 		while ( $curr->has_parent() ) {
-			// Add ancestor
-			$ret[] = $par = $curr->get_parent();
-			// Get next ancestor
-			$curr = $par;
+			// Get next ancestor.
+			$curr = $curr->get_parent();
+			// Add ancestor.
+			$ret[] = $curr;
 		}
+
 		return $ret;
 	}
 

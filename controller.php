@@ -1464,7 +1464,9 @@ class SLB_Lightbox extends SLB_Base {
 					continue;
 				}
 				// Restore content
-				$key = $attrs['key'] = intval( $attrs['key'] );
+				$attrs['key'] = intval( $attrs['key'] );
+				$key          = $attrs['key'];
+
 				if ( isset( $cache[ $key ] ) ) {
 					$content = str_replace( $matches[0][ $idx ], $cache[ $key ], $content );
 				}

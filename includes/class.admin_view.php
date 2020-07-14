@@ -260,17 +260,17 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 * Retrieve content
 	 */
 	protected function get_content( $parsed = true ) {
-		$content = $this->content_raw;
-		if ( $parsed ) {
-			// Return previously parsed content
-			if ( ! empty( $this->content ) ) {
-				$content = $this->content;
-			} elseif ( ! empty( $this->content_raw ) ) {
-				// Parse content before returning
-				$content = $this->content = $this->parse_content();
-			}
+		// Return raw content.
+		if ( ! $parsed ) {
+			return $this->content_raw;
 		}
-		return $content;
+
+		// Return parsed content.
+		if ( empty( $this->content ) && ! empty( $this->content_raw ) ) {
+			$this->content = $this->parse_content();
+		}
+
+		return $this->content;
 	}
 
 	/**
