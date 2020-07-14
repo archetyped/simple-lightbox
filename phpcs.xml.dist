@@ -48,7 +48,6 @@
 
         <!-- ** WordPress-Specific ** -->
         <exclude name="WordPress.CodeAnalysis.AssignmentInCondition.FoundInTernaryCondition"/>
-        <exclude name="WordPress.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition"/>
         <exclude name="WordPress.DB.PreparedSQL.InterpolatedNotPrepared"/>
         <exclude name="WordPress.DB.PreparedSQL.NotPrepared"/>
         <exclude name="WordPress.PHP.DontExtract.extract_extract"/>
