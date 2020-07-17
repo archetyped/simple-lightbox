@@ -44,11 +44,9 @@
         <exclude name="WordPress.Security.NonceVerification.Recommended"/>
 
         <!-- ** WordPress-Specific ** -->
-        <exclude name="WordPress.CodeAnalysis.AssignmentInCondition.FoundInTernaryCondition"/>
         <exclude name="WordPress.DB.PreparedSQL.InterpolatedNotPrepared"/>
         <exclude name="WordPress.DB.PreparedSQL.NotPrepared"/>
         <exclude name="WordPress.PHP.DontExtract.extract_extract"/>
-        <exclude name="WordPress.PHP.NoSilencedErrors.Discouraged"/>
         <exclude name="WordPress.Security.EscapeOutput.OutputNotEscaped"/>
     </rule>
 
