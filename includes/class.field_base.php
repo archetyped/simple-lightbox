@@ -186,7 +186,6 @@ class SLB_Field_Base extends SLB_Base {
 			if ( $this->util->property_exists( $item, $path[ $x ] ) ) {
 				// Set $item as reference to next level in path for next iteration
 				$item =& $this->util->get_property( $item, $path[ $x ] );
-				// $item =& $item[ $path[$x] ];
 			} else {
 				return false;
 			}

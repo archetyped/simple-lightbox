@@ -1775,7 +1775,6 @@ class SLB_Utilities {
 				foreach ( $arg as $key => $val ) {
 					$path = array_merge( $path, $this->build_path( $val ) );
 				}
-				// $path = array_merge($path, array_values($arg));
 			} elseif ( is_scalar( $arg ) ) {
 				$path[] = $arg;
 			}

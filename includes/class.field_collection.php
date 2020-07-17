@@ -423,7 +423,7 @@ class SLB_Field_Collection extends SLB_Field_Base {
 	protected function sanitize_group_id( $id, $fallback = true ) {
 		// Sanitize.
 		$id = sanitize_title_with_dashes( $id );
-		// Use default ID (if necessary).
+		// Use default ID (fallback).
 		if ( strlen( $id ) === 0 && ! ! $fallback ) {
 			$id = 'default';
 		}
