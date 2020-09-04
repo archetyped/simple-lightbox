@@ -15,7 +15,7 @@
     "grunt-sass": "^3.0.2",
     "jshint-stylish": "^2.2.1",
     "load-grunt-tasks": "^5.1.0",
-    "node-sass": "^4.12.0",
+    "node-sass": "^4.13.1",
     "time-grunt": "^2.0.0"
   }
 }
