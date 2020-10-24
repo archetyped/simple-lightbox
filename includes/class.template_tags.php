@@ -31,9 +31,9 @@ class SLB_Template_Tags extends SLB_Collection_Controller {
 
 	protected function _hooks() {
 		parent::_hooks();
-		$this->util->add_action('init', $this->m('init_defaults'));
-		$this->util->add_action('footer', $this->m('client_output'), 1, 0, false);
-		$this->util->add_filter('footer_script', $this->m('client_output_script'), $this->util->priority('client_footer_output'), 1, false);
+		$this->util->add_action( 'init', $this->m( 'init_defaults' ) );
+		$this->util->add_action( 'footer', $this->m( 'client_output' ), 1, 0, false );
+		$this->util->add_filter( 'footer_script', $this->m( 'client_output_script' ), $this->util->priority( 'client_footer_output' ), 1, false );
 	}
 
 	/* Collection Management */
@@ -46,10 +46,10 @@ class SLB_Template_Tags extends SLB_Collection_Controller {
 	 * @param array $props Tag properties
 	 * @return object Current instance
 	 */
-	public function add($id, $props = array()) {
-		$o = ( is_string($id) ) ? new $this->item_type($id, $props) : $id;
+	public function add( $id, $props = array() ) {
+		$o = ( is_string( $id ) ) ? new $this->item_type( $id, $props ) : $id;
 		// Add to collection
-		return parent::add($o);
+		return parent::add( $o );
 	}
 
 	/* Defaults */
@@ -58,24 +58,24 @@ class SLB_Template_Tags extends SLB_Collection_Controller {
 	 * Initialize default template tags
 	 * @param SLB_Template_Tags $tags Tags controller
 	 */
-	public function init_defaults($tags) {
-		$js_path = 'js/';
+	public function init_defaults( $tags ) {
+		$js_path  = 'js/';
 		$js_path .= ( SLB_DEV ) ? 'dev' : 'prod';
-		$src_base = $this->util->get_file_url('template-tags', true);
-		$defaults = array (
-			'item'		=> array (
-				'scripts'		=> array (
-					array ( 'base', "$src_base/item/$js_path/tag.item.js" ),
-				)
+		$src_base = $this->util->get_file_url( 'template-tags', true );
+		$defaults = array(
+			'item' => array(
+				'scripts' => array(
+					array( 'base', "$src_base/item/$js_path/tag.item.js" ),
+				),
 			),
-			'ui'		=> array (
-				'scripts'		=> array (
-					array ( 'base', "$src_base/ui/$js_path/tag.ui.js" ),
-				)
+			'ui'   => array(
+				'scripts' => array(
+					array( 'base', "$src_base/ui/$js_path/tag.ui.js" ),
+				),
 			),
 		);
 		foreach ( $defaults as $id => $props ) {
-			$tags->add($id, $props);
+			$tags->add( $id, $props );
 		}
 	}
 
@@ -96,26 +96,26 @@ class SLB_Template_Tags extends SLB_Collection_Controller {
 	 * @param array $commands Client script commands
 	 * @return array Modified script commands
 	 */
-	public function client_output_script($commands) {
-		$out = array('/* TPLT */');
+	public function client_output_script( $commands ) {
+		$out  = array( '/* TPLT */' );
 		$code = array();
 
 		foreach ( $this->get() as $tag ) {
-			$styles = $tag->get_styles(array('uri_format'=>'full'));
-			if ( empty($styles) ) {
+			$styles = $tag->get_styles( array( 'uri_format' => 'full' ) );
+			if ( empty( $styles ) ) {
 				continue;
 			}
 			// Setup client parameters
-			$params = array(
-				sprintf("'%s'", $tag->get_id()),
+			$params   = array(
+				sprintf( "'%s'", $tag->get_id() ),
 			);
-			$params[] = json_encode( array('styles' => array_values($styles)) );
+			$params[] = wp_json_encode( array( 'styles' => array_values( $styles ) ) );
 			// Extend handler in client
-			$code[] = $this->util->call_client_method('View.extend_template_tag_handler', $params, false);
+			$code[] = $this->util->call_client_method( 'View.extend_template_tag_handler', $params, false );
 		}
-		if ( !empty($code) ) {
-			$out[] = implode('', $code);
-			$commands[] = implode(PHP_EOL, $out);
+		if ( ! empty( $code ) ) {
+			$out[]      = implode( '', $code );
+			$commands[] = implode( PHP_EOL, $out );
 		}
 		return $commands;
 	}
