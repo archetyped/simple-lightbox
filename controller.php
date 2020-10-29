@@ -226,7 +226,7 @@ class SLB_Lightbox extends SLB_Base {
 			$this->util->add_action( 'footer_script', $this->m( 'client_init' ), 1 );
 			$this->util->add_filter( 'footer_script', $this->m( 'client_script_media' ), 2 );
 			// Link activation
-			add_filter( 'the_content', $this->m( 'activate_links' ), $priority );
+			add_filter( 'the_content', $this->m( 'activate_init' ), 1 );
 			add_filter( 'get_post_galleries', $this->m( 'activate_galleries' ), $priority );
 			$this->util->add_filter( 'post_process_links', $this->m( 'activate_groups' ), 11 );
 			$this->util->add_filter( 'validate_uri_regex', $this->m( 'validate_uri_regex_default' ), 1 );
@@ -640,6 +640,31 @@ class SLB_Lightbox extends SLB_Base {
 		}
 
 		return $galleries;
+	}
+
+	/**
+	 * Stages link activation.
+	 *
+	 * Sets link activation after all other filters have been run on content.
+	 *
+	 * @param string $content Content being filtered.
+	 * @return string Filtered content.
+	 */
+	public function activate_init( $content ) {
+		global $wp_filter;
+		$tag = current_filter();
+
+		// Stop processing on invalid hook.
+		if ( empty( $tag ) || ! is_string( $tag ) ) {
+			return $content;
+		}
+
+		// Get lowest priority for filter.
+		$max_priority = max( array_keys( $wp_filter[ $tag ]->callbacks ) ) + 123;
+
+		// Add new hook at lowest priority (to run after all other hooks).
+		add_filter( $tag, $this->m( 'activate_links' ), $max_priority );
+		return $content;
 	}
 
 	/**
