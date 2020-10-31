@@ -219,14 +219,15 @@ class SLB_Lightbox extends SLB_Base {
 	 */
 	public function _hooks_init() {
 		if ( $this->is_enabled() ) {
-			$priority = $this->util->priority( 'low' );
+			$cb_hooks_add_last = $this->m( 'hooks_add_last' );
+			$priority          = $this->util->priority( 'low' );
 
 			// Init lightbox
 			add_action( 'wp_footer', $this->m( 'client_footer' ) );
 			$this->util->add_action( 'footer_script', $this->m( 'client_init' ), 1 );
 			$this->util->add_filter( 'footer_script', $this->m( 'client_script_media' ), 2 );
 			// Link activation
-			add_filter( 'the_content', $this->m( 'activate_init' ), 1 );
+			add_filter( 'the_content', $cb_hooks_add_last );
 			add_filter( 'get_post_galleries', $this->m( 'activate_galleries' ), $priority );
 			$this->util->add_filter( 'post_process_links', $this->m( 'activate_groups' ), 11 );
 			$this->util->add_filter( 'validate_uri_regex', $this->m( 'validate_uri_regex_default' ), 1 );
@@ -248,10 +249,10 @@ class SLB_Lightbox extends SLB_Base {
 			// Widgets
 			if ( $this->options->get_bool( 'enabled_widget' ) ) {
 				add_action( 'dynamic_sidebar_before', $this->m( 'widget_process_nested' ) );
-				add_action( 'dynamic_sidebar', $this->m( 'widget_process_start' ), PHP_INT_MAX );
-				add_filter( 'dynamic_sidebar_params', $this->m( 'widget_process_inter' ), PHP_INT_MAX );
-				add_action( 'dynamic_sidebar_after', $this->m( 'widget_process_finish' ), PHP_INT_MAX - 1 );
-				add_action( 'dynamic_sidebar_after', $this->m( 'widget_process_nested_finish' ), PHP_INT_MAX );
+				add_action( 'dynamic_sidebar', $cb_hooks_add_last );
+				add_filter( 'dynamic_sidebar_params', $this->m( 'widget_process_inter' ), 1 );
+				add_action( 'dynamic_sidebar_after', $cb_hooks_add_last );
+				add_action( 'dynamic_sidebar_after', $cb_hooks_add_last );
 			} else {
 				add_action( 'dynamic_sidebar_before', $this->m( 'widget_block_start' ) );
 				add_action( 'dynamic_sidebar_after', $this->m( 'widget_block_finish' ) );
@@ -262,6 +263,45 @@ class SLB_Lightbox extends SLB_Base {
 				add_filter( 'wp_nav_menu', $this->m( 'menu_process' ), $priority, 2 );
 			}
 		}
+	}
+
+	/**
+	 * Adds hook(s) to end of filter/action stack.
+	 *
+	 * @param string $data Optional. Data being filtered.
+	 * @return string Filtered content.
+	 */
+	public function hooks_add_last( $data = null ) {
+		global $wp_filter;
+
+		$tag = current_filter();
+
+		// Stop processing on invalid hook.
+		if ( empty( $tag ) || ! is_string( $tag ) ) {
+			return $data;
+		}
+
+		// Get lowest priority for filter.
+		$max_priority = max( array_keys( $wp_filter[ $tag ]->callbacks ) ) + 123;
+
+		switch ( $tag ) {
+			case 'the_content':
+				add_filter( $tag, $this->m( 'activate_links' ), $max_priority );
+				break;
+			case 'dynamic_sidebar':
+				add_action( $tag, $this->m( 'widget_process_start' ), $max_priority );
+				break;
+			case 'dynamic_sidebar_after':
+				add_action( $tag, $this->m( 'widget_process_finish' ), $max_priority );
+				add_action( $tag, $this->m( 'widget_process_nested_finish' ), $max_priority );
+				break;
+		}
+
+		// Remove init hook.
+		remove_filter( $tag, $this->m( __FUNCTION__ ) );
+
+		// Return content (for filters).
+		return $data;
 	}
 
 	/**
@@ -640,31 +680,6 @@ class SLB_Lightbox extends SLB_Base {
 		}
 
 		return $galleries;
-	}
-
-	/**
-	 * Stages link activation.
-	 *
-	 * Sets link activation after all other filters have been run on content.
-	 *
-	 * @param string $content Content being filtered.
-	 * @return string Filtered content.
-	 */
-	public function activate_init( $content ) {
-		global $wp_filter;
-		$tag = current_filter();
-
-		// Stop processing on invalid hook.
-		if ( empty( $tag ) || ! is_string( $tag ) ) {
-			return $content;
-		}
-
-		// Get lowest priority for filter.
-		$max_priority = max( array_keys( $wp_filter[ $tag ]->callbacks ) ) + 123;
-
-		// Add new hook at lowest priority (to run after all other hooks).
-		add_filter( $tag, $this->m( 'activate_links' ), $max_priority );
-		return $content;
 	}
 
 	/**
