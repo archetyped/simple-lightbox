@@ -220,7 +220,6 @@ class SLB_Lightbox extends SLB_Base {
 	public function _hooks_init() {
 		if ( $this->is_enabled() ) {
 			$cb_hooks_add_last = $this->m( 'hooks_add_last' );
-			$priority          = $this->util->priority( 'low' );
 
 			// Init lightbox
 			add_action( 'wp_footer', $this->m( 'client_footer' ) );
@@ -228,7 +227,7 @@ class SLB_Lightbox extends SLB_Base {
 			$this->util->add_filter( 'footer_script', $this->m( 'client_script_media' ), 2 );
 			// Link activation
 			add_filter( 'the_content', $cb_hooks_add_last );
-			add_filter( 'get_post_galleries', $this->m( 'activate_galleries' ), $priority );
+			add_filter( 'get_post_galleries', $cb_hooks_add_last );
 			$this->util->add_filter( 'post_process_links', $this->m( 'activate_groups' ), 11 );
 			$this->util->add_filter( 'validate_uri_regex', $this->m( 'validate_uri_regex_default' ), 1 );
 			//  Content exclusion
@@ -287,6 +286,9 @@ class SLB_Lightbox extends SLB_Base {
 		switch ( $tag ) {
 			case 'the_content':
 				add_filter( $tag, $this->m( 'activate_links' ), $max_priority );
+				break;
+			case 'get_post_galleries':
+				add_filter( $tag, $this->m( 'activate_galleries' ), $max_priority );
 				break;
 			case 'dynamic_sidebar':
 				add_action( $tag, $this->m( 'widget_process_start' ), $max_priority );
