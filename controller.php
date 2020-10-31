@@ -260,7 +260,7 @@ class SLB_Lightbox extends SLB_Base {
 
 			// Menus
 			if ( $this->options->get_bool( 'enabled_menu' ) ) {
-				add_filter( 'wp_nav_menu', $this->m( 'menu_process' ), $priority, 2 );
+				add_filter( 'wp_nav_menu', $cb_hooks_add_last );
 			}
 		}
 	}
@@ -294,6 +294,9 @@ class SLB_Lightbox extends SLB_Base {
 			case 'dynamic_sidebar_after':
 				add_action( $tag, $this->m( 'widget_process_finish' ), $max_priority );
 				add_action( $tag, $this->m( 'widget_process_nested_finish' ), $max_priority );
+				break;
+			case 'wp_nav_menu':
+				add_filter( $tag, $this->m( 'menu_process' ), $max_priority, 2 );
 				break;
 		}
 
