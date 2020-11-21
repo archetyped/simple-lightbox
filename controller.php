@@ -215,52 +215,56 @@ class SLB_Lightbox extends SLB_Base {
 	}
 
 	/**
-	 * Init Hooks
+	 * Initialize hooks.
+	 *
+	 * @return void
 	 */
 	public function _hooks_init() {
-		if ( $this->is_enabled() ) {
-			$cb_hooks_add_last = $this->m( 'hooks_add_last' );
+		if ( ! $this->is_enabled() ) {
+			return;
+		}
+		// Callback for hooks that need to have method added to end of stack.
+		$cb_hooks_add_last = $this->m( 'hooks_add_last' );
 
-			// Init lightbox
-			add_action( 'wp_footer', $this->m( 'client_footer' ) );
-			$this->util->add_action( 'footer_script', $this->m( 'client_init' ), 1 );
-			$this->util->add_filter( 'footer_script', $this->m( 'client_script_media' ), 2 );
-			// Link activation
-			add_filter( 'the_content', $cb_hooks_add_last );
-			add_filter( 'get_post_galleries', $cb_hooks_add_last );
-			$this->util->add_filter( 'post_process_links', $this->m( 'activate_groups' ), 11 );
-			$this->util->add_filter( 'validate_uri_regex', $this->m( 'validate_uri_regex_default' ), 1 );
-			//  Content exclusion
-			$this->util->add_filter( 'pre_process_links', $this->m( 'exclude_content' ) );
-			$this->util->add_filter( 'pre_exclude_content', $this->m( 'exclude_shortcodes' ) );
-			$this->util->add_filter( 'post_process_links', $this->m( 'restore_excluded_content' ) );
+		// Init lightbox
+		add_action( 'wp_footer', $this->m( 'client_footer' ) );
+		$this->util->add_action( 'footer_script', $this->m( 'client_init' ), 1 );
+		$this->util->add_filter( 'footer_script', $this->m( 'client_script_media' ), 2 );
+		// Link activation
+		add_filter( 'the_content', $cb_hooks_add_last );
+		add_filter( 'get_post_galleries', $cb_hooks_add_last );
+		$this->util->add_filter( 'post_process_links', $this->m( 'activate_groups' ), 11 );
+		$this->util->add_filter( 'validate_uri_regex', $this->m( 'validate_uri_regex_default' ), 1 );
+		//  Content exclusion
+		$this->util->add_filter( 'pre_process_links', $this->m( 'exclude_content' ) );
+		$this->util->add_filter( 'pre_exclude_content', $this->m( 'exclude_shortcodes' ) );
+		$this->util->add_filter( 'post_process_links', $this->m( 'restore_excluded_content' ) );
 
-			// Grouping
-			if ( $this->options->get_bool( 'group_post' ) ) {
-				$this->util->add_filter( 'get_group_id', $this->m( 'post_group_id' ), 1 );
-			}
+		// Grouping
+		if ( $this->options->get_bool( 'group_post' ) ) {
+			$this->util->add_filter( 'get_group_id', $this->m( 'post_group_id' ), 1 );
+		}
 
-			// Shortcode grouping
-			if ( $this->options->get_bool( 'group_gallery' ) ) {
-				add_filter( 'the_content', $this->m( 'group_shortcodes' ), 1 );
-			}
+		// Shortcode grouping
+		if ( $this->options->get_bool( 'group_gallery' ) ) {
+			add_filter( 'the_content', $this->m( 'group_shortcodes' ), 1 );
+		}
 
-			// Widgets
-			if ( $this->options->get_bool( 'enabled_widget' ) ) {
-				add_action( 'dynamic_sidebar_before', $this->m( 'widget_process_nested' ) );
-				add_action( 'dynamic_sidebar', $cb_hooks_add_last );
-				add_filter( 'dynamic_sidebar_params', $this->m( 'widget_process_inter' ), 1 );
-				add_action( 'dynamic_sidebar_after', $cb_hooks_add_last );
-				add_action( 'dynamic_sidebar_after', $cb_hooks_add_last );
-			} else {
-				add_action( 'dynamic_sidebar_before', $this->m( 'widget_block_start' ) );
-				add_action( 'dynamic_sidebar_after', $this->m( 'widget_block_finish' ) );
-			}
+		// Widgets
+		if ( $this->options->get_bool( 'enabled_widget' ) ) {
+			add_action( 'dynamic_sidebar_before', $this->m( 'widget_process_nested' ) );
+			add_action( 'dynamic_sidebar', $cb_hooks_add_last );
+			add_filter( 'dynamic_sidebar_params', $this->m( 'widget_process_inter' ), 1 );
+			add_action( 'dynamic_sidebar_after', $cb_hooks_add_last );
+			add_action( 'dynamic_sidebar_after', $cb_hooks_add_last );
+		} else {
+			add_action( 'dynamic_sidebar_before', $this->m( 'widget_block_start' ) );
+			add_action( 'dynamic_sidebar_after', $this->m( 'widget_block_finish' ) );
+		}
 
-			// Menus
-			if ( $this->options->get_bool( 'enabled_menu' ) ) {
-				add_filter( 'wp_nav_menu', $cb_hooks_add_last );
-			}
+		// Menus
+		if ( $this->options->get_bool( 'enabled_menu' ) ) {
+			add_filter( 'wp_nav_menu', $cb_hooks_add_last );
 		}
 	}
 
