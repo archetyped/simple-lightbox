@@ -64,6 +64,12 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 
 == Changelog ==
 
+= 2.8.1 =
+
+* Update: PHP 5.6 Compatibility
+* Add: PHPCS configuration
+* Add: GitHub Issue templates
+
 = 2.8.0 =
 
 * Update: WordPress 5.3+ required.
