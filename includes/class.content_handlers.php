@@ -212,7 +212,7 @@ class SLB_Content_Handlers extends SLB_Collection_Controller {
 	 */
 	public function match_image($uri, $handlers) {
 		// Basic matching
-		$match = ( $this->util->has_file_extension($uri, array('jpg', 'jpeg', 'jpe', 'jfif', 'jif', 'gif', 'png')) ) ? true : false;
+		$match = ( $this->util->has_file_extension($uri, array('jpg', 'jpeg', 'jpe', 'jfif', 'jif', 'gif', 'png', 'webp', 'svg')) ) ? true : false;
 
 		// Filter result
 		$extra = new stdClass();
