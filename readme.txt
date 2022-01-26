@@ -4,7 +4,7 @@ Donate link: http://gum.co/slb-donate
 License: GPLv2
 Tags: lightbox, gallery, photography, images, theme, template, style
 Requires at least: 5.3
-Tested up to: 5.8
+Tested up to: 5.9
 Requires PHP: 5.6.20
 Stable tag: trunk
 
