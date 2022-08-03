@@ -38,11 +38,12 @@ Options for customizing the lightbox behavior are located in the **Appearance > 
 **That's it! The image will be displayed in a lightbox automatically.**
 
 * For more usage tips, go to [Simple Lightbox's official page](http://archetyped.com/tools/simple-lightbox/)
+* See [Simple Lightbox's documentation](https://github.com/archetyped/simple-lightbox/wiki) for in-depth information on using and customizing SLB.
 
 == Installation ==
 
 1.  Install and activate SLB
-1.  Verify that your site's theme uses the `wp_head()`, `wp_footer()`, & `the_content()` template tags (standard in any professional theme)
+2.  Verify that your site's theme uses the `wp_head()`, `wp_footer()`, & `the_content()` template tags (standard in any professional theme)
 
 == Upgrade Notice ==
 
