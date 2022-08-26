@@ -7,15 +7,15 @@
   "license": "GPLv2",
   "private": true,
   "devDependencies": {
-    "grunt": "^1.0.1",
-    "grunt-contrib-jshint": "^2.1.0",
-    "grunt-contrib-uglify": "^4.0.1",
-    "grunt-contrib-watch": "^1.0.0",
+    "grunt": "^1.5.3",
+    "grunt-contrib-jshint": "^3.2.0",
+    "grunt-contrib-uglify": "^5.2.2",
+    "grunt-contrib-watch": "^1.1.0",
     "grunt-phplint": "0.1.0",
-    "grunt-sass": "^3.0.2",
+    "grunt-sass": "^3.1.0",
     "jshint-stylish": "^2.2.1",
     "load-grunt-tasks": "^5.1.0",
-    "node-sass": "^4.12.0",
+    "node-sass": "^7.0.1",
     "time-grunt": "^2.0.0"
   }
 }
