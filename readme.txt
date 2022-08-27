@@ -4,7 +4,7 @@ Donate link: http://gum.co/slb-donate
 License: GPLv2
 Tags: lightbox, gallery, photography, images, theme, template, style
 Requires at least: 5.3
-Tested up to: 5.3
+Tested up to: 6.0
 Requires PHP: 5.6.20
 Stable tag: trunk
 
@@ -38,11 +38,12 @@ Options for customizing the lightbox behavior are located in the **Appearance > 
 **That's it! The image will be displayed in a lightbox automatically.**
 
 * For more usage tips, go to [Simple Lightbox's official page](http://archetyped.com/tools/simple-lightbox/)
+* See [Simple Lightbox's documentation](https://github.com/archetyped/simple-lightbox/wiki) for in-depth information on using and customizing SLB.
 
 == Installation ==
 
 1.  Install and activate SLB
-1.  Verify that your site's theme uses the `wp_head()`, `wp_footer()`, & `the_content()` template tags (standard in any professional theme)
+2.  Verify that your site's theme uses the `wp_head()`, `wp_footer()`, & `the_content()` template tags (standard in any professional theme)
 
 == Upgrade Notice ==
 
@@ -63,6 +64,19 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 3.  Dark Theme
 
 == Changelog ==
+
+= 2.9.0 =
+
+* Add: Support WebP image format
+* Add: Support AVIF image format
+* Add: Documentation link to readme file
+* Optimize: Code cleanup/refactoring
+* Optimize: WPCS validation (Phase 1)
+* Optimize: Activate links after all other filters
+* Optimize: Plugin metadata retrieval
+* Update: Confirm WordPress 6.0 compatibility
+* Update: Build dependencies
+* Update: GitHub issue templates
 
 = 2.8.1 =
 

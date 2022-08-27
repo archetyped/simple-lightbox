@@ -9,7 +9,7 @@
 class SLB_Theme extends SLB_Component {
 	/* Properties */
 
-	protected $props_required = array('name');
+	protected $props_required = array( 'name' );
 
 	/**
 	 * Public flag
@@ -24,7 +24,7 @@ class SLB_Theme extends SLB_Component {
 	 * @param bool $sort_topdown (optional) Ancestor sorting (Default: Nearest to Farthest)
 	 * @return array Theme's ancestors (sorted by nearest to most distant ancestor)
 	 */
-	public function get_ancestors($sort_topdown = false) {
+	public function get_ancestors( $sort_topdown = false ) {
 		$ret = array();
 		/**
 		 * @var SLB_Theme
@@ -33,7 +33,7 @@ class SLB_Theme extends SLB_Component {
 		while ( $thm->has_parent() ) {
 			$par = $thm->get_parent();
 			// Add ancestor
-			if ( $par->is_valid() && !in_array($par, $ret, true) ) {
+			if ( $par->is_valid() && ! in_array( $par, $ret, true ) ) {
 				$ret[] = $par;
 			}
 			// Get next ancestor
@@ -41,7 +41,7 @@ class SLB_Theme extends SLB_Component {
 		}
 		// Sorting
 		if ( $sort_topdown ) {
-			$ret = array_reverse($ret);
+			$ret = array_reverse( $ret );
 		}
 		return $ret;
 	}
@@ -50,8 +50,8 @@ class SLB_Theme extends SLB_Component {
 	 * Set public flag
 	 * @param bool $public
 	 */
-	public function set_public($public) {
-		$this->public = !!$public;
+	public function set_public( $public ) {
+		$this->public = ! ! $public;
 	}
 
 	/**
@@ -59,7 +59,7 @@ class SLB_Theme extends SLB_Component {
 	 * @return bool
 	 */
 	public function get_public() {
-		return !!$this->public;
+		return ! ! $this->public;
 	}
 
 	/* Templates */
@@ -71,8 +71,8 @@ class SLB_Theme extends SLB_Component {
 	 * @param string $src Template URI
 	 * @return obj Current instance
 	 */
-	protected function add_template($handle, $src) {
-		return $this->add_file('template', $handle, $src);
+	protected function add_template( $handle, $src ) {
+		return $this->add_file( 'template', $handle, $src );
 	}
 
 	/**
@@ -82,8 +82,8 @@ class SLB_Theme extends SLB_Component {
 	 * @param string $format (optional) Return value format
 	 * @return mixed Template file (Default: array of file properties @see `Base_Object::add_file()`)
 	 */
-	protected function get_template($handle, $format = null) {
-		return $this->get_file('template', $handle, $format);
+	protected function get_template( $handle, $format = null ) {
+		return $this->get_file( 'template', $handle, $format );
 	}
 
 	/* Layout */
@@ -94,8 +94,8 @@ class SLB_Theme extends SLB_Component {
 	 * @param string $src Layout file URI
 	 * @return Current instance
 	 */
-	public function set_layout($src) {
-		return $this->add_template('layout', $src);
+	public function set_layout( $src ) {
+		return $this->add_template( 'layout', $src );
 	}
 
 	/**
@@ -103,7 +103,7 @@ class SLB_Theme extends SLB_Component {
 	 * @param string $format (optional) Layout data format
 	 * @return mixed Theme layout
 	 */
-	public function get_layout($format = null) {
-		return $this->get_template('layout', $format);
+	public function get_layout( $format = null ) {
+		return $this->get_template( 'layout', $format );
 	}
 }

@@ -4,12 +4,12 @@
  *
  * @package Simple Lightbox
  * @author Archetyped <support@archetyped.com>
- * @copyright 2019 Archetyped
+ * @copyright 2022 Archetyped
  *
  * Plugin Name: Simple Lightbox
  * Plugin URI: http://archetyped.com/tools/simple-lightbox/
  * Description: The highly customizable lightbox for WordPress
- * Version: 2.8.1
+ * Version: 2.9.0
  * Requires at least: 5.3
  * Requires PHP: 5.6.20
  * Text Domain: simple-lightbox

@@ -21,11 +21,11 @@ class SLB_Admin_Page extends SLB_Admin_View {
 
 	/* Init */
 
-	public function __construct($id, $parent, $labels, $callback = null, $capability = null) {
+	public function __construct( $id, $parent, $labels, $callback = null, $capability = null ) {
 		// Default
-		parent::__construct($id, $labels, $callback, $capability);
+		parent::__construct( $id, $labels, $callback, $capability );
 		// Class specific
-		$this->set_parent($parent);
+		$this->set_parent( $parent );
 		return $this;
 	}
 
@@ -42,16 +42,16 @@ class SLB_Admin_Page extends SLB_Admin_View {
 	 * @param array $callback_args (optional) Additional data to pass callback (Default: NULL)
 	 * @return object Page instance reference
 	 */
-	public function add_content($id, $title, $callback = null, $context = 'primary', $priority = 'default', $callback_args = null) {
-		return parent::add_content($id, array(
-			'id'			=> $id,
-			'title'			=> $title,
-			'callback'		=> $callback,
-			'context'		=> $context,
-			'priority'		=> $priority,
-			'callback_args'	=> $callback_args
-			)
-		);
+	public function add_content( $id, $title, $callback = null, $context = 'primary', $priority = 'default', $callback_args = null ) {
+		$opts = [
+			'id'            => $id,
+			'title'         => $title,
+			'callback'      => $callback,
+			'context'       => $context,
+			'priority'      => $priority,
+			'callback_args' => $callback_args,
+		];
+		return parent::add_content( $id, $opts );
 	}
 
 	/**
@@ -60,16 +60,16 @@ class SLB_Admin_Page extends SLB_Admin_View {
 	 */
 	protected function parse_content() {
 		// Get raw content
-		$raw = $this->get_content(false);
+		$raw = $this->get_content( false );
 		// Group by context
 		$content = array();
 		foreach ( $raw as $c ) {
 			// Add new context
-			if ( !isset($content[$c->context]) ) {
-				$content[$c->context] = array();
+			if ( ! isset( $content[ $c->context ] ) ) {
+				$content[ $c->context ] = array();
 			}
 			// Add item to context
-			$content[$c->context][] = $c;
+			$content[ $c->context ][] = $c;
 		}
 		return $content;
 	}
@@ -78,34 +78,34 @@ class SLB_Admin_Page extends SLB_Admin_View {
 	 * Render content blocks
 	 * @param string $context (optional) Context to render
 	 */
-	protected function render_content($context = 'primary') {
+	protected function render_content( $context = 'primary' ) {
 		// Get content
 		$content = $this->get_content();
 		// Check for context
-		if ( !isset($content[$context]) ) {
+		if ( ! isset( $content[ $context ] ) ) {
 			return false;
 		}
-		$content = $content[$context];
-		$out = '';
+		$content = $content[ $context ];
+		$out     = '';
 		// Render content
 		?>
 		<div class="content-wrap">
 		<?php
 			// Add meta boxes
 			$screen = get_current_screen();
-			foreach ( $content as $c ) {
-				$c->screen = $screen;
-				// Callback
-				if ( is_callable($c->callback) ) {
-					$callback = $c->callback;
-					add_meta_box($c->id, $c->title, $c->callback, $c->screen, $c->context, $c->priority, $c->callback_args);
-				} else {
-					// Let handlers build output
-					$this->util->do_action('render_content', $c->callback, $this, $c);
-				}
+		foreach ( $content as $c ) {
+			$c->screen = $screen;
+			// Callback
+			if ( is_callable( $c->callback ) ) {
+				$callback = $c->callback;
+				add_meta_box( $c->id, $c->title, $c->callback, $c->screen, $c->context, $c->priority, $c->callback_args );
+			} else {
+				// Let handlers build output
+				$this->util->do_action( 'render_content', $c->callback, $this, $c );
 			}
+		}
 			// Output meta boxes
-			do_meta_boxes($screen, $context, null);
+			do_meta_boxes( $screen, $context, null );
 		?>
 		</div>
 		<?php
@@ -116,7 +116,7 @@ class SLB_Admin_Page extends SLB_Admin_View {
 	 * @return obj Page instance
 	 */
 	public function require_form() {
-		$this->_require('form_submit');
+		$this->_require( 'form_submit' );
 		return $this;
 	}
 
@@ -125,7 +125,7 @@ class SLB_Admin_Page extends SLB_Admin_View {
 	 * @return bool TRUE if form submission required
 	 */
 	private function is_required_form() {
-		return $this->_is_required('form_submit');
+		return $this->_is_required( 'form_submit' );
 	}
 
 	/* Handlers */
@@ -138,48 +138,49 @@ class SLB_Admin_Page extends SLB_Admin_View {
 	 * @uses wp_die() to end execution when user does not have permission to access page
 	 */
 	public function handle() {
-		if ( !current_user_can($this->get_capability()) )
-			wp_die(__('Access Denied', 'simple-lightbox'));
-		wp_enqueue_script('postbox');
+		if ( ! current_user_can( $this->get_capability() ) ) {
+			wp_die( __( 'Access Denied', 'simple-lightbox' ) );
+		}
+		wp_enqueue_script( 'postbox' );
 		?>
 		<div class="wrap slb">
-			<h2><?php esc_html_e( $this->get_label('header') ); ?></h2>
+			<h2><?php echo esc_html( $this->get_label( 'header' ) ); ?></h2>
 			<?php
 				// Form submission support
-				if ( $this->is_required_form() ) {
-					// Build form output
-					$form_id = $this->add_prefix('admin_form_' . $this->get_id_raw());
-					$nonce = (object) [
-						'action' => $this->get_id(),
-						'name' => $this->get_id() . '_nonce',
-					];
-					?>
-					<form id="<?php esc_attr_e($form_id); ?>" name="<?php esc_attr_e($form_id); ?>" action="" method="post">
+			if ( $this->is_required_form() ) {
+				// Build form output
+				$form_id = $this->add_prefix( 'admin_form_' . $this->get_id_raw() );
+				$nonce   = (object) [
+					'action' => $this->get_id(),
+					'name'   => $this->get_id() . '_nonce',
+				];
+				?>
+					<form id="<?php echo esc_attr( $form_id ); ?>" name="<?php echo esc_attr( $form_id ); ?>" action="" method="post">
 					<?php
-						wp_nonce_field( $nonce->action, $nonce->name );
-				}
+					wp_nonce_field( $nonce->action, $nonce->name );
+			}
 			?>
 			<div class="metabox-holder columns-2">
 				<div class="content-primary postbox-container">
 					<?php
-					$this->render_content('primary');
+					$this->render_content( 'primary' );
 					?>
 				</div>
 				<div class="content-secondary postbox-container">
 					<?php
-					$this->render_content('secondary');
+					$this->render_content( 'secondary' );
 					?>
 				</div>
 			</div>
 			<br class="clear" />
 			<?php
 				// Form submission support
-				if ( $this->is_required_form() ) {
-					submit_button();
-					?>
+			if ( $this->is_required_form() ) {
+				submit_button();
+				?>
 					</form>
-					<?php
-				}
+				<?php
+			}
 			?>
 		</div>
 		<?php
