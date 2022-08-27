@@ -65,6 +65,19 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 
 == Changelog ==
 
+= 2.9.0 =
+
+* Add: Support WebP image format
+* Add: Support AVIF image format
+* Add: Documentation link to readme file
+* Optimize: Code cleanup/refactoring
+* Optimize: WPCS validation (Phase 1)
+* Optimize: Activate links after all other filters
+* Optimize: Plugin metadata retrieval
+* Update: Confirm WordPress 6.0 compatibility
+* Update: Build dependencies
+* Update: GitHub issue templates
+
 = 2.8.1 =
 
 * Update: PHP 5.6 Compatibility
