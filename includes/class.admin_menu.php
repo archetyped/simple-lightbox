@@ -18,11 +18,11 @@ class SLB_Admin_Menu extends SLB_Admin_View {
 
 	/* Init */
 
-	public function __construct($id, $labels, $callback = null, $capability = null, $icon = null, $position = null) {
+	public function __construct( $id, $labels, $callback = null, $capability = null, $icon = null, $position = null ) {
 		// Default
-		parent::__construct($id, $labels, $callback, $capability, $icon);
+		parent::__construct( $id, $labels, $callback, $capability, $icon );
 		// Class specific
-		$this->set_position($position);
+		$this->set_position( $position );
 		return $this;
 	}
 
@@ -32,9 +32,10 @@ class SLB_Admin_Menu extends SLB_Admin_View {
 	 * Set menu position
 	 * @return obj Current instance
 	 */
-	public function set_position($position) {
-		if ( is_int($position) )
+	public function set_position( $position ) {
+		if ( is_int( $position ) ) {
 			$this->position = $position;
+		}
 		return $this;
 	}
 }

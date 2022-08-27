@@ -94,7 +94,10 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 * @see this->required for more information
 	 * @var array
 	 */
-	private $_required = array ( 'id' => 'string', 'labels' => 'array' );
+	private $_required = array(
+		'id'     => 'string',
+		'labels' => 'array',
+	);
 
 	/* Init */
 
@@ -102,32 +105,33 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 * Constructor
 	 * @return obj Current instance
 	 */
-	public function __construct($id, $labels, $callback = null, $capability = null, $icon = null) {
+	public function __construct( $id, $labels, $callback = null, $capability = null, $icon = null ) {
 		$props = array(
-			'labels'		=> $labels,
-			'callback'		=> $callback,
-			'capability'	=> $capability,
-			'icon'			=> $icon,
+			'labels'     => $labels,
+			'callback'   => $callback,
+			'capability' => $capability,
+			'icon'       => $icon,
 		);
-		parent::__construct($id, $props);
+		parent::__construct( $id, $props );
 		$this->init_required();
 		return $this;
 	}
 
 	protected function init_required() {
-		$this->required = array_merge($this->_required, $this->required);
+		$this->required = array_merge( $this->_required, $this->required );
 		// Check for parent requirement
-		if ( $this->parent_required )
+		if ( $this->parent_required ) {
 			$this->required['parent'] = 'string';
+		}
 	}
 
 	/**
 	 * Set required feature
 	 * @param string $feature Required feature
 	 */
-	protected function _require($feature) {
-		if ( !isset($this->_required[$feature]) ) {
-			$this->_required[$feature] = true;
+	protected function _require( $feature ) {
+		if ( ! isset( $this->_required[ $feature ] ) ) {
+			$this->_required[ $feature ] = true;
 		}
 		return $this;
 	}
@@ -137,8 +141,8 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 * @param string $feature Feature to check for
 	 * @return bool TRUE if feature required
 	 */
-	protected function _is_required($feature) {
-		return ( isset($this->_required[$feature]) ) ? true : false;
+	protected function _is_required( $feature ) {
+		return ( isset( $this->_required[ $feature ] ) ) ? true : false;
 	}
 
 	/* Property Methods */
@@ -148,10 +152,11 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 * @param bool $formatted (optional) Whether ID should be formatted for external use or not
 	 * @return string ID
 	 */
-	public function get_id($formatted = true) {
+	public function get_id( $formatted = true ) {
 		$id = parent::get_id();
-		if ( $formatted )
-			$this->add_prefix_ref($id);
+		if ( $formatted ) {
+			$this->add_prefix_ref( $id );
+		}
 		return $id;
 	}
 
@@ -160,7 +165,7 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 * @return string Raw ID
 	 */
 	public function get_id_raw() {
-		return $this->get_id(false);
+		return $this->get_id( false );
 	}
 
 	/**
@@ -170,17 +175,18 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 * @param string $default (optional) Default value if label type does not exist
 	 * @return string Label text
 	 */
-	public function get_label($type, $default = null) {
+	public function get_label( $type, $default = null ) {
 		// Retrieve existing label type
-		if ( $this->has_label($type) )
-			return $this->labels[$type];
+		if ( $this->has_label( $type ) ) {
+			return $this->labels[ $type ];
+		}
 		// Use default label if type is not set
-		if ( empty($default) && !empty($this->labels) ) {
-			reset($this->labels);
-			$default = current($this->labels);
+		if ( empty( $default ) && ! empty( $this->labels ) ) {
+			reset( $this->labels );
+			$default = current( $this->labels );
 		}
 
-		return ( empty($default) ) ? '' : $default;
+		return ( empty( $default ) ) ? '' : $default;
 	}
 
 	/**
@@ -188,21 +194,22 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 * @param array|string $labels
 	 * @return obj Current instance
 	 */
-	public function set_labels($labels) {
-		if ( empty($labels) )
+	public function set_labels( $labels ) {
+		if ( empty( $labels ) ) {
 			return this;
+		}
 		// Single string
-		if ( is_string($labels) ) {
-			$labels = array ( $labels );
+		if ( is_string( $labels ) ) {
+			$labels = array( $labels );
 		}
 
 		// Array
-		if ( is_array($labels) ) {
+		if ( is_array( $labels ) ) {
 			// Merge with existing labels
-			if ( empty($this->labels) || !is_array($this->labels) ) {
+			if ( empty( $this->labels ) || ! is_array( $this->labels ) ) {
 				$this->labels = array();
 			}
-			$this->labels = array_merge($this->labels, $labels);
+			$this->labels = array_merge( $this->labels, $labels );
 		}
 		return $this;
 	}
@@ -214,10 +221,10 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 * @param string $value Label value
 	 * @return obj Current instance
 	 */
-	public function set_label($type, $value) {
-		if ( is_string($type) && is_string($value) ) {
+	public function set_label( $type, $value ) {
+		if ( is_string( $type ) && is_string( $value ) ) {
 			$label = array( $type => $value );
-			$this->set_labels($label);
+			$this->set_labels( $label );
 		}
 		return $this;
 	}
@@ -227,8 +234,8 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 * @param string $type Label type
 	 * @return bool TRUE if label exists, FALSE otherwise
 	 */
-	public function has_label($type) {
-		return ( isset($this->labels[$type]) );
+	public function has_label( $type ) {
+		return ( isset( $this->labels[ $type ] ) );
 	}
 
 	/* Content */
@@ -240,9 +247,9 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 * @param array $args Content arguments (Defined by child class), converted to an object
 	 * @return obj Current View instance
 	 */
-	public function add_content($id, $args) {
+	public function add_content( $id, $args ) {
 		// Save parameters
-		$this->content_raw[$id] = (object) $args;
+		$this->content_raw[ $id ] = (object) $args;
 		// Clear parsed content
 		$this->content = array();
 		// Return instance reference
@@ -252,19 +259,18 @@ class SLB_Admin_View extends SLB_Base_Object {
 	/**
 	 * Retrieve content
 	 */
-	protected function get_content($parsed = true) {
-		$content = $this->content_raw;
-		if ( $parsed ) {
-			// Return previously parsed content
-			if ( !empty($this->content) ) {
-				$content = $this->content;
-			}
-			elseif ( !empty($this->content_raw) ) {
-				// Parse content before returning
-				$content = $this->content = $this->parse_content();
-			}
+	protected function get_content( $parsed = true ) {
+		// Return raw content.
+		if ( ! $parsed ) {
+			return $this->content_raw;
 		}
-		return $content;
+
+		// Return parsed content.
+		if ( empty( $this->content ) && ! empty( $this->content_raw ) ) {
+			$this->content = $this->parse_content();
+		}
+
+		return $this->content;
 	}
 
 	/**
@@ -273,7 +279,7 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 * @return array Parsed content
 	 */
 	protected function parse_content() {
-		return $this->get_content(false);
+		return $this->get_content( false );
 	}
 
 	/**
@@ -281,22 +287,23 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 * @return bool TRUE if content added
 	 */
 	protected function has_content() {
-		$raw = $this->get_content(false);
-		return !empty($raw);
+		$raw = $this->get_content( false );
+		return ! empty( $raw );
 	}
 
 	/**
 	 * Render content
 	 */
-	protected function render_content($context = 'default') {}
+	protected function render_content( $context = 'default' ) {}
 
 	/**
 	 * Retrieve view messages
 	 * @return array Messages
 	 */
 	protected function &get_messages() {
-		if ( !is_array($this->messages) )
+		if ( ! is_array( $this->messages ) ) {
 			$this->messages = array();
+		}
 		return $this->messages;
 	}
 
@@ -305,11 +312,12 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 * @param string $text Message text
 	 * @return obj Current instance
 	 */
-	public function set_message($text) {
+	public function set_message( $text ) {
 		$msgs =& $this->get_messages();
-		$text = trim($text);
-		if ( empty($msgs) && !empty($text) )
-			$this->util->add_filter('admin_messages', $this->m('do_messages'), 10, 1, false);
+		$text = trim( $text );
+		if ( empty( $msgs ) && ! empty( $text ) ) {
+			$this->util->add_filter( 'admin_messages', $this->m( 'do_messages' ), 10, 1, false );
+		}
 		$msgs[] = $text;
 		return $this;
 	}
@@ -320,10 +328,11 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 * @param array $msgs Aggregated messages
 	 * @return array Merged messages array
 	 */
-	public function do_messages($msgs = array()) {
+	public function do_messages( $msgs = array() ) {
 		$m =& $this->get_messages();
-		if ( !empty($m) )
-			$msgs = array_merge($msgs, $m);
+		if ( ! empty( $m ) ) {
+			$msgs = array_merge( $msgs, $m );
+		}
 		return $msgs;
 	}
 
@@ -332,7 +341,7 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 * @return callback Callback (Default: standard handler method)
 	 */
 	public function get_callback() {
-		return ( $this->has_callback() ) ? $this->callback : $this->m('handle');
+		return ( $this->has_callback() ) ? $this->callback : $this->m( 'handle' );
 	}
 
 	/**
@@ -340,8 +349,8 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 * @param callback $callback Callback function to use
 	 * @return obj Current instance
 	 */
-	public function set_callback($callback) {
-		$this->callback = ( is_callable($callback) ) ? $callback : null;
+	public function set_callback( $callback ) {
+		$this->callback = ( is_callable( $callback ) ) ? $callback : null;
 		return $this;
 	}
 
@@ -350,14 +359,14 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 * @return bool TRUE if callback is set
 	 */
 	protected function has_callback() {
-		return ( !empty($this->callback) ) ? true : false;
+		return ( ! empty( $this->callback ) ) ? true : false;
 	}
 
 	/**
 	 * Run callback
 	 */
 	public function do_callback() {
-		call_user_func($this->get_callback());
+		call_user_func( $this->get_callback() );
 	}
 
 	/**
@@ -373,9 +382,10 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 * @param string $capability Capability
 	 * @return obj Current instance
 	 */
-	public function set_capability($capability) {
-		if ( is_string($capability) && !empty($capability) )
+	public function set_capability( $capability ) {
+		if ( is_string( $capability ) && ! empty( $capability ) ) {
 			$this->capability = $capability;
+		}
 		return $this;
 	}
 
@@ -384,14 +394,15 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 * @param string $icon Icon URI
 	 * @return obj Current instance
 	 */
-	public function set_icon($icon) {
-		if ( !empty($icon) && is_string($icon) )
+	public function set_icon( $icon ) {
+		if ( ! empty( $icon ) && is_string( $icon ) ) {
 			$this->icon = $icon;
+		}
 		return $this;
 	}
 
 	protected function get_hookname() {
-		return ( empty($this->hookname) ) ? '' : $this->hookname;
+		return ( empty( $this->hookname ) ) ? '' : $this->hookname;
 	}
 
 	/**
@@ -399,9 +410,10 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 * @param string $hookname Hookname value
 	 * @return obj Current instance
 	 */
-	public function set_hookname($hookname) {
-		if ( !empty($hookname) && is_string($hookname) )
+	public function set_hookname( $hookname ) {
+		if ( ! empty( $hookname ) && is_string( $hookname ) ) {
 			$this->hookname = $hookname;
+		}
 		return $this;
 	}
 
@@ -413,7 +425,7 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 */
 	public function get_parent() {
 		$parent = parent::get_parent();
-		return ( $this->is_parent_custom() ) ? $this->add_prefix($parent) : $parent;
+		return ( $this->is_parent_custom() ) ? $this->add_prefix( $parent ) : $parent;
 	}
 
 	/**
@@ -421,10 +433,11 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 * @param string $parent Parent ID
 	 * @return obj Current instance
 	 */
-	public function set_parent($parent) {
+	public function set_parent( $parent ) {
 		if ( $this->parent_required ) {
-			if ( !empty($parent) && is_string($parent) )
-			$this->parent = $parent;
+			if ( ! empty( $parent ) && is_string( $parent ) ) {
+				$this->parent = $parent;
+			}
 		} else {
 			$this->parent = null;
 		}
@@ -436,9 +449,9 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 * @param bool $custom (optional) TRUE if custom, FALSE if WP
 	 * @return obj Current instance
 	 */
-	protected function set_parent_custom($custom = true) {
+	protected function set_parent_custom( $custom = true ) {
 		if ( $this->parent_required ) {
-			$this->parent_custom = !!$custom;
+			$this->parent_custom = ! ! $custom;
 		}
 		return $this;
 	}
@@ -449,7 +462,7 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 * @return obj Current instance
 	 */
 	public function set_parent_wp() {
-		$this->set_parent_custom(false);
+		$this->set_parent_custom( false );
 		return $this;
 	}
 
@@ -458,32 +471,34 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 * URI Structures:
 	 *  > Top Level Menus: admin.php?page={menu_id}
 	 *  > Pages: [parent_page_file.php|admin.php]?page={page_id}
-	 * 	> Section: [parent_menu_uri]#{section_id}
+	 *  > Section: [parent_menu_uri]#{section_id}
 	 *
 	 * @uses $admin_page_hooks to determine if page is child of default WP page
 	 * @param string $file (optional) Base file name
 	 * @param string $format (optional) Format string for URI
 	 * @return string Object URI
 	 */
-	public function get_uri($file = null, $format = null) {
+	public function get_uri( $file = null, $format = null ) {
 		static $page_hooks = null;
-		$uri = '';
-		if ( empty($file) )
+		$uri               = '';
+		if ( empty( $file ) ) {
 			$file = 'admin.php';
+		}
 		if ( $this->is_child() ) {
-			$parent = str_replace('_page_' . $this->get_id(), '', $this->get_hookname());
-			if ( is_null($page_hooks) ) {
-				$page_hooks = array_flip($GLOBALS['admin_page_hooks']);
+			$parent = str_replace( '_page_' . $this->get_id(), '', $this->get_hookname() );
+			if ( is_null( $page_hooks ) ) {
+				$page_hooks = array_flip( $GLOBALS['admin_page_hooks'] );
 			}
-			if ( isset($page_hooks[$parent]) )
-				$file = $page_hooks[$parent];
+			if ( isset( $page_hooks[ $parent ] ) ) {
+				$file = $page_hooks[ $parent ];
+			}
 		}
 
-		if ( empty($format) ) {
-			$delim = ( strpos($file, '?') === false ) ? '?' : '&amp;';
+		if ( empty( $format ) ) {
+			$delim  = ( strpos( $file, '?' ) === false ) ? '?' : '&amp;';
 			$format = '%1$s' . $delim . 'page=%2$s';
 		}
-		$uri = sprintf($format, $file, $this->get_id());
+		$uri = sprintf( $format, $file, $this->get_id() );
 
 		return $uri;
 	}
@@ -503,15 +518,24 @@ class SLB_Admin_View extends SLB_Base_Object {
 	 * @return bool TRUE if valid, FALSE if not valid
 	 */
 	public function is_valid() {
-		$valid = true;
+		$invalid = false;
 		foreach ( $this->required as $prop => $type ) {
-			if ( empty($this->{$prop} )
-				|| ( !empty($type) && is_string($type) && ( $f = 'is_' . $type ) && function_exists($f) && !$f($this->{$prop}) ) ) {
-				$valid = false;
-				break;
+			// Baseline validation.
+			if (
+				empty( $this->{$prop} )
+				|| empty( $type )
+				|| ! is_string( $type )
+			) {
+				return $invalid;
+			}
+
+			// Validate data type.
+			$f = 'is_' . $type;
+			if ( ! function_exists( $f ) || ! $f( $this->{$prop} ) ) {
+				return $invalid;
 			}
 		}
-		return $valid;
+		return true;
 	}
 
 	protected function is_child() {
@@ -523,7 +547,7 @@ class SLB_Admin_View extends SLB_Base_Object {
 	}
 
 	public function is_parent_wp() {
-		return ( $this->is_child() && !$this->parent_custom ) ? true : false;
+		return ( $this->is_child() && ! $this->parent_custom ) ? true : false;
 	}
 
 }

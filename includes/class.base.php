@@ -53,7 +53,7 @@ class SLB_Base {
 	 */
 	private static $globals = array();
 
-	protected $shared = array('options', 'admin');
+	protected $shared = array( 'options', 'admin' );
 
 	/**
 	 * Capabilities
@@ -75,17 +75,17 @@ class SLB_Base {
 	 * > Properties
 	 *   > file (string) File path (Relative to plugin base)
 	 *   > deps (array) Script dependencies
-	 * 		> Internal dependencies are wrapped in square brackets ([])
+	 *      > Internal dependencies are wrapped in square brackets ([])
 	 *   > context (string|array)
-	 * 		> Context in which the script should be included
+	 *      > Context in which the script should be included
 	 *   > in_footer (bool) optional [Default: FALSE]
-	 * 		> If TRUE, file will be included in footer of page, otherwise it will be included in the header
+	 *      > If TRUE, file will be included in footer of page, otherwise it will be included in the header
 	 *
 	 * Array is processed and converted to an object on init
 	 */
-	private $client_files = array (
-		'scripts'	=> array(),
-		'styles'	=> array()
+	private $client_files = array(
+		'scripts' => array(),
+		'styles'  => array(),
 	);
 
 	/*-** Instances **-*/
@@ -94,7 +94,7 @@ class SLB_Base {
 	 * Utilities
 	 * @var SLB_Utilities
 	 */
-	var $util = null;
+	public $util = null;
 
 	/**
 	 * Options
@@ -106,7 +106,7 @@ class SLB_Base {
 	 * Admin
 	 * @var SLB_Admin
 	 */
-	var $admin = null;
+	public $admin = null;
 
 	/*-** Initialization **-*/
 
@@ -114,13 +114,13 @@ class SLB_Base {
 	 * Constructor
 	 */
 	function __construct() {
-		$this->util = new SLB_Utilities($this);
-		if ( $this->can('init') ) {
+		$this->util = new SLB_Utilities( $this );
+		if ( $this->can( 'init' ) ) {
 			$hook = 'init';
-			if ( did_action($hook) || self::$_init_passed ) {
+			if ( did_action( $hook ) || self::$_init_passed ) {
 				$this->_init();
 			} else {
-				add_action($hook, $this->m('_init'), 1);
+				add_action( $hook, $this->m( '_init' ), 1 );
 			}
 		}
 	}
@@ -136,19 +136,21 @@ class SLB_Base {
 	 */
 	public function _init() {
 		self::$_init_passed = true;
-		if ( $this->_init || !isset($this) || !$this->can('init') )
+		if ( $this->_init || ! isset( $this ) || ! $this->can( 'init' ) ) {
 			return false;
+		}
 		$this->_init = true;
 		// Environment
 		$this->_env();
 
-		if ( $this->can('control') ) {
+		if ( $this->can( 'control' ) ) {
 			// Options
 			$this->_options();
 
 			// Admin
-			if ( is_admin() )
+			if ( is_admin() ) {
 				$this->_admin();
+			}
 		}
 
 		// Hooks
@@ -162,19 +164,19 @@ class SLB_Base {
 	 * Initialize environment (Localization, etc.)
 	 */
 	private function _env() {
-		if ( !$this->can('singleton') ) {
+		if ( ! $this->can( 'singleton' ) ) {
 			return false;
 		}
 		// Localization
-		$ldir = 'l10n';
-		$lpath = $this->util->get_plugin_file_path($ldir, array(false, false));
-		$lpath_abs = $this->util->get_file_path($ldir);
-		if ( is_dir($lpath_abs) ) {
-			load_plugin_textdomain('simple-lightbox', false, $lpath);
+		$ldir      = 'l10n';
+		$lpath     = $this->util->get_plugin_file_path( $ldir, array( false, false ) );
+		$lpath_abs = $this->util->get_file_path( $ldir );
+		if ( is_dir( $lpath_abs ) ) {
+			load_plugin_textdomain( 'simple-lightbox', false, $lpath );
 		}
 
 		// Context
-		add_action( ( is_admin() ) ? 'admin_print_footer_scripts' : 'wp_footer', $this->util->m('set_client_context'), $this->util->priority('client_footer_output') );
+		add_action( ( is_admin() ) ? 'admin_print_footer_scripts' : 'wp_footer', $this->util->m( 'set_client_context' ), $this->util->priority( 'client_footer_output' ) );
 	}
 
 	/**
@@ -187,21 +189,21 @@ class SLB_Base {
 	 * Initialize options
 	 * To be called by child class
 	 */
-	protected function _set_options($options_config = null) {
-		$class = $this->util->get_class('Options');
-		$key = 'options';
-		if ( $this->shares($key) ) {
-			$opts = $this->gvar($key);
+	protected function _set_options( $options_config = null ) {
+		$class = $this->util->get_class( 'Options' );
+		$key   = 'options';
+		if ( $this->shares( $key ) ) {
+			$opts = $this->gvar( $key );
 			// Setup options instance
-			if ( !($opts instanceof $class) ) {
-				$opts = $this->gvar($key, new $class());
+			if ( ! ( $opts instanceof $class ) ) {
+				$opts = $this->gvar( $key, new $class() );
 			}
 		} else {
 			$opts = new $class();
 		}
 		// Load options
-		if ( $this->is_options_valid($options_config, false) ) {
-			$opts->load($options_config);
+		if ( $this->is_options_valid( $options_config, false ) ) {
+			$opts->load( $options_config );
 		}
 		// Set instance property
 		$this->options = $opts;
@@ -212,19 +214,19 @@ class SLB_Base {
 	 * To be called by child class
 	 */
 	private function _admin() {
-		if ( !is_admin() ) {
+		if ( ! is_admin() ) {
 			return false;
 		}
-		$class = $this->util->get_class('Admin');
-		$key = 'admin';
-		if ( $this->shares($key) ) {
-			$adm = $this->gvar($key);
+		$class = $this->util->get_class( 'Admin' );
+		$key   = 'admin';
+		if ( $this->shares( $key ) ) {
+			$adm = $this->gvar( $key );
 			// Setup options instance
-			if ( !($adm instanceof $class) ) {
-				$adm = $this->gvar($key, new $class($this));
+			if ( ! ( $adm instanceof $class ) ) {
+				$adm = $this->gvar( $key, new $class( $this ) );
 			}
 		} else {
-			$adm = new $class($this);
+			$adm = new $class( $this );
 		}
 		// Set instance property
 		$this->admin = $adm;
@@ -237,48 +239,49 @@ class SLB_Base {
 		$base = $this->util->get_plugin_base_file();
 		// Activation
 		$func_activate = '_activate';
-		if ( method_exists($this, $func_activate) )
-			register_activation_hook($base, $this->m($func_activate));
+		if ( method_exists( $this, $func_activate ) ) {
+			register_activation_hook( $base, $this->m( $func_activate ) );
+		}
 
 		// Deactivation
 		$func_deactivate = '_deactivate';
-		if ( method_exists($this, $func_deactivate) )
-			register_deactivation_hook($base, $this->m($func_deactivate));
+		if ( method_exists( $this, $func_deactivate ) ) {
+			register_deactivation_hook( $base, $this->m( $func_deactivate ) );
+		}
 	}
 
 	/**
 	 * Initialize client files
 	 */
-	protected function _client_files($files = null) {
+	protected function _client_files( $files = null ) {
 		// Validation
-		if ( !is_array($files) || empty($files) ) {
+		if ( ! is_array( $files ) || empty( $files ) ) {
 			return false;
 		}
 		foreach ( $this->client_files as $key => $val ) {
-			if ( isset($files[$key]) && is_array($files[$key]) || !empty($files[$key]) ) {
-				$this->client_files[$key] = $this->util->parse_client_files($files[$key], $key);
+			if ( isset( $files[ $key ] ) && is_array( $files[ $key ] ) || ! empty( $files[ $key ] ) ) {
+				$this->client_files[ $key ] = $this->util->parse_client_files( $files[ $key ], $key );
 			}
 			// Remove empty file groups
-			if ( empty($this->client_files[$key]) ) {
-				unset($this->client_files[$key]);
+			if ( empty( $this->client_files[ $key ] ) ) {
+				unset( $this->client_files[ $key ] );
 			}
 		}
 
-
 		// Stop if no files are set for registration
-		if ( empty($this->client_files) ) {
+		if ( empty( $this->client_files ) ) {
 			return false;
 		}
 
 		// Register
-		add_action('init', $this->m('register_client_files'));
+		add_action( 'init', $this->m( 'register_client_files' ) );
 
 		// Enqueue
-		$hk_prfx = ( ( is_admin() ) ? 'admin' : 'wp' );
-		$hk_enqueue = $hk_prfx . '_enqueue_scripts' ;
+		$hk_prfx       = ( ( is_admin() ) ? 'admin' : 'wp' );
+		$hk_enqueue    = $hk_prfx . '_enqueue_scripts';
 		$hk_enqueue_ft = $hk_prfx . '_footer';
-		add_action($hk_enqueue, $this->m('enqueue_client_files'), 10, 0);
-		add_action($hk_enqueue_ft, $this->m('enqueue_client_files_footer'), 1);
+		add_action( $hk_enqueue, $this->m( 'enqueue_client_files' ), 10, 0 );
+		add_action( $hk_enqueue_ft, $this->m( 'enqueue_client_files_footer' ), 1 );
 	}
 
 	/**
@@ -290,13 +293,14 @@ class SLB_Base {
 	public function register_client_files() {
 		$v = $this->util->get_plugin_version();
 		foreach ( $this->client_files as $type => $files ) {
-			$func = $this->get_client_files_handler($type, 'register');
-			if ( !$func )
+			$func = $this->get_client_files_handler( $type, 'register' );
+			if ( ! $func ) {
 				continue;
+			}
 			foreach ( $files as $f ) {
 				// Get file URI
-				$f->file = ( !$this->util->is_file($f->file) && is_callable($f->file) ) ? call_user_func($f->file) : $this->util->get_file_url($f->file, true);
-				$params = array($f->id, $f->file, $f->deps, $v);
+				$f->file = ( ! $this->util->is_file( $f->file ) && is_callable( $f->file ) ) ? call_user_func( $f->file ) : $this->util->get_file_url( $f->file, true );
+				$params  = array( $f->id, $f->file, $f->deps, $v );
 				// Set additional parameters based on file type (script, style, etc.)
 				switch ( $type ) {
 					case 'scripts':
@@ -307,7 +311,7 @@ class SLB_Base {
 						break;
 				}
 				// Register file
-				call_user_func_array($func, $params);
+				call_user_func_array( $func, $params );
 			}
 		}
 	}
@@ -319,25 +323,25 @@ class SLB_Base {
 	 * @param bool $footer (optional) Whether to enqueue footer files (Default: No)
 	 * @return void
 	 */
-	function enqueue_client_files($footer = false) {
+	function enqueue_client_files( $footer = false ) {
 		// Validate
-		if ( !is_bool($footer) ) {
+		if ( ! is_bool( $footer ) ) {
 			$footer = false;
 		}
 		// Enqueue files
 		foreach ( $this->client_files as $type => $files ) {
-			$func = $this->get_client_files_handler($type, 'enqueue');
-			if ( !$func ) {
+			$func = $this->get_client_files_handler( $type, 'enqueue' );
+			if ( ! $func ) {
 				continue;
 			}
 			foreach ( $files as $fkey => $f ) {
 				// Skip previously-enqueued files and shadow files
-				if ( $f->enqueued || !$f->enqueue ) {
+				if ( $f->enqueued || ! $f->enqueue ) {
 					continue;
 				}
 				// Enqueue files only for current location (header/footer)
-				if ( isset($f->in_footer) ) {
-					if ( $f->in_footer != $footer ) {
+				if ( isset( $f->in_footer ) ) {
+					if ( $f->in_footer !== $footer ) {
 						continue;
 					}
 				} elseif ( $footer ) {
@@ -345,24 +349,25 @@ class SLB_Base {
 				}
 				$load = true;
 				// Global Callback
-				if ( is_callable($f->callback) && !call_user_func($f->callback) ) {
+				if ( is_callable( $f->callback ) && ! call_user_func( $f->callback ) ) {
 					$load = false;
 				}
 				// Context
-				if ( $load && !empty($f->context) ) {
+				if ( $load && ! empty( $f->context ) ) {
 					// Reset $load before evaluating context
 					$load = false;
 					// Iterate through contexts
 					foreach ( $f->context as $ctx ) {
 						// Context + Callback
-						if ( is_array($ctx) ) {
+						if ( is_array( $ctx ) ) {
 							// Stop checking context if callback is invalid
-							if ( !is_callable($ctx[1]) || !call_user_func($ctx[1]) )
+							if ( ! is_callable( $ctx[1] ) || ! call_user_func( $ctx[1] ) ) {
 								continue;
+							}
 							$ctx = $ctx[0];
 						}
 						// Stop checking context if valid context found
-						if ( $this->util->is_context($ctx) ) {
+						if ( $this->util->is_context( $ctx ) ) {
 							$load = true;
 							break;
 						}
@@ -371,8 +376,8 @@ class SLB_Base {
 				// Load valid file
 				if ( $load ) {
 					// Mark file as enqueued
-					$this->client_files[$type]->{$fkey}->enqueued = true;
-					$func($f->id);
+					$this->client_files[ $type ]->{$fkey}->enqueued = true;
+					$func( $f->id );
 				}
 			}
 		}
@@ -382,16 +387,17 @@ class SLB_Base {
 	 * Enqueue client files in the footer
 	 */
 	public function enqueue_client_files_footer() {
-		$this->enqueue_client_files(true);
+		$this->enqueue_client_files( true );
 	}
 
 	/**
 	 * Build function name for handling client operations
 	 */
-	function get_client_files_handler($type, $action) {
-		$func = 'wp_' . $action . '_' . substr($type, 0, -1);
-		if ( !function_exists($func) )
+	function get_client_files_handler( $type, $action ) {
+		$func = 'wp_' . $action . '_' . substr( $type, 0, -1 );
+		if ( ! function_exists( $func ) ) {
 			$func = false;
+		}
 		return $func;
 	}
 
@@ -403,8 +409,9 @@ class SLB_Base {
 	 */
 	function &get_base() {
 		$base = false;
-		if ( isset($GLOBALS[$this->base]) )
-			$base =& $GLOBALS[$this->base];
+		if ( isset( $GLOBALS[ $this->base ] ) ) {
+			$base =& $GLOBALS[ $this->base ];
+		}
 		return $base;
 	}
 
@@ -415,8 +422,8 @@ class SLB_Base {
 	 * @param string $method Method name
 	 * @return array Callback array
 	 */
-	function m($method) {
-		return $this->util->m($this, $method);
+	function m( $method ) {
+		return $this->util->m( $this, $method );
 	}
 
 	/*-** Prefix **-*/
@@ -426,9 +433,9 @@ class SLB_Base {
 	 * @param bool|string $sep Separator to append to class prefix (Default: no separator)
 	 * @return string Class prefix
 	 */
-	function get_prefix($sep = null) {
+	function get_prefix( $sep = null ) {
 		$args = func_get_args();
-		return call_user_func_array($this->util->m($this->util, 'get_prefix'), $args);
+		return call_user_func_array( $this->util->m( $this->util, 'get_prefix' ), $args );
 	}
 
 	/**
@@ -436,9 +443,9 @@ class SLB_Base {
 	 * @param string $text Text to check for prefix
 	 * @param string $sep (optional) Separator used
 	 */
-	function has_prefix($text, $sep = null) {
+	function has_prefix( $text, $sep = null ) {
 		$args = func_get_args();
-		return call_user_func_array($this->util->m($this->util, 'has_prefix'), $args);
+		return call_user_func_array( $this->util->m( $this->util, 'has_prefix' ), $args );
 	}
 
 	/**
@@ -448,9 +455,9 @@ class SLB_Base {
 	 * @param bool $once (optional) Whether to add prefix to text that already contains a prefix or not
 	 * @return string Text with prefix prepended
 	 */
-	function add_prefix($text, $sep = null, $once = true) {
+	function add_prefix( $text, $sep = null, $once = true ) {
 		$args = func_get_args();
-		return call_user_func_array($this->util->m($this->util, 'add_prefix'), $args);
+		return call_user_func_array( $this->util->m( $this->util, 'add_prefix' ), $args );
 	}
 
 	/**
@@ -460,9 +467,9 @@ class SLB_Base {
 	 * @param bool $once (optional) Whether to add prefix to text that already contains a prefix or not
 	 * @return string Text with prefix prepended
 	 */
-	function add_prefix_uc($text, $sep = null, $once = true) {
+	function add_prefix_uc( $text, $sep = null, $once = true ) {
 		$args = func_get_args();
-		return call_user_func_array($this->util->m($this->util, 'add_prefix_uc'), $args);
+		return call_user_func_array( $this->util->m( $this->util, 'add_prefix_uc' ), $args );
 	}
 
 	/**
@@ -474,10 +481,10 @@ class SLB_Base {
 	 * @param bool $once (optional) Add prefix only once
 	 * @return void
 	 */
-	function add_prefix_ref(&$var, $sep = null, $once = true) {
-		$args = func_get_args();
+	function add_prefix_ref( &$var, $sep = null, $once = true ) {
+		$args    = func_get_args();
 		$args[0] =& $var;
-		call_user_func_array($this->util->m($this->util, 'add_prefix_ref'), $args);
+		call_user_func_array( $this->util->m( $this->util, 'add_prefix_ref' ), $args );
 	}
 
 	/**
@@ -485,23 +492,23 @@ class SLB_Base {
 	 * @param string $text String to remove prefix from
 	 * @param string $sep (optional) Separator used with prefix
 	 */
-	function remove_prefix($text, $sep = null) {
+	function remove_prefix( $text, $sep = null ) {
 		$args = func_get_args();
-		return call_user_func_array($this->util->m($this->util, 'remove_prefix'), $args);
+		return call_user_func_array( $this->util->m( $this->util, 'remove_prefix' ), $args );
 	}
 
 	/*-** Capabilities **-*/
 
-	protected function can($cap) {
-		if ( is_null($this->caps) ) {
+	protected function can( $cap ) {
+		if ( is_null( $this->caps ) ) {
 			// Build capabilities based on instance properties
 			$this->caps = array(
-				'init'			=> ( 'object' != $this->mode ) ? true : false,
-				'singleton'		=> ( !!$this->model ) ? true : false,
-				'control'		=> ( 'sub' == $this->mode || 'object' == $this->mode ) ? false : true,
+				'init'      => ( 'object' !== $this->mode ) ? true : false,
+				'singleton' => ( ! ! $this->model ) ? true : false,
+				'control'   => ( 'sub' === $this->mode || 'object' === $this->mode ) ? false : true,
 			);
 		}
-		return ( isset($this->caps[$cap]) ) ? $this->caps[$cap] : false;
+		return ( isset( $this->caps[ $cap ] ) ) ? $this->caps[ $cap ] : false;
 	}
 
 	/*-** Globals **-*/
@@ -513,27 +520,27 @@ class SLB_Base {
 	 * @param mixed $val (optional) Set the value of a variable (Returns variable value if omitted)
 	 * @return mixed Variable value
 	 */
-	private function gvar($name = null, $val = null) {
+	private function gvar( $name = null, $val = null ) {
 		$g =& self::$globals;
-		if ( !is_array($g) ) {
+		if ( ! is_array( $g ) ) {
 			$g = array();
 		}
-		if ( !is_string($name) || empty($name) ) {
+		if ( ! is_string( $name ) || empty( $name ) ) {
 			return $g;
 		}
 		$ret = $val;
 		if ( null !== $val ) {
 			// Set Value
-			$g[$name] = $val;
-		} elseif ( isset($g[$name]) ) {
+			$g[ $name ] = $val;
+		} elseif ( isset( $g[ $name ] ) ) {
 			// Retrieve variable
-			$ret = $g[$name];
+			$ret = $g[ $name ];
 		}
 		return $ret;
 	}
 
-	private function shares($name) {
-		return ( !empty($this->shared) && in_array($name, $this->shared) ) ? true : false;
+	private function shares( $name ) {
+		return ( ! empty( $this->shared ) && in_array( $name, $this->shared, true ) ) ? true : false;
 	}
 
 	/*-** Options **-*/
@@ -543,13 +550,12 @@ class SLB_Base {
 	 * @param array $data Data to be used on options
 	 * @return bool TRUE if options are valid, FALSE otherwise
 	 */
-	function is_options_valid($data, $check_var = true) {
-		$class = $this->util->get_class('Options');
-		$ret = ( empty($data) || !is_array($data) || !class_exists($class) ) ? false : true;
-		if ( $ret && $check_var && !($this->options instanceof $class) )
+	function is_options_valid( $data, $check_var = true ) {
+		$class = $this->util->get_class( 'Options' );
+		$ret   = ( empty( $data ) || ! is_array( $data ) || ! class_exists( $class ) ) ? false : true;
+		if ( $ret && $check_var && ! ( $this->options instanceof $class ) ) {
 			$ret = false;
+		}
 		return $ret;
 	}
 }
-
-?>

@@ -9,7 +9,7 @@
  */
 class SLB_Field_Base extends SLB_Base {
 	/*-** Config **-*/
-	protected $mode = 'object';
+	protected $mode   = 'object';
 	protected $shared = false;
 
 	/*-** Properties **-*/
@@ -17,7 +17,7 @@ class SLB_Field_Base extends SLB_Base {
 	/**
 	 * @var string Unique name
 	 */
-	var $id = '';
+	public $id = '';
 
 	/**
 	 * ID formatting options.
@@ -42,34 +42,34 @@ class SLB_Field_Base extends SLB_Base {
 	 * > Value: Placeholder for special character
 	 * @var array
 	 */
-	var $special_chars = null;
+	public $special_chars = null;
 
-	var $special_chars_default = array(
-		'{'		=> '%SQB_L%',
-		'}'		=> '%SQB_R%',
+	public $special_chars_default = array(
+		'{' => '%SQB_L%',
+		'}' => '%SQB_R%',
 	);
 
 	/**
 	 * Reference to parent object that current instance inherits from
 	 * @var object
 	 */
-	var $parent = null;
+	public $parent = null;
 
 	/**
 	 * Title
 	 * @var string
 	 */
-	var $title = '';
+	public $title = '';
 
 	/**
 	 * @var string Short description
 	 */
-	var $description = '';
+	public $description = '';
 
 	/**
 	 * @var array Object Properties
 	 */
-	var $properties = array();
+	public $properties = array();
 
 	/**
 	 * Initialization properties
@@ -85,27 +85,27 @@ class SLB_Field_Base extends SLB_Base {
 	 * Reason: Faster searching over large arrays
 	 * @var array Groupings of Properties
 	 */
-	var $property_groups = array();
+	public $property_groups = array();
 
 	/**
 	 * Keys to filter out of properties array before setting properties
 	 * @var array
 	 */
-	var $property_filter = array('group');
+	public $property_filter = array( 'group' );
 
 	/**
 	 * Define order of properties
 	 * Useful when processing order is important (e.g. one property depends on another)
 	 * @var array
 	 */
-	var $property_priority = array();
+	public $property_priority = array();
 
 	/**
 	 * Data for object
 	 * May also contain data for nested objects
 	 * @var mixed
 	 */
-	var $data = null;
+	public $data = null;
 
 	/**
 	 * Whether data has been fetched or not
@@ -116,18 +116,18 @@ class SLB_Field_Base extends SLB_Base {
 	/**
 	 * @var array Script resources to include for object
 	 */
-	var $scripts = array();
+	public $scripts = array();
 
 	/**
 	 * @var array CSS style resources to include for object
 	 */
-	var $styles = array();
+	public $styles = array();
 
 	/**
 	 * Hooks (Filters/Actions) for object
 	 * @var array
 	 */
-	var $hooks = array();
+	public $hooks = array();
 
 	/**
 	 * Mapping of child properties to parent members
@@ -137,7 +137,7 @@ class SLB_Field_Base extends SLB_Base {
 	 *  > Val: Parent property to map TO
 	 * @var array
 	 */
-	var $map = null;
+	public $map = null;
 
 	/**
 	 * Options used when building collection (callbacks, etc.)
@@ -146,23 +146,23 @@ class SLB_Field_Base extends SLB_Base {
 	 * > Value: Option value
 	 * @var array
 	 */
-	var $build_vars = array();
+	public $build_vars = array();
 
-	var $build_vars_default = array();
+	public $build_vars_default = array();
 
 	/**
 	 * Constructor
 	 */
-	function __construct($id = '', $properties = null) {
+	function __construct( $id = '', $properties = null ) {
 		parent::__construct();
 		// Normalize Properties
-		$args = func_get_args();
-		$defaults = $this->integrate_id($id);
-		$properties = $this->make_properties($args, $defaults);
+		$args       = func_get_args();
+		$defaults   = $this->integrate_id( $id );
+		$properties = $this->make_properties( $args, $defaults );
 		// Save init properties
 		$this->properties_init = $properties;
 		// Set Properties
-		$this->set_properties($properties);
+		$this->set_properties( $properties );
 	}
 
 	/* Getters/Setters */
@@ -172,19 +172,20 @@ class SLB_Field_Base extends SLB_Base {
 	 * @param array $path Path to check for
 	 * @return bool TRUE if path exists in object, FALSE otherwise
 	 */
-	function path_isset($path = '') {
+	function path_isset( $path = '' ) {
 		// Stop execution if no path is supplied
-		if ( empty($path) )
+		if ( empty( $path ) ) {
 			return false;
+		}
 		$args = func_get_args();
-		$path = $this->util->build_path($args);
+		$path = $this->util->build_path( $args );
 		$item =& $this;
 		// Iterate over path and check if each level exists before moving on to the next
-		for ($x = 0; $x < count($path); $x++) {
-			if ( $this->util->property_exists($item, $path[$x]) ) {
+		$path_size = count( $path );
+		for ( $x = 0; $x < $path_size; $x++ ) {
+			if ( $this->util->property_exists( $item, $path[ $x ] ) ) {
 				// Set $item as reference to next level in path for next iteration
-				$item =& $this->util->get_property($item, $path[$x]);
-				// $item =& $item[ $path[$x] ];
+				$item =& $this->util->get_property( $item, $path[ $x ] );
 			} else {
 				return false;
 			}
@@ -198,16 +199,19 @@ class SLB_Field_Base extends SLB_Base {
 	 * @param array $path Path to retrieve value from. Each item in array is a deeper dimension
 	 * @return mixed Value at specified path
 	 */
-	function &get_path_value($path = '') {
-		$ret = '';
-		$path = $this->util->build_path(func_get_args());
-		if ( $this->path_isset($path) ) {
+	function &get_path_value( $path = '' ) {
+		$ret  = '';
+		$path = $this->util->build_path( func_get_args() );
+		if ( $this->path_isset( $path ) ) {
 			$ret =& $this;
-			for ($x = 0; $x < count($path); $x++) {
-				if ( 0 == $x )
-					$ret =& $ret->{ $path[$x] };
-				else
-					$ret =& $ret[ $path[$x] ];
+
+			$path_size = count( $path );
+			for ( $x = 0; $x < $path_size; $x++ ) {
+				if ( 0 === $x ) {
+					$ret =& $ret->{ $path[ $x ] };
+				} else {
+					$ret =& $ret[ $path[ $x ] ];
+				}
 			}
 		}
 		return $ret;
@@ -219,34 +223,37 @@ class SLB_Field_Base extends SLB_Base {
 	 * @param string $name Value to retrieve from member
 	 * @return mixed Member value if found (Default: empty string)
 	 */
-	function get_parent_value($member, $name = '', $default = '') {
+	function get_parent_value( $member, $name = '', $default = '' ) {
 		$parent = $this->get_parent();
-		return $this->get_object_value($parent, $member, $name, $default, 'parent');
+		return $this->get_object_value( $parent, $member, $name, $default, 'parent' );
 	}
 
 	/**
-	 * Retrieves specified member value
-	 * Handles inherited values
-	 * Merging corresponding parents if value is an array (e.g. for property groups)
-	 * @param string|array $member Member to search.  May also contain a path to the desired member
-	 * @param string $name Value to retrieve from member
-	 * @param mixed $default Default value if no value found (Default: empty string)
-	 * @param string $dir Direction to move through hierarchy to find value
-	 * Possible Values:
-	 *  parent (default) 	- Search through field parents
-	 *  current				- Do not search through connected objects
-	 *  container			- Search through field containers
-	 *  caller				- Search through field callers
-	 * @return mixed Specified member value
-	 * @todo Return reference
+	 * Retrieves specified member value.
+	 *
+	 * Handles inherited values and merges corresponding parents
+	 * if value is an array (e.g. for property groups).
+	 *
+	 * @param string|array $member Member to get value from.
+	 * @param string|array $name Optional. Element/Path to Element to retrieve from member. Default none.
+	 * @param mixed $default Optional. Default value to return if no data retrieved. Default empty string.
+	 * @param string $dir Optional. Direction to move through hierarchy to find value.
+	 *     Possible Values:
+	 *         * parent (default) - Search through field parents.
+	 *         * current          - Do not search through connected objects.
+	 *         * container        - Search through field containers.
+	 *         * caller           - Search through field callers.
+	 * @return mixed Specified member value.
+	 * @todo Return reference.
 	 */
-	function &get_member_value($member, $name = '', $default = '', $dir = 'parent') {
+	function &get_member_value( $member, $name = '', $default = '', $dir = 'parent' ) {
 		// Check if path to member is supplied
 		$path = array();
-		if ( is_array($member) && isset($member['tag']) ) {
-			if ( isset($member['attributes']['ref_base']) ) {
-				if ( 'root' != $member['attributes']['ref_base'] )
+		if ( is_array( $member ) && isset( $member['tag'] ) ) {
+			if ( isset( $member['attributes']['ref_base'] ) ) {
+				if ( 'root' !== $member['attributes']['ref_base'] ) {
 					$path[] = $member['attributes']['ref_base'];
+				}
 			} else {
 				$path[] = 'properties';
 			}
@@ -255,49 +262,62 @@ class SLB_Field_Base extends SLB_Base {
 		} else {
 			$path = $member;
 		}
-
-		$path = $this->util->build_path($path, $name);
+		// Prep name.
+		if ( is_string( $name ) ) {
+			$name = trim( $name );
+		}
+		$path = $this->util->build_path( $path, $name );
 		// Set defaults and prepare data
-		$val = $default;
-		$inherit = false;
+		$val         = $default;
+		$inherit     = false;
 		$inherit_tag = '{inherit}';
 
-		/* Determine whether the value must be retrieved from a parent/container object
+		/**
+		 * Determines whether the value must be retrieved from a parent/container object.
+		 *
 		 * Conditions:
-		 * > Path does not exist in current field
-		 * > Path exists and is not an object, but at least one of the following is true:
-		 *   > Value at path is an array (e.g. properties, elements, etc. array)
-		 *     > Parent/container values should be merged with retrieved array
-		 *   > Value at path is a string that inherits from another field
-		 *     > Value from other field will be retrieved and will replace inheritance placeholder in retrieved value
-		 */
-
+		 *
+		 * 1. Path does not exist in current field.
+		 * 2. Path exists and is not an object, but at least one of the following is true:
+		 *     * Value at path is an array (e.g. properties, elements, etc. array):
+		 *         * - Parent/container values should be merged with retrieved array.
+		 *     * Value at path is a string that inherits from another field:
+		 *         * - Value from other field will be retrieved and will replace
+		 *           inheritance placeholder in retrieved value
+		 * @var bool
+		*/
 		$deeper = false;
 
-		if ( !$this->path_isset($path) )
+		if ( ! $this->path_isset( $path ) ) {
 			$deeper = true;
-		else {
-			$val = $this->get_path_value($path);
-			if ( !is_object($val) && ( is_array($val) || ($inherit = strpos($val, $inherit_tag)) !== false ) )
+		} else {
+			$val = $this->get_path_value( $path );
+			if ( is_array( $val ) ) {
 				$deeper = true;
-			else
-				$deeper = false;
+			} elseif ( is_string( $val ) && false !== strpos( $val, $inherit_tag ) ) {
+				$deeper = true;
+				// Value inherits from another field.
+				$inherit = true;
+			}
 		}
-		if ( $deeper && 'current' != $dir ) {
+
+		if ( $deeper && 'current' !== $dir ) {
 			$ex_val = '';
 			// Get Parent value (recursive)
-			if ( 'parent' == $dir )
-				$ex_val = $this->get_parent_value($member, $name, $default);
-			elseif ( method_exists($this, 'get_container_value') )
-				$ex_val =  $this->get_container_value($member, $name, $default);
+			if ( 'parent' === $dir ) {
+				$ex_val = $this->get_parent_value( $member, $name, $default );
+			} elseif ( method_exists( $this, 'get_container_value' ) ) {
+				$ex_val = $this->get_container_value( $member, $name, $default );
+			}
 			// Handle inheritance
-			if ( is_array($val) ) {
+			if ( is_array( $val ) ) {
 				// Combine Arrays
-				if ( is_array($ex_val) )
-					$val = array_merge($ex_val, $val);
-			} elseif ( $inherit !== false ) {
+				if ( is_array( $ex_val ) ) {
+					$val = array_merge( $ex_val, $val );
+				}
+			} elseif ( false !== $inherit ) {
 				// Replace placeholder with inherited string
-				$val = str_replace($inherit_tag, $ex_val, $val);
+				$val = str_replace( $inherit_tag, $ex_val, $val );
 			} else {
 				// Default: Set parent value as value
 				$val = $ex_val;
@@ -316,10 +336,11 @@ class SLB_Field_Base extends SLB_Base {
 	 * @param string $dir Direction to move through hierarchy to find value @see SLB_Field_Type::get_member_value() for possible values
 	 * @return mixed Member value if found (Default: $default)
 	 */
-	function get_object_value(&$object, $member, $name = '', $default = '', $dir = 'parent') {
+	function get_object_value( &$object, $member, $name = '', $default = '', $dir = 'parent' ) {
 		$ret = $default;
-		if ( is_object($object) && method_exists($object, 'get_member_value') )
-			$ret = $object->get_member_value($member, $name, $default, $dir);
+		if ( is_object( $object ) && method_exists( $object, 'get_member_value' ) ) {
+			$ret = $object->get_member_value( $member, $name, $default, $dir );
+		}
 		return $ret;
 	}
 
@@ -327,10 +348,11 @@ class SLB_Field_Base extends SLB_Base {
 	 * Set item ID
 	 * @param string $id Unique item ID
 	 */
-	function set_id($id) {
-		if ( empty($id) || !is_string($id) )
+	function set_id( $id ) {
+		if ( empty( $id ) || ! is_string( $id ) ) {
 			return false;
-		$this->id = trim($id);
+		}
+		$this->id = trim( $id );
 	}
 
 	/**
@@ -338,101 +360,116 @@ class SLB_Field_Base extends SLB_Base {
 	 * @param array|string $options (optional) Options or ID of format to use
 	 * @return string item ID
 	 */
-	function get_id($options = array()) {
-		$item_id = trim($this->id);
+	function get_id( $options = array() ) {
+		$item_id = trim( $this->id );
 		$formats = $this->get_id_formats();
 		// Setup options
-		$wrap_default = array('open' => '', 'close' => '', 'segment_open' => '', 'segment_close' => '');
+		$wrap_default = array(
+			'open'          => '',
+			'close'         => '',
+			'segment_open'  => '',
+			'segment_close' => '',
+		);
 
 		$options_default = array(
-			'format'			=> null,
-			'wrap'				=> array(),
-			'segments_pre'		=> null,
-			'prefix'			=> '',
-			'recursive'			=> false
+			'format'       => null,
+			'wrap'         => array(),
+			'segments_pre' => null,
+			'prefix'       => '',
+			'recursive'    => false,
 		);
 
 		// Load options based on format
-		if ( !is_array($options) )
-			$options = array('format' => $options);
-		if ( isset($options['format']) && is_string($options['format']) && isset($formats[$options['format']]) )
-			$options_default = wp_parse_args($formats[$options['format']], $options_default);
-		else
-			unset($options['format']);
-		$options = wp_parse_args($options, $options_default);
+		if ( ! is_array( $options ) ) {
+			$options = array( 'format' => $options );
+		}
+		if ( isset( $options['format'] ) && is_string( $options['format'] ) && isset( $formats[ $options['format'] ] ) ) {
+			$options_default = wp_parse_args( $formats[ $options['format'] ], $options_default );
+		} else {
+			unset( $options['format'] );
+		}
+		$options = wp_parse_args( $options, $options_default );
 		// Import options into function
-		extract($options);
+		extract( $options );
 
 		// Validate options
-		$wrap = wp_parse_args($wrap, $wrap_default);
+		$wrap = wp_parse_args( $wrap, $wrap_default );
 
-		if ( !is_array($segments_pre) )
-			$segments_pre = array($segments_pre);
-		$segments_pre = array_reverse($segments_pre);
+		if ( ! is_array( $segments_pre ) ) {
+			$segments_pre = array( $segments_pre );
+		}
+		$segments_pre = array_reverse( $segments_pre );
 
 		// Format ID based on options
-		$item_id = array($item_id);
+		$item_id = array( $item_id );
 
 		// Add parent objects to ID
-		if ( !!$recursive ) {
+		if ( ! ! $recursive ) {
 			// Create array of ID components
 			$m = 'get_caller';
-			$c = ( method_exists($this, $m) ) ? $this->{$m}() : null;
-			while ( !!$c ) {
+			$c = ( method_exists( $this, $m ) ) ? $this->{$m}() : null;
+			while ( ! ! $c ) {
 				// Add ID of current caller to array
-				if ( method_exists($c, 'get_id') && ( $itemp = $c->get_id() ) && !empty($itemp) )
-					$item_id = $itemp;
+				if ( method_exists( $c, 'get_id' ) && ! strlen( $c->get_id() ) > 0 ) {
+					$item_id = $c->get_id();
+				}
 				// Get parent object
-				$c = ( method_exists($c, $m) ) ? $c->{$m}() : null;
-				$itemp = '';
+				$c = ( method_exists( $c, $m ) ) ? $c->{$m}() : null;
 			}
-			unset($c);
+			unset( $c );
 		}
 
 		// Additional segments (Pre)
 		foreach ( $segments_pre as $seg ) {
-			if ( is_null($seg) )
+			if ( is_null( $seg ) ) {
 				continue;
-			if ( is_object($seg) )
-				$seg = (array)$seg;
-			if ( is_array($seg) )
-				$item_id = array_merge($item_id, array_reverse($seg));
-			elseif ( '' != strval($seg) )
-				$item_id[] = strval($seg);
+			}
+			if ( is_object( $seg ) ) {
+				$seg = (array) $seg;
+			}
+			if ( is_array( $seg ) ) {
+				$item_id = array_merge( $item_id, array_reverse( $seg ) );
+			} elseif ( '' !== strval( $seg ) ) {
+				$item_id[] = strval( $seg );
+			}
 		}
 
 		// Prefix
-		if ( is_array($prefix) ) {
+		if ( is_array( $prefix ) ) {
 			// Array is sequence of instance methods to call on object
 			// Last array member can be an array of parameters to pass to methods
-			$count = count($prefix);
-			$args = ( $count > 1 && is_array($prefix[$count - 1]) ) ? array_pop($prefix) : array();
-			$p = $this;
-			$val = '';
+			$count = count( $prefix );
+			$args  = ( $count > 1 && is_array( $prefix[ $count - 1 ] ) ) ? array_pop( $prefix ) : array();
+			$p     = $this;
+			$val   = '';
 			// Iterate through methods
 			foreach ( $prefix as $m ) {
-				if ( !method_exists($p, $m) )
+				if ( ! method_exists( $p, $m ) ) {
 					continue;
+				}
 				// Build callback
-				$m = $this->util->m($p, $m);
+				$m = $this->util->m( $p, $m );
 				// Call callback
-				$val = call_user_func_array($m, $args);
+				$val = call_user_func_array( $m, $args );
 				// Returned value may be an instance object
-				if ( is_object($val) )
+				if ( is_object( $val ) ) {
 					$p = $val; // Use returned object in next round
-				else
-					array_unshift($args, $val); // Pass returned value as parameter to next method on using current object
+				} else {
+					array_unshift( $args, $val ); // Pass returned value as parameter to next method on using current object
+				}
 			}
 			$prefix = $val;
-			unset($p, $val);
+			unset( $p, $val );
 		}
-		if ( is_numeric($prefix) )
-			$prefix = strval($prefix);
-		if ( empty($prefix) || !is_string($prefix) )
+		if ( is_numeric( $prefix ) ) {
+			$prefix = strval( $prefix );
+		}
+		if ( empty( $prefix ) || ! is_string( $prefix ) ) {
 			$prefix = '';
+		}
 
 		// Convert array to string
-		$item_id = $prefix . $wrap['open'] . implode($wrap['segment_close'] . $wrap['segment_open'], array_reverse($item_id)) . $wrap['close'];
+		$item_id = $prefix . $wrap['open'] . implode( $wrap['segment_close'] . $wrap['segment_open'], array_reverse( $item_id ) ) . $wrap['close'];
 		return $item_id;
 	}
 
@@ -460,8 +497,11 @@ class SLB_Field_Base extends SLB_Base {
 			$this->add_id_format(
 				'attr_id',
 				[
-					'wrap' => [ 'open' => '_', 'segment_open' => '_' ],
-					'prefix' => [ 'get_container', 'get_id', 'add_prefix' ],
+					'wrap'      => [
+						'open'         => '_',
+						'segment_open' => '_',
+					],
+					'prefix'    => [ 'get_container', 'get_id', 'add_prefix' ],
 					'recursive' => true,
 				],
 				true
@@ -469,9 +509,14 @@ class SLB_Field_Base extends SLB_Base {
 			$this->add_id_format(
 				'attr_name',
 				[
-					'wrap' => [ 'open' => '[', 'close' => ']', 'segment_open' => '[', 'segment_close' => ']' ],
-					'prefix' => [ 'get_container', 'get_id', 'add_prefix' ],
-					'recursive' =>  true,
+					'wrap'      => [
+						'open'          => '[',
+						'close'         => ']',
+						'segment_open'  => '[',
+						'segment_close' => ']',
+					],
+					'prefix'    => [ 'get_container', 'get_id', 'add_prefix' ],
+					'recursive' => true,
 				],
 				true
 			);
@@ -495,18 +540,25 @@ class SLB_Field_Base extends SLB_Base {
 		// Init ID formats before adding new ones.
 		$this->init_id_formats();
 		// Validate args.
-		$name = trim($name);
+		$name = trim( $name );
 		// Stop if name invalid.
 		if ( empty( $name ) ) {
 			return;
 		}
 		$overwrite = (bool) $overwrite;
 		// Do not add format if name matches existing format (when overwriting not allowed).
-		if ( ! $overwrite && in_array( $name, array_keys( $this->id_formats ) ) ) {
+		if ( ! $overwrite && in_array( $name, array_keys( $this->id_formats ), true ) ) {
 			return;
 		}
 		// Normlize options.
-		$options = wp_parse_args( $options, [ 'wrap' => [], 'prefix' => [], 'recursive' => false ] );
+		$options = wp_parse_args(
+			$options,
+			[
+				'wrap'      => [],
+				'prefix'    => [],
+				'recursive' => false,
+			]
+		);
 		// Add format.
 		$this->id_formats[ $name ] = $options;
 	}
@@ -517,80 +569,85 @@ class SLB_Field_Base extends SLB_Base {
 	 * @param bool $top (optional) Whether to traverse through the field hierarchy to get data for field (Default: TRUE)
 	 * @return mixed Value at specified path
 	 */
-	function get_data($context = '', $top = true) {
-		$opt_d = array('context' => '', 'top' => true);
-		$args = func_get_args();
-		$a = false;
-		if ( count($args) == 1 && is_array($args[0]) && !empty($args[0]) ) {
-			$a = true;
-			$args = wp_parse_args($args[0], $opt_d);
-			extract($args);
+	function get_data( $context = '', $top = true ) {
+		$opt_d = array(
+			'context' => '',
+			'top'     => true,
+		);
+		$args  = func_get_args();
+		$a     = false;
+		if ( count( $args ) === 1 && is_array( $args[0] ) && ! empty( $args[0] ) ) {
+			$a    = true;
+			$args = wp_parse_args( $args[0], $opt_d );
+			extract( $args );
 		}
 
-		if ( is_string($top) ) {
-			if ( 'false' == $top )
+		if ( is_string( $top ) ) {
+			if ( 'false' === $top ) {
 				$top = false;
-			elseif ( 'true' == $top )
+			} elseif ( 'true' === $top ) {
 				$top = true;
-			elseif ( is_numeric($top) )
-				$top = intval($top);
+			} elseif ( is_numeric( $top ) ) {
+				$top = intval( $top );
+			}
 		}
-		$top = !!$top;
-		$obj =& $this;
-		$obj_path = array($this);
-		$path = array();
+		$top      = ! ! $top;
+		$obj      =& $this;
+		$obj_path = array( $this );
+		$path     = array();
 		if ( $top ) {
 			// Iterate through hiearchy to get top-most object
-			while ( !empty($obj) ) {
+			while ( ! empty( $obj ) ) {
 				$new = null;
 				// Try to get caller first
-				if ( method_exists($obj, 'get_caller') ) {
+				if ( method_exists( $obj, 'get_caller' ) ) {
 					$checked = true;
-					$new =& $obj->get_caller();
+					$new     =& $obj->get_caller();
 				}
 				// Try to get container if no caller found
-				if ( empty($new) && method_exists($obj, 'get_container') ) {
+				if ( empty( $new ) && method_exists( $obj, 'get_container' ) ) {
 					$checked = true;
-					$new =& $obj->get_container();
+					$new     =& $obj->get_container();
 					// Load data
-					if ( method_exists($new, 'load_data') ) {
+					if ( method_exists( $new, 'load_data' ) ) {
 						$new->load_data();
 					}
 				}
 
 				$obj =& $new;
-				unset($new);
+				unset( $new );
 				// Stop iteration
-				if ( !empty($obj) ) {
+				if ( ! empty( $obj ) ) {
 					// Add object to path if it is valid
 					$obj_path[] =& $obj;
 				}
 			}
-			unset($obj);
+			unset( $obj );
 		}
 
 		// Check each object (starting with top-most) for matching data for current field
 
 		// Reverse array
-		$obj_path = array_reverse($obj_path);
+		$obj_path = array_reverse( $obj_path );
 		// Build path for data location
 		foreach ( $obj_path as $obj ) {
-			if ( method_exists($obj, 'get_id') )
+			if ( method_exists( $obj, 'get_id' ) ) {
 				$path[] = $obj->get_id();
+			}
 		}
 		// Iterate through objects
-		while ( !empty($obj_path) ) {
+		while ( ! empty( $obj_path ) ) {
 			// Get next object
-			$obj = array_shift($obj_path);
+			$obj = array_shift( $obj_path );
 			// Shorten path
-			array_shift($path);
+			array_shift( $path );
 			// Check for value in object and stop iteration if matching data found
-			$val = $this->get_object_value($obj, 'data', $path, null, 'current');
-			if ( !is_null($val) ) {
+			$val = $this->get_object_value( $obj, 'data', $path, null, 'current' );
+			if ( ! is_null( $val ) ) {
 				break;
 			}
 		}
-		return $this->format($val, $context);
+		return $this->format( $val, $context );
 	}
 
 	/**
@@ -599,8 +656,8 @@ class SLB_Field_Base extends SLB_Base {
 	 * @param mixed $value Value to set
 	 * @param string|array $name Name of value to set (Can also be path to value)
 	 */
-	function set_data($value, $name = '') {
-		$ref =& $this->get_path_value('data', $name);
+	function set_data( $value, $name = '' ) {
+		$ref =& $this->get_path_value( 'data', $name );
 		$ref = $value;
 	}
 
@@ -612,34 +669,38 @@ class SLB_Field_Base extends SLB_Base {
 	 * @uses SLB_Fields::get() to retrieve field type object reference
 	 * @param string|object $parent Parent ID or reference
 	 */
-	function set_parent($parent = null) {
+	function set_parent( $parent = null ) {
 		// Stop processing if parent empty
-		if ( empty($parent) && !is_string($this->parent) )
+		if ( empty( $parent ) && ! is_string( $this->parent ) ) {
 			return false;
+		}
 		// Parent passed as object reference wrapped in array
-		if ( is_array($parent) && isset($parent[0]) && is_object($parent[0]) )
+		if ( is_array( $parent ) && isset( $parent[0] ) && is_object( $parent[0] ) ) {
 			$parent = $parent[0];
+		}
 
 		// No parent set but parent ID (previously) set in object
-		if ( empty($parent) && is_string($this->parent) )
+		if ( empty( $parent ) && is_string( $this->parent ) ) {
 			$parent = $this->parent;
+		}
 
 		// Retrieve reference object if ID was supplied
-		if ( is_string($parent) ) {
-			$parent = trim($parent);
+		if ( is_string( $parent ) ) {
+			$parent = trim( $parent );
 			// Get parent object reference
 			/**
 			 * @var SLB
 			 */
 			$b = $this->get_base();
-			if ( !!$b && isset($b->fields) && $b->fields->has($parent) ) {
-				$parent = $b->fields->get($parent);
+			if ( ! ! $b && isset( $b->fields ) && $b->fields->has( $parent ) ) {
+				$parent = $b->fields->get( $parent );
 			}
 		}
 
 		// Set parent value on object
-		if ( is_string($parent) || is_object($parent) )
+		if ( is_string( $parent ) || is_object( $parent ) ) {
 			$this->parent = $parent;
+		}
 	}
 
 	/**
@@ -655,24 +716,25 @@ class SLB_Field_Base extends SLB_Base {
 	 * @param string $title Title for object
 	 * @param string $plural Plural form of title
 	 */
-	function set_title($title = '') {
-		if ( is_scalar($title) )
-			$this->title = strip_tags(trim($title));
+	function set_title( $title = '' ) {
+		if ( is_scalar( $title ) ) {
+			$this->title = wp_strip_all_tags( trim( $title ) );
+		}
 	}
 
 	/**
 	 * Retrieve object title
 	 */
 	function get_title() {
-		return $this->get_member_value('title', '','', 'current');
+		return $this->get_member_value( 'title', '', '', 'current' );
 	}
 
 	/**
 	 * Set object description
 	 * @param string $description Description for object
 	 */
-	function set_description($description = '') {
-		$this->description = strip_tags(trim($description));
+	function set_description( $description = '' ) {
+		$this->description = wp_strip_all_tags( trim( $description ) );
 	}
 
 	/**
@@ -681,36 +743,42 @@ class SLB_Field_Base extends SLB_Base {
 	 */
 	function get_description() {
 		$dir = 'current';
-		return $this->get_member_value('description', '','', $dir);
-		return $desc;
+		return $this->get_member_value( 'description', '', '', $dir );
 	}
 
 	/**
-	 * Sets multiple properties on field type at once
-	 * @param array $properties Properties. Each element is an array containing the arguments to set a new property
-	 * @return boolean TRUE if successful, FALSE otherwise
+	 * Sets multiple properties on field type at once.
+	 *
+	 * @param array $properties Properties to set - each element is an
+	 *                          array containing the arguments to set a
+	 *                          new property.
+	 * @return void
+	 * @todo Test refactored code.
 	 */
-	function set_properties($properties) {
-		if ( !is_array($properties) ) {
-			return false;
+	function set_properties( $properties ) {
+		if ( ! is_array( $properties ) ) {
+			return;
 		}
 		// Normalize properties
-		$properties = $this->remap_properties($properties);
-		$properties = $this->sort_properties($properties);
-		// Set Member properties
+		$properties = $this->remap_properties( $properties );
+		$properties = $this->sort_properties( $properties );
+
+		// Set Member properties.
 		foreach ( $properties as $prop => $val ) {
-			if ( ( $m = 'set_' . $prop ) && method_exists($this, $m) ) {
-				$this->{$m}($val);
+			$m = 'set_' . $prop;
+			if ( method_exists( $this, $m ) ) {
+				$this->{$m}( $val );
 				// Remove member property from array
-				unset($properties[$prop]);
+				unset( $properties[ $prop ] );
 			}
+			unset( $m );
 		}
 
 		// Filter properties
-		$properties = $this->filter_properties($properties);
+		$properties = $this->filter_properties( $properties );
 		// Set additional instance properties
-		foreach ( $properties as $name => $val) {
-			$this->set_property($name, $val);
+		foreach ( $properties as $name => $val ) {
+			$this->set_property( $name, $val );
 		}
 	}
 
@@ -721,9 +789,9 @@ class SLB_Field_Base extends SLB_Base {
 	 * @param array $properties Associative array of properties
 	 * @return array Remapped properties
 	 */
-	function remap_properties($properties) {
+	function remap_properties( $properties ) {
 		// Return remapped properties
-		return $this->util->array_remap($properties, $this->map);
+		return $this->util->array_remap( $properties, $this->map );
 	}
 
 	/**
@@ -731,21 +799,23 @@ class SLB_Field_Base extends SLB_Base {
 	 * @uses this::property_priority
 	 * @return array Sorted priorities
 	 */
-	function sort_properties($properties) {
+	function sort_properties( $properties ) {
 		// Stop if sorting not necessary
-		if ( empty($properties) || !is_array($properties) || empty($this->property_priority) || !is_array($this->property_priority) )
+		if ( empty( $properties ) || ! is_array( $properties ) || empty( $this->property_priority ) || ! is_array( $this->property_priority ) ) {
 			return $properties;
+		}
 		$props = array();
 		foreach ( $this->property_priority as $prop ) {
-			if ( !array_key_exists($prop, $properties) )
+			if ( ! array_key_exists( $prop, $properties ) ) {
 				continue;
+			}
 			// Add to new array
-			$props[$prop] = $properties[$prop];
+			$props[ $prop ] = $properties[ $prop ];
 			// Remove from old array
-			unset($properties[$prop]);
+			unset( $properties[ $prop ] );
 		}
 		// Append any remaining properties
-		$props = array_merge($props, $properties);
+		$props = array_merge( $props, $properties );
 		return $props;
 	}
 
@@ -755,28 +825,28 @@ class SLB_Field_Base extends SLB_Base {
 	 * @param array $signature (optional) Default properties
 	 * @return array Normalized properties
 	 */
-	function make_properties($props, $signature = array()) {
+	function make_properties( $props, $signature = array() ) {
 		$p = array();
-		if ( is_array($props) ) {
+		if ( is_array( $props ) ) {
 			foreach ( $props as $prop ) {
-				if ( is_array($prop) ) {
-					$p = array_merge($prop, $p);
+				if ( is_array( $prop ) ) {
+					$p = array_merge( $prop, $p );
 				}
 			}
 		}
 		$props = $p;
-		if ( is_array($signature) ) {
-			$props = array_merge($signature, $props);
+		if ( is_array( $signature ) ) {
+			$props = array_merge( $signature, $props );
 		}
 		return $props;
 	}
 
-	function validate_id($id) {
-		return ( is_scalar($id) && !empty($id) ) ? true : false;
+	function validate_id( $id ) {
+		return ( is_scalar( $id ) && ! empty( $id ) ) ? true : false;
 	}
 
-	function integrate_id($id) {
-		return ( $this->validate_id($id) ) ? array('id' => $id) : array();
+	function integrate_id( $id ) {
+		return ( $this->validate_id( $id ) ) ? array( 'id' => $id ) : array();
 	}
 
 	/**
@@ -785,8 +855,8 @@ class SLB_Field_Base extends SLB_Base {
 	 * @param array $props Properties
 	 * @return array Filtered properties
 	 */
-	function filter_properties($props = array()) {
-		return $this->util->array_filter_keys($props, $this->property_filter);
+	function filter_properties( $props = array() ) {
+		return $this->util->array_filter_keys( $props, $this->property_filter );
 	}
 
 	/**
@@ -796,18 +866,19 @@ class SLB_Field_Base extends SLB_Base {
 	 * @param string|array $group Group(s) property belongs to
 	 * @return boolean TRUE if property is successfully added to field type, FALSE otherwise
 	 */
-	function set_property($name, $value = '', $group = null) {
+	function set_property( $name, $value = '', $group = null ) {
 		// Do not add if property name is not a string
-		if ( !is_string($name) )
+		if ( ! is_string( $name ) ) {
 			return false;
+		}
 		// Create property array
-		$prop_arr = array();
+		$prop_arr          = array();
 		$prop_arr['value'] = $value;
 		// Add to properties array
-		$this->properties[$name] = $value;
+		$this->properties[ $name ] = $value;
 		// Add property to specified groups
-		if ( !empty($group) ) {
-			$this->set_group_property($group, $name);
+		if ( ! empty( $group ) ) {
+			$this->set_group_property( $group, $name );
 		}
 		return true;
 	}
@@ -817,8 +888,8 @@ class SLB_Field_Base extends SLB_Base {
 	 * @param string $name Name of property to retrieve
 	 * @return mixed Specified Property if exists (Default: Empty string)
 	 */
-	function get_property($name) {
-		$val = $this->get_member_value('properties', $name);
+	function get_property( $name ) {
+		$val = $this->get_member_value( 'properties', $name );
 		return $val;
 	}
 
@@ -826,14 +897,15 @@ class SLB_Field_Base extends SLB_Base {
 	 * Removes a property from item
 	 * @param string $name Property ID
 	 */
-	function remove_property($name) {
+	function remove_property( $name ) {
 		// Remove property
-		if ( isset($this->properties[$name]) )
-			unset($this->properties[$name]);
+		if ( isset( $this->properties[ $name ] ) ) {
+			unset( $this->properties[ $name ] );
+		}
 		// Remove from group
-		foreach ( array_keys($this->property_groups) as $g ) {
-			if ( isset($this->property_groups[$g][$name]) ) {
-				unset($this->property_groups[$g][$name]);
+		foreach ( array_keys( $this->property_groups ) as $g ) {
+			if ( isset( $this->property_groups[ $g ][ $name ] ) ) {
+				unset( $this->property_groups[ $g ][ $name ] );
 				break;
 			}
 		}
@@ -844,21 +916,23 @@ class SLB_Field_Base extends SLB_Base {
 	 * @param string|array $group Group(s) to add property to
 	 * @param string $property Property to add to group
 	 */
-	function set_group_property($group, $property) {
-		if ( is_string($group) && isset($this->property_groups[$group][$property]) )
+	function set_group_property( $group, $property ) {
+		if ( is_string( $group ) && isset( $this->property_groups[ $group ][ $property ] ) ) {
 			return;
-		if ( !is_array($group) ) {
-			$group = array($group);
+		}
+		if ( ! is_array( $group ) ) {
+			$group = array( $group );
 		}
 
-		foreach ($group as $g) {
-			$g = trim($g);
+		foreach ( $group as $g ) {
+			$g = trim( $g );
 			// Initialize group if it doesn't already exist
-			if ( !isset($this->property_groups[$g]) )
-				$this->property_groups[$g] = array();
+			if ( ! isset( $this->property_groups[ $g ] ) ) {
+				$this->property_groups[ $g ] = array();
+			}
 
 			// Add property to group
-			$this->property_groups[$g][$property] = null;
+			$this->property_groups[ $g ][ $property ] = null;
 		}
 	}
 
@@ -867,8 +941,8 @@ class SLB_Field_Base extends SLB_Base {
 	 * @param string $group Group to retrieve
 	 * @return array Array of properties in specified group
 	 */
-	function get_group($group) {
-		return $this->get_member_value('property_groups', $group, array());
+	function get_group( $group ) {
+		return $this->get_member_value( 'property_groups', $group, array() );
 	}
 
 	/**
@@ -888,7 +962,7 @@ class SLB_Field_Base extends SLB_Base {
 	 * @return array Hooks
 	 */
 	function get_hooks() {
-		return $this->get_member_value('hooks', '', array());
+		return $this->get_member_value( 'hooks', '', array() );
 	}
 
 	/**
@@ -899,19 +973,21 @@ class SLB_Field_Base extends SLB_Base {
 	 * @param $priority
 	 * @param $accepted_args
 	 */
-	function add_hook($tag, $function_to_add, $priority = 10, $accepted_args = 1) {
+	function add_hook( $tag, $function_to_add, $priority = 10, $accepted_args = 1 ) {
 		// Create new array for tag (if not already set)
-		if ( !isset($this->hooks[$tag]) )
-			$this->hooks[$tag] = array();
+		if ( ! isset( $this->hooks[ $tag ] ) ) {
+			$this->hooks[ $tag ] = array();
+		}
 		// Build Unique ID
-		if ( is_string($function_to_add) )
+		if ( is_string( $function_to_add ) ) {
 			$id = $function_to_add;
-		elseif ( is_array($function_to_add) && !empty($function_to_add) )
-			$id = strval($function_to_add[count($function_to_add) - 1]);
-		else
-			$id = 'function_' . ( count($this->hooks[$tag]) + 1 );
+		} elseif ( is_array( $function_to_add ) && ! empty( $function_to_add ) ) {
+			$id = strval( $function_to_add[ count( $function_to_add ) - 1 ] );
+		} else {
+			$id = 'function_' . ( count( $this->hooks[ $tag ] ) + 1 );
+		}
 		// Add hook
-		$this->hooks[$tag][$id] = func_get_args();
+		$this->hooks[ $tag ][ $id ] = func_get_args();
 	}
 
 	/**
@@ -922,8 +998,8 @@ class SLB_Field_Base extends SLB_Base {
 	 * @param $priority
 	 * @param $accepted_args
 	 */
-	function add_action($tag, $function_to_add, $priority = 10, $accepted_args = 1) {
-		$this->add_hook($tag, $function_to_add, $priority, $accepted_args);
+	function add_action( $tag, $function_to_add, $priority = 10, $accepted_args = 1 ) {
+		$this->add_hook( $tag, $function_to_add, $priority, $accepted_args );
 	}
 
 	/**
@@ -934,8 +1010,8 @@ class SLB_Field_Base extends SLB_Base {
 	 * @param $priority
 	 * @param $accepted_args
 	 */
-	function add_filter($tag, $function_to_add, $priority = 10, $accepted_args = 1) {
-		$this->add_hook($tag, $function_to_add, $priority, $accepted_args);
+	function add_filter( $tag, $function_to_add, $priority = 10, $accepted_args = 1 ) {
+		$this->add_hook( $tag, $function_to_add, $priority, $accepted_args );
 	}
 
 	/*-** Dependencies **-*/
@@ -951,22 +1027,27 @@ class SLB_Field_Base extends SLB_Base {
 	 * @param $ver
 	 * @param $ex
 	 */
-	function add_dependency($type, $context, $handle, $src = false, $deps = array(), $ver = false, $ex = false) {
+	function add_dependency( $type, $context, $handle, $src = false, $deps = array(), $ver = false, $ex = false ) {
 		$args = func_get_args();
 		// Remove type/context from arguments
-		$args = array_slice($args, 2);
+		$args = array_slice( $args, 2 );
 
 		// Set context
-		if ( !is_array($context) ) {
+		if ( ! is_array( $context ) ) {
 			// Wrap single contexts in an array
-			if ( is_string($context) )
-				$context = array($context);
-			else
+			if ( is_string( $context ) ) {
+				$context = array( $context );
+			} else {
 				$context = array();
+			}
 		}
 		// Add file to instance property
-		if ( isset($this->{$type}) && is_array($this->{$type}) )
-			$this->{$type}[$handle] = array('context' => $context, 'params' => $args);
+		if ( isset( $this->{$type} ) && is_array( $this->{$type} ) ) {
+			$this->{$type}[ $handle ] = array(
+				'context' => $context,
+				'params'  => $args,
+			);
+		}
 	}
 
 	/**
@@ -982,8 +1063,8 @@ class SLB_Field_Base extends SLB_Base {
 	function add_script( $context, $handle, $src = false, $deps = array(), $ver = false, $in_footer = false ) {
 		$args = func_get_args();
 		// Add file type to front of arguments array
-		array_unshift($args, 'scripts');
-		call_user_func_array($this->m('add_dependency'), $args);
+		array_unshift( $args, 'scripts' );
+		call_user_func_array( $this->m( 'add_dependency' ), $args );
 	}
 
 	/**
@@ -991,7 +1072,7 @@ class SLB_Field_Base extends SLB_Base {
 	 * @return array Script dependencies
 	 */
 	function get_scripts() {
-		return $this->get_member_value('scripts', '', array());
+		return $this->get_member_value( 'scripts', '', array() );
 	}
 
 	/**
@@ -1006,8 +1087,8 @@ class SLB_Field_Base extends SLB_Base {
 	 */
 	function add_style( $handle, $src = false, $deps = array(), $ver = false, $media = false ) {
 		$args = func_get_args();
-		array_unshift($args, 'styles');
-		call_user_func_array($this->m('add_dependency'), $args);
+		array_unshift( $args, 'styles' );
+		call_user_func_array( $this->m( 'add_dependency' ), $args );
 	}
 
 	/**
@@ -1015,7 +1096,7 @@ class SLB_Field_Base extends SLB_Base {
 	 * @return array Style dependencies
 	 */
 	function get_styles() {
-		return $this->get_member_value('styles', '', array());
+		return $this->get_member_value( 'styles', '', array() );
 	}
 
 	/* Helpers */
@@ -1026,13 +1107,13 @@ class SLB_Field_Base extends SLB_Base {
 	 * @param string $context Current context
 	 * @return mixed Formatted value
 	 */
-	function format($value, $context = '') {
-		if ( is_scalar($context) && !empty($context) ) {
-			$handler = 'format_' . trim(strval($context));
+	function format( $value, $context = '' ) {
+		if ( is_scalar( $context ) && ! empty( $context ) ) {
+			$handler = 'format_' . trim( strval( $context ) );
 			// Only process if context is valid and has a handler
-			if ( !empty($context) && method_exists($this, $handler) ) {
+			if ( ! empty( $context ) && method_exists( $this, $handler ) ) {
 				// Pass value to handler
-				$value = $this->{$handler}($value, $context);
+				$value = $this->{$handler}( $value, $context );
 			}
 		}
 		// Return formatted value
@@ -1083,26 +1164,29 @@ class SLB_Field_Base extends SLB_Base {
 	 * @param string $context (Optional) Formatting context
 	 * @return mixed Formatted value
 	 */
-	function format_final($value, $context = '') {
-		if ( !is_string($value) )
+	function format_final( $value, $context = '' ) {
+		if ( ! is_string( $value ) ) {
 			return $value;
+		}
 
 		// Restore special chars
-		return $this->restore_special_chars($value, $context);
+		return $this->restore_special_chars( $value, $context );
 	}
 
-	function preserve_special_chars($value, $context = '') {
-		if ( !is_string($value) )
+	function preserve_special_chars( $value, $context = '' ) {
+		if ( ! is_string( $value ) ) {
 			return $value;
+		}
 		$specials = $this->get_special_chars();
-		return str_replace(array_keys($specials), $specials, $value);
+		return str_replace( array_keys( $specials ), $specials, $value );
 	}
 
-	function restore_special_chars($value, $context = '') {
-		if ( !is_string($value) )
+	function restore_special_chars( $value, $context = '' ) {
+		if ( ! is_string( $value ) ) {
 			return $value;
+		}
 		$specials = $this->get_special_chars();
-		return str_replace($specials, array_keys($specials), $value);
+		return str_replace( $specials, array_keys( $specials ), $value );
 	}
 
 	/**
@@ -1113,6 +1197,6 @@ class SLB_Field_Base extends SLB_Base {
 	 * @return array Special characters/placeholders
 	 */
 	function get_special_chars() {
-		return wp_parse_args($this->special_chars, $this->special_chars_default);
+		return wp_parse_args( $this->special_chars, $this->special_chars_default );
 	}
 }

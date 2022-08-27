@@ -1,7 +1,7 @@
 ---
 name: Feedback
 about: Share your feedback
-title: "[Feedback] "
+title: "[Feedback]: "
 labels: feedback
 assignees: ''
 
