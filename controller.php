@@ -285,7 +285,11 @@ class SLB_Lightbox extends SLB_Base {
 		}
 
 		// Get lowest priority for filter.
-		$max_priority = max( array_keys( $wp_filter[ $tag ]->callbacks ) ) + 123;
+		$max_priority = max( array_keys( $wp_filter[ $tag ]->callbacks ) );
+		// Add priority offset
+		if ( $max_priority < PHP_INT_MAX ) {
+			$max_priority += min( 123, PHP_INT_MAX - $max_priority );
+		}
 
 		switch ( $tag ) {
 			case 'the_content':
