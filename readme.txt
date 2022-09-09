@@ -65,6 +65,10 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 
 == Changelog ==
 
+= 2.9.1 =
+
+* Fix: Validate hook priority values (Let's Getz Prioritized)
+
 = 2.9.0 =
 
 * Add: Support WebP image format
