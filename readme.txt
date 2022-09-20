@@ -65,6 +65,10 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 
 == Changelog ==
 
+= 2.9.2 =
+
+* Optimize: Symbolic link handing for file/directory paths.
+
 = 2.9.1 =
 
 * Fix: Validate hook priority values (Let's Getz Prioritized)
