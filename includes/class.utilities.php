@@ -1251,9 +1251,17 @@ class SLB_Utilities {
 			}
 			// Extract base path
 			$base = $this->normalize_path( $base );
-			if ( 0 === strpos( $base, $this->normalize_path( WP_PLUGIN_DIR ) ) ) {
-				$end  = strpos( $base, '/', strlen( WP_PLUGIN_DIR ) + 1 );
+			$wp_plugin_dir = $this->normalize_path( realpath( WP_PLUGIN_DIR ) );
+			if ( 0 === strpos( $base, $wp_plugin_dir ) ) {
+				$end  = strpos( $base, '/', strlen( $wp_plugin_dir ) + 1 );
 				$base = substr( $base, 0, $end );
+			}
+			// Validate path.
+			if ( !is_dir( $base ) || !is_readable( $base ) ) {
+				// Fallback: Merge `WP_PLUGIN_DIR` and top-level directory from `plugin_basename()`.
+				$base = plugin_basename( __FILE__ );
+				$base = substr( $base, 0, strpos( $base, '/') );
+				$base = $this->normalize_path( WP_PLUGIN_DIR, $base, false );
 			}
 			// Save base path.
 			$this->_path_base = $base;
