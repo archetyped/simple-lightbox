@@ -1,8 +1,6 @@
 module.exports = function(grunt) {
 	// Load tasks
 	require('load-grunt-tasks')(grunt);
-	// Display task timing
-	require('time-grunt')(grunt);
 	// Project configuration.
 	grunt.initConfig({
 		// Metadata
