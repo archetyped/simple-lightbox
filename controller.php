@@ -1135,7 +1135,7 @@ class SLB_Lightbox extends SLB_Base {
 					// Save data to corresponding media item(s).
 					if ( isset( $pids[ $att->ID ] ) ) {
 						foreach ( $pids[ $att->ID ] as $key ) {
-							$this->media_items[ $key ] = (object) array_merge( (array) $this->media_items[ $key ], $data );
+							// $this->media_items[ $key ] = (object) array_merge( (array) $this->media_items[ $key ], $data );
 						}
 					}
 				}
