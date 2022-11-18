@@ -4,7 +4,7 @@ Donate link: http://gum.co/slb-donate
 License: GPLv2
 Tags: lightbox, gallery, photography, images, theme, template, style
 Requires at least: 5.3
-Tested up to: 6.0
+Tested up to: 6.1
 Requires PHP: 5.6.20
 Stable tag: trunk
 
@@ -64,6 +64,13 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 3.  Dark Theme
 
 == Changelog ==
+
+= 2.9.3 =
+
+* Hotfix: WordPress 6.1 `wp_rand()` bug (32-bit platforms) ([#974](https://github.com/archetyped/simple-lightbox/issues/974))
+* Update: Confirm WordPress 6.1 compatibility
+* Optimize: Media item cache key generation
+* Optimize: Prune build tasks
 
 = 2.9.2 =
 

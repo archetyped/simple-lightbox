@@ -1,6 +1,6 @@
 {
   "name": "simple-lightbox",
-  "version": "2.9.2",
+  "version": "2.9.3",
   "title": "Simple Lightbox",
   "description": "The highly-customizable lightbox for WordPress",
   "author": "Archetyped <support@archetyped.com>",
@@ -11,11 +11,9 @@
     "grunt-contrib-jshint": "^3.2.0",
     "grunt-contrib-uglify": "^5.2.2",
     "grunt-contrib-watch": "^1.1.0",
-    "grunt-phplint": "0.1.0",
     "grunt-sass": "^3.1.0",
     "jshint-stylish": "^2.2.1",
     "load-grunt-tasks": "^5.1.0",
-    "node-sass": "^7.0.1",
-    "time-grunt": "^2.0.0"
+    "sass": "^1.55.0"
   }
 }
