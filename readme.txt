@@ -65,6 +65,13 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 
 == Changelog ==
 
+= 2.9.3 =
+
+* Hotfix: WordPress 6.1 `wp_rand()` bug (32-bit platforms) ([#974](https://github.com/archetyped/simple-lightbox/issues/974))
+* Update: Confirm WordPress 6.1 compatibility
+* Optimize: Media item cache key generation
+* Optimize: Prune build tasks
+
 = 2.9.2 =
 
 * Optimize: Symbolic link handing for file/directory paths.
