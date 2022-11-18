@@ -1,13 +1,6 @@
 module.exports = function(grunt) {
 
 grunt.config('watch', {
-	phplint : {
-		files : '<%= paths.php.files_std %>',
-		tasks : ['phplint'],
-		options : {
-			spawn : false
-		}
-	},
 	sass_core : {
 		files : ['<%= paths.sass.base_src %>/**/*.scss'],
 		tasks : ['sass:core']

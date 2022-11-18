@@ -1180,7 +1180,7 @@ class SLB_Lightbox extends SLB_Base {
 		if ( null === $key ) {
 			// Generate Unique ID.
 			do {
-				$key = (string) wp_rand();
+				$key = mt_rand();
 			} while ( isset( $this->media_items_raw['props'][ $key ] ) );
 			// Build properties object.
 			$i = $this->media_item_template;
