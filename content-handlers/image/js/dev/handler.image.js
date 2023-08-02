@@ -16,7 +16,7 @@ SLB.View.extend_content_handler('image', {
 			// Set attributes
 			item.set_attribute('dimensions', {'width': img.width, 'height': img.height});
 			// Build output
-			var out = $('<img />', {'src': item.get_uri()});
+			var out = $('<img />', {'src': item.get_uri('permalink')});
 			// Resolve deferred
 			dfr.resolve(out);
 		};
@@ -24,7 +24,7 @@ SLB.View.extend_content_handler('image', {
 		// Attach event handler
 		$(img).on('load', function(e) { handler(e); });
 		// Load image
-		img.src = item.get_uri();
+		img.src = item.get_uri('permalink');
 		// Return promise
 		return dfr.promise();
 	}
