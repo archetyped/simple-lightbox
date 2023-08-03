@@ -345,17 +345,21 @@ class SLB_Lightbox extends SLB_Base {
 					'title'    => __( 'Activation', 'simple-lightbox' ),
 					'priority' => 10,
 				),
+				'settings'   => array(
+					'title'    => __( 'Settings', 'simple-lightbox' ),
+					'priority' => 20,
+				),
 				'grouping'   => array(
 					'title'    => __( 'Grouping', 'simple-lightbox' ),
-					'priority' => 20,
+					'priority' => 30,
 				),
 				'ui'         => array(
 					'title'    => __( 'UI', 'simple-lightbox' ),
-					'priority' => 30,
+					'priority' => 40,
 				),
 				'labels'     => array(
 					'title'    => __( 'Labels', 'simple-lightbox' ),
-					'priority' => 40,
+					'priority' => 50,
 				),
 			),
 			'items'  => array(
@@ -393,6 +397,12 @@ class SLB_Lightbox extends SLB_Base {
 					'title'   => __( 'Enable for Menus', 'simple-lightbox' ),
 					'default' => false,
 					'group'   => array( 'activation', 60 ),
+				),
+				'image_from_permalink'        => array(
+					'title'   => __( 'Use permalink for image uri', 'simple-lightbox' ),
+					'default' => false,
+					'group'   => array( 'settings', 10 ),
+					'in_client' => true,
 				),
 				'group_links'         => array(
 					'title'   => __( 'Group items (for displaying as a slideshow)', 'simple-lightbox' ),
