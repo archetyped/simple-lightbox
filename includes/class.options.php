@@ -498,7 +498,7 @@ class SLB_Options extends SLB_Field_Collection {
 	function &add( $id, $properties = array(), $update = false ) {
 		// Create item
 		$args = func_get_args();
-		$ret  = call_user_func_array( array( 'parent', 'add' ), $args );
+		$ret  = call_user_func_array( array( parent::class, 'add' ), $args );
 		return $ret;
 	}
 
