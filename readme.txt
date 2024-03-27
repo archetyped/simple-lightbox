@@ -6,7 +6,7 @@ Tags: lightbox, gallery, photography, images, theme, template, style
 Requires at least: 5.3
 Tested up to: 6.5
 Requires PHP: 5.6.20
-Stable tag: trunk
+Stable tag: 2.9.3
 
 The highly customizable lightbox for WordPress
 
