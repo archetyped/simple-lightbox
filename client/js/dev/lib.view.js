@@ -1184,13 +1184,14 @@ var Component = {
 			if ( this.util.is_obj(attrs_full) ) {
 				var attr_prefix = this.util.get_attribute();
 				var attr_key;
+				const t = this;
 				$.each(attrs_full, function(idx, attr) {
 					if ( attr.name.indexOf( attr_prefix ) === -1 ) {
 						return true;
 					}
 					// Process custom attributes (Strip prefix)
 					attr_key = attr.name.substr(attr_prefix.length + 1);
-					attrs[attr_key] = attr.value;
+					attrs[attr_key] = t.util.esc_html( attr.value );
 				});
 			}
 		}
@@ -3108,6 +3109,9 @@ var Content_Item = {
 			if ( !title ) {
 				title = validate( dom.get(0).innerText.trim() );
 			}
+
+			// Escape retrieved value.
+			title = this.util.esc_html(title);
 		}
 
 		// Final validation.
