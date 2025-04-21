@@ -4,7 +4,7 @@ Donate link: http://gum.co/slb-donate
 License: GPLv2
 Tags: lightbox, gallery, photography, image, slideshow
 Requires at least: 5.3
-Tested up to: 6.7
+Tested up to: 6.8
 Requires PHP: 5.6.20
 Stable tag: 2.9.3
 
