@@ -65,6 +65,11 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 
 == Changelog ==
 
+= 2.9.4 =
+
+* Optimize: Escape special characters in DOM attributes.
+* Update: Confirm WordPress 6.2-6.8 compatibility.
+
 = 2.9.3 =
 
 * Hotfix: WordPress 6.1 `wp_rand()` bug (32-bit platforms) ([#974](https://github.com/archetyped/simple-lightbox/issues/974))
