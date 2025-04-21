@@ -6,7 +6,7 @@ Tags: lightbox, gallery, photography, image, slideshow
 Requires at least: 5.3
 Tested up to: 6.8
 Requires PHP: 5.6.20
-Stable tag: 2.9.3
+Stable tag: 2.9.4
 
 The highly customizable lightbox for WordPress
 
