@@ -723,6 +723,18 @@ var Utilities =  {
 	},
 
 	/**
+	 * Escapes HTML characters.
+	 * @param string val Value to escape.
+	 * @returns string Escaped value.
+	 */
+	esc_html: function (val) {
+		val = ( this.is_empty(val) && val !== 0 ) ? "" : String(val);
+		const node = document.createElement("div");
+		node.appendChild(document.createTextNode(val));
+		return node.innerHTML;
+	},
+
+	/**
 	 * Checks if key(s) exist in an object
 	 * @param object obj Object to check
 	 * @param string|array key Key(s) to check for in object

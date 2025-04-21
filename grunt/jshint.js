@@ -3,6 +3,7 @@ module.exports = function(grunt) {
 grunt.config('jshint', {
 	options : {
 		reporter: require('jshint-stylish'),
+		esversion : 6,
 		curly : true,
 		eqeqeq : true,
 		immed : true,

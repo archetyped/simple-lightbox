@@ -2,11 +2,11 @@
 Contributors: Archetyped
 Donate link: http://gum.co/slb-donate
 License: GPLv2
-Tags: lightbox, gallery, photography, images, theme, template, style
+Tags: lightbox, gallery, photography, image, slideshow
 Requires at least: 5.3
-Tested up to: 6.1
+Tested up to: 6.8
 Requires PHP: 5.6.20
-Stable tag: trunk
+Stable tag: 2.9.3
 
 The highly customizable lightbox for WordPress
 
@@ -64,6 +64,11 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 3.  Dark Theme
 
 == Changelog ==
+
+= 2.9.4 =
+
+* Optimize: Escape special characters in DOM attributes.
+* Update: Confirm WordPress 6.2-6.8 compatibility.
 
 = 2.9.3 =
 
