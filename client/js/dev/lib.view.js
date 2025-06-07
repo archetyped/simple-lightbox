@@ -3073,46 +3073,47 @@ var Content_Item = {
 			return title;
 		};
 
-		// DOM-based caption
-		if ( dom.length ) {
-			// Link title (generally must be manually-entered)
-			title = dom.attr(prop);
 
-			// Figcaption element
-			if ( !title ) {
-				title = dom.closest('figure').find('figcaption').first().html();
-			}
+	   // DOM-based caption
+	   if ( dom.length ) {
+		   // Link title (generally must be manually-entered)
+		   title = dom.attr(prop);
 
-			// Class Name
-			if ( !title ) {
-				title = dom.closest('figure').find('.wp-caption-text').first().html();
-			}
-		}
+		   // Image Alt attribute (second priority)
+		   if ( !title ) {
+			   title = validate( dom.find('img').first().attr('alt') );
+		   }
 
-		// Saved attributes
-		if ( !title ) {
-			var props = ['caption', 'title'];
-			for ( var x = 0; x < props.length; x++ ) {
-				title = validate( this.get_attribute(props[x], '') );
-				if ( !this.util.is_empty(title) ) {
-					break;
-				}
-			}
-		}
+		   // Figcaption element
+		   if ( !title ) {
+			   title = dom.closest('figure').find('figcaption').first().html();
+		   }
 
-		// Fallbacks
-		if ( !title && dom.length ) {
-			// Image Alt attribute
-			title = validate( dom.find('img').first().attr('alt') );
+		   // Class Name
+		   if ( !title ) {
+			   title = dom.closest('figure').find('.wp-caption-text').first().html();
+		   }
+	   }
 
-			// Element text
-			if ( !title ) {
-				title = validate( dom.get(0).innerText.trim() );
-			}
+	   // Saved attributes
+	   if ( !title ) {
+		   var props = ['caption', 'title'];
+		   for ( var x = 0; x < props.length; x++ ) {
+			   title = validate( this.get_attribute(props[x], '') );
+			   if ( !this.util.is_empty(title) ) {
+				   break;
+			   }
+		   }
+	   }
 
-			// Escape retrieved value.
-			title = this.util.esc_html(title);
-		}
+	   // Fallbacks
+	   if ( !title && dom.length ) {
+		   // Element text
+		   title = validate( dom.get(0).innerText.trim() );
+
+		   // Escape retrieved value.
+		   title = this.util.esc_html(title);
+	   }
 
 		// Final validation.
 		title = validate(title);
