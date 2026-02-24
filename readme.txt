@@ -4,9 +4,9 @@ Donate link: http://gum.co/slb-donate
 License: GPLv2
 Tags: lightbox, gallery, photography, image, slideshow
 Requires at least: 5.3
-Tested up to: 6.8
+Tested up to: 6.9
 Requires PHP: 5.6.20
-Stable tag: 2.9.3
+Stable tag: 2.9.5
 
 The highly customizable lightbox for WordPress
 
@@ -65,6 +65,11 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 
 == Changelog ==
 
+= 2.9.5 =
+
+* Optimize: Parameterize DB queries.
+* Update: Confirm WordPress 6.9 compatibility.
+
 = 2.9.4 =
 
 * Optimize: Escape special characters in DOM attributes.
@@ -97,25 +102,5 @@ Get more information on [Simple Lightbox's official page](http://archetyped.com/
 * Update: Confirm WordPress 6.0 compatibility
 * Update: Build dependencies
 * Update: GitHub issue templates
-
-= 2.8.1 =
-
-* Update: PHP 5.6 Compatibility
-* Add: PHPCS configuration
-* Add: GitHub Issue templates
-
-= 2.8.0 =
-
-* Update: WordPress 5.3+ required.
-* Update: PHP 7.2+ required.
-* Optimize: Link detection up to 2x faster.
-* Optimize: Options data handling.
-* Optimize: Default title filtering.
-* Optimize: Standardize media item data structure to avoid conflicts with third-party data.
-* Optimize: Load only necessary media item properties in browser.
-* Optimize: Filter all media items (instead of each individual item).
-    * Filter Removed: `media_item_properties` (single item).
-    * Filter Added: `media_items` (all items).
-* Fix: `area` elements included in link detection (This is Jim's Area).
 
 [See full changelog](https://github.com/archetyped/simple-lightbox/releases)
