@@ -1072,20 +1072,34 @@ class SLB_Lightbox extends SLB_Base {
 			unset( $key, $p );
 
 			// Retrieve attachment IDs.
-			$uris_flat = "('" . implode( "','", array_keys( $uris_base ) ) . "')";
-			$q         = $wpdb->prepare( "SELECT post_id, meta_value FROM $wpdb->postmeta WHERE `meta_key` = %s AND LOWER(`meta_value`) IN $uris_flat LIMIT %d", '_wp_attached_file', count( $uris_base ) );
-			$pids      = $wpdb->get_results( $q );
-			// Match IDs to URIs.
-			if ( $pids ) {
-				foreach ( $pids as $pd ) {
-					$file =& $pd->meta_value;
-					if ( isset( $uris_base[ $file ] ) ) {
-						$m_internals[ $uris_base[ $file ] ]->id = absint( $pd->post_id );
+			$uris_count = count( $uris_base );
+			if ( $uris_count ) {
+				// Build placeholders for URIs.
+				$uris_placeholders = implode( ',', array_fill(0, $uris_count, '%s' ) );
+				// Merge query args into single array.
+				$q_args = array_merge(
+					[ '_wp_attached_file' ],
+					array_keys( $uris_base ),
+					[ $uris_count ]
+				);
+				// Query DB.
+				$q = $wpdb->prepare(
+					"SELECT post_id, meta_value FROM $wpdb->postmeta WHERE `meta_key` = %s AND LOWER(`meta_value`) IN ($uris_placeholders) LIMIT %d",
+					...$q_args
+				);
+				$pids = $wpdb->get_results( $q );
+				// Match IDs to URIs.
+				if ( $pids ) {
+					foreach ( $pids as $pd ) {
+						$file =& $pd->meta_value;
+						if ( isset( $uris_base[ $file ] ) ) {
+							$m_internals[ $uris_base[ $file ] ]->id = absint( $pd->post_id );
+						}
 					}
 				}
 			}
 			// Cleanup.
-			unset( $uris_base, $uris_flat, $q, $pids, $pd, $file );
+			unset( $uris_base, $uris_count, $q, $pids, $pd, $file );
 		}
 
 		// Process items with attachment IDs.
