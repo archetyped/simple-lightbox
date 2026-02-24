@@ -70,12 +70,12 @@ class SLB_Lightbox extends SLB_Base {
 	/**
 	 * Processed media items for output to client.
 	 *
-	 * @var object[string] {
+	 * @var array<string, object> {
 	 *     Media item properties.
 	 *
 	 *     @index string Unique ID (system-generated).
 	 *
-	 *     @see $media_item_template.
+	 *     @see SLB_Lightbox::$media_item_template
 	 * }
 	 */
 	private $media_items = [];
@@ -83,15 +83,15 @@ class SLB_Lightbox extends SLB_Base {
 	/**
 	 * Collection of unprocessed media items.
 	 *
-	 * @var array {
-	 *     @type object[string] $props {
+	 * @var array<string, array> {
+	 *     @type array<string, object> $props {
 	 *         Media item properties.
 	 *
 	 *         @index string Unique ID (system-generated).
 	 *
-	 *         @see $media_item_template
+	 *         @see SLB_Lightbox::$media_item_template
 	 *     }
-	 *     @type string[string] $uri {
+	 *     @type array<string, string> $uri {
 	 *         Cached URIs.
 	 *
 	 *         @index string URI.
