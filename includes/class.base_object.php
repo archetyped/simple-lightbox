@@ -254,9 +254,18 @@ class SLB_Base_Object extends SLB_Base {
 					break;
 				case 'contents':
 					$ret = $ret['uri'];
+					// Try reading from local filesystem to avoid an HTTP loopback request.
 					if ( ! $this->util->is_uri( $ret ) ) {
+						$path = $this->util->get_relative_path( $ret );
+						$path = $this->util->normalize_path( ABSPATH, $path );
+						$real = realpath( $path );
+						if ( $real && strpos( wp_normalize_path( $real ), wp_normalize_path( WP_CONTENT_DIR ) ) === 0 ) {
+							$ret = file_get_contents( $real );
+							break;
+						}
 						$ret = $this->util->normalize_path( site_url(), $ret );
 					}
+					// Fallback to HTTP request (e.g. remote/non-local storage).
 					$get = wp_safe_remote_get( $ret );
 					$ret = ( ! is_wp_error( $get ) && 200 === $get['response']['code'] ) ? $get['body'] : '';
 					break;
