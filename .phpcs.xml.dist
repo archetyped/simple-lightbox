@@ -7,7 +7,7 @@
     <arg value="p"/>
 
     <!-- A path to strip from the front of file paths inside reports. -->
-    <arg name="basepath" value="."/>
+    <!-- <arg name="basepath" value="."/> -->
     <arg name="colors"/>
     <arg name="extensions" value="php"/>
 
@@ -29,7 +29,7 @@
         <!-- Use PSR-4 file naming standard instead -->
         <exclude name="WordPress.Files.FileName"/>
         <!-- Allow short array syntax -->
-        <exclude name="Generic.Arrays.DisallowShortArraySyntax"/>
+        <exclude name="Universal.Arrays.DisallowShortArraySyntax.Found"/>
         <!-- Allow global variable override -->
         <exclude name="WordPress.WP.GlobalVariablesOverride.Prohibited"/>
         <!-- Temporarily exclude rules -->
