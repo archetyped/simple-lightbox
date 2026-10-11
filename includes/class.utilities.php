@@ -542,7 +542,9 @@ class SLB_Utilities {
 
 		// Build condition
 		$sep = '.';
+		$obj = $obj ? $obj : '';
 		$obj = trim( $obj, $sep );
+
 		//  Strip base object
 		if ( 0 === strpos( $obj, $base . $sep ) ) {
 			$obj = substr( $obj, strlen( $base . $sep ) );

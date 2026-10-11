@@ -432,7 +432,7 @@ class SLB_Field_Type extends SLB_Field_Base {
 				// Iterate through instances of current placeholder
 				foreach ( $instances as $instance ) {
 					// Process value based on placeholder name.
-					$target_property = $this->util->apply_filters_ref_array( "process_placeholder_${tag}", [ '', $this, &$instance, $layout, $data ], false );
+					$target_property = $this->util->apply_filters_ref_array( "process_placeholder_{$tag}", [ '', $this, &$instance, $layout, $data ], false );
 					// Process value using default processors (if necessary).
 					if ( '' === $target_property ) {
 						$target_property = $this->util->apply_filters_ref_array( 'process_placeholder', [ $target_property, $this, &$instance, $layout, $data ], false );
